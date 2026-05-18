@@ -40,7 +40,7 @@
                             <tr>
                                 <th width="100">Kode</th>
                                 <th width="120">Jabatan</th>
-                                <th width="250">Nama</th>
+                                <th>Nama</th>
                                 <th width="150">Terakhir Login</th>
                                 <th width="80">Status</th>
                                 <th width="80">Kunjungan</th>
@@ -55,12 +55,10 @@
                                 // $linkDelete = array('action' => 'delete', $user->id);
                                 $linkResetPassword = array('action' => 'reset_password', $user->id);
                                 $userLastLogin = (empty($user->last_login)) ? '' : date_format($user->last_login, 'd-m-Y (H:m:i)');
-                                $linkAddFace = array('action' => 'add_face', $user->id);
 
                                 $btnAction = $this->Krs->btn('access', $linkPreview);
                                 $btnAction .= $this->Krs->btn('edit', $linkEdit);
                                 $btnAction .= $this->Krs->btn('resetPassword', $linkResetPassword, $user->name);
-                                $btnAction .= $this->Krs->btn('addFace', $linkAddFace, $user->name);
                                 ?>
                             <tr>
                                 <td><?= h($user->code) ?></td>

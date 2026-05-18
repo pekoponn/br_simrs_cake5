@@ -5,87 +5,674 @@ $action = $this->request->getParam('action');
 // Memanggil controller yang aktif
 $controller = $this->request->getParam('controller');
 
-$menuDashboard = ($controller=='Dashboard')?' class="active"':'';
-$menuUserChangePassword = ($controller=='Users' && $action=='changePassword') ? ' class="active"' : '';
+$menuDashboard = ($controller == 'Dashboard') ? ' class="active"' : '';
+//$menuSetting = ($controller=='Users')?'active':'';
+// $menuUser = ($controller=='Users' && $action=='index') ? ' class="active"' : '';
+$menuUserChangePassword = ($controller == 'Users' && $action == 'changePassword') ? ' class="active"' : '';
+//$menuCompany = ($controller=='Settings' && $action=='edit') ? ' class="active"' : '';
 
+// pr($getController);
+//pr($checkUrl);
+// $branch = $checkUrl['branchs'];
 $branch = (isset($checkUrl['branches'])) ? $checkUrl['branches'] : array();
+$item = (isset($checkUrl['items'])) ? $checkUrl['items'] : array();
+$itemubs = (isset($checkUrl['itemubs'])) ? $checkUrl['itemubs'] : array();
+$itemubsupload = (isset($checkUrl['itemubsuploads'])) ? $checkUrl['itemubsuploads'] : array();
+$warehouse = (isset($checkUrl['warehouses'])) ? $checkUrl['warehouses'] : array();
+$placement = (isset($checkUrl['placements'])) ? $checkUrl['placements'] : array();
+$mutation = (isset($checkUrl['mutations'])) ? $checkUrl['mutations'] : array();
+$purchaseOfGood = (isset($checkUrl['purchaseofgoods'])) ? $checkUrl['purchaseofgoods'] : array();
+$placementOfGood = (isset($checkUrl['placementofgoods'])) ? $checkUrl['placementofgoods'] : array();
+$submission = (isset($checkUrl['submissions'])) ? $checkUrl['submissions'] : array();
+$order = (isset($checkUrl['orders'])) ? $checkUrl['orders'] : array();
+$orderpo = (isset($checkUrl['orderpos'])) ? $checkUrl['orderpos'] : array();
+$supplier = (isset($checkUrl['suppliers'])) ? $checkUrl['suppliers'] : array();
+$suppliermou = (isset($checkUrl['suppliermous'])) ? $checkUrl['suppliermous'] : array();
+$medicine = (isset($checkUrl['medicines'])) ? $checkUrl['medicines'] : array();
+$medicineUbs = (isset($checkUrl['medicineubs'])) ? $checkUrl['medicineubs'] : array();
+$medicineUbsUpload = (isset($checkUrl['medicineubsuploads'])) ? $checkUrl['medicineubsuploads'] : array();
+$medicineMerk = (isset($checkUrl['medicinemerks'])) ? $checkUrl['medicinemerks'] : array();
+$medicineGroup = (isset($checkUrl['medicinegroups'])) ? $checkUrl['medicinegroups'] : array();
+
+$warehouseReceive = (isset($checkUrl['warehousereceives'])) ? $checkUrl['warehousereceives'] : array();
+$patient = (isset($checkUrl['patients'])) ? $checkUrl['patients'] : array();
+$medicine = (isset($checkUrl['medicines'])) ? $checkUrl['medicines'] : array();
+$doctor = (isset($checkUrl['doctors'])) ? $checkUrl['doctors'] : array();
+$service = (isset($checkUrl['services'])) ? $checkUrl['services'] : array();
+$laboratoryService = (isset($checkUrl['laboratoryservices'])) ? $checkUrl['laboratoryservices'] : array();
+$icd_service = (isset($checkUrl['icd_services'])) ? $checkUrl['icd_services'] : array();
+
 $customer = (isset($checkUrl['customers'])) ? $checkUrl['customers'] : array();
+$processor = (isset($checkUrl['processors'])) ? $checkUrl['processors'] : array();
+$transporter = (isset($checkUrl['transporters'])) ? $checkUrl['transporters'] : array();
+$truck = (isset($checkUrl['trucks'])) ? $checkUrl['trucks'] : array();
+$driver = (isset($checkUrl['drivers'])) ? $checkUrl['drivers'] : array();
+$waste = (isset($checkUrl['wastes'])) ? $checkUrl['wastes'] : array();
+$wasteType = (isset($checkUrl['wastetypes'])) ? $checkUrl['wastetypes'] : array();
+$wastePrice = (isset($checkUrl['wasteprices'])) ? $checkUrl['wasteprices'] : array();
+$mou = (isset($checkUrl['mous'])) ? $checkUrl['mous'] : array();
+$template = (isset($checkUrl['templates'])) ? $checkUrl['templates'] : array();
+$manifest = (isset($checkUrl['manifests'])) ? $checkUrl['manifests'] : array();
+$manifestProcessor = (isset($checkUrl['manifestprocessors'])) ? $checkUrl['manifestprocessors'] : array();
+$manifestInside = (isset($checkUrl['manifestinsides'])) ? $checkUrl['manifestinsides'] : array();
+
+$manifestDirect = (isset($checkUrl['manifestdirects'])) ? $checkUrl['manifestdirects'] : array();
+$order = (isset($checkUrl['orders'])) ? $checkUrl['orders'] : array();
+$invoice = (isset($checkUrl['invoices'])) ? $checkUrl['invoices'] : array();
+$invoiceDeposit = (isset($checkUrl['invoicedeposits'])) ? $checkUrl['invoicedeposits'] : array();
+$invoiceCutoff = (isset($checkUrl['invoicecutoffs'])) ? $checkUrl['invoicecutoffs'] : array();
+$invoiceOut = (isset($checkUrl['invoiceouts'])) ? $checkUrl['invoiceouts'] : array();
 $settings = (isset($checkUrl['settings'])) ? $checkUrl['settings'] : array();
+$project = (isset($checkUrl['projects'])) ? $checkUrl['projects'] : array();
 $users = (isset($checkUrl['users'])) ? $checkUrl['users'] : array();
+$operational = (isset($checkUrl['operationals'])) ? $checkUrl['operationals'] : array();
+$permit = (isset($checkUrl['permits'])) ? $checkUrl['permits'] : array();
+$truckSchedule = (isset($checkUrl['truckschedules'])) ? $checkUrl['truckschedules'] : array();
+$truckInspection = (isset($checkUrl['truckinspections'])) ? $checkUrl['truckinspections'] : array();
+$vehicleRequirement = (isset($checkUrl['vehiclerequirements'])) ? $checkUrl['vehiclerequirements'] : array();
+
+$pettyCash = (isset($checkUrl['pettycashes'])) ? $checkUrl['pettycashes'] : array();
+$pettyCashTopup = (isset($checkUrl['pettycashtopups'])) ? $checkUrl['pettycashtopups'] : array();
+$pettyCashBank = (isset($checkUrl['pettycashbanks'])) ? $checkUrl['pettycashbanks'] : array();
+$pettyCashBankTopup = (isset($checkUrl['pettycashbanktopups'])) ? $checkUrl['pettycashbanktopups'] : array();
+
+$unidentifiedIncome = (isset($checkUrl['unidentifiedincomes'])) ? $checkUrl['unidentifiedincomes'] : array();
+$orderRegular = (isset($checkUrl['orderregulars'])) ? $checkUrl['orderregulars'] : array();
+
+$invoiceHutang = (isset($checkUrl['invoicehutangs'])) ? $checkUrl['invoicehutangs'] : array();
+$accJournal = (isset($checkUrl['accjournals'])) ? $checkUrl['accjournals'] : array();
+$accBeginningBalance = (isset($checkUrl['accbeginningbalances'])) ? $checkUrl['accbeginningbalances'] : array();
+$accChartOfAccount = (isset($checkUrl['accchartofaccounts'])) ? $checkUrl['accchartofaccounts'] : array();
+$accJournalMapping = (isset($checkUrl['accjournalmappings'])) ? $checkUrl['accjournalmappings'] : array();
+$recipientPayer = (isset($checkUrl['recipientpayers'])) ? $checkUrl['recipientpayers'] : array();
+$depreciations = (isset($checkUrl['depreciations'])) ? $checkUrl['depreciations'] : array();
+$permitProcessor = (isset($checkUrl['permitprocessors'])) ? $checkUrl['permitprocessors'] : array();
+$invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoiceprocessors'] : array();
+
+$patient = (isset($checkUrl['patients'])) ? $checkUrl['patients'] : array();
+$rooms = (isset($checkUrl['rooms'])) ? $checkUrl['rooms'] : array();
+
 ?>
 <div class="sidebar-bg"></div>
 <div id="sidebar" class="sidebar">
 	<div data-scrollbar="true" data-height="100%">
-		<ul class="nav">
-			<li><a href="javascript:;" class="sidebar-minify-btn" data-click="sidebar-minify"><i class="fa fa-angle-double-left"></i></a></li>
+		<?php
+
+		// <ul class="nav">
+		// 	<li class="nav-profile">
+		// 		<a href="javascript:;" data-toggle="nav-profile">
+		// 			<div class="cover with-shadow"></div>
+		// 			<div class="image">
+		// 				<img src="../assets/img/user/user-13.jpg" alt="" />
+		// 			</div>
+		// 			<div class="info">
+		// 				<b class="caret pull-right"></b>Sean Ngu
+		// 				<small>Front end developer</small>
+		// 			</div>
+		// 		</a>
+		// 	</li>
+		// 	<li>
+		// 		<ul class="nav nav-profile">
+		// 			<li><a href="javascript:;"><i class="fa fa-cog"></i> Settings</a></li>
+		// 			<li><a href="javascript:;"><i class="fa fa-pencil-alt"></i> Send Feedback</a></li>
+		// 			<li><a href="javascript:;"><i class="fa fa-question-circle"></i> Helps</a></li>
+		// 		</ul>
+		// 	</li>
+		// </ul>
+		
+		?>
+		<ul class="nav"><?php //<li class="nav-header">Navigation</li> ?>
+			<li><a href="javascript:;" class="sidebar-minify-btn" data-click="sidebar-minify"><i
+						class="fa fa-angle-double-left"></i></a></li>
 			<li<?= $menuDashboard ?>>
 				<?= $this->Html->link('<i class="fas fa-home"></i><span>Beranda</span>', ['controller' => 'Dashboard', 'action' => 'index'], ['escape' => false]) ?>
-			</li>
-			<?php
-			
-			if($customers['index']==1) {
+				</li>
+				<?php
+				//$pettyCash['index']==1 || 
+				// $getController=='pettycashes' || 
+				// $menuPettyCashIndex = ($getController=='pettycashes' && $getAction=='index')?' class="active"':'';
+				if ($accChartOfAccount['index'] == 1 || $accChartOfAccount['group'] == 1 || $accJournal['index'] == 1 || $accJournal['indexShort'] == 1 || $accJournal['generalJournalReport'] == 1 || $accJournal['import'] == 1) {
+					$menuAccounting = ($getController == 'accjournals' || $getController == 'accchartofaccounts') ? 'active' : '';
 
-				$menuDataLink = ($getController=='customers')?'active':'';
 
-				$menuMasterCustomer = ($getController=='customers')?' class="active"':'';				
-			?>
-			<li class="has-sub <?php echo $menuDataLink; ?>">
-				<a href="javascript:;">
-					<b class="caret pull-right"></b>
-					<i class="fas fa-database"></i>
-					<span>Master</span>
-				</a>
-				<ul class="sub-menu">
+					$menuAcc = ($getController == 'accjournals' || $getController == 'accchartofaccounts') ? 'active' : '';
+
+					$menuAccCoa = ($getController == 'accchartofaccounts' && ($getAction == 'index' || $getAction == 'add' || $getAction == 'edit' || $getAction == 'group')) ? 'active' : '';
+
+					$menuAccJournal = ($getController == 'accjournals' && ($getAction == 'index' || $getAction == 'indexShort' || $getAction == 'addMany' || $getAction == 'editMany' || $getAction == 'import')) ? 'active' : '';
+
+					$menuAccReport = ($getController == 'accjournals' && ($getAction == 'generalLedgerReport' || $getAction == 'ekuitasReport' || $getAction == 'generalJournalReport' || $getAction == 'incomeGlobalReport' || $getAction == 'incomeMultiReport' || $getAction == 'trialBalanceReport' || $getAction == 'balanceSheetPercentReport' || $getAction == 'workSheetBalanceReport')) ? 'active' : '';
+					$menuReportGeneralLedger = ($getAction == 'generalLedgerReport') ? 'class="active"' : '';
+					$menuReportGeneralJournal = ($getAction == 'generalJournalReport') ? 'class="active"' : '';
+
+					$menuAccReportBalanceSheet = ($getController == 'accjournals' && ($getAction == 'trialBalanceReport' || $getAction == 'balanceSheetPercentReport' || $getAction == 'workSheetBalanceReport')) ? 'active' : '';
+					$menuTrialBalanceReport = ($getAction == 'trialBalanceReport') ? 'class="active"' : '';
+					$menuBalanceSheetReport = ($getAction == 'balanceSheetPercentReport') ? 'class="active"' : '';
+					$menuWorkSheetBalanceReport = ($getAction == 'workSheetBalanceReport') ? 'class="active"' : '';
+
+					$menuAccReportLR = ($getController == 'accjournals' && ($getAction == 'incomeGlobalReport' || $getAction == 'incomeMultiReport')) ? 'active' : '';
+					$menuIncomeGlobalReport = ($getAction == 'incomeGlobalReport') ? 'class="active"' : '';
+					$menuIncomeMultiReport = ($getAction == 'incomeMultiReport') ? 'class="active"' : '';
+
+					$menuReportEkuitas = ($getAction == 'ekuitasReport') ? 'class="active"' : '';
+
+
+					$menuAccCoaGroup = ($getController == 'accchartofaccounts' && ($getAction == 'group')) ? ' class="active"' : '';
+					$menuAccCoaIndex = ($getController == 'accchartofaccounts' && ($getAction == 'index' || $getAction == 'add' || $getAction == 'edit')) ? ' class="active"' : '';
+					$menuAccCoaBeginningBalanceExportImport = ($getController == 'accchartofaccounts' && ($getAction == 'beginningBalanceExportImport')) ? ' class="active"' : '';
+
+					$menuAccJournalIndex = ($getController == 'accjournals' && ($getAction == 'index' || $getAction == 'addMany')) ? ' class="active"' : '';
+					$menuAccJournalIndexShort = ($getController == 'accjournals' && ($getAction == 'indexShort' || $getAction == 'addMany' || $getAction == 'editMany')) ? ' class="active"' : '';
+					$menuAccJournalImport = ($getController == 'accjournals' && ($getAction == 'import')) ? ' class="active"' : '';
+					?>
+					<li class="has-sub <?= $menuAccounting ?>">
+						<a href="javascript:;">
+							<b class="caret"></b>
+							<i class="fa fa-money-bill-alt"></i>
+							<span>ACC</span>
+						</a>
+						<ul class="sub-menu">
+							<li class="has-sub <?= $menuAccJournal ?>">
+								<a href="javascript:;">
+									<b class="caret"></b>
+									<span>Jurnal</span>
+								</a>
+								<ul class="sub-menu">
+									<?php
+									if ($accJournal['indexShort'] == 1) {
+										?>
+										<li <?= $menuAccJournalIndexShort ?>>
+											<?= $this->Html->link('Daftar', ['controller' => 'AccJournals', 'action' => 'indexShort'], ['fullBase' => true, 'escape' => false]) ?>
+										</li>
+										<?php
+									}
+									if ($accJournal['index'] == 1) {
+										?>
+										<li <?= $menuAccJournalIndex ?>>
+											<?= $this->Html->link('Daftar (Detail)', ['controller' => 'AccJournals', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+										</li>
+										<?php
+									}
+									if ($accJournal['import'] == 1) {
+										?>
+										<li <?= $menuAccJournalImport ?>>
+											<?= $this->Html->link('Import (Melaui Excel)', ['controller' => 'AccJournals', 'action' => 'import'], ['fullBase' => true, 'escape' => false]) ?>
+										</li>
+										<?php
+									}
+									?>
+								</ul>
+							</li>
+							<?php
+							if ($accChartOfAccount['index'] == 1) {
+								?>
+								<li <?= $menuAccCoaIndex ?>>
+									<?= $this->Html->link('Perkiraan (COA)', ['controller' => 'AccChartOfAccounts', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+								<?php
+							}
+							if ($accChartOfAccount['beginningBalanceExportImport'] == 1) {
+								?>
+								<li <?= $menuAccCoaBeginningBalanceExportImport ?>>
+									<?= $this->Html->link('Saldo Awal', ['controller' => 'AccChartOfAccounts', 'action' => 'beginningBalanceExportImport'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+								<?php
+							}
+							?>
+
+							<li class="has-sub <?= $menuAccReport ?>">
+								<a href="javascript:;">
+									<b class="caret"></b>
+									<span>Laporan</span>
+								</a>
+								<ul class="sub-menu">
+									<li class="has-sub <?= $menuAccReportBalanceSheet ?>">
+										<a href="javascript:;">
+											<b class="caret"></b>
+											<span>Neraca</span>
+										</a>
+										<ul class="sub-menu">
+											<li <?= $menuTrialBalanceReport ?>>
+												<?= $this->Html->link('Neraca Saldo', ['controller' => 'AccJournals', 'action' => 'trial_balance_report'], ['fullBase' => true, 'escape' => false]) ?>
+											</li>
+											<li <?= $menuBalanceSheetReport ?>>
+												<?= $this->Html->link('Neraca %', ['controller' => 'AccJournals', 'action' => 'balance_sheet_percent_report'], ['fullBase' => true, 'escape' => false]) ?>
+											</li>
+											<li <?= $menuWorkSheetBalanceReport ?>>
+												<?= $this->Html->link('Neraca Lajur', ['controller' => 'AccJournals', 'action' => 'work_sheet_balance_report'], ['fullBase' => true, 'escape' => false]) ?>
+											</li>
+										</ul>
+									</li>
+									<li class="has-sub <?= $menuAccReportLR ?>">
+										<a href="javascript:;">
+											<b class="caret"></b>
+											<span>Laba/Rugi</span>
+										</a>
+										<ul class="sub-menu">
+											<li <?= $menuIncomeGlobalReport ?>>
+												<?= $this->Html->link('L/R Global', ['controller' => 'AccJournals', 'action' => 'income_global_report'], ['fullBase' => true, 'escape' => false]) ?>
+											</li>
+											<li <?= $menuIncomeMultiReport ?>>
+												<?= $this->Html->link('L/R Multi', ['controller' => 'AccJournals', 'action' => 'income_multi_report'], ['fullBase' => true, 'escape' => false]) ?>
+											</li>
+										</ul>
+									</li>
+									<li <?= $menuReportGeneralJournal ?>>
+										<?= $this->Html->link('Jurnal Umum', ['controller' => 'AccJournals', 'action' => 'general_journal_report'], ['fullBase' => true, 'escape' => false]) ?>
+									</li>
+									<li <?= $menuReportGeneralLedger ?>>
+										<?= $this->Html->link('Buku Besar', ['controller' => 'AccJournals', 'action' => 'generalLedgerReport'], ['fullBase' => true, 'escape' => false]) ?>
+									</li>
+									<?php
+									// <li <?= $menuReportEkuitas><?= $this->Html->link('Ekuitas', ['controller' => 'AccJournals', 'action' => 'ekuitasReport'], ['fullBase' => true, 'escape' => false])</li>
+								
+									?>
+								</ul>
+							</li>
+							<?php
+							/* if($pettyCash['index']==1){
+							?>
+							<li<?= $menuPettyCashIndex ?>><?= $this->Html->link('Petty Cash', ['controller' => 'petty_cashes', 'action' => 'index'], ['fullBase'=>true, 'escape' => false]) ?></li>
+							<?php
+							} */
+
+							?>
+						</ul>
+					</li>
+				<?php } ?>
+				<?php
+				if ($purchaseOfGood['index'] == 1 || $placementOfGood['index'] == 1 || $mutation['index'] == 1 || $truckSchedule['index'] == 1 || $warehouseReceive['index'] == 1 || $submission['index'] == 1) {
+
+					$menuDataLink = ($getController == 'purchaseofgoods' || $getController == 'placementofgoods' || $getController == 'mutations' || $getController == 'submissions' || $getController == 'warehousereceives' || $getController == 'truckschedules') ? 'active' : '';
+
+					//Menu Data-Warehouse
+					$menuLinkWarehouseReceives = ($getController == 'warehousereceives') ? 'active' : '';
+					$menuDataWarehouseReceiveIndex = ($getController == 'warehousereceives' && ($getAction == 'index' || $getAction == 'add' || $getAction == 'addDriver' || $getAction == 'edit')) ? ' class="active"' : '';
+					$menuDataTruckSchedule = ($getController == 'truckschedules') ? ' class="active"' : '';
+					$menuDataPurchaseOfGood = ($getController == 'purchaseofgoods') ? ' class="active"' : '';
+					$menuDataPlacementOfGood = ($getController == 'placementofgoods') ? ' class="active"' : '';
+					$menuDataMutation = ($getController == 'mutations') ? ' class="active"' : '';
+					$menuDataSubmission = ($getController == 'submissions') ? ' class="active"' : '';
+					?>
+					<li class="has-sub <?php echo $menuDataLink; ?>">
+						<a href="javascript:;">
+							<b class="caret pull-right"></b>
+							<i class="fas fa-gem"></i>
+							<span>Data</span>
+						</a>
+						<ul class="sub-menu">
+							<?php
+							if ($purchaseOfGood['index'] == 1) {
+								?>
+								<li <?= $menuDataPurchaseOfGood ?>>
+									<?= $this->Html->link('Pembelian Barang', ['controller' => 'PurchaseOfGoods', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+								<?php
+							}
+							if ($placementOfGood['index'] == 1) {
+								?>
+								<li <?= $menuDataPlacementOfGood ?>>
+									<?= $this->Html->link('Penempatan Barang', ['controller' => 'PlacementOfGoods', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+								<?php
+							}
+							if ($mutation['index'] == 1) {
+								?>
+								<li <?= $menuDataMutation ?>>
+									<?= $this->Html->link('Mutasi', ['controller' => 'Mutations', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+								<?php
+							}
+							if ($submission['index'] == 1) {
+								?>
+								<li <?= $menuDataSubmission ?>>
+									<?= $this->Html->link('Permintaan Dana', ['controller' => 'Submissions', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+								<?php
+							}
+
+							/*
+							if($truckSchedule['index']==1) {
+							?>
+								<li <?= $menuDataTruckSchedule ?>><?= $this->Html->link('Jadwal Pengangkutan', ['controller' => 'TruckSchedules', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+							<?php 
+							}
+							if($warehouseReceive['index']==1) {
+							?>
+							<li class="has-sub <?= $menuLinkWarehouseReceives; ?>">
+								<a href="javascript:;">
+									<b class="caret"></b>Gudang (Masuk)
+								</a>
+								<ul class="sub-menu">
+									<?php
+									if($warehouseReceive['index']==1) {
+									?>
+									<li <?= $menuDataWarehouseReceiveIndex; ?>><?= $this->Html->link('Penerimaan', ['controller'=>'WarehouseReceives', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+									</li>
+									<?php
+									}
+
+									?>
+								</ul>
+							</li>					
+							<?php
+							}
+							*/
+							?>
+						</ul>
+					</li>
 					<?php
-					if($customers['index']==1) {
+				}
+				if ($order['index'] == 1 || $orderpo['index'] == 1) {
+
+					$menuScmLink = ($getController == 'orders' || $getController == 'orderpos') ? 'active' : '';
+
+					$menuDataOrder = ($getController == 'orders') ? ' class="active"' : '';
+					$menuDataOrderPo = ($getController == 'orderpos') ? ' class="active"' : '';
 					?>
-	                    <li <?= $menuMasterCustomer ?>><?= $this->Html->link('Pelanggan', ['controller' => 'Customers', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
-	                    </li>
-	                <?php 
-	            	}
-					?>
-				</ul>
-			</li>
-			<?php
-			}
+					<li class="has-sub <?php echo $menuScmLink; ?>">
+						<a href="javascript:;">
+							<b class="caret pull-right"></b>
+							<i class="fas fa-cogs"></i>
+							<span>SCM</span>
+						</a>
+						<ul class="sub-menu">
+							<?php
+							if ($order['index'] == 1) {
+								?>
+								<li <?= $menuDataOrder ?>>
+									<?= $this->Html->link('Order', ['controller' => 'Orders', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+								<?php
+							}
+							if ($orderpo['index'] == 1) {
+								?>
+								<li <?= $menuDataOrderPo ?>>
+									<?= $this->Html->link('Order (Supplier)', ['controller' => 'OrderPos', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+								<?php
+							}
 
-			if($users['changePassword']==1 || $users['resetPassword']==1  || $users['access']==1 || $users['index']==1 || $settings['index']==1 || $branch['index']==1){
+							/*
+							if($truckSchedule['index']==1) {
+							?>
+								<li <?= $menuDataTruckSchedule ?>><?= $this->Html->link('Jadwal Pengangkutan', ['controller' => 'TruckSchedules', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+							<?php 
+							}
+							if($warehouseReceive['index']==1) {
+							?>
+							<li class="has-sub <?= $menuLinkWarehouseReceives; ?>">
+								<a href="javascript:;">
+									<b class="caret"></b>Gudang (Masuk)
+								</a>
+								<ul class="sub-menu">
+									<?php
+									if($warehouseReceive['index']==1) {
+									?>
+									<li <?= $menuDataWarehouseReceiveIndex; ?>><?= $this->Html->link('Penerimaan', ['controller'=>'WarehouseReceives', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+									</li>
+									<?php
+									}
 
-				$menuSetting = ($getController=='users' || $getController=='settings' || $getController=='branches')?'active':'';		
-
-				$menuUser = ($getController=='users' && ($getAction=='index' || $getAction=='add' || $getAction=='edit' || $getAction=='resetPassword' || $getAction=='access'))?' class="active"':'';
-				$menuChangePassword = ($getController=='users' && $getAction=='changePassword')?' class="active"':'';
-				$menuBranches = ($getController=='branches' && $getAction=='index') ? 'class="active"' : '';
-				$menuSettings = ($getController=='settings' && $getAction=='index')?' class="active"':'';			
-			?>
-
-			<li class="has-sub <?= $menuSetting ?>">
-				<a href="javascript:;">
-					<b class="caret"></b>
-					<i class="fa fa-cog"></i>
-					<span>Pengaturan</span>
-				</a>
-				<ul class="sub-menu">
-					<li<?= $menuChangePassword ?>><?= $this->Html->link('Ganti Password', ['controller' => 'Users', 'action' => 'changepassword',$getUser->id], ['fullBase'=>true, 'escape' => false]) ?></li>
+									?>
+								</ul>
+							</li>					
+							<?php
+							}
+							*/
+							?>
+						</ul>
+					</li>
 					<?php
-					if($users['index']==1){
+				}
+
+				if (
+					$medicine['index'] == 1 ||
+					$medicineMerk['index'] == 1 ||
+					$medicineGroup['index'] == 1 ||
+					$patient['index'] == 1
+				) {
+
+					$menuDataLink = (
+						$getController == 'medicines' ||
+						$getController == 'medicinemerks' ||
+						$getController == 'medicinegroups' ||
+						$getController == 'patients'
+					) ? 'active' : '';
+
+					$menuMedicine = (
+						$getController == 'medicines' ||
+						$getController == 'medicinemerks' ||
+						$getController == 'medicinegroups'
+					) ? 'active' : '';
+
+					$menuMasterMedicine = ($getController == 'medicines') ? ' class="active"' : '';
+					$menuMasterMedicineMerk = ($getController == 'medicinemerks') ? ' class="active"' : '';
+					$menuMasterMedicineGroup = ($getController == 'medicinegroups') ? ' class="active"' : '';
+					$menuPatientIndex = ($getController == 'patients') ? ' class="active"' : '';
+					$menuDoctorIndex = ($getController == 'doctors') ? ' class="active"' : '';
+					$menuDoctorScheduleIndex = ($getController == 'doctorschedules') ? ' class="active"' : '';
+					$menuHealthFacilityIndex = ($getController == 'healthfacilities') ? ' class="active"' : '';
+					$menuInsuranceIndex = ($getController == 'insurance') ? ' class="active"' : '';
+					$menuNutritionCombineIndex = ($getController == 'nutritioncombines') ? ' class="active"' : '';
+					$menuNutritionMenuIndex = ($getController == 'nutritionmenus') ? ' class="active"' : '';
+					$menuPharmacyItemIndex = ($getController == 'pharmacyitems') ? ' class="active"' : '';
+					$menuPolyclinicIndex = ($getController == 'polyclinics') ? ' class="active"' : '';
+					$menuRoomIndex = ($getController == 'rooms') ? ' class="active"' : '';
+
 					?>
-					<li<?= $menuUser ?>><?= $this->Html->link('User', ['controller' => 'Users', 'action' => 'index'], ['fullBase'=>true, 'escape' => false]) ?></li>
-					<?php 
+					<li class="has-sub <?php echo $menuDataLink; ?>">
+						<a href="javascript:;">
+							<b class="caret pull-right"></b>
+							<i class="fas fa-database"></i>
+							<span>Master</span>
+						</a>
+
+						<ul class="sub-menu">
+
+							<?php
+							if (
+								$medicine['index'] == 1 ||
+								$medicineMerk['index'] == 1 ||
+								$medicineGroup['index'] == 1
+							) {
+								?>
+								<li class="has-sub <?= $menuMedicine ?>">
+									<a href="javascript:;">
+										<b class="caret"></b>
+										<span>Obat</span>
+									</a>
+
+									<ul class="sub-menu">
+										<?php
+										if ($medicine['index'] == 1) {
+											?>
+											<li <?= $menuMasterMedicine ?>>
+												<?= $this->Html->link('Daftar', ['controller' => 'Medicines', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+											</li>
+											<?php
+										}
+
+										if ($medicineMerk['index'] == 1) {
+											?>
+											<li <?= $menuMasterMedicineMerk ?>>
+												<?= $this->Html->link('Merk', ['controller' => 'MedicineMerks', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+											</li>
+											<?php
+										}
+
+										if ($medicineGroup['index'] == 1) {
+											?>
+											<li <?= $menuMasterMedicineGroup ?>>
+												<?= $this->Html->link('Group', ['controller' => 'MedicineGroups', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+											</li>
+											<?php
+										}
+										?>
+									</ul>
+								</li>
+								<?php
+							}
+
+							if ($patient['index'] == 1) {
+								?>
+								<li <?= $menuPatientIndex ?>>
+									<?= $this->Html->link('Patients', ['controller' => 'Patients', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+								<?php
+							}
+
+							if ($doctor['index'] == 1) {
+								?>
+								<li <?= $menuDoctorIndex ?>>
+									<?= $this->Html->link(
+										'Doctor',
+										['controller' => 'Doctors', 'action' => 'index'],
+										['fullBase' => true, 'escape' => false]
+									) ?>
+								</li>
+								<?php
+							}
+							?>
+
+							<?php
+							if ($doctorSchedule['index'] == 1) {
+								?>
+								<li <?= $menuDoctorScheduleIndex ?>>
+									<?= $this->Html->link(
+										'Doctor Schedules',
+										['controller' => 'DoctorSchedules', 'action' => 'index'],
+										['fullBase' => true, 'escape' => false]
+									) ?>
+								</li>
+								<?php
+							}
+							?>
+
+							<?php
+							if ($healthFacility['index'] == 1) {
+								?>
+								<li <?= $menuHealthFacilityIndex ?>>
+									<?= $this->Html->link(
+										'Health Facilities',
+										['controller' => 'HealthFacilities', 'action' => 'index'],
+										['fullBase' => true, 'escape' => false]
+									) ?>
+								</li>
+								<?php
+							}
+							?>
+
+							<?php
+							if ($insurance['index'] == 1) {
+								?>
+								<li <?= $menuInsuranceIndex ?>>
+									<?= $this->Html->link(
+										'Insurance',
+										['controller' => 'Insurance', 'action' => 'index'],
+										['fullBase' => true, 'escape' => false]
+									) ?>
+								</li>
+								<?php
+							}
+							?>
+
+							<?php
+							if ($nutritionCombine['index'] == 1) {
+								?>
+								<li <?= $menuNutritionCombineIndex ?>>
+									<?= $this->Html->link(
+										'Nutrition Combine',
+										['controller' => 'NutritionCombines', 'action' => 'index'],
+										['fullBase' => true, 'escape' => false]
+									) ?>
+								</li>
+								<?php
+							}
+							?>
+
+							<?php
+							if ($nutritionMenu['index'] == 1) {
+								?>
+								<li <?= $menuNutritionMenuIndex ?>>
+									<?= $this->Html->link(
+										'Nutrition Menus',
+										['controller' => 'NutritionMenus', 'action' => 'index'],
+										['fullBase' => true, 'escape' => false]
+									) ?>
+								</li>
+								<?php
+							}
+							?>
+
+							<?php
+							if ($pharmacyItem['index'] == 1) {
+								?>
+								<li <?= $menuPharmacyItemIndex ?>>
+									<?= $this->Html->link(
+										'Pharmacy Items',
+										['controller' => 'PharmacyItems', 'action' => 'index'],
+										['fullBase' => true, 'escape' => false]
+									) ?>
+								</li>
+								<?php
+							}
+
+							?>
+
+						</ul>
+					</li>
+					<?php
+				}
+
+				if ($users['changePassword'] == 1 || $users['resetPassword'] == 1 || $users['access'] == 1 || $users['index'] == 1 || $settings['index'] == 1 || $branch['index'] == 1) {
+
+					$menuSetting = ($getController == 'users' || $getController == 'settings' || $getController == 'branches') ? 'active' : '';
+
+					$menuUser = ($getController == 'users' && ($getAction == 'index' || $getAction == 'add' || $getAction == 'edit' || $getAction == 'resetPassword' || $getAction == 'access')) ? ' class="active"' : '';
+					$menuChangePassword = ($getController == 'users' && $getAction == 'changePassword') ? ' class="active"' : '';
+					$menuBranches = ($getController == 'branches' && $getAction == 'index') ? 'class="active"' : '';
+					$menuSettings = ($getController == 'settings' && $getAction == 'index') ? ' class="active"' : '';
+					?>
+
+					<li class="has-sub <?= $menuSetting ?>">
+						<a href="javascript:;">
+							<b class="caret"></b>
+							<i class="fa fa-cog"></i>
+							<span>Pengaturan</span>
+						</a>
+						<ul class="sub-menu">
+							<li<?= $menuChangePassword ?>>
+								<?= $this->Html->link('Ganti Password', ['controller' => 'Users', 'action' => 'changepassword', $getUser->id], ['fullBase' => true, 'escape' => false]) ?>
+					</li>
+					<?php
+					if ($users['index'] == 1) {
+						?>
+						<li<?= $menuUser ?>>
+							<?= $this->Html->link('User', ['controller' => 'Users', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+							</li>
+							<?php
 					}
-					if($branch['index']==1){
-					?>
-					<li<?= $menuBranches ?>><?= $this->Html->link('Cabang', ['controller' => 'Branches', 'action' => 'index'], ['fullBase'=>true, 'escape' => false]) ?></li>
-					<?php 
+					if ($branch['index'] == 1) {
+						?>
+							<li<?= $menuBranches ?>>
+								<?= $this->Html->link('Cabang', ['controller' => 'Branches', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+								<?php
 					}
-					if($settings['index']==1){
-					?>
-					<li<?= $menuSettings ?>><?= $this->Html->link('Perusahaan', ['controller' => 'Settings', 'action' => 'edit/1'], ['fullBase'=>true, 'escape' => false]) ?></li>
-					<?php } ?>
-				</ul>
+					if ($settings['index'] == 1) {
+						?>
+								<li<?= $menuSettings ?>>
+									<?= $this->Html->link('Perusahaan', ['controller' => 'Settings', 'action' => 'edit/1'], ['fullBase' => true, 'escape' => false]) ?>
+									</li>
+								<?php } ?>
+			</ul>
 			</li>
-			<?php } ?>
-			<li><a href="javascript:;" class="sidebar-minify-btn" data-click="sidebar-minify"><i class="fa fa-angle-double-left"></i></a></li>
+		<?php } ?>
+		<li><a href="javascript:;" class="sidebar-minify-btn" data-click="sidebar-minify"><i
+					class="fa fa-angle-double-left"></i></a></li>
 		</ul>
 	</div>
 </div>
