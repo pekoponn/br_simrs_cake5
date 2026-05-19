@@ -7,7 +7,6 @@ use Cake\ORM\Query;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
-use Cake\Utility\Hash; // Memanggil fungsi Hash, untuk filter
 
 /**
  * DaerahKabupatens Model
@@ -74,19 +73,5 @@ class DaerahKabupatensTable extends Table
             ->notEmptyString('id_jenis');
 
         return $validator;
-    }
-
-    public function getList($provId=null) {
-
-        $condId = (!empty($provId)) ? $provId : '';
-        $dataRows = $this->find('all', array(
-                                'fields' => array('id_kab', 'id_prov', 'nama'),
-                                'conditions' => array('id_prov' => $condId),
-                                //$condId,                                
-                                'order' => array('nama' => 'asc')));
-        $dataRows = $dataRows->toList();
-        $result = Hash::combine($dataRows, '{n}.nama', '{n}.nama');
-        
-        return $result;
     }
 }

@@ -56,6 +56,24 @@ class PatientsTable extends Table
         ]);
     }
 
+    public function generateCode()
+    {
+        $lastPatient = $this->find()
+            ->select(['code'])
+            ->where(['code LIKE' => 'RM%'])
+            ->order(['id' => 'DESC'])
+            ->first();
+
+        if ($lastPatient && !empty($lastPatient->code)) {
+            $lastNumber = (int) str_replace('RM', '', $lastPatient->code);
+            $newNumber = $lastNumber + 1;
+        } else {
+            $newNumber = 1;
+        }
+
+        return 'RM' . str_pad((string) $newNumber, 6, '0', STR_PAD_LEFT);
+    }
+
     /**
      * Default validation rules.
      *

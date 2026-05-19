@@ -6,6 +6,7 @@ namespace App\Controller;
 /**
  * DaerahProvinsis Controller
  *
+ * @property \App\Model\Table\DaerahProvinsisTable $DaerahProvinsis
  * @method \App\Model\Entity\DaerahProvinsi[]|\Cake\Datasource\ResultSetInterface paginate($object = null, array $settings = [])
  */
 class DaerahProvinsisController extends AppController
@@ -20,10 +21,6 @@ class DaerahProvinsisController extends AppController
         $daerahProvinsis = $this->paginate($this->DaerahProvinsis);
 
         $this->set(compact('daerahProvinsis'));
-    }
-    public function getLists()
-    {
-        echo "asdaf";
     }
 
     /**

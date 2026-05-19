@@ -1008,7 +1008,6 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
     $healthfacilitiesDataExportImport = ($healthfacilities['dataExportImport'] == 1) ? 'checked' : '';
     $healthfacilitiesDataExportImportXls = ($healthfacilities['dataExportImportXls'] == 1) ? 'checked' : '';
 
-
     //insurances
     $insurance = $rules['insurances'];
     $insurancesIndex = ($insurance['index'] == 1) ? 'checked' : '';
@@ -1033,13 +1032,13 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
     $nutritionmenusView = ($nutritionmenu['view'] == 1) ? 'checked' : '';
     $nutritionmenusDelete = ($nutritionmenu['delete'] == 1) ? 'checked' : '';
 
-    //nutritioncombines
-    $nutritioncombine = $rules['nutritioncombines'];
-    $nutritioncombinesIndex = ($nutritioncombine['index'] == 1) ? 'checked' : '';
-    $nutritioncombinesAdd = ($nutritioncombine['add'] == 1) ? 'checked' : '';
-    $nutritioncombinesEdit = ($nutritioncombine['edit'] == 1) ? 'checked' : '';
-    $nutritioncombinesView = ($nutritioncombine['view'] == 1) ? 'checked' : '';
-    $nutritioncombinesDelete = ($nutritioncombine['delete'] == 1) ? 'checked' : '';
+    //nutritioncombine
+    $nutritioncombine = $rules['nutritioncombine'];
+    $nutritioncombineIndex = ($nutritioncombine['index'] == 1) ? 'checked' : '';
+    $nutritioncombineAdd = ($nutritioncombine['add'] == 1) ? 'checked' : '';
+    $nutritioncombineEdit = ($nutritioncombine['edit'] == 1) ? 'checked' : '';
+    $nutritioncombineView = ($nutritioncombine['view'] == 1) ? 'checked' : '';
+    $nutritioncombineDelete = ($nutritioncombine['delete'] == 1) ? 'checked' : '';
 
     //nutritionmenutypes
     $nutritionmenutype = $rules['nutritionmenutypes'];
@@ -1057,6 +1056,27 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
     $polyclinicqueuesDelete = ($polyclinicqueues['delete'] == 1) ? 'checked' : '';
     $polyclinicqueuesKiosk = ($polyclinicqueues['kiosk'] == 1) ? 'checked' : '';
     $polyclinicqueuesWa = ($polyclinicqueues['wa'] == 1) ? 'checked' : '';
+
+    //registrations
+    $registrations = $rules['registrations'];
+    $registrationsIndex = ($registrations['index'] == 1) ? 'checked' : '';
+    $registrationsAdd = ($registrations['add'] == 1) ? 'checked' : '';
+    $registrationsEdit = ($registrations['edit'] == 1) ? 'checked' : '';
+    $registrationsDelete = ($registrations['delete'] == 1) ? 'checked' : '';
+
+    //registrations
+    $beds = $rules['beds'];
+    $bedsIndex = ($beds['index'] == 1) ? 'checked' : '';
+    $bedsAdd = ($beds['add'] == 1) ? 'checked' : '';
+    $bedsEdit = ($beds['edit'] == 1) ? 'checked' : '';
+    $bedsDelete = ($beds['delete'] == 1) ? 'checked' : '';
+
+    //personresponsibles
+    $personresponsibles = $rules['personresponsibles'];
+    $personresponsiblesIndex = ($personresponsibles['index'] == 1) ? 'checked' : '';
+    $personresponsiblesAdd = ($personresponsibles['add'] == 1) ? 'checked' : '';
+    $personresponsiblesEdit = ($personresponsibles['edit'] == 1) ? 'checked' : '';
+    $personresponsiblesDelete = ($personresponsibles['delete'] == 1) ? 'checked' : '';
 
 }
 ?>
@@ -3414,7 +3434,61 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
                                         <label class="form-check-label">Wa</label>
                                     </div>
                                     
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Pendaftaran pasien</td>
+                            <td>
+                                <div class="col-md-12">
 
+                                    <div class="form-check form-check-inline">
+                                        <?php
+                                        echo $this->Form->checkbox('Rules.registrations.index', [
+                                            'value' => '1',
+                                            'hiddenField' => true,
+                                            'checked' => $registrationsIndex,
+                                            'class' => 'form-check-input'
+                                        ]);
+                                        ?>
+                                        <label class="form-check-label">Daftar</label>
+                                    </div>
+
+                                    <div class="form-check form-check-inline">
+                                        <?php
+                                        echo $this->Form->checkbox('Rules.registrations.add', [
+                                            'value' => '1',
+                                            'hiddenField' => true,
+                                            'checked' => $registrationsAdd,
+                                            'class' => 'form-check-input'
+                                        ]);
+                                        ?>
+                                        <label class="form-check-label">Tambah</label>
+                                    </div>
+
+                                    <div class="form-check form-check-inline">
+                                        <?php
+                                        echo $this->Form->checkbox('Rules.registrations.edit', [
+                                            'value' => '1',
+                                            'hiddenField' => true,
+                                            'checked' => $registrationsEdit,
+                                            'class' => 'form-check-input'
+                                        ]);
+                                        ?>
+                                        <label class="form-check-label">Ubah</label>
+                                    </div>
+
+                                    <div class="form-check form-check-inline">
+                                        <?php
+                                        echo $this->Form->checkbox('Rules.registrations.delete', [
+                                            'value' => '1',
+                                            'hiddenField' => true,
+                                            'checked' => $registrationsDelete,
+                                            'class' => 'form-check-input'
+                                        ]);
+                                        ?>
+                                        <label class="form-check-label">Hapus</label>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
@@ -4049,6 +4123,45 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
                             </td>
                         </tr>
                         <tr>
+                            <td>Beds</td>
+                            <td>
+                                <div class="col-md-12">
+                                    <div class="form-check form-check-inline">
+                                        <?php
+                                        echo $this->Form->checkbox('Rules.beds.index', ['value' => '1', 'hiddenField' => true, 'checked' => $bedsIndex, 'class' => 'form-check-input']);
+                                        ?>
+                                        <label class="form-check-label">Daftar</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php
+                                        echo $this->Form->checkbox('Rules.beds.add', ['value' => '1', 'hiddenField' => true, 'checked' => $bedsAdd, 'class' => 'form-check-input']);
+                                        ?>
+                                        <label class="form-check-label">Tambah</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php
+                                        echo $this->Form->checkbox('Rules.beds.edit', ['value' => '1', 'hiddenField' => true, 'checked' => $bedsEdit, 'class' => 'form-check-input']);
+                                        ?>
+                                        <label class="form-check-label">Ubah</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?=
+                                            $this->Form->checkbox(
+                                                'Rules.beds.delete',
+                                                [
+                                                    'value' => '1',
+                                                    'hiddenField' => true,
+                                                    'checked' => $bedsDelete,
+                                                    'class' => 'form-check-input'
+                                                ]
+                                            );
+                                        ?>
+                                        <label class="form-check-label">Hapus</label>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
                             <td>Polyclinics</td>
                             <td>
                                 <div class="col-md-12">
@@ -4382,45 +4495,34 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
                             </td>
                         </tr>
                         <tr>
-                            <td>nutritioncombines</td>
+                            <td>nutritioncombine</td>
                             <td>
                                 <div class="col-md-12">
                                     <div class="form-check form-check-inline">
                                         <?php
-                                        echo $this->Form->checkbox('Rules.nutritioncombines.index', ['value' => '1', 'hiddenField' => true, 'checked' => $nutritioncombinesIndex, 'class' => 'form-check-input']);
+                                        echo $this->Form->checkbox('Rules.nutritioncombine.index', ['value' => '1', 'hiddenField' => true, 'checked' => $nutritioncombineIndex, 'class' => 'form-check-input']);
                                         ?>
                                         <label class="form-check-label">Daftar</label>
                                     </div>
                                     <div class="form-check form-check-inline">
                                         <?php
-                                        echo $this->Form->checkbox('Rules.nutritioncombines.add', ['value' => '1', 'hiddenField' => true, 'checked' => $nutritioncombinesAdd, 'class' => 'form-check-input']);
+                                        echo $this->Form->checkbox('Rules.nutritioncombine.add', ['value' => '1', 'hiddenField' => true, 'checked' => $nutritioncombineAdd, 'class' => 'form-check-input']);
                                         ?>
                                         <label class="form-check-label">Tambah</label>
                                     </div>
                                     <div class="form-check form-check-inline">
                                         <?php
-                                        echo $this->Form->checkbox('Rules.nutritioncombines.edit', ['value' => '1', 'hiddenField' => true, 'checked' => $nutritioncombinesEdit, 'class' => 'form-check-input']);
+                                        echo $this->Form->checkbox('Rules.nutritioncombine.edit', ['value' => '1', 'hiddenField' => true, 'checked' => $nutritioncombineEdit, 'class' => 'form-check-input']);
                                         ?>
                                         <label class="form-check-label">Ubah</label>
                                     </div>
                                     <div class="form-check form-check-inline">
                                         <?php
-                                        echo $this->Form->checkbox('Rules.nutritioncombines.preview', ['value' => '1', 'hiddenField' => true, 'checked' => $nutritioncombinesPreview, 'class' => 'form-check-input']);
+                                        echo $this->Form->checkbox('Rules.nutritioncombine.preview', ['value' => '1', 'hiddenField' => true, 'checked' => $nutritioncombinePreview, 'class' => 'form-check-input']);
                                         ?>
                                         <label class="form-check-label">Tampilkan</label>
                                     </div>
-                                    <div class="form-check form-check-inline">
-                                        <?php
-                                        echo $this->Form->checkbox('Rules.nutritioncombines.dataExportImport', ['value' => '1', 'hiddenField' => true, 'checked' => $nutritioncombinesDataExportImport, 'class' => 'form-check-input']);
-                                        ?>
-                                        <label class="form-check-label">Simpan (Xls-Import)</label>
-                                    </div>
-                                    <div class="form-check form-check-inline">
-                                        <?php
-                                        echo $this->Form->checkbox('Rules.nutritioncombines.dataExportImportXls', ['value' => '1', 'hiddenField' => true, 'checked' => $nutritioncombinesDataExportImportXls, 'class' => 'form-check-input']);
-                                        ?>
-                                        <label class="form-check-label">Download (Xls-Import-Example)</label>
-                                    </div>
+
                                 </div>
                             </td>
                         </tr>
@@ -4461,6 +4563,49 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
                                     <div class="form-check form-check-inline">
                                         <?php
                                         echo $this->Form->checkbox('Rules.nutritionmenutypes.dataExportImportXls', ['value' => '1', 'hiddenField' => true, 'checked' => $nutritionmenutypesDataExportImportXls, 'class' => 'form-check-input']);
+                                        ?>
+                                        <label class="form-check-label">Download (Xls-Import-Example)</label>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Person Responsibles</td>
+                            <td>
+                                <div class="col-md-12">
+                                    <div class="form-check form-check-inline">
+                                        <?php
+                                        echo $this->Form->checkbox('Rules.personresponsibles.index', ['value' => '1', 'hiddenField' => true, 'checked' => $personresponsiblesIndex, 'class' => 'form-check-input']);
+                                        ?>
+                                        <label class="form-check-label">Daftar</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php
+                                        echo $this->Form->checkbox('Rules.personresponsibles.add', ['value' => '1', 'hiddenField' => true, 'checked' => $personresponsiblesAdd, 'class' => 'form-check-input']);
+                                        ?>
+                                        <label class="form-check-label">Tambah</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php
+                                        echo $this->Form->checkbox('Rules.personresponsibles.edit', ['value' => '1', 'hiddenField' => true, 'checked' => $personresponsiblesEdit, 'class' => 'form-check-input']);
+                                        ?>
+                                        <label class="form-check-label">Ubah</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php
+                                        echo $this->Form->checkbox('Rules.personresponsibles.preview', ['value' => '1', 'hiddenField' => true, 'checked' => $personresponsiblesPreview, 'class' => 'form-check-input']);
+                                        ?>
+                                        <label class="form-check-label">Tampilkan</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php
+                                        echo $this->Form->checkbox('Rules.personresponsibles.dataExportImport', ['value' => '1', 'hiddenField' => true, 'checked' => $personresponsiblesDataExportImport, 'class' => 'form-check-input']);
+                                        ?>
+                                        <label class="form-check-label">Simpan (Xls-Import)</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php
+                                        echo $this->Form->checkbox('Rules.personresponsibles.dataExportImportXls', ['value' => '1', 'hiddenField' => true, 'checked' => $personresponsiblesDataExportImportXls, 'class' => 'form-check-input']);
                                         ?>
                                         <label class="form-check-label">Download (Xls-Import-Example)</label>
                                     </div>

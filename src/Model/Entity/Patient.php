@@ -22,10 +22,10 @@ use Cake\ORM\Entity;
  * @property string $phone_number
  * @property string $nationality
  * @property string $citizenship
- * @property string $province
- * @property string $city
- * @property string $district
- * @property string $subdistrict
+ * @property string $id_prov
+ * @property string $id_kab
+ * @property string $id_kec
+ * @property string $id_kel
  * @property string $occupation
  * @property string $religion
  * @property string $education
@@ -69,10 +69,10 @@ class Patient extends Entity
         'phone_number' => true,
         'nationality' => true,
         'citizenship' => true,
-        'province' => true,
-        'city' => true,
-        'district' => true,
-        'subdistrict' => true,
+        'id_prov' => true,
+        'id_kab' => true,
+        'id_kec' => true,
+        'id_kel' => true,
         'occupation' => true,
         'religion' => true,
         'education' => true,

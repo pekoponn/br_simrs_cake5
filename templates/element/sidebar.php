@@ -38,6 +38,15 @@ $warehouseReceive = (isset($checkUrl['warehousereceives'])) ? $checkUrl['warehou
 $patient = (isset($checkUrl['patients'])) ? $checkUrl['patients'] : array();
 $medicine = (isset($checkUrl['medicines'])) ? $checkUrl['medicines'] : array();
 $doctor = (isset($checkUrl['doctors'])) ? $checkUrl['doctors'] : array();
+$doctorSchedule = (isset($checkUrl['doctorschedules'])) ? $checkUrl['doctorschedules'] : array();
+$healthFacility = (isset($checkUrl['healthfacilities'])) ? $checkUrl['healthfacilities'] : array();
+$insurance = (isset($checkUrl['insurances'])) ? $checkUrl['insurances'] : array();
+$nutritionCombine = (isset($checkUrl['nutritioncombine'])) ? $checkUrl['nutritioncombine'] : array();
+$nutritionMenu = (isset($checkUrl['nutritionmenus'])) ? $checkUrl['nutritionmenus'] : array();
+$pharmacyItem = (isset($checkUrl['pharmacyitems'])) ? $checkUrl['pharmacyitems'] : array();
+$polyclinic = (isset($checkUrl['polyclinics'])) ? $checkUrl['polyclinics'] : array();
+$rooms = (isset($checkUrl['rooms'])) ? $checkUrl['rooms'] : array();
+$polyclinicQueue = (isset($checkUrl['polyclinicqueues'])) ? $checkUrl['polyclinicqueues'] : array();
 $service = (isset($checkUrl['services'])) ? $checkUrl['services'] : array();
 $laboratoryService = (isset($checkUrl['laboratoryservices'])) ? $checkUrl['laboratoryservices'] : array();
 $icd_service = (isset($checkUrl['icd_services'])) ? $checkUrl['icd_services'] : array();
@@ -88,9 +97,6 @@ $recipientPayer = (isset($checkUrl['recipientpayers'])) ? $checkUrl['recipientpa
 $depreciations = (isset($checkUrl['depreciations'])) ? $checkUrl['depreciations'] : array();
 $permitProcessor = (isset($checkUrl['permitprocessors'])) ? $checkUrl['permitprocessors'] : array();
 $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoiceprocessors'] : array();
-
-$patient = (isset($checkUrl['patients'])) ? $checkUrl['patients'] : array();
-$rooms = (isset($checkUrl['rooms'])) ? $checkUrl['rooms'] : array();
 
 ?>
 <div class="sidebar-bg"></div>
@@ -427,12 +433,67 @@ $rooms = (isset($checkUrl['rooms'])) ? $checkUrl['rooms'] : array();
 					</li>
 					<?php
 				}
+				if ($polyclinicQueue['index'] == 1) {
+
+					$menuPolyclinicQueue = ($getController == 'polyclinicqueues') ? 'active' : '';
+					$menuPolyclinicQueueIndex = ($getController == 'polyclinicqueues') ? ' class="active"' : '';
+					?>
+					<li class="has-sub <?= $menuPolyclinicQueue ?>">
+						<a href="javascript:;">
+							<b class="caret pull-right"></b>
+							<i class="fa fa-user-plus"></i>
+							<span>Pendaftaran Pasien</span>
+						</a>
+
+						<ul class="sub-menu">
+
+							<li <?= $menuPolyclinicQueueIndex ?>>
+								<?= $this->Html->link(
+									'Antrian Pasien',
+									[
+										'controller' => 'PolyclinicQueues',
+										'action' => 'index'
+									],
+									[
+										'fullBase' => true,
+										'escape' => false
+									]
+								) ?>
+							</li>
+
+							<li>
+								<?= $this->Html->link(
+									'Kiosk',
+									[
+										'controller' => 'PolyclinicQueues',
+										'action' => 'kiosk'
+									],
+									[
+										'fullBase' => true,
+										'escape' => false
+									]
+								) ?>
+							</li>
+
+						</ul>
+					</li>
+					<?php
+				}
 
 				if (
 					$medicine['index'] == 1 ||
 					$medicineMerk['index'] == 1 ||
 					$medicineGroup['index'] == 1 ||
-					$patient['index'] == 1
+					$patient['index'] == 1 ||
+					$doctor['index'] == 1 ||
+					$doctorSchedule['index'] == 1 ||
+					$healthFacility['index'] == 1 ||
+					$insurance['index'] == 1 ||
+					$nutritionCombine['index'] == 1 ||
+					$nutritionMenu['index'] == 1 ||
+					$pharmacyItem['index'] == 1 ||
+					$polyclinic['index'] == 1 ||
+					$rooms['index'] == 1
 				) {
 
 					$menuDataLink = (
@@ -527,95 +588,71 @@ $rooms = (isset($checkUrl['rooms'])) ? $checkUrl['rooms'] : array();
 							if ($doctor['index'] == 1) {
 								?>
 								<li <?= $menuDoctorIndex ?>>
-									<?= $this->Html->link(
-										'Doctor',
-										['controller' => 'Doctors', 'action' => 'index'],
-										['fullBase' => true, 'escape' => false]
-									) ?>
+									<?= $this->Html->link('Doctor', ['controller' => 'Doctors', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
 								<?php
 							}
-							?>
 
-							<?php
 							if ($doctorSchedule['index'] == 1) {
 								?>
 								<li <?= $menuDoctorScheduleIndex ?>>
-									<?= $this->Html->link(
-										'Doctor Schedules',
-										['controller' => 'DoctorSchedules', 'action' => 'index'],
-										['fullBase' => true, 'escape' => false]
-									) ?>
+									<?= $this->Html->link('Doctor Schedules', ['controller' => 'DoctorSchedules', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
 								<?php
 							}
-							?>
 
-							<?php
 							if ($healthFacility['index'] == 1) {
 								?>
 								<li <?= $menuHealthFacilityIndex ?>>
-									<?= $this->Html->link(
-										'Health Facilities',
-										['controller' => 'HealthFacilities', 'action' => 'index'],
-										['fullBase' => true, 'escape' => false]
-									) ?>
+									<?= $this->Html->link('Health Facilities', ['controller' => 'HealthFacilities', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
 								<?php
 							}
-							?>
 
-							<?php
 							if ($insurance['index'] == 1) {
 								?>
 								<li <?= $menuInsuranceIndex ?>>
-									<?= $this->Html->link(
-										'Insurance',
-										['controller' => 'Insurance', 'action' => 'index'],
-										['fullBase' => true, 'escape' => false]
-									) ?>
+									<?= $this->Html->link('Insurances', ['controller' => 'Insurances', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
 								<?php
 							}
-							?>
 
-							<?php
 							if ($nutritionCombine['index'] == 1) {
 								?>
 								<li <?= $menuNutritionCombineIndex ?>>
-									<?= $this->Html->link(
-										'Nutrition Combine',
-										['controller' => 'NutritionCombines', 'action' => 'index'],
-										['fullBase' => true, 'escape' => false]
-									) ?>
+									<?= $this->Html->link('Nutrition Combine', ['controller' => 'NutritionCombine', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
 								<?php
 							}
-							?>
 
-							<?php
 							if ($nutritionMenu['index'] == 1) {
 								?>
 								<li <?= $menuNutritionMenuIndex ?>>
-									<?= $this->Html->link(
-										'Nutrition Menus',
-										['controller' => 'NutritionMenus', 'action' => 'index'],
-										['fullBase' => true, 'escape' => false]
-									) ?>
+									<?= $this->Html->link('Nutrition Menus', ['controller' => 'NutritionMenus', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
 								<?php
 							}
-							?>
 
-							<?php
 							if ($pharmacyItem['index'] == 1) {
 								?>
 								<li <?= $menuPharmacyItemIndex ?>>
-									<?= $this->Html->link(
-										'Pharmacy Items',
-										['controller' => 'PharmacyItems', 'action' => 'index'],
-										['fullBase' => true, 'escape' => false]
-									) ?>
+									<?= $this->Html->link('Pharmacy Items', ['controller' => 'PharmacyItems', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+								<?php
+							}
+
+							if ($polyclinic['index'] == 1) {
+								?>
+								<li <?= $menuPolyclinicIndex ?>>
+									<?= $this->Html->link('Polyclinics', ['controller' => 'Polyclinics', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+								<?php
+							}
+
+							if ($rooms['index'] == 1) {
+								?>
+								<li <?= $menuRoomIndex ?>>
+									<?= $this->Html->link('Rooms', ['controller' => 'Rooms', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
 								<?php
 							}

@@ -39,13 +39,6 @@ class DaerahKabupatensController extends AppController
         $this->set(compact('daerahKabupaten'));
     }
 
-    public function getList() {
-        $condId = (empty($id)) ? $this->request->getQuery('id') : $id;
-        $result = $this->DaerahKabupatens->getList($condId);
-        
-        return $this->response->withType("application/json")->withStringBody(json_encode($result));
-    }
-
     /**
      * Add method
      *

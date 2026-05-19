@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 use Cake\Auth\DefaultPasswordHasher; //Memanggil PasswordHaser
+
 /**
  * Users Controller
  *
@@ -21,15 +22,15 @@ class UsersController extends AppController
         //$this->Authentication->addUnauthenticatedActions(['add']);
         parent::beforeFilter($event);
         //$this->loadComponent('Security');
-        
+
         /*// Memanggil action yang aktif
         $action = $this->request->getParam('action');
-        
+
         // Memanggil controller yang aktif
         $controller = $this->request->getParam('controller');
         // pr($this->request->getParam('controller'));
         // pr($this->request->getParam('action'));
-        
+
         // Memanggil nilai dari Authentication
         $result = $this->Authentication->getResult();
         //pr($result);
@@ -60,7 +61,7 @@ class UsersController extends AppController
     {
         $this->request->allowMethod(['get', 'post']);
         $result = $this->Authentication->getResult();
-        
+
         // regardless of POST or GET, redirect if user is logged in
         if ($result->isValid()) {
             // memanggil data dari Authenctication
@@ -68,9 +69,9 @@ class UsersController extends AppController
             $dateNow = date('Y-m-d H:i:s');
 
             // mengupdate last_login dan visited
-            $this->Users->updateAll(['last_login' => $dateNow, 'visited' => $getData['visited']+1], ['id' => $getData['id']]); 
+            $this->Users->updateAll(['last_login' => $dateNow, 'visited' => $getData['visited'] + 1], ['id' => $getData['id']]);
 
-            $this->Flash->success('Selamat datang '.$getData->name.', silakan menggunakan aplikasi ini.');
+            $this->Flash->success('Selamat datang ' . $getData->name . ', silakan menggunakan aplikasi ini.');
 
             // redirect to /articles after login success
             $redirect = $this->request->getQuery('redirect', ['controller' => 'Dashboard', 'action' => 'index',]);
@@ -81,7 +82,7 @@ class UsersController extends AppController
         if ($this->request->is('post') && !$result->isValid()) {
             $this->Flash->error('Maaf, Password yang anda masukkan salah!!');
         }
-        
+
 
     }
 
@@ -105,10 +106,10 @@ class UsersController extends AppController
     {
         $key = $this->request->getQuery('key');
         if ($key) {
-          $query = $this->Users->find('all')
-                        ->where(['OR'=>['Users.name like' => '%' . $key . '%', 'Users.staff like' => '%' . $key . '%', 'Users.devision like' => '%' . $key . '%', 'Users.last_login like' => '%' . $key . '%']]);
+            $query = $this->Users->find('all')
+                ->where(['OR' => ['Users.name like' => '%' . $key . '%', 'Users.staff like' => '%' . $key . '%', 'Users.devision like' => '%' . $key . '%', 'Users.last_login like' => '%' . $key . '%']]);
         } else {
-          $query = $this->Users;
+            $query = $this->Users;
         }
 
         // debug($query);
@@ -124,9 +125,9 @@ class UsersController extends AppController
             ],
         ];
         $users = $this->paginate($query, $settings);
-        
+
         //$data['setFlash'] = array();        
-        
+
         $this->set(compact('users'));
 
         //$users = $this->paginate($this->Users, $settings);
@@ -159,7 +160,7 @@ class UsersController extends AppController
         if ($this->request->is('post')) {
             //$password = "My Password String";
             $hasher = new DefaultPasswordHasher(); // Memanggil class PasswordHasher
-           // $newPassword = $hasher->hash($password);
+            // $newPassword = $hasher->hash($password);
             //$newPassword = $hasher->hash($password);
             //pr($newPassword);
 
@@ -173,14 +174,14 @@ class UsersController extends AppController
             $dataRules = array('rules' => "dashboard=index:0;purchaseprices=getDataFromSupplier:0;users=logout:1,changePassword:1,status:0,login:1,home:0,index:0,add:0,edit:0,access:0,resetPassword:0,delete:0;waste_prices=getAjaxData:0;customers=getLastNumber:0,getSearch:0,getAjaxType:0,getKabupaten:0,index:0,add:0,edit:0,editAdmin:0,preview:0,status:0,delete:0,xls:0;materials=getSelect:0,index:0,add:0,edit:0,preview:0,status:0,delete:0,xls:0;daerahkabupatens=getList:0;purchasepasses=index:0,add:0,edit:0,preview:0,printing:0,pdf:0,delete:0,xls:0,payment:0,stock:0,payment_edit:0,payment_cancel:0;suppliers=index:0,add:0,edit:0,preview:0,status:0,delete:0,xls:0;trucks=index:0,add:0,edit:0,delete:0;warehouses=index:0,add:0,edit:0,delete:0;branchs=index:0,add:0,edit:0,delete:0;settings=index:0,add:0,edit:0;pettycashes=index:0,add:0,edit:0,preview:0,printing:0,pdf:0,delete:0,status:0,approve:0,approve_ceo:0,edit_all:0,accountability:0,xls:0,payment:0");
 
             $dataPassword = (empty($dataRow['passwordNew'])) ? array() : array('password_new' => $hasher->hash($dataRow['passwordNew']));
-            $auditLog = $this->Krs->auditLog($this->request->getParam('controller'), 'N', $isUser, "User add"); 
-            $dataAuditLog = array('is_log' => "'".$auditLog."'");
+            $auditLog = $this->Krs->auditLog($this->request->getParam('controller'), 'N', $isUser, "User add");
+            $dataAuditLog = array('is_log' => "'" . $auditLog . "'");
             // $sha1 = Security::hash('CakePHP Framework');
             // pr($sha1);
             //$dataHint = array('help_hint_pwd' => $dataRow['password']);
 
             $user = $this->Users->patchEntity($user, array_merge($dataUserId, $dataBranchId, $dataPassword, $dataHint, $dataRow, $dataRules, $dataAuditLog));
-            
+
             //pr($user);
             if ($this->Users->save($user)) {
                 $this->Flash->success('Data berhasil disimpan.');
@@ -206,12 +207,12 @@ class UsersController extends AppController
             'contain' => [],
         ]);
         if ($this->request->is(['patch', 'post', 'put'])) {
-            
+
             pr($user);
             //if ($this->Users->save($user)) {
-                //$this->Krs->setFlash("Terima kasih, Data berhasil disimpan.", "success");
-                // $this->Flash->success('Data berhasil disimpan.');
-                //$this->Flash->success(__('The user has been saved.'));
+            //$this->Krs->setFlash("Terima kasih, Data berhasil disimpan.", "success");
+            // $this->Flash->success('Data berhasil disimpan.');
+            //$this->Flash->success(__('The user has been saved.'));
 
             //     return $this->redirect(['action' => 'index']);
             // }
@@ -234,11 +235,11 @@ class UsersController extends AppController
             $isUser = $dataRow['user_id'];
             $dataUserId = array('is_update' => $isUser);
             $dataPassword = (empty($dataRow['passwordNew'])) ? array() : array('password' => $dataRow['passwordNew']);
-            $auditLog = $this->Krs->auditLog($this->request->getParam('controller'), $id, $isUser, "Change Password"); 
+            $auditLog = $this->Krs->auditLog($this->request->getParam('controller'), $id, $isUser, "Change Password");
             $dataAuditLog = array('is_log' => $auditLog);
 
             $user = $this->Users->patchEntity($user, array_merge($dataUserId, $dataPassword, $dataAuditLog));
-            
+
             if ($this->Users->save($user)) {
                 $this->Flash->success('Terima kasih, sandi berhasil disimpan');
 
@@ -263,19 +264,19 @@ class UsersController extends AppController
             $dataUserId = array('is_update' => $isUser);
             $dataPassword = (empty($dataRow['passwordNew'])) ? array() : array('password_new' => $hasher->hash($dataRow['passwordNew']));
             //$dataPassword = (empty($dataRow['passwordNew'])) ? array() : array('password_new' => $this->hasher($dataRow['passwordNew']));
-            $auditLog = $this->Krs->auditLog($this->request->getParam('controller'), $id, $isUser, "Reset Password"); 
+            $auditLog = $this->Krs->auditLog($this->request->getParam('controller'), $id, $isUser, "Reset Password");
             $dataAuditLog = array('is_log' => $auditLog);
-            
+
             $user = $this->Users->patchEntity($user, array_merge($dataUserId, $dataPassword, $dataAuditLog));
             //pr($user);
-            
+
             if ($this->Users->save($user)) {
                 $this->Flash->success('Terima kasih, sandi berhasil disimpan');
 
                 return $this->redirect(['controller' => 'users']);
             }
             $this->Flash->error('Maaf, sandi tidak dapat disimpan!');
-            
+
         }
         $this->set(compact('user'));
     }
@@ -283,7 +284,7 @@ class UsersController extends AppController
     public function access($id = null)
     {
         $userData = $this->request->getAttribute('identity');
-  
+
         $users = $this->Users->get($id, [
             //'contain' => ['Division'],
         ]);
@@ -295,28 +296,68 @@ class UsersController extends AppController
 
         if ($this->request->is(['patch', 'post', 'put'])) {
             $dataRow = $this->request->getData();
+
             $isUser = $dataRow['user_id'];
-            $dataUserId = array('is_update' => $dataRow['user_id']);
-            $dataProject = array('project' => $dataRow['project']);
-            $dataUbs = array('ubs' => $dataRow['ubs']);
-            $dataProjectStatus = array('project_status' => $dataRow['projectStatus']);
 
-            $auditLog = $this->Krs->auditLog($this->request->getParam('controller'), $id, $isUser, "Edit Access"); 
-            $dataRules = $this->Krs->createRule($dataRow['Rules']);
+            $dataUserId = [
+                'is_update' => $dataRow['user_id']
+            ];
 
-            $dataAuditLog = array('is_log' => $auditLog);
-            $dataRule = array('rules' => $dataRules);
+            $dataProject = [
+                'project' => $dataRow['project']
+            ];
 
-            $users = $this->Users->patchEntity($users, array_merge($dataUserId, $dataProject, $dataUbs, $dataProjectStatus, $dataAuditLog, $dataRule));
-            // pr($this->request->getParam('controller'));
-            // pr($dataAuditLog);
-            //pr($dataRow['Rule']); 
-            // pr($dataRow);
+            $dataUbs = [
+                'ubs' => $dataRow['ubs']
+            ];
+
+            $dataProjectStatus = [
+                'project_status' => $dataRow['projectStatus']
+            ];
+
+            $auditLog = $this->Krs->auditLog(
+                $this->request->getParam('controller'),
+                $id,
+                $isUser,
+                "Edit Access"
+            );
+
+            $oldRules = $this->Krs->_rule($users->rules);
+            $newRules = $dataRow['Rules'] ?? [];
+
+            $mergedRules = array_replace_recursive(
+                $oldRules,
+                $newRules
+            );
+
+            $dataRules = $this->Krs->createRule($mergedRules);
+
+            $dataAuditLog = [
+                'is_log' => $auditLog
+            ];
+
+            $dataRule = [
+                'rules' => $dataRules
+            ];
+
+            $users = $this->Users->patchEntity(
+                $users,
+                array_merge(
+                    $dataUserId,
+                    $dataProject,
+                    $dataUbs,
+                    $dataProjectStatus,
+                    $dataAuditLog,
+                    $dataRule
+                )
+            );
+
             if ($this->Users->save($users)) {
                 $this->Flash->success('Terima kasih, Hak Akses berhasil disimpan');
 
                 return $this->redirect(['action' => 'index']);
             }
+
             $this->Flash->error('Maaf, Hak Akses tidak dapat disimpan!');
         }
     }
