@@ -63,20 +63,21 @@ class RegistrationsTable extends Table
         ]);
         $this->belongsTo('Rooms', [
             'foreignKey' => 'room_id',
-            'joinType' => 'INNER',
+            'joinType' => 'LEFT',
         ]);
+
         $this->belongsTo('Beds', [
             'foreignKey' => 'bed_id',
-            'joinType' => 'INNER',
+            'joinType' => 'LEFT',
         ]);
         $this->belongsTo('PersonResponsibles', [
             'foreignKey' => 'person_responsible_id',
             'joinType' => 'LEFT',
         ]);
-    //     $this->hasMany('PersonResponsible', [
-    //         'foreignKey' => 'registration_id',
-    //     ]);
-     }
+        //     $this->hasMany('PersonResponsible', [
+        //         'foreignKey' => 'registration_id',
+        //     ]);
+    }
 
     /**
      * Default validation rules.
@@ -115,9 +116,18 @@ class RegistrationsTable extends Table
 
         $validator
             ->scalar('class_name')
-            ->maxLength('class_name', 255)
-            ->requirePresence('class_name', 'create')
-            ->notEmptyString('class_name');
+            ->maxLength('class_name', 100)
+            ->allowEmptyString('class_name')
+            ->add('class_name', 'requiredForRawatInap', [
+                'rule' => function ($value, $context) {
+                    if (($context['data']['service_type'] ?? '') === 'rawat_inap') {
+                        return !empty($value);
+                    }
+
+                    return true;
+                },
+                'message' => 'Kelas wajib diisi untuk rawat inap'
+            ]);
 
         $validator
             ->scalar('entry_process')
@@ -209,8 +219,8 @@ class RegistrationsTable extends Table
     {
         $rules->add($rules->existsIn(['patient_id'], 'Patients'), ['errorField' => 'patient_id']);
         $rules->add($rules->existsIn(['doctor_id'], 'Doctors'), ['errorField' => 'doctor_id']);
-        $rules->add($rules->existsIn(['room_id'], 'Rooms'), ['errorField' => 'room_id']);
-        $rules->add($rules->existsIn(['bed_id'], 'Beds'), ['errorField' => 'bed_id']);
+        // $rules->add($rules->existsIn(['room_id'], 'Rooms'), ['errorField' => 'room_id']);
+        // $rules->add($rules->existsIn(['bed_id'], 'Beds'), ['errorField' => 'bed_id']);
         $rules->add($rules->existsIn(['person_responsible_id'], 'PersonResponsibles'), ['errorField' => 'person_responsible_id']);
 
         return $rules;
