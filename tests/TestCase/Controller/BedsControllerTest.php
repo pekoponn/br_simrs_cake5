@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Test\TestCase\Controller;
@@ -24,7 +25,6 @@ class BedsControllerTest extends TestCase
     protected $fixtures = [
         'app.Beds',
         'app.Rooms',
-        'app.Registrations',
     ];
 
     /**

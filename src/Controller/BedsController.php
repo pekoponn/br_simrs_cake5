@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller;
@@ -12,99 +13,353 @@ namespace App\Controller;
 class BedsController extends AppController
 {
     /**
-     * Index method
-     *
-     * @return \Cake\Http\Response|null|void Renders view
+     * INDEX
      */
     public function index()
     {
-        $this->paginate = [
-            'contain' => ['Rooms'],
-        ];
-        $beds = $this->paginate($this->Beds);
+        $query = $this->Beds->find()
+            ->contain(['Rooms'])
+            ->where([
+                'OR' => [
+                    ['Beds.is_delete !=' => 1],
+                    ['Beds.is_delete IS' => null]
+                ]
+            ])
+            ->order([
+                'Beds.id' => 'DESC'
+            ]);
 
-        $this->set(compact('beds'));
+        /*
+        |--------------------------------------------------------------------------
+        | SEARCH
+        |--------------------------------------------------------------------------
+        */
+        $key = $this->request->getQuery('key');
+
+        if (!empty($key)) {
+            $query->where([
+                'OR' => [
+                    'Beds.code LIKE'       => '%' . $key . '%',
+                    'Beds.bed_no LIKE'     => '%' . $key . '%',
+                    'Beds.name LIKE'       => '%' . $key . '%',
+                    'Beds.class_name LIKE' => '%' . $key . '%',
+                    'Rooms.room_name LIKE' => '%' . $key . '%',
+                ]
+            ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | FILTER ROOM
+        |--------------------------------------------------------------------------
+        */
+        $roomId = $this->request->getQuery('room_id');
+
+        if (!empty($roomId)) {
+            $query->where([
+                'Beds.room_id' => $roomId
+            ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | FILTER CLASS
+        |--------------------------------------------------------------------------
+        */
+        $className = $this->request->getQuery('class_name');
+
+        if (!empty($className)) {
+            $query->where([
+                'Beds.class_name' => $className
+            ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | FILTER STATUS
+        |--------------------------------------------------------------------------
+        */
+        $status = $this->request->getQuery('status');
+
+        if ($status !== null && $status !== '') {
+            $query->where([
+                'Beds.status' => $status
+            ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | PAGINATION
+        |--------------------------------------------------------------------------
+        */
+        $this->paginate = [
+            'limit' => 10
+        ];
+
+        $beds = $this->paginate($query);
+
+        /*
+        |--------------------------------------------------------------------------
+        | ROOM LIST
+        |--------------------------------------------------------------------------
+        */
+        $rooms = $this->Beds->Rooms->find('list', [
+            'keyField'   => 'id',
+            'valueField' => 'room_name'
+        ])
+            ->order([
+                'Rooms.room_name' => 'ASC'
+            ])
+            ->toArray();
+
+        /*
+        |--------------------------------------------------------------------------
+        | CLASS LIST
+        |--------------------------------------------------------------------------
+        */
+        $classList = $this->Beds->getClassList();
+
+        /*
+        |--------------------------------------------------------------------------
+        | STATUS LIST
+        |--------------------------------------------------------------------------
+        */
+        $statusList = $this->Beds->getStatusList();
+
+        $this->set(compact(
+            'beds',
+            'rooms',
+            'classList',
+            'statusList',
+            'key',
+            'roomId',
+            'className',
+            'status'
+        ));
     }
 
     /**
-     * View method
-     *
-     * @param string|null $id Bed id.
-     * @return \Cake\Http\Response|null|void Renders view
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
+     * VIEW
      */
     public function view($id = null)
     {
         $bed = $this->Beds->get($id, [
-            'contain' => ['Rooms', 'Registrations'],
+            'contain' => ['Rooms'],
         ]);
 
         $this->set(compact('bed'));
     }
 
     /**
-     * Add method
-     *
-     * @return \Cake\Http\Response|null|void Redirects on successful add, renders view otherwise.
+     * ADD
      */
     public function add()
     {
         $bed = $this->Beds->newEmptyEntity();
-        if ($this->request->is('post')) {
-            $bed = $this->Beds->patchEntity($bed, $this->request->getData());
-            if ($this->Beds->save($bed)) {
-                $this->Flash->success(__('The bed has been saved.'));
 
-                return $this->redirect(['action' => 'index']);
+        if ($this->request->is('post')) {
+
+            $data = $this->request->getData();
+
+            /*
+            |--------------------------------------------------------------------------
+            | AUTO GENERATE CODE
+            |--------------------------------------------------------------------------
+            */
+            if (empty($data['code'])) {
+
+                $lastBed = $this->Beds
+                    ->find()
+                    ->order([
+                        'Beds.id' => 'DESC'
+                    ])
+                    ->first();
+
+                $lastId = $lastBed ? ($lastBed->id + 1) : 1;
+
+                $data['code'] =
+                    'BED-' . str_pad((string)$lastId, 4, '0', STR_PAD_LEFT);
             }
-            $this->Flash->error(__('The bed could not be saved. Please, try again.'));
+
+            /*
+            |--------------------------------------------------------------------------
+            | DEFAULT VALUE
+            |--------------------------------------------------------------------------
+            */
+            $data['is_create'] = 1;
+
+            if (empty($data['is_active'])) {
+                $data['is_active'] = 'Y';
+            }
+
+            if (!isset($data['status'])) {
+                $data['status'] = 0;
+            }
+
+            $bed = $this->Beds->patchEntity($bed, $data);
+
+            if ($this->Beds->save($bed)) {
+
+                $this->Flash->success(__('Bed berhasil disimpan.'));
+
+                return $this->redirect([
+                    'action' => 'index'
+                ]);
+            }
+
+            $this->Flash->error(__('Bed gagal disimpan.'));
         }
-        $rooms = $this->Beds->Rooms->find('list', ['limit' => 200]);
-        $this->set(compact('bed', 'rooms'));
+
+        /*
+        |--------------------------------------------------------------------------
+        | ROOM LIST
+        |--------------------------------------------------------------------------
+        */
+        $rooms = $this->Beds->Rooms->find('list', [
+            'keyField'   => 'id',
+            'valueField' => 'room_name'
+        ])
+            ->order([
+                'Rooms.room_name' => 'ASC'
+            ])
+            ->toArray();
+
+        /*
+        |--------------------------------------------------------------------------
+        | DROPDOWN LIST
+        |--------------------------------------------------------------------------
+        */
+        $classList  = $this->Beds->getClassList();
+        $statusList = $this->Beds->getStatusList();
+        $activeList = $this->Beds->getActiveList();
+
+        $this->set(compact(
+            'bed',
+            'rooms',
+            'classList',
+            'statusList',
+            'activeList'
+        ));
     }
 
     /**
-     * Edit method
-     *
-     * @param string|null $id Bed id.
-     * @return \Cake\Http\Response|null|void Redirects on successful edit, renders view otherwise.
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
+     * EDIT
      */
     public function edit($id = null)
     {
-        $bed = $this->Beds->get($id, [
-            'contain' => [],
-        ]);
-        if ($this->request->is(['patch', 'post', 'put'])) {
-            $bed = $this->Beds->patchEntity($bed, $this->request->getData());
-            if ($this->Beds->save($bed)) {
-                $this->Flash->success(__('The bed has been saved.'));
+        $bed = $this->Beds->get($id);
 
-                return $this->redirect(['action' => 'index']);
+        if ($this->request->is(['patch', 'post', 'put'])) {
+
+            $data = $this->request->getData();
+
+            /*
+            |--------------------------------------------------------------------------
+            | UPDATE FLAG
+            |--------------------------------------------------------------------------
+            */
+            $data['is_update'] = 1;
+
+            $bed = $this->Beds->patchEntity($bed, $data);
+
+            if ($this->Beds->save($bed)) {
+
+                $this->Flash->success(__('Bed berhasil diupdate.'));
+
+                return $this->redirect([
+                    'action' => 'index'
+                ]);
             }
-            $this->Flash->error(__('The bed could not be saved. Please, try again.'));
+
+            $this->Flash->error(__('Bed gagal diupdate.'));
         }
-        $rooms = $this->Beds->Rooms->find('list', ['limit' => 200]);
-        $this->set(compact('bed', 'rooms'));
+
+        /*
+        |--------------------------------------------------------------------------
+        | ROOM LIST
+        |--------------------------------------------------------------------------
+        */
+        $rooms = $this->Beds->Rooms->find('list', [
+            'keyField'   => 'id',
+            'valueField' => 'room_name'
+        ])
+            ->order([
+                'Rooms.room_name' => 'ASC'
+            ])
+            ->toArray();
+
+        /*
+        |--------------------------------------------------------------------------
+        | DROPDOWN LIST
+        |--------------------------------------------------------------------------
+        */
+        $classList  = $this->Beds->getClassList();
+        $statusList = $this->Beds->getStatusList();
+        $activeList = $this->Beds->getActiveList();
+
+        $this->set(compact(
+            'bed',
+            'rooms',
+            'classList',
+            'statusList',
+            'activeList'
+        ));
     }
 
     /**
-     * Delete method
-     *
-     * @param string|null $id Bed id.
-     * @return \Cake\Http\Response|null|void Redirects to index.
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
+     * DELETE
      */
     public function delete($id = null)
     {
-        $this->request->allowMethod(['post', 'delete']);
+        $this->request->allowMethod([
+            'post',
+            'delete'
+        ]);
+
         $bed = $this->Beds->get($id);
-        if ($this->Beds->delete($bed)) {
-            $this->Flash->success(__('The bed has been deleted.'));
+
+        /*
+        |--------------------------------------------------------------------------
+        | SOFT DELETE
+        |--------------------------------------------------------------------------
+        */
+        $bed->is_delete = 1;
+        $bed->deleted   = date('Y-m-d H:i:s');
+        $bed->delete_log = 'Deleted by user';
+
+        if ($this->Beds->save($bed)) {
+
+            $this->Flash->success(__('Bed berhasil dihapus.'));
         } else {
-            $this->Flash->error(__('The bed could not be deleted. Please, try again.'));
+
+            $this->Flash->error(__('Bed gagal dihapus.'));
         }
 
-        return $this->redirect(['action' => 'index']);
+        return $this->redirect([
+            'action' => 'index'
+        ]);
+    }
+
+    /**
+     * MONITORING
+     */
+    public function monitoring()
+    {
+        $beds = $this->Beds->find()
+            ->contain(['Rooms'])
+            ->where([
+                'Beds.is_active' => 'Y',
+                'OR' => [
+                    ['Beds.is_delete !=' => 1],
+                    ['Beds.is_delete IS' => null]
+                ]
+            ])
+            ->order([
+                'Rooms.room_name' => 'ASC',
+                'Beds.bed_no'     => 'ASC'
+            ])
+            ->all();
+
+        $this->set(compact('beds'));
     }
 }

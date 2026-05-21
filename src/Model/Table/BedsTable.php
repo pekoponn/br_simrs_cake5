@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Model\Table;
@@ -12,23 +13,6 @@ use Cake\Validation\Validator;
  * Beds Model
  *
  * @property \App\Model\Table\RoomsTable&\Cake\ORM\Association\BelongsTo $Rooms
- * @property \App\Model\Table\RegistrationsTable&\Cake\ORM\Association\HasMany $Registrations
- *
- * @method \App\Model\Entity\Bed newEmptyEntity()
- * @method \App\Model\Entity\Bed newEntity(array $data, array $options = [])
- * @method \App\Model\Entity\Bed[] newEntities(array $data, array $options = [])
- * @method \App\Model\Entity\Bed get($primaryKey, $options = [])
- * @method \App\Model\Entity\Bed findOrCreate($search, ?callable $callback = null, $options = [])
- * @method \App\Model\Entity\Bed patchEntity(\Cake\Datasource\EntityInterface $entity, array $data, array $options = [])
- * @method \App\Model\Entity\Bed[] patchEntities(iterable $entities, array $data, array $options = [])
- * @method \App\Model\Entity\Bed|false save(\Cake\Datasource\EntityInterface $entity, $options = [])
- * @method \App\Model\Entity\Bed saveOrFail(\Cake\Datasource\EntityInterface $entity, $options = [])
- * @method \App\Model\Entity\Bed[]|\Cake\Datasource\ResultSetInterface|false saveMany(iterable $entities, $options = [])
- * @method \App\Model\Entity\Bed[]|\Cake\Datasource\ResultSetInterface saveManyOrFail(iterable $entities, $options = [])
- * @method \App\Model\Entity\Bed[]|\Cake\Datasource\ResultSetInterface|false deleteMany(iterable $entities, $options = [])
- * @method \App\Model\Entity\Bed[]|\Cake\Datasource\ResultSetInterface deleteManyOrFail(iterable $entities, $options = [])
- *
- * @mixin \Cake\ORM\Behavior\TimestampBehavior
  */
 class BedsTable extends Table
 {
@@ -42,100 +26,276 @@ class BedsTable extends Table
     {
         parent::initialize($config);
 
+        // TABLE
         $this->setTable('beds');
+
+        // DISPLAY FIELD
         $this->setDisplayField('name');
+
+        // PRIMARY KEY
         $this->setPrimaryKey('id');
 
+        // TIMESTAMP
         $this->addBehavior('Timestamp');
 
+        /**
+         * RELATION ROOMS
+         */
         $this->belongsTo('Rooms', [
             'foreignKey' => 'room_id',
             'joinType' => 'INNER',
         ]);
-        $this->hasMany('Registrations', [
-            'foreignKey' => 'bed_id',
-        ]);
     }
 
     /**
-     * Default validation rules.
+     * Validation rules
      *
-     * @param \Cake\Validation\Validator $validator Validator instance.
+     * @param \Cake\Validation\Validator $validator
      * @return \Cake\Validation\Validator
      */
     public function validationDefault(Validator $validator): Validator
     {
+        /**
+         * ID
+         */
         $validator
             ->integer('id')
             ->allowEmptyString('id', null, 'create');
 
+        /**
+         * CODE BED
+         */
         $validator
             ->scalar('code')
             ->maxLength('code', 50)
-            ->notEmptyString('code');
+            ->requirePresence('code', 'create')
+            ->notEmptyString(
+                'code',
+                'Code Bed tidak boleh kosong'
+            );
 
+        /**
+         * ROOM
+         */
+        $validator
+            ->integer('room_id')
+            ->requirePresence('room_id', 'create')
+            ->notEmptyString(
+                'room_id',
+                'Room wajib dipilih'
+            );
+
+        /**
+         * BED NUMBER
+         */
         $validator
             ->scalar('bed_no')
-            ->maxLength('bed_no', 255)
+            ->maxLength('bed_no', 50)
             ->requirePresence('bed_no', 'create')
-            ->notEmptyString('bed_no');
+            ->notEmptyString(
+                'bed_no',
+                'Nomor TT wajib diisi'
+            );
 
+        /**
+         * BED NAME
+         */
         $validator
             ->scalar('name')
             ->maxLength('name', 255)
             ->requirePresence('name', 'create')
-            ->notEmptyString('name');
+            ->notEmptyString(
+                'name',
+                'Nama Bed wajib diisi'
+            );
 
+        /**
+         * CLASS
+         */
         $validator
             ->scalar('class_name')
-            ->maxLength('class_name', 255)
+            ->maxLength('class_name', 100)
             ->requirePresence('class_name', 'create')
-            ->notEmptyString('class_name');
+            ->notEmptyString(
+                'class_name',
+                'Class wajib dipilih'
+            );
 
+        /**
+         * STATUS BED
+         */
         $validator
-            ->scalar('status')
-            ->maxLength('status', 50)
+            ->integer('status')
             ->requirePresence('status', 'create')
-            ->notEmptyString('status');
+            ->notEmptyString(
+                'status',
+                'Status Bed wajib dipilih'
+            );
 
-        $validator
-            ->integer('is_create')
-            ->notEmptyString('is_create');
-
-        $validator
-            ->integer('is_update')
-            ->notEmptyString('is_update');
-
-        $validator
-            ->integer('is_delete')
-            ->notEmptyString('is_delete');
-
-        $validator
-            ->dateTime('deleted')
-            ->allowEmptyDateTime('deleted');
-
-        $validator
-            ->scalar('delete_log')
-            ->allowEmptyString('delete_log');
-
+        /**
+         * ACTIVE STATUS
+         */
         $validator
             ->scalar('is_active')
-            ->notEmptyString('is_active');
+            ->maxLength('is_active', 1)
+            ->requirePresence('is_active', 'create')
+            ->notEmptyString(
+                'is_active',
+                'Status Active wajib dipilih'
+            )
+            ->inList(
+                'is_active',
+                ['Y', 'N'],
+                'Status Active tidak valid'
+            );
 
         return $validator;
     }
 
     /**
-     * Returns a rules checker object that will be used for validating
-     * application integrity.
+     * Build Rules
      *
-     * @param \Cake\ORM\RulesChecker $rules The rules object to be modified.
+     * @param \Cake\ORM\RulesChecker $rules
      * @return \Cake\ORM\RulesChecker
      */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
-        $rules->add($rules->existsIn(['room_id'], 'Rooms'), ['errorField' => 'room_id']);
+        /**
+         * CODE UNIQUE
+         */
+        $rules->add(
+            $rules->isUnique(['code']),
+            [
+                'errorField' => 'code',
+                'message' => 'Code Bed sudah digunakan'
+            ]
+        );
+
+        /**
+         * ROOM EXIST
+         */
+        $rules->add(
+            $rules->existsIn(['room_id'], 'Rooms'),
+            [
+                'errorField' => 'room_id',
+                'message' => 'Room tidak ditemukan'
+            ]
+        );
+
+        /**
+         * BED NUMBER TIDAK BOLEH SAMA
+         * DALAM ROOM YANG SAMA
+         */
+        $rules->add(function ($entity, $options) {
+
+            $query = $this->find()
+                ->where([
+                    'room_id' => $entity->room_id,
+                    'bed_no' => $entity->bed_no,
+                ]);
+
+            /**
+             * JIKA EDIT DATA
+             */
+            if (!empty($entity->id)) {
+
+                $query->where([
+                    'id !=' => $entity->id
+                ]);
+            }
+
+            return $query->count() === 0;
+        }, [
+            'errorField' => 'bed_no',
+            'message' =>
+            'Nomor TT sudah digunakan pada room ini'
+        ]);
 
         return $rules;
+    }
+
+    /**
+     * STATUS BED
+     *
+     * @return array
+     */
+    public function getStatusList(): array
+    {
+        return [
+            0 => 'Available / Kosong',
+            1 => 'Occupied / Terisi',
+        ];
+    }
+
+    /**
+     * STATUS ACTIVE
+     *
+     * @return array
+     */
+    public function getActiveList(): array
+    {
+        return [
+            'Y' => 'Active',
+            'N' => 'Non Active',
+        ];
+    }
+
+    /**
+     * CLASS LIST
+     *
+     * @return array
+     */
+    public function getClassList(): array
+    {
+        return [
+            'VIP' => 'VIP',
+            'VVIP' => 'VVIP',
+            'Kelas 1' => 'Kelas 1',
+            'Kelas 2' => 'Kelas 2',
+            'Kelas 3' => 'Kelas 3',
+            'ICU' => 'ICU',
+            'NICU' => 'NICU',
+            'PICU' => 'PICU',
+            'HCU' => 'HCU',
+            'Isolasi' => 'Isolasi',
+        ];
+    }
+
+    /**
+     * SEARCH FILTER
+     *
+     * @param string|null $key
+     * @return \Cake\ORM\Query
+     */
+    public function findSearch(Query $query, array $options)
+    {
+        $key = $options['key'] ?? null;
+
+        if (!empty($key)) {
+
+            $query->contain(['Rooms']);
+
+            $query->where([
+                'OR' => [
+
+                    'Beds.code LIKE' =>
+                    '%' . $key . '%',
+
+                    'Beds.bed_no LIKE' =>
+                    '%' . $key . '%',
+
+                    'Beds.name LIKE' =>
+                    '%' . $key . '%',
+
+                    'Beds.class_name LIKE' =>
+                    '%' . $key . '%',
+
+                    'Rooms.room_name LIKE' =>
+                    '%' . $key . '%',
+                ]
+            ]);
+        }
+
+        return $query;
     }
 }

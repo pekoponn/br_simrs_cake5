@@ -10,11 +10,11 @@ use Cake\ORM\Entity;
  *
  * @property int $id
  * @property string $code
- * @property string $room_id
+ * @property int $room_id
  * @property string $bed_no
  * @property string $name
  * @property string $class_name
- * @property string $status
+ * @property int $status
  * @property int $is_create
  * @property \Cake\I18n\FrozenTime|null $created
  * @property int $is_update

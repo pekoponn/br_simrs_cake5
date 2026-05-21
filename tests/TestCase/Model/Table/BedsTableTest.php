@@ -26,7 +26,6 @@ class BedsTableTest extends TestCase
     protected $fixtures = [
         'app.Beds',
         'app.Rooms',
-        'app.Registrations',
     ];
 
     /**
