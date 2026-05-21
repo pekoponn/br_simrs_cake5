@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller;
@@ -89,6 +90,19 @@ class RegistrationsController extends AppController
                         $patientData['full_name'] = $fullName;
                     }
 
+                    if (!empty($data['patient']['identity_number'])) {
+                        $existingPatient = $this->Patients->find()
+                            ->where([
+                                'identity_number' => $data['patient']['identity_number']
+                            ])
+                            ->first();
+
+                        if ($existingPatient) {
+                            $this->Flash->error(__('No identitas sudah terdaftar. Silakan cari pasien melalui tombol Cari.'));
+                            return;
+                        }
+                    }
+
                     $patientData['code'] = $this->Patients->generateCode();
 
                     $patient = $this->Patients->newEmptyEntity();
@@ -103,6 +117,24 @@ class RegistrationsController extends AppController
                 } else {
                     $this->Flash->error(__('Pasien belum dipilih atau nama pasien baru belum diisi.'));
                     return;
+                }
+            }
+
+            // Simpan data penanggung jawab//
+            if (!empty($data['person_responsible']['name'])) {
+                $this->loadModel('PersonResponsibles');
+
+                $personResponsibles = $this->PersonResponsibles->newEmptyEntity();
+                $personResponsibles = $this->PersonResponsibles->patchEntity(
+                    $personResponsibles,
+                    $data['person_responsible']
+                );
+
+                if ($this->PersonResponsibles->save($personResponsibles)) {
+                    $data['person_responsible_id'] = $personResponsibles->id;
+                } else {
+                    $this->Flash->error(__('Data penanggung jawab gagal disimpan.'));
+                    return $this->redirect(['action' => 'add']);
                 }
             }
 
@@ -132,9 +164,6 @@ class RegistrationsController extends AppController
 
         $beds = $this->Registrations->Beds->find('list', [
             'limit' => 200,
-            'conditions' => [
-                'Beds.status' => 'available'
-            ]
         ])->all();
 
         $this->set(compact(
@@ -318,5 +347,53 @@ class RegistrationsController extends AppController
         return $this->response
             ->withType('application/json')
             ->withStringBody(json_encode($kelurahans));
+    }
+
+    public function getBedClass()
+    {
+        $this->request->allowMethod(['get']);
+
+        $bedId = $this->request->getQuery('bed_id');
+
+        $bed = $this->Registrations->Beds->find()
+            ->select([
+                'id',
+                'class_name'
+            ])
+            ->where([
+                'id' => $bedId
+            ])
+            ->first();
+
+        $this->autoRender = false;
+
+        // FIXED: tambah ->toArray() agar entity bisa di-encode JSON dengan benar
+        return $this->response
+            ->withType('application/json')
+            ->withStringBody(
+                json_encode($bed ? $bed->toArray() : ['class_name' => ''])
+            );
+    }
+
+    public function getDoctorSchedules()
+    {
+        $this->request->allowMethod(['get']);
+
+        $doctorId = $this->request->getQuery('doctor_id');
+
+        $this->loadModel('DoctorSchedules');
+
+        $schedules = $this->DoctorSchedules->find()
+            ->select(['id', 'code', 'day', 'start_time', 'end_time', 'quota'])
+            ->where(['DoctorSchedules.doctor_id' => $doctorId])
+            ->order(['DoctorSchedules.day' => 'ASC'])
+            ->enableHydration(false)
+            ->toArray();
+
+        $this->autoRender = false;
+
+        return $this->response
+            ->withType('application/json')
+            ->withStringBody(json_encode($schedules));
     }
 }

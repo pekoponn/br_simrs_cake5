@@ -16,6 +16,7 @@ use Cake\ORM\Entity;
  * @property string $gender
  * @property string $blood_type
  * @property \Cake\I18n\FrozenDate|null $birth_date
+ * @property string $age
  * @property string|null $address
  * @property string $mother_name
  * @property string $father_name
@@ -63,6 +64,7 @@ class Patient extends Entity
         'gender' => true,
         'blood_type' => true,
         'birth_date' => true,
+        'age' => true,
         'address' => true,
         'mother_name' => true,
         'father_name' => true,

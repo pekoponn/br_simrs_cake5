@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Model\Table;
@@ -72,6 +73,16 @@ class PatientsTable extends Table
         }
 
         return 'RM' . str_pad((string) $newNumber, 6, '0', STR_PAD_LEFT);
+    }
+
+    public function buildRules(RulesChecker $rules): RulesChecker
+    {
+        $rules->add($rules->isUnique(['identity_number']), [
+            'errorField' => 'identity_number',
+            'message' => 'No identitas sudah terdaftar.'
+        ]);
+
+        return $rules;
     }
 
     /**

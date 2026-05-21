@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Registration $registration
@@ -96,6 +97,11 @@
                         <input type="date" id="view-birth-date" name="patient[birth_date]" class="form-control">
                     </div>
 
+                    <div class="col-md-3">
+                        <label>Umur</label>
+                        <input type="text" id="view-age" class="form-control" readonly>
+                    </div>
+
                     <div class="col-md-9">
                         <label>Alamat</label>
                         <input type="text" id="view-address" name="patient[address]" class="form-control">
@@ -143,7 +149,7 @@
 
                         <?= $this->Form->select(
                             'patient[id_prov]',
-                            $provinces,
+                            $provinces ?? [],
                             [
                                 'empty' => '-- Pilih Provinsi --',
                                 'id' => 'view-id-prov',
@@ -265,142 +271,288 @@
 
                 <h4>Tujuan Berobat</h4>
 
-                <?php
-                echo $this->Form->control('registration_no', [
-                    'label' => 'No Registrasi'
-                ]);
+                <div class="row">
+                    <div class="col-md-4">
+                        <label>No Registrasi</label>
+                        <input type="text" name="registration_no" class="form-control">
+                    </div>
 
-                echo $this->Form->control('registration_date', [
-                    'label' => 'Tanggal Registrasi',
-                    'type' => 'date',
-                    'value' => date('Y-m-d')
-                ]);
+                    <div class="col-md-4">
+                        <label>Tanggal Masuk</label>
+                        <input type="date" name="registration_date" class="form-control" value="<?= date('Y-m-d') ?>">
+                    </div>
 
-                echo $this->Form->control('service_type', [
-                    'label' => 'Pelayanan',
-                    'type' => 'select',
-                    'options' => [
-                        'rawat_jalan' => 'Rawat Jalan',
-                        'igd' => 'IGD',
-                        'rawat_inap' => 'Rawat Inap'
-                    ],
-                    'empty' => '-- Pilih Pelayanan --'
-                ]);
+                    <div class="col-md-4">
+                        <label>Jam Masuk</label>
+                        <input type="time" name="admission_time" class="form-control" value="<?= date('H:i') ?>">
+                    </div>
 
-                echo $this->Form->control('doctor_id', [
-                    'label' => 'Dokter',
-                    'options' => $doctors,
-                    'empty' => '-- Pilih Dokter --'
-                ]);
+                    <div class="col-md-12">
+                        <label>Pelayanan</label><br>
 
-                echo $this->Form->control('polyclinic_name', [
-                    'label' => 'Poli'
-                ]);
+                        <label style="margin-right:20px;">
+                            <input type="radio" name="service_type" value="rawat_jalan" checked>
+                            Rawat Jalan
+                        </label>
 
-                echo $this->Form->control('room_id', [
-                    'label' => 'Ruangan',
-                    'options' => $rooms,
-                    'empty' => '-- Pilih Ruangan --'
-                ]);
+                        <label style="margin-right:20px;">
+                            <input type="radio" name="service_type" value="igd">
+                            IGD
+                        </label>
 
-                echo $this->Form->control('bed_id', [
-                    'label' => 'Bed / Kamar',
-                    'options' => $beds,
-                    'empty' => '-- Pilih Bed --'
-                ]);
+                        <label>
+                            <input type="radio" name="service_type" value="rawat_inap">
+                            Rawat Inap
+                        </label>
+                    </div>
 
-                echo $this->Form->control('class_name', [
-                    'label' => 'Kelas'
-                ]);
+                    <div class="col-md-4 rawat-jalan-field igd-field">
+                        <label>Poli / Unit</label>
+                        <input type="text" name="polyclinic_name" class="form-control">
+                    </div>
 
-                echo $this->Form->control('entry_process', [
-                    'label' => 'Proses Masuk',
-                    'type' => 'select',
-                    'options' => [
-                        'langsung_rawat_jalan' => 'Langsung Rawat Jalan',
-                        'langsung_igd' => 'Langsung IGD',
-                        'langsung_rawat_inap' => 'Langsung Rawat Inap'
-                    ],
-                    'empty' => '-- Pilih Proses Masuk --'
-                ]);
+                    <div class="col-md-4">
+                        <label>Dokter</label>
+                        <?= $this->Form->select('doctor_id', $doctors, [
+                            'empty' => '-- Pilih Dokter --',
+                            'id' => 'doctor-id',
+                            'class' => 'form-control'
+                        ]) ?>
+                    </div>
 
-                echo $this->Form->control('entry_method', [
-                    'label' => 'Cara Masuk',
-                    'type' => 'select',
-                    'options' => [
-                        'datang_sendiri' => 'Datang Sendiri',
-                        'rujukan' => 'Rujukan',
-                        'puskesmas' => 'Puskesmas',
-                        'rs_lain' => 'RS Lain'
-                    ],
-                    'empty' => '-- Pilih Cara Masuk --'
-                ]);
-                ?>
+                    <div class="col-md-4">
+                        <label>Jadwal Dokter</label>
+                        <select name="doctor_schedule_id" id="doctor-schedule-id" class="form-control">
+                            <option value="">-- Pilih Jadwal Dokter --</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label>Nomor Antri</label>
+                        <input type="text" name="queue_number" id="queue-number" class="form-control" readonly>
+                        <input type="hidden" name="polyclinic_queue_id" id="polyclinic-queue-id">
+                    </div>
+
+                    <div class="col-md-4 rawat-inap-field">
+                        <label>Ruangan</label>
+                        <?= $this->Form->select('room_id', $rooms, [
+                            'empty' => '-- Pilih Ruangan --',
+                            'class' => 'form-control'
+                        ]) ?>
+                    </div>
+
+                    <div class="col-md-4 rawat-inap-field">
+                        <label>Bed / Kamar</label>
+                        <?= $this->Form->select('bed_id', $beds, [
+                            'empty' => '-- Pilih Bed --',
+                            'class' => 'form-control'
+                        ]) ?>
+                    </div>
+
+                    <div class="col-md-4 rawat-inap-field">
+                        <label>Kelas</label>
+                        <input type="text" name="class_name" class="form-control">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label>Proses Masuk</label>
+                        <select name="entry_process" class="form-control">
+                            <option value="">-- Pilih Proses Masuk --</option>
+                            <option value="Melalui Unit Rawat Jalan">Melalui Unit Rawat Jalan</option>
+                            <option value="Melalui IGD">Melalui IGD</option>
+                            <option value="Langsung Rawat Inap">Langsung Rawat Inap</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label>Cara Masuk</label>
+                        <select name="entry_method" class="form-control">
+                            <option value="">-- Pilih Cara Masuk --</option>
+                            <option value="Datang Sendiri">Datang Sendiri</option>
+                            <option value="Puskesmas">Puskesmas</option>
+                            <option value="Rujukan RS">Rujukan RS</option>
+                        </select>
+                    </div>
+                </div>
 
                 <hr>
 
                 <h4>Cara Bayar</h4>
 
-                <?php
-                echo $this->Form->control('payment_method', [
-                    'label' => 'Jenis Pasien',
-                    'type' => 'select',
-                    'options' => [
-                        'umum' => 'Umum',
-                        'asuransi' => 'Asuransi',
-                        'bpjs' => 'BPJS'
-                    ],
-                    'empty' => '-- Pilih Jenis Pasien --'
-                ]);
+                <div class="row" id="payment-section">
 
-                echo $this->Form->control('insurance_type', [
-                    'label' => 'Jenis Asuransi'
-                ]);
+                    <div class="col-md-4">
+                        <label>Jenis Pasien</label>
+                        <select name="payment_method" id="payment-method" class="form-control">
+                            <option value="">-- Pilih Jenis Pasien --</option>
+                            <option value="UMUM">UMUM</option>
+                            <option value="ASURANSI">ASURANSI</option>
+                        </select>
+                    </div>
 
-                echo $this->Form->control('insurance_card_no', [
-                    'label' => 'Nomor Kartu'
-                ]);
+                    <div class="col-md-4 insurance-field">
+                        <label>Penjamin</label>
+                        <select name="insurance_type" id="insurance-type" class="form-control">
+                            <option value="">-- Pilih Penjamin --</option>
+                            <option value="BPJS KESEHATAN">BPJS KESEHATAN</option>
+                            <option value="ASURANSI LAIN">ASURANSI LAIN</option>
+                            <option value="MANDIRI INHEALTH">MANDIRI INHEALTH</option>
+                            <option value="PRUDENTIAL">PRUDENTIAL</option>
+                        </select>
+                    </div>
 
-                echo $this->Form->control('refferal_no', [
-                    'label' => 'No Rujukan'
-                ]);
+                    <div class="col-md-4 bpjs-field">
+                        <label>Kategori Asuransi</label>
+                        <select name="insurance_category" id="insurance-category" class="form-control">
+                            <option value="">-- Pilih Kategori --</option>
+                            <option value="PBI">PBI</option>
+                            <option value="NON PBI">NON PBI</option>
+                        </select>
+                    </div>
 
-                echo $this->Form->control('sep_no', [
-                    'label' => 'No SEP'
-                ]);
+                    <div class="col-md-4 insurance-field">
+                        <label>Nomor Kartu</label>
+                        <input type="text" name="insurance_card_no" id="insurance-card-no" class="form-control">
+                    </div>
 
-                echo $this->Form->control('treatment_type', [
-                    'label' => 'Perawatan',
-                    'type' => 'select',
-                    'options' => [
-                        'biasa' => 'Biasa',
-                        'paket' => 'Paket'
-                    ],
-                    'empty' => '-- Pilih Perawatan --'
-                ]);
-                ?>
+                    <div class="col-md-4 bpjs-field">
+                        <label>No Rujukan/Kontrol</label>
+                        <input type="text" name="refferal_no" id="refferal-no" class="form-control">
+                    </div>
+
+                    <div class="col-md-4 bpjs-field">
+                        <label>SKDP/NO KONTROL</label>
+                        <input type="text" name="skdp_no" id="skdp-no" class="form-control">
+                    </div>
+
+                    <div class="col-md-4 bpjs-field">
+                        <label>Jenis Referensi</label>
+                        <select name="reference_type" id="reference-type" class="form-control">
+                            <option value="">-- Pilih Jenis Referensi --</option>
+                            <option value="RUJUKAN">RUJUKAN</option>
+                            <option value="KONTROL">KONTROL</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 bpjs-field">
+                        <label>No SEP</label>
+                        <input type="text" name="sep_no" id="sep-no" class="form-control">
+                    </div>
+
+                    <div class="col-md-4 bpjs-field">
+                        <label>NIK/Bagian</label>
+                        <input type="text" name="bpjs_nik" id="bpjs-nik" class="form-control">
+                    </div>
+
+                    <div class="col-md-6 bpjs-field">
+                        <label>Nama</label>
+                        <input type="text" name="bpjs_name" id="bpjs-name" class="form-control">
+                    </div>
+
+                    <div class="col-md-3 bpjs-field">
+                        <label>Golongan</label>
+                        <input type="text" name="bpjs_group" id="bpjs-group" class="form-control">
+                    </div>
+
+                    <div class="col-md-3 bpjs-field">
+                        <label>Jenis</label>
+                        <select name="bpjs_type" id="bpjs-type" class="form-control">
+                            <option value="">-- Pilih Jenis --</option>
+                            <option value="PESERTA">PESERTA</option>
+                            <option value="KELUARGA">KELUARGA</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 bpjs-field">
+                        <label>Kelas</label>
+                        <select name="bpjs_class" id="bpjs-class" class="form-control">
+                            <option value="">-- Pilih Kelas --</option>
+                            <option value="1">KELAS 1</option>
+                            <option value="2">KELAS 2</option>
+                            <option value="3">KELAS 3</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 bpjs-field">
+                        <label>Provider</label>
+                        <input type="text" name="provider" id="provider" class="form-control">
+                    </div>
+
+                    <div class="col-md-12">
+                        <label>Perawatan</label><br>
+
+                        <label style="margin-right:20px;">
+                            <input type="radio" name="treatment_type" value="BIASA" checked>
+                            Biasa
+                        </label>
+
+                        <label>
+                            <input type="radio" name="treatment_type" value="PAKET">
+                            Paket
+                        </label>
+                    </div>
+
+                </div>
 
                 <hr>
 
-                <h4>Status</h4>
+                <h4>Penanggung Jawab Pasien</h4>
 
-                <?php
-                echo $this->Form->control('status', [
-                    'type' => 'select',
-                    'options' => [
-                        'active' => 'Active',
-                        'cancel' => 'Cancel',
-                        'done' => 'Done'
-                    ],
-                    'empty' => '-- Pilih Status --'
-                ]);
+                <div class="row">
+                    <div class="col-md-6">
+                        <label>Nama</label>
+                        <input type="text" name="person_responsible[name]" class="form-control">
+                    </div>
 
-                echo $this->Form->control('is_active', [
-                    'label' => 'Aktif',
-                    'type' => 'checkbox',
-                    'checked' => true
-                ]);
-                ?>
+                    <div class="col-md-3">
+                        <label>Identitas</label>
+                        <select name="person_responsible[identity_type]" class="form-control">
+                            <option value="">-- Pilih --</option>
+                            <option value="KTP">KTP</option>
+                            <option value="SIM">SIM</option>
+                            <option value="PASPOR">PASPOR</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label>No Identitas</label>
+                        <input type="text" name="person_responsible[identity_no]" class="form-control">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label>Hubungan</label>
+                        <select name="person_responsible[relation]" class="form-control">
+                            <option value="">-- Pilih Hubungan --</option>
+                            <option value="AYAH">AYAH</option>
+                            <option value="IBU">IBU</option>
+                            <option value="SUAMI">SUAMI</option>
+                            <option value="ISTRI">ISTRI</option>
+                            <option value="ANAK">ANAK</option>
+                            <option value="SAUDARA">SAUDARA</option>
+                            <option value="LAINNYA">LAINNYA</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label>Umur</label>
+                        <input type="number" name="person_responsible[age]" class="form-control">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label>Pekerjaan</label>
+                        <input type="text" name="person_responsible[job]" class="form-control">
+                    </div>
+
+                    <div class="col-md-12">
+                        <label>Alamat</label>
+                        <textarea name="person_responsible[address]" class="form-control"></textarea>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label>Telepon</label>
+                        <input type="text" name="person_responsible[phone]" class="form-control">
+                    </div>
+                </div>
 
             </fieldset>
 
@@ -434,9 +586,9 @@
 </div>
 
 <script>
-    $(document).ready(function () {
+    $(document).ready(function() {
 
-        $('#view-id-prov').on('change', function () {
+        $('#view-id-prov').on('change', function() {
 
             let idProv = $(this).val();
 
@@ -453,9 +605,9 @@
                     data: {
                         id_prov: idProv
                     },
-                    success: function (response) {
+                    success: function(response) {
 
-                        response.forEach(function (item) {
+                        response.forEach(function(item) {
 
                             $('#view-id-kab').append(
                                 '<option value="' + item.id_kab + '">' + item.nama + '</option>'
@@ -466,7 +618,7 @@
             }
         });
 
-        $('#view-id-kab').on('change', function () {
+        $('#view-id-kab').on('change', function() {
 
             let idKab = $(this).val();
 
@@ -482,9 +634,9 @@
                     data: {
                         id_kab: idKab
                     },
-                    success: function (response) {
+                    success: function(response) {
 
-                        response.forEach(function (item) {
+                        response.forEach(function(item) {
 
                             $('#view-id-kec').append(
                                 '<option value="' + item.id_kec + '">' + item.nama + '</option>'
@@ -495,7 +647,7 @@
             }
         });
 
-        $('#view-id-kec').on('change', function () {
+        $('#view-id-kec').on('change', function() {
 
             let idKec = $(this).val();
 
@@ -510,9 +662,9 @@
                     data: {
                         id_kec: idKec
                     },
-                    success: function (response) {
+                    success: function(response) {
 
-                        response.forEach(function (item) {
+                        response.forEach(function(item) {
 
                             $('#view-id-kel').append(
                                 '<option value="' + item.id_kel + '">' + item.nama + '</option>'
@@ -523,7 +675,7 @@
             }
         });
 
-        $('#modal-search-patient').on('keyup', function () {
+        $('#modal-search-patient').on('keyup', function() {
             let keyword = $(this).val();
 
             if (keyword.length < 2) {
@@ -538,7 +690,7 @@
                 data: {
                     q: keyword
                 },
-                success: function (response) {
+                success: function(response) {
                     let html = '';
 
                     if (response.length > 0) {
@@ -554,7 +706,7 @@
                         html += '</thead>';
                         html += '<tbody>';
 
-                        response.forEach(function (patient) {
+                        response.forEach(function(patient) {
                             html += '<tr>';
                             html += '<td>' + (patient.code ?? '-') + '</td>';
                             html += '<td>' + (patient.full_name ?? '-') + '</td>';
@@ -600,13 +752,13 @@
 
                     $('#modal-patient-result').html(html);
                 },
-                error: function () {
+                error: function() {
                     $('#modal-patient-result').html('<div class="alert alert-danger">Gagal mencari pasien</div>');
                 }
             });
         });
 
-        $(document).on('click', '.load-patient', function () {
+        $(document).on('click', '.load-patient', function() {
             $('#patient-id').val($(this).data('id'));
 
             $('#view-code').val($(this).data('code'));
@@ -616,16 +768,33 @@
             $('#view-gender').val($(this).data('gender'));
             $('#view-blood-type').val($(this).data('blood-type'));
             $('#view-birth-date').val($(this).data('birth-date'));
+            $('#view-age').val(calculateAge($(this).data('birth-date')));
             $('#view-address').val($(this).data('address'));
             $('#view-father-name').val($(this).data('father-name'));
             $('#view-mother-name').val($(this).data('mother-name'));
             $('#view-phone-number').val($(this).data('phone-number'));
             $('#view-nationality').val($(this).data('nationality'));
             $('#view-citizenship').val($(this).data('citizenship'));
-            $('#view-province').val($(this).data('province'));
-            $('#view-city').val($(this).data('city'));
-            $('#view-district').val($(this).data('district'));
-            $('#view-subdistrict').val($(this).data('subdistrict'));
+            let idProv = $(this).data('id-prov');
+            let idKab = $(this).data('id-kab');
+            let idKec = $(this).data('id-kec');
+            let idKel = $(this).data('id-kel');
+
+            $('#view-id-prov').val(idProv).trigger('change');
+
+            setTimeout(function() {
+                $('#view-id-kab').val(idKab).trigger('change');
+
+                setTimeout(function() {
+                    $('#view-id-kec').val(idKec).trigger('change');
+
+                    setTimeout(function() {
+                        $('#view-id-kel').val(idKel);
+                    }, 500);
+
+                }, 500);
+
+            }, 500);
             $('#view-occupation').val($(this).data('occupation'));
             $('#view-religion').val($(this).data('religion'));
             $('#view-education').val($(this).data('education'));
@@ -635,6 +804,183 @@
             $('#modalSearchPatient').modal('hide');
             $('#modal-search-patient').val('');
             $('#modal-patient-result').html('');
+        });
+
+        function calculateAge(birthDate) {
+            if (!birthDate) {
+                return '';
+            }
+
+            let today = new Date();
+            let birth = new Date(birthDate);
+
+            let years = today.getFullYear() - birth.getFullYear();
+            let months = today.getMonth() - birth.getMonth();
+            let days = today.getDate() - birth.getDate();
+
+            if (days < 0) {
+                months--;
+                let previousMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+                days += previousMonth.getDate();
+            }
+
+            if (months < 0) {
+                years--;
+                months += 12;
+            }
+
+            return years + ' tahun ' + months + ' bulan ' + days + ' hari';
+        }
+
+        $('#view-birth-date').on('change', function() {
+            $('#view-age').val(calculateAge($(this).val()));
+        });
+
+        function clearInsuranceFields() {
+            $('#insurance-type').val('');
+            $('#insurance-category').val('');
+            $('#insurance-card-no').val('');
+            $('#refferal-no').val('');
+            $('#skdp-no').val('');
+            $('#reference-type').val('');
+            $('#sep-no').val('');
+            $('#bpjs-nik').val('');
+            $('#bpjs-name').val('');
+            $('#bpjs-group').val('');
+            $('#bpjs-type').val('');
+            $('#bpjs-class').val('');
+            $('#provider').val('');
+        }
+
+        function clearBpjsFields() {
+            $('#insurance-category').val('');
+            $('#refferal-no').val('');
+            $('#skdp-no').val('');
+            $('#reference-type').val('');
+            $('#sep-no').val('');
+            $('#bpjs-nik').val('');
+            $('#bpjs-name').val('');
+            $('#bpjs-group').val('');
+            $('#bpjs-type').val('');
+            $('#bpjs-class').val('');
+            $('#provider').val('');
+        }
+
+        $('#payment-method').on('change', function() {
+            let paymentMethod = $(this).val();
+
+            clearInsuranceFields();
+
+            if (paymentMethod === 'UMUM') {
+                $('.insurance-field').hide();
+                $('.bpjs-field').hide();
+            } else if (paymentMethod === 'ASURANSI') {
+                $('.insurance-field').show();
+                $('.bpjs-field').hide();
+            } else {
+                $('.insurance-field').show();
+                $('.bpjs-field').show();
+            }
+        });
+
+        $('#insurance-type').on('change', function() {
+            let insuranceType = $(this).val();
+
+            clearBpjsFields();
+
+            if (insuranceType === 'BPJS KESEHATAN') {
+                $('.bpjs-field').show();
+            } else {
+                $('.bpjs-field').hide();
+            }
+        });
+
+        $('#service-type').change(function() {
+
+            let value = $(this).val();
+
+            $('#general-fields').hide();
+            $('#rawat-inap-fields').hide();
+
+            if (value == "rawat_jalan" || value == "igd") {
+                $('#general-fields').show();
+            }
+
+            if (value == "rawat_inap") {
+                $('#general-fields').show();
+                $('#rawat-inap-fields').show();
+            }
+        });
+
+        // FIXED: AJAX bed class sekarang pakai action 'getBedClass' yang sudah diperbaiki di controller
+        $('#bed-id').change(function() {
+
+            let bedId = $(this).val();
+
+            $('#class-name').val('');
+
+            if (bedId) {
+
+                $.ajax({
+                    url: "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'getBedClass']) ?>",
+                    type: "GET",
+                    data: {
+                        bed_id: bedId
+                    },
+                    dataType: "json",
+                    success: function(response) {
+                        $('#class-name').val(response.class_name ?? '');
+                    },
+                    error: function() {
+                        $('#class-name').val('');
+                    }
+                });
+            }
+        });
+
+        function setServiceForm(serviceType) {
+            $('.rawat-inap-field').hide();
+
+            if (serviceType === 'rawat_inap') {
+                $('.rawat-inap-field').show();
+            }
+        }
+
+        setServiceForm('rawat_jalan');
+
+        $('input[name="service_type"]').on('change', function() {
+            setServiceForm($(this).val());
+        });
+
+        $('#doctor-id').on('change', function() {
+            let doctorId = $(this).val();
+
+            $('#doctor-schedule-id').html('<option value="">-- Pilih Jadwal Dokter --</option>');
+
+            if (doctorId) {
+                $.ajax({
+                    url: "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'getDoctorSchedules']) ?>",
+                    type: "GET",
+                    dataType: "json",
+                    data: {
+                        doctor_id: doctorId
+                    },
+                    success: function(response) {
+                        console.log(response);
+
+                        response.forEach(function(item) {
+                            $('#doctor-schedule-id').append(
+                                '<option value="' + item.id + '">' +
+                                item.day + ' | ' + item.start_time + ' - ' + item.end_time +
+                                '</option>'
+                            );
+                        });
+                    },
+                    error: function(xhr) {
+                        console.log(xhr.responseText);
+                    }
+                });
+            }
         });
 
     });

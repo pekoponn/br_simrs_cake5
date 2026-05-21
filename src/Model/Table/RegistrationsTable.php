@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Model\Table;
@@ -70,12 +71,12 @@ class RegistrationsTable extends Table
         ]);
         $this->belongsTo('PersonResponsibles', [
             'foreignKey' => 'person_responsible_id',
-            'joinType' => 'INNER',
+            'joinType' => 'LEFT',
         ]);
-        $this->hasMany('PersonResponsible', [
-            'foreignKey' => 'registration_id',
-        ]);
-    }
+    //     $this->hasMany('PersonResponsible', [
+    //         'foreignKey' => 'registration_id',
+    //     ]);
+     }
 
     /**
      * Default validation rules.

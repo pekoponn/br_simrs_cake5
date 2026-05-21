@@ -48,10 +48,10 @@ class PersonResponsiblesTable extends Table
 
         $this->addBehavior('Timestamp');
 
-        $this->belongsTo('Registrations', [
-            'foreignKey' => 'registration_id',
-            'joinType' => 'INNER',
-        ]);
+        // $this->belongsTo('Registrations', [
+        //     'foreignKey' => 'registration_id',
+        //     'joinType' => 'INNER',
+        // ]);
         $this->hasMany('Registrations', [
             'foreignKey' => 'person_responsible_id',
         ]);
@@ -151,7 +151,7 @@ class PersonResponsiblesTable extends Table
      */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
-        $rules->add($rules->existsIn(['registration_id'], 'Registrations'), ['errorField' => 'registration_id']);
+        // $rules->add($rules->existsIn(['registration_id'], 'Registrations'), ['errorField' => 'registration_id']);
 
         return $rules;
     }
