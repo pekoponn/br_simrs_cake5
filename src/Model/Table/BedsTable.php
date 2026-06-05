@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
+use Cake\Datasource\ConnectionManager;
 use Cake\ORM\Query;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
@@ -45,6 +46,19 @@ class BedsTable extends Table
             'foreignKey' => 'room_id',
             'joinType' => 'INNER',
         ]);
+
+        if ($this->getSchema()->hasColumn('patient_id')) {
+            $this->belongsTo('Patients', [
+                'foreignKey' => 'patient_id',
+                'joinType' => 'LEFT',
+            ]);
+        }
+
+        if ($this->tableExists('bed_histories')) {
+            $this->hasMany('BedHistories', [
+                'foreignKey' => 'bed_id',
+            ]);
+        }
     }
 
     /**
@@ -222,8 +236,20 @@ class BedsTable extends Table
     public function getStatusList(): array
     {
         return [
-            0 => 'Available / Kosong',
-            1 => 'Occupied / Terisi',
+            0 => 'Tersedia',
+            1 => 'Terisi',
+            2 => 'Dibersihkan',
+            3 => 'Maintenance',
+        ];
+    }
+
+    public function getStatusLabel(): array
+    {
+        return [
+            0 => '<span class="label label-success">Tersedia</span>',
+            1 => '<span class="label label-danger">Terisi</span>',
+            2 => '<span class="label label-warning">Dibersihkan</span>',
+            3 => '<span class="label label-default">Maintenance</span>',
         ];
     }
 
@@ -297,5 +323,14 @@ class BedsTable extends Table
         }
 
         return $query;
+    }
+
+    private function tableExists(string $tableName): bool
+    {
+        try {
+            return in_array($tableName, ConnectionManager::get('default')->getSchemaCollection()->listTables(), true);
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 }

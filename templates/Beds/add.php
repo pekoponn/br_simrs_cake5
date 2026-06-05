@@ -4,6 +4,7 @@
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Bed $bed
  * @var array $rooms
+ * @var array $roomsMeta
  * @var array $classList
  * @var array $statusList
  * @var array $activeList
@@ -31,8 +32,23 @@
                     <?= $this->Form->control('code', [
                         'label' => 'Code Bed',
                         'class' => 'form-control',
-                        'placeholder' => 'Masukkan code bed',
+                        'placeholder' => 'Kosongkan untuk auto-generate',
+                        'id' => 'bed-code',
+                        'required' => false,
+                        'data-parsley-required' => 'false',
                     ]) ?>
+
+                    <div class="form-check mt-2">
+                        <input type="checkbox"
+                            class="form-check-input"
+                            id="auto-bed-code"
+                            name="auto_code"
+                            value="1"
+                            checked>
+                        <label class="form-check-label" for="auto-bed-code">
+                            Generate otomatis
+                        </label>
+                    </div>
                 </div>
             </div>
 
@@ -43,7 +59,9 @@
                         'options' => $rooms,
                         'empty' => '-- Pilih Room --',
                         'class' => 'form-control',
+                        'id' => 'bed-room-id',
                     ]) ?>
+                    <small id="room-capacity-info" class="text-muted"></small>
                 </div>
             </div>
 
@@ -52,7 +70,9 @@
                     <?= $this->Form->control('bed_no', [
                         'label' => 'Nomor TT',
                         'class' => 'form-control',
-                        'placeholder' => 'Contoh: TT01',
+                        'placeholder' => 'Pilih room untuk generate nomor TT',
+                        'id' => 'bed-no',
+                        'readonly' => true,
                     ]) ?>
                 </div>
             </div>
@@ -69,13 +89,13 @@
 
             <div class="col-md-6">
                 <div class="form-group">
-                    <?= $this->Form->control('class_name', [
-                        'type' => 'select',
-                        'label' => 'Class',
-                        'options' => $classList,
-                        'empty' => '-- Pilih Class --',
-                        'class' => 'form-control',
-                    ]) ?>
+                    <label>Class</label>
+                    <?= $this->Form->hidden('class_name', ['id' => 'bed-class-name']) ?>
+                    <input type="text"
+                        id="bed-class-display"
+                        class="form-control"
+                        placeholder="Otomatis dari room"
+                        readonly>
                 </div>
             </div>
 
@@ -121,6 +141,7 @@
                 '<i class="fa fa-save"></i> Simpan',
                 [
                     'class' => 'btn btn-success',
+                    'id' => 'btn-save-bed',
                     'escapeTitle' => false
                 ]
             ) ?>
@@ -132,3 +153,76 @@
     </div>
 
 </div>
+
+<script>
+    var ROOMS_META = <?= json_encode($roomsMeta ?? []) ?>;
+
+    $(document).ready(function() {
+        function toggleBedCode() {
+            if ($('#auto-bed-code').is(':checked')) {
+                $('#bed-code')
+                    .prop('readonly', true)
+                    .prop('required', false)
+                    .removeAttr('required')
+                    .attr('data-parsley-required', 'false')
+                    .val('')
+                    .css({
+                        'background-color': '#e9ecef',
+                        'cursor': 'not-allowed'
+                    });
+            } else {
+                $('#bed-code')
+                    .prop('readonly', false)
+                    .attr('data-parsley-required', 'true')
+                    .css({
+                        'background-color': '',
+                        'cursor': ''
+                    });
+            }
+        }
+
+        toggleBedCode();
+
+        $('#auto-bed-code').on('change', function() {
+            toggleBedCode();
+        });
+
+        function applyRoomMeta() {
+            var roomId = $('#bed-room-id').val();
+            var meta = ROOMS_META[roomId] || null;
+
+            $('#bed-no').val('');
+            $('#bed-class-name').val('');
+            $('#bed-class-display').val('');
+            $('#room-capacity-info').text('');
+
+            if (!meta) {
+                return;
+            }
+
+            $('#bed-class-name').val(meta.class_name || '');
+            $('#bed-class-display').val(meta.class_name || '-');
+
+            if (meta.next_bed_no) {
+                $('#bed-no').val(meta.next_bed_no);
+                $('#btn-save-bed').prop('disabled', false);
+                $('#room-capacity-info')
+                    .removeClass('text-danger')
+                    .addClass('text-muted')
+                    .text('Terpakai ' + meta.used + ' dari ' + meta.capacity + ' bed. Sisa ' + meta.remaining + '.');
+            } else {
+                $('#btn-save-bed').prop('disabled', true);
+                $('#room-capacity-info')
+                    .removeClass('text-muted')
+                    .addClass('text-danger')
+                    .text('Kapasitas ruangan sudah penuh.');
+            }
+        }
+
+        applyRoomMeta();
+
+        $('#bed-room-id').on('change', function() {
+            applyRoomMeta();
+        });
+    });
+</script>

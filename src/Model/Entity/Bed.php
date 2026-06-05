@@ -15,17 +15,19 @@ use Cake\ORM\Entity;
  * @property string $name
  * @property string $class_name
  * @property int $status
- * @property int $is_create
+ * @property string $is_active
  * @property \Cake\I18n\FrozenTime|null $created
- * @property int $is_update
  * @property \Cake\I18n\FrozenTime|null $modified
  * @property int $is_delete
- * @property \Cake\I18n\FrozenTime|null $deleted
- * @property string|null $delete_log
- * @property string $is_active
+ * @property \Cake\I18n\FrozenTime|null $check_in_date
+ * @property \Cake\I18n\FrozenTime|null $check_out_date
+ * @property string|null $patient_name
+ * @property int|null $patient_id
+ * @property string|null $notes_patient
+ * @property string|null $notes
  *
  * @property \App\Model\Entity\Room $room
- * @property \App\Model\Entity\Registration[] $registrations
+ * @property \App\Model\Entity\Patient|null $patient
  */
 class Bed extends Entity
 {
@@ -45,15 +47,17 @@ class Bed extends Entity
         'name' => true,
         'class_name' => true,
         'status' => true,
-        'is_create' => true,
+        'is_active' => true,
         'created' => true,
-        'is_update' => true,
         'modified' => true,
         'is_delete' => true,
-        'deleted' => true,
-        'delete_log' => true,
-        'is_active' => true,
+        'patient_id' => true,
+        'patient_name' => true,
+        'check_in_date' => true,
+        'check_out_date' => true,
+        'notes_patient' => true,
+        'notes' => true,
         'room' => true,
-        'registrations' => true,
+        'patient' => true,
     ];
 }
