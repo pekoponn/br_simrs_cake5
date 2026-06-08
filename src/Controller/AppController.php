@@ -96,9 +96,71 @@ class AppController extends Controller
             }
           }
           $getAction = $this->request->getParam('action');
-          $resultCheck = $checkUrl[$getController];
-          
-          if($resultCheck[$getAction]==0) {
+          $resultCheck = $checkUrl[$getController] ?? [];
+          $registrationHelperActions = [
+            'searchPatients',
+            'getKabupatens',
+            'getKecamatans',
+            'getKelurahans',
+            'getBedClass',
+            'getAvailableBeds',
+            'getDoctorSchedules',
+          ];
+
+          $canAccessRegistrationHelper = $getController === 'registrations'
+            && in_array($getAction, $registrationHelperActions, true)
+            && (
+              !empty($resultCheck['add'])
+              || !empty($resultCheck['edit'])
+            );
+
+          $canAccessRegistrationView = $getController === 'registrations'
+            && $getAction === 'view'
+            && (
+              !empty($resultCheck['index'])
+              || !empty($resultCheck['add'])
+              || !empty($resultCheck['edit'])
+              || !empty($checkUrl['polyclinicqueues']['index'])
+            );
+
+          $bedHelperActions = [
+            'monitoring',
+            'view',
+            'searchPatients',
+            'updateStatus',
+          ];
+
+          $canAccessBedHelper = $getController === 'beds'
+            && in_array($getAction, $bedHelperActions, true)
+            && (
+              !empty($resultCheck['index'])
+              || !empty($resultCheck['edit'])
+            );
+
+          $polyclinicQueueHelperActions = [
+            'view',
+            'pdf',
+            'display',
+          ];
+
+          $canAccessPolyclinicQueueHelper = $getController === 'polyclinicqueues'
+            && in_array($getAction, $polyclinicQueueHelperActions, true)
+            && !empty($resultCheck['index']);
+
+          $polyclinicQueueEntryActions = [
+            'mobileJkn',
+            'checkIn',
+            'callQueue',
+          ];
+
+          $canAccessPolyclinicQueueEntry = $getController === 'polyclinicqueues'
+            && in_array($getAction, $polyclinicQueueEntryActions, true)
+            && (
+              !empty($resultCheck['index'])
+              || !empty($resultCheck['add'])
+            );
+
+          if(!$canAccessRegistrationHelper && !$canAccessRegistrationView && !$canAccessBedHelper && !$canAccessPolyclinicQueueHelper && !$canAccessPolyclinicQueueEntry && (empty($resultCheck[$getAction]) || $resultCheck[$getAction]==0)) {
            return $this->redirect($this->referer()); // Halaman akan tidak bisa diakses
           }
 

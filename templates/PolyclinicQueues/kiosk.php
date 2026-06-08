@@ -1,287 +1,726 @@
 <!-- templates/PolyclinicQueues/kiosk.php -->
+<?php
+$polyclinics = $polyclinicButtonData ?? [];
+$selectedPoly = $this->request->getData('poly_name') ?? 'Poli Umum';
+$todayLabel = date('d F Y');
+?>
 
-<!DOCTYPE html>
-<html lang="id">
+<script>
+    document.body.classList.add('kiosk-mode');
+</script>
 
-<head>
-    <meta charset="UTF-8">
-    <title>Mesin Anjungan Ambil Antrian</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+    .kiosk-mode #header,
+    .kiosk-mode .header,
+    .kiosk-mode #sidebar,
+    .kiosk-mode #sidebar-bg,
+    .kiosk-mode .sidebar-bg,
+    .kiosk-mode .sidebar,
+    .kiosk-mode .page-sidebar,
+    .kiosk-mode .page-sidebar-minify-btn,
+    .kiosk-mode .page-sidebar-minified #sidebar,
+    .kiosk-mode #footer,
+    .kiosk-mode .footer,
+    .kiosk-mode .btn-scroll-to-top {
+        display: none !important;
+    }
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    html:has(body.kiosk-mode),
+    body.kiosk-mode {
+        width: 100% !important;
+        height: 100vh !important;
+        min-height: 100vh !important;
+        overflow: hidden !important;
+        background: #edf3f7 !important;
+    }
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+    .kiosk-mode #page-container {
+        position: static !important;
+        width: 100% !important;
+        height: 100vh !important;
+        min-height: 100vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        background: #edf3f7 !important;
+    }
+
+    .kiosk-mode #page-container.page-sidebar-minified,
+    .kiosk-mode #page-container.page-sidebar-fixed,
+    .kiosk-mode #page-container.page-header-fixed {
+        padding-left: 0 !important;
+        padding-top: 0 !important;
+    }
+
+    .kiosk-mode #content.content {
+        position: static !important;
+        left: 0 !important;
+        right: auto !important;
+        top: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: 100vh !important;
+        min-height: 100vh;
+        overflow: hidden !important;
+        background: #edf3f7;
+    }
+
+    .kiosk-page,
+    .kiosk-page * {
+        box-sizing: border-box;
+    }
+
+    .kiosk-page {
+        height: 100vh;
+        min-height: 100vh;
+        overflow: hidden;
+        padding: 10px 18px;
+        color: #172033;
+        background:
+            linear-gradient(135deg, rgba(232, 245, 241, 0.96), rgba(236, 243, 252, 0.96)),
+            radial-gradient(circle at 10% 10%, rgba(15, 118, 110, 0.12), transparent 34%),
+            radial-gradient(circle at 90% 0%, rgba(29, 78, 216, 0.13), transparent 30%);
+        font-family: "Open Sans", "Segoe UI", Arial, sans-serif;
+    }
+
+    .kiosk-shell {
+        width: 100%;
+        max-width: 1180px;
+        height: 100%;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+    }
+
+    .kiosk-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 8px;
+    }
+
+    .hospital-brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .brand-mark {
+        width: 46px;
+        height: 46px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 13px;
+        background: #fff;
+        border: 1px solid #d8e3ec;
+        padding: 8px;
+        box-shadow: 0 12px 24px rgba(15, 118, 110, 0.20);
+    }
+
+    .brand-mark img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .brand-name {
+        margin: 0;
+        font-size: 19px;
+        font-weight: 800;
+        line-height: 1.2;
+        color: #112136;
+        letter-spacing: 0;
+    }
+
+    .brand-subtitle {
+        margin-top: 2px;
+        color: #667085;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .time-box {
+        min-width: 170px;
+        padding: 7px 12px;
+        border: 1px solid #d8e3ec;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.82);
+        text-align: right;
+    }
+
+    .time-box .date {
+        color: #667085;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .time-box .clock {
+        margin-top: 2px;
+        color: #112136;
+        font-size: 19px;
+        font-weight: 800;
+        line-height: 1.1;
+    }
+
+    .kiosk-card {
+        overflow: hidden;
+        border: 1px solid rgba(214, 226, 236, 0.92);
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 18px 42px rgba(31, 45, 61, 0.12);
+        flex: 0 1 auto;
+    }
+
+    .kiosk-card-header {
+        padding: 14px 22px 12px;
+        border-bottom: 1px solid #e8eef4;
+        background: linear-gradient(90deg, #ffffff, #f8fbfc);
+    }
+
+    .kiosk-title {
+        margin: 0;
+        color: #112136;
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: 0;
+    }
+
+    .kiosk-description {
+        margin: 4px 0 0;
+        color: #5f6f82;
+        font-size: 13px;
+        line-height: 1.3;
+    }
+
+    .kiosk-card-body {
+        padding: 12px 22px 14px;
+    }
+
+    .section-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+        color: #112136;
+        font-size: 15px;
+        font-weight: 800;
+    }
+
+    .section-label i {
+        color: #0f766e;
+    }
+
+    .poli-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .poli-card {
+        min-height: 66px;
+        width: 100%;
+        padding: 9px 11px;
+        border: 2px solid #dce6ef;
+        border-radius: 12px;
+        background: #fff;
+        color: #172033;
+        text-align: left;
+        cursor: pointer;
+        transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease, background 0.16s ease;
+    }
+
+    .poli-card:hover,
+    .poli-card:focus {
+        border-color: #0f766e;
+        box-shadow: 0 10px 22px rgba(15, 118, 110, 0.12);
+        outline: none;
+        transform: translateY(-1px);
+    }
+
+    .poli-card.is-active {
+        border-color: #0f766e;
+        background: #ecfdf7;
+        box-shadow: 0 12px 28px rgba(15, 118, 110, 0.16);
+    }
+
+    .poli-card.is-featured {
+        grid-column: span 2;
+        min-height: 66px;
+        border-color: #bfe4d8;
+        background: linear-gradient(135deg, #ecfdf7, #ffffff);
+    }
+
+    .poli-card-name {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        font-size: 15px;
+        font-weight: 800;
+        line-height: 1.15;
+    }
+
+    .poli-card-doctor {
+        display: block;
+        margin-top: 4px;
+        color: #344054;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.15;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .poli-card-name i {
+        display: none;
+        color: #0f766e;
+        font-size: 18px;
+    }
+
+    .poli-card.is-active .poli-card-name i {
+        display: inline-block;
+    }
+
+    .poli-card-help {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 5px;
+        padding: 3px 7px;
+        border-radius: 999px;
+        background: #f2f7fb;
+        color: #667085;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .kiosk-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #e8eef4;
+    }
+
+    .help-text {
+        max-width: 420px;
+        color: #667085;
+        font-size: 12px;
+        line-height: 1.3;
+    }
+
+    .help-text i {
+        margin-right: 7px;
+        color: #1d4ed8;
+    }
+
+    .btn-queue {
+        min-width: 260px;
+        height: 48px;
+        padding: 0 22px;
+        border: 0;
+        border-radius: 12px;
+        background: #149966;
+        color: #fff;
+        font-size: 16px;
+        font-weight: 800;
+        box-shadow: 0 16px 28px rgba(20, 153, 102, 0.24);
+        cursor: pointer;
+        transition: background 0.16s ease, opacity 0.16s ease, transform 0.16s ease;
+    }
+
+    .btn-queue:hover,
+    .btn-queue:focus {
+        background: #0f8557;
+        outline: none;
+    }
+
+    .btn-queue:disabled {
+        background: #a8b5c2;
+        box-shadow: none;
+        cursor: not-allowed;
+        opacity: 0.78;
+    }
+
+    .queue-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: rgba(17, 24, 39, 0.70);
+    }
+
+    .queue-modal-card {
+        width: min(620px, 100%);
+        padding: 36px;
+        border-radius: 24px;
+        background: #fff;
+        text-align: center;
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+    }
+
+    .queue-modal-icon {
+        width: 72px;
+        height: 72px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 18px;
+        border-radius: 20px;
+        background: #ecfdf7;
+        color: #0f766e;
+        font-size: 34px;
+    }
+
+    .queue-modal-title {
+        margin: 0;
+        color: #112136;
+        font-size: 30px;
+        font-weight: 800;
+    }
+
+    .queue-modal-code {
+        margin: 18px 0 20px;
+        color: #1d4ed8;
+        font-size: 86px;
+        font-weight: 900;
+        line-height: 1;
+    }
+
+    .queue-modal-label {
+        margin: 0 0 6px;
+        color: #667085;
+        font-size: 14px;
+        font-weight: 800;
+        letter-spacing: 0;
+        text-transform: uppercase;
+    }
+
+    .queue-modal-poli {
+        margin: 0 0 18px;
+        color: #112136;
+        font-size: 24px;
+        font-weight: 800;
+    }
+
+    .queue-modal-note {
+        margin: 0;
+        color: #667085;
+        font-size: 20px;
+        line-height: 1.45;
+    }
+
+    .btn-finish {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 190px;
+        height: 58px;
+        margin-top: 28px;
+        border-radius: 14px;
+        background: #172033;
+        color: #fff;
+        font-size: 18px;
+        font-weight: 800;
+        text-decoration: none;
+    }
+
+    .btn-finish:hover,
+    .btn-finish:focus {
+        color: #fff;
+        background: #0f172a;
+        text-decoration: none;
+    }
+
+    @media (max-width: 1200px) {
+        .poli-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 991px) {
+        body.kiosk-mode,
+        .kiosk-mode #page-container,
+        .kiosk-mode #content.content,
+        .kiosk-page {
+            height: auto !important;
+            min-height: 100vh !important;
+            overflow: auto !important;
         }
 
-        body {
-            min-height: 100vh;
-            background:
-                linear-gradient(rgba(8, 15, 40, 0.85), rgba(8, 15, 40, 0.85)),
-                url('https://images.unsplash.com/photo-1587351021759-3e566b3db4f1?q=80&w=1974&auto=format&fit=crop');
-            background-size: cover;
-            background-position: center;
-            font-family: 'Segoe UI', sans-serif;
-            padding: 40px 15px;
+        .kiosk-page {
+            padding: 18px;
         }
 
-        .main-card {
-            border: none;
-            border-radius: 35px;
-            overflow: hidden;
-            background: rgba(255, 255, 255, 0.96);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+        .kiosk-top {
+            align-items: flex-start;
+            flex-direction: column;
         }
 
-        .left-side {
-            background: linear-gradient(180deg, #0d6efd, #003c99);
-            color: white;
-            padding: 50px 40px;
-            height: 100%;
-            position: relative;
+        .time-box {
+            width: 100%;
+            text-align: left;
         }
 
-        .hospital-logo {
-            width: 90px;
-            height: 90px;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 42px;
-            margin-bottom: 25px;
+        .kiosk-card-header,
+        .kiosk-card-body {
+            padding-left: 22px;
+            padding-right: 22px;
         }
 
-        .hospital-title {
-            font-size: 36px;
-            font-weight: bold;
-            line-height: 1.2;
+        .kiosk-title {
+            font-size: 28px;
         }
 
-        .hospital-subtitle {
-            margin-top: 18px;
-            font-size: 18px;
-            opacity: 0.9;
+        .poli-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
-        .feature-box {
-            margin-top: 45px;
+        .poli-card.is-featured {
+            grid-column: span 2;
         }
 
-        .feature-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 22px;
-            font-size: 17px;
-        }
-
-        .feature-item i {
-            width: 42px;
-            height: 42px;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.15);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 15px;
-        }
-
-        .right-side {
-            padding: 50px 45px;
-        }
-
-        .form-title {
-            font-size: 32px;
-            font-weight: bold;
-            color: #0d1b3e;
-        }
-
-        .form-subtitle {
-            color: #6c757d;
-            margin-top: 8px;
-            margin-bottom: 35px;
-            font-size: 17px;
-        }
-
-        .form-label {
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: #0d1b3e;
-        }
-
-        .form-select {
-            height: 58px;
-            border-radius: 16px;
-            border: 2px solid #e7ebf3;
-            font-size: 17px;
-            padding-left: 18px;
+        .kiosk-actions {
+            align-items: stretch;
+            flex-direction: column;
         }
 
         .btn-queue {
             width: 100%;
-            height: 62px;
-            border-radius: 18px;
+            min-width: 0;
+        }
+    }
+
+    @media (max-width: 575px) {
+        .kiosk-page {
+            padding: 12px;
+        }
+
+        .brand-mark {
+            width: 50px;
+            height: 50px;
+        }
+
+        .brand-name {
             font-size: 20px;
-            font-weight: bold;
-            border: none;
-            background: linear-gradient(90deg, #198754, #0f9d58);
         }
 
-        .queue-result {
-            margin-top: 40px;
-            background: linear-gradient(135deg, #f8fbff, #eef5ff);
-            border-radius: 28px;
-            padding: 35px;
-            text-align: center;
-            border: 2px dashed #0d6efd;
+        .kiosk-title {
+            font-size: 24px;
         }
 
-        .queue-code {
-            font-size: 95px;
-            font-weight: 900;
-            color: #0d6efd;
-            line-height: 1;
-            margin: 15px 0;
+        .kiosk-description {
+            font-size: 16px;
         }
 
-        .poli-name {
-            margin-top: 18px;
-            display: inline-block;
-            padding: 10px 22px;
-            border-radius: 999px;
-            background: #198754;
-            color: white;
-            font-weight: bold;
+        .poli-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .poli-card.is-featured {
+            grid-column: span 1;
+        }
+
+        .poli-card-name {
             font-size: 18px;
         }
 
-        .footer-note {
-            margin-top: 20px;
-            color: #6c757d;
+        .queue-modal-code {
+            font-size: 64px;
         }
+    }
+</style>
 
-        @media (max-width: 991px) {
-            .right-side {
-                padding: 35px 25px;
-            }
-
-            .queue-code {
-                font-size: 70px;
-            }
-        }
-    </style>
-</head>
-
-<body>
-
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-xl-11">
-                <div class="card main-card">
-                    <div class="row g-0">
-
-                        <div class="col-lg-5">
-                            <div class="left-side">
-                                <div class="hospital-logo">
-                                    <i class="fa-solid fa-hospital"></i>
-                                </div>
-
-                                <div class="hospital-title">
-                                    Mesin Antrian Loket
-                                </div>
-
-                                <div class="hospital-subtitle">
-                                    Rumah Sakit Bhakti Rahayu
-                                </div>
-
-                                <div class="feature-box">
-                                    <div class="feature-item">
-                                        <i class="fa-solid fa-clock"></i>
-                                        <span>Ambil nomor antrian loket</span>
-                                    </div>
-
-                                    <div class="feature-item">
-                                        <i class="fa-solid fa-ticket"></i>
-                                        <span>Nomor antrian otomatis</span>
-                                    </div>
-
-                                    <div class="feature-item">
-                                        <i class="fa-solid fa-hospital-user"></i>
-                                        <span>Lanjut pendaftaran di loket</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-7">
-                            <div class="right-side">
-
-                                <?= $this->Flash->render() ?>
-
-                                <div class="form-title">
-                                    Ambil Nomor Antrian
-                                </div>
-
-                                <div class="form-subtitle">
-                                    Pilih tujuan poli awal, lalu ambil nomor antrian loket.
-                                </div>
-
-                                <?= $this->Form->create(null) ?>
-
-                                <div class="mb-4">
-                                    <label class="form-label">Pilih Poli Tujuan</label>
-
-                                    <?= $this->Form->control('poly_name', [
-                                        'type' => 'select',
-                                        'options' => $this->Krs->polyclinics(),
-                                        'empty' => '-- Pilih Poli --',
-                                        'label' => false,
-                                        'class' => 'form-select',
-                                        'required' => true,
-                                        'value' => $this->request->getData('poly_name') ?? ''
-                                    ]) ?>
-                                </div>
-
-                                <div class="mt-4">
-                                    <?= $this->Form->button('Ambil Nomor Sekarang', [
-                                        'class' => 'btn btn-success btn-queue'
-                                    ]) ?>
-                                </div>
-
-                                <?= $this->Form->end() ?>
-
-                                <?php if (!empty($queueNumber)): ?>
-                                    <div class="queue-result">
-                                        <h4>Nomor Antrian Loket Anda</h4>
-
-                                        <div class="queue-code">
-                                            <?= h($queueCode) ?>
-                                        </div>
-
-                                        <div class="poli-name">
-                                            <?= h($this->request->getData('poly_name')) ?>
-                                        </div>
-
-                                        <div class="footer-note">
-                                            Silakan menunggu panggilan di loket pendaftaran.
-                                        </div>
-                                    </div>
-                                <?php endif; ?>
-
-                            </div>
-                        </div>
-
-                    </div>
+<div class="kiosk-page">
+    <div class="kiosk-shell">
+        <div class="kiosk-top">
+            <div class="hospital-brand">
+                <div class="brand-mark">
+                    <?= $this->Html->image('logo_br.png', ['alt' => 'Logo Rumah Sakit Bhakti Rahayu']) ?>
                 </div>
+                <div>
+                    <h1 class="brand-name">Rumah Sakit Bhakti Rahayu</h1>
+                    <div class="brand-subtitle">Mesin Antrian Loket SIMRS</div>
+                </div>
+            </div>
+
+            <div class="time-box">
+                <div class="date"><?= h($todayLabel) ?></div>
+                <div class="clock" id="kiosk-clock">--:--:--</div>
+            </div>
+        </div>
+
+        <div class="kiosk-card">
+            <div class="kiosk-card-header">
+                <h2 class="kiosk-title">Ambil Nomor Antrian</h2>
+                <p class="kiosk-description">Pilih poli tujuan lalu tekan tombol ambil nomor.</p>
+            </div>
+
+            <div class="kiosk-card-body">
+                <?= $this->Flash->render() ?>
+
+                <?= $this->Form->create(null, ['id' => 'kiosk-queue-form']) ?>
+                    <input type="hidden" name="poly_name" id="selected-poly" value="<?= h($selectedPoly) ?>">
+
+                    <div class="section-label">
+                        <i class="fa fa-clinic-medical"></i>
+                        Pilih Poli Tujuan
+                    </div>
+
+                    <div class="poli-grid" role="listbox" aria-label="Pilihan poli tujuan">
+                        <?php foreach ($polyclinics as $poly): ?>
+                            <?php
+                            $polyValue = (string)$poly['value'];
+                            $polyLabel = (string)$poly['label'];
+                            $doctorName = (string)$poly['doctor'];
+                            $queueTotal = (int)$poly['total'];
+                            $isFeatured = !empty($poly['is_featured']);
+                            $isActive = $selectedPoly !== '' && $selectedPoly === $polyValue;
+                            ?>
+                            <button
+                                type="button"
+                                class="poli-card<?= $isActive ? ' is-active' : '' ?><?= $isFeatured ? ' is-featured' : '' ?>"
+                                data-poly-value="<?= h($polyValue) ?>"
+                                aria-pressed="<?= $isActive ? 'true' : 'false' ?>">
+                                <span class="poli-card-name">
+                                    <?= h($polyLabel) ?>
+                                    <i class="fa fa-check-circle"></i>
+                                </span>
+                                <span class="poli-card-doctor"><?= h($doctorName) ?></span>
+                                <span class="poli-card-help">
+                                    <i class="fa fa-users"></i>
+                                    Total Antrian: <?= h($queueTotal) ?>
+                                </span>
+                            </button>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <div class="kiosk-actions">
+                        <div class="help-text">
+                            <i class="fa fa-info-circle"></i>
+                            Jika mengalami kesulitan, hubungi petugas loket.
+                        </div>
+
+                        <?= $this->Form->button('Ambil Nomor Sekarang', [
+                            'class' => 'btn-queue',
+                            'id' => 'btn-submit-queue',
+                            'disabled' => $selectedPoly === '',
+                        ]) ?>
+                    </div>
+                <?= $this->Form->end() ?>
             </div>
         </div>
     </div>
 
-</body>
+    <?php if (!empty($queueNumber)): ?>
+        <div class="queue-modal" role="dialog" aria-modal="true" aria-labelledby="queue-modal-title">
+            <div class="queue-modal-card">
+                <div class="queue-modal-icon">
+                    <i class="fa fa-ticket-alt"></i>
+                </div>
+                <h2 class="queue-modal-title" id="queue-modal-title">Nomor Antrian Anda</h2>
+                <div class="queue-modal-code"><?= h($queueCode) ?></div>
+                <div class="queue-modal-label">Tujuan Poli</div>
+                <div class="queue-modal-poli"><?= h($this->request->getData('poly_name')) ?></div>
+                <p class="queue-modal-note">Silakan menunggu panggilan petugas.</p>
+                <button type="button" class="btn-finish" id="btn-finish-queue">Selesai</button>
+            </div>
+        </div>
+    <?php endif; ?>
+</div>
 
-</html>
+<script>
+    (function() {
+        var selectedPolyInput = document.getElementById('selected-poly');
+        var submitButton = document.getElementById('btn-submit-queue');
+        var poliCards = document.querySelectorAll('.poli-card');
+        var clock = document.getElementById('kiosk-clock');
+        var queueModal = document.querySelector('.queue-modal');
+        var finishButton = document.getElementById('btn-finish-queue');
+
+        function updateClock() {
+            if (!clock) {
+                return;
+            }
+
+            var now = new Date();
+            clock.textContent = now.toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        function selectPoly(card) {
+            poliCards.forEach(function(item) {
+                item.classList.remove('is-active');
+                item.setAttribute('aria-pressed', 'false');
+            });
+
+            card.classList.add('is-active');
+            card.setAttribute('aria-pressed', 'true');
+            selectedPolyInput.value = card.getAttribute('data-poly-value') || '';
+            submitButton.disabled = selectedPolyInput.value === '';
+        }
+
+        function resetSelection() {
+            var defaultCard = document.querySelector('.poli-card[data-poly-value="Poli Umum"]');
+
+            poliCards.forEach(function(item) {
+                item.classList.remove('is-active');
+                item.setAttribute('aria-pressed', 'false');
+            });
+
+            if (defaultCard) {
+                defaultCard.classList.add('is-active');
+                defaultCard.setAttribute('aria-pressed', 'true');
+                selectedPolyInput.value = 'Poli Umum';
+                submitButton.disabled = false;
+                return;
+            }
+
+            selectedPolyInput.value = '';
+            submitButton.disabled = true;
+        }
+
+        function closeQueueModal() {
+            if (queueModal) {
+                queueModal.remove();
+            }
+
+            resetSelection();
+
+            if (window.history.replaceState) {
+                window.history.replaceState(null, '', "<?= $this->Url->build(['action' => 'kiosk']) ?>");
+            }
+        }
+
+        poliCards.forEach(function(card) {
+            card.addEventListener('click', function() {
+                selectPoly(card);
+            });
+        });
+
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        if (finishButton) {
+            finishButton.addEventListener('click', closeQueueModal);
+        }
+
+        if (queueModal) {
+            setTimeout(closeQueueModal, 10000);
+        }
+    })();
+</script>

@@ -11,6 +11,15 @@ use Cake\ORM\Entity;
  * @property int $id
  * @property string|null $code
  * @property string|null $source
+ * @property string|null $booking_code
+ * @property string|null $bpjs_number
+ * @property string|null $identity_number
+ * @property \Cake\I18n\FrozenDate|null $visit_date
+ * @property string|null $checkin_status
+ * @property \Cake\I18n\FrozenTime|null $checkin_time
+ * @property string|null $call_status
+ * @property \Cake\I18n\FrozenTime|null $called_time
+ * @property int|null $call_count
  * @property string|null $poly_name
  * @property string|null $patients_name
  * @property string|null $no_telp
@@ -34,6 +43,15 @@ class PolyclinicQueue extends Entity
     protected $_accessible = [
         'code' => true,
         'source' => true,
+        'booking_code' => true,
+        'bpjs_number' => true,
+        'identity_number' => true,
+        'visit_date' => true,
+        'checkin_status' => true,
+        'checkin_time' => true,
+        'call_status' => true,
+        'called_time' => true,
+        'call_count' => true,
         'poly_name' => true,
         'patients_name' => true,
         'no_telp' => true,

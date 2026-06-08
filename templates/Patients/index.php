@@ -1,10 +1,13 @@
 <?php
+
 /**
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Patient[]|\Cake\Collection\CollectionInterface $patients
  */
 
 $pages = (empty($this->request->getQuery('page'))) ? '' : $this->request->getQuery('page');
+$canViewPatients = !empty($checkUrl['patients']['view']);
+$canViewPatientHistory = !empty($checkUrl['medicalrecords']['history']);
 ?>
 
 <?= $this->Krs->breadcrumb('Master', 'Patient', 'Tampilkan') ?>
@@ -18,9 +21,9 @@ $pages = (empty($this->request->getQuery('page'))) ? '' : $this->request->getQue
         </h4>
 
         <div class="panel-heading-btn">
-            <a href="javascript:;" 
-               class="btn btn-xs btn-icon btn-circle btn-default" 
-               data-click="panel-expand">
+            <a href="javascript:;"
+                class="btn btn-xs btn-icon btn-circle btn-default"
+                data-click="panel-expand">
                 <i class="fa fa-expand"></i>
             </a>
         </div>
@@ -116,8 +119,12 @@ $pages = (empty($this->request->getQuery('page'))) ? '' : $this->request->getQue
 
                         <tr>
 
-                            <th width="100">
-                                Kode
+                            <th width="105">
+                                Kode Pasien
+                            </th>
+
+                            <th width="120">
+                                No RM
                             </th>
 
                             <th>
@@ -174,9 +181,9 @@ $pages = (empty($this->request->getQuery('page'))) ? '' : $this->request->getQue
                                 $statusHiddenActive = ($rowData->is_active == 'Y') ? "" : ' style="display:none;"';
                                 $statusHiddenInactive = ($rowData->is_active == 'N') ? "" : ' style="display:none;"';
 
-                                $btnActive = "<div id='statusSpin".$rowData->id."'></div>";
+                                $btnActive = "<div id='statusSpin" . $rowData->id . "'></div>";
 
-                                $btnActive .= "<div id='statusActive".$rowData->id."'".$statusHiddenActive.">".
+                                $btnActive .= "<div id='statusActive" . $rowData->id . "'" . $statusHiddenActive . ">" .
                                     $this->Html->link(
                                         '<i class="fa fa-check"></i>',
                                         'javascript:;',
@@ -184,10 +191,10 @@ $pages = (empty($this->request->getQuery('page'))) ? '' : $this->request->getQue
                                             "escape" => false,
                                             "class" => "btn btn-lime btn-icon btn-circle btn-sm"
                                         ]
-                                    ).
-                                "</div>";
+                                    ) .
+                                    "</div>";
 
-                                $btnActive .= "<div id='statusInactive".$rowData->id."'".$statusHiddenInactive.">".
+                                $btnActive .= "<div id='statusInactive" . $rowData->id . "'" . $statusHiddenInactive . ">" .
                                     $this->Html->link(
                                         '<i class="fa fa-times"></i>',
                                         'javascript:;',
@@ -195,82 +202,112 @@ $pages = (empty($this->request->getQuery('page'))) ? '' : $this->request->getQue
                                             "escape" => false,
                                             "class" => "btn btn-danger btn-icon btn-circle btn-sm"
                                         ]
-                                    ).
-                                "</div>";
+                                    ) .
+                                    "</div>";
 
                                 if ($rowData->is_active == 'Y') {
 
                                     $classCondition = "";
-
                                 } else {
 
                                     $classCondition = 'class="table-warning"';
-
                                 }
 
                                 $linkEdit = ['action' => 'edit', $rowData->id];
+                                $linkView = ['action' => 'view', $rowData->id];
                                 $linkDelete = ['action' => 'delete', $rowData->id];
+                                $linkHistory = ['controller' => 'MedicalRecords', 'action' => 'history', $rowData->id];
                         ?>
 
-                        <tr <?= $classCondition ?>>
+                                <tr <?= $classCondition ?>>
 
-                            <td align="center">
-                                <b><?= h($rowData->code) ?></b>
-                            </td>
+                                    <td align="center">
+                                        <b><?= h($rowData->code) ?></b>
+                                    </td>
 
-                            <td>
-                                <?= h($rowData->full_name) ?>
-                            </td>
+                                    <td align="center">
+                                        <b><?= h($rowData->medical_record_no ?? $rowData->code ?? '-') ?></b>
+                                    </td>
 
-                            <td align="center">
-                                <?= h($rowData->identity_type) ?>
-                            </td>
+                                    <td>
+                                        <?= h($rowData->full_name) ?>
+                                    </td>
 
-                            <td>
-                                <?= h($rowData->identity_number) ?>
-                            </td>
+                                    <td align="center">
+                                        <?= h($rowData->identity_type) ?>
+                                    </td>
 
-                            <td align="center">
-                                <?= h($rowData->gender) ?>
-                            </td>
+                                    <td>
+                                        <?= h($rowData->identity_number) ?>
+                                    </td>
 
-                            <td align="center">
-                                <?= h($rowData->blood_type) ?>
-                            </td>
+                                    <td align="center">
+                                        <?= h($rowData->gender) ?>
+                                    </td>
 
-                            <td align="center">
-                                <?= h($rowData->birth_date) ?>
-                            </td>
+                                    <td align="center">
+                                        <?= h($rowData->blood_type) ?>
+                                    </td>
 
-                            <td>
-                                <?= h($rowData->phone_number) ?>
-                            </td>
+                                    <td align="center">
+                                        <?= !empty($rowData->birth_date) ? $rowData->birth_date->format('Y-m-d') : '-' ?>
+                                    </td>
 
-                            <td align="center">
-                                <?= h($rowData->religion) ?>
-                            </td>
+                                    <td>
+                                        <?= h($rowData->phone_number) ?>
+                                    </td>
 
-                            <td align="center">
-                                <?= $btnActive ?>
-                            </td>
+                                    <td align="center">
+                                        <?= h($rowData->religion) ?>
+                                    </td>
 
-                            <td class="actions" width="100">
+                                    <td align="center">
+                                        <?= $btnActive ?>
+                                    </td>
 
-                                <?= $this->Krs->btn('edit', $linkEdit) ?>
+                                    <td class="actions" width="500">
 
-                                <?= $this->Krs->btn('delete', $linkDelete, $rowData->full_name) ?>
+                                        <?php if ($canViewPatients): ?>
+                                            <?= $this->Html->link(
+                                                '<i class="fa fa-eye"></i>',
+                                                $linkView,
+                                                [
+                                                    'class' => 'btn btn-yellow btn-sm m-r-5 p-l-15 p-r-15',
+                                                    'escape' => false,
+                                                    'data-toggle' => 'tooltip',
+                                                    'data-placement' => 'top',
+                                                    'data-original-title' => 'Lihat'
+                                                ]
+                                            ) ?>
+                                        <?php endif; ?>
 
-                            </td>
+                                        <?= $this->Krs->btn('edit', $linkEdit) ?>
 
-                        </tr>
+                                        <?php if ($canViewPatientHistory): ?>
+                                            <?= $this->Html->link(
+                                                '<i class="fa fa-history"></i>',
+                                                $linkHistory,
+                                                [
+                                                    'class' => 'btn btn-primary btn-sm m-r-5 p-l-15 p-r-15',
+                                                    'escape' => false,
+                                                    'data-toggle' => 'tooltip',
+                                                    'data-placement' => 'top',
+                                                    'data-original-title' => 'Riwayat Pasien'
+                                                ]
+                                            ) ?>
+                                        <?php endif; ?>
+
+                                        <?= $this->Krs->btn('delete', $linkDelete, $rowData->full_name) ?>
+
+                                    </td>
+
+                                </tr>
 
                         <?php
                             }
-
                         } else {
 
                             echo $this->Krs->dataNull();
-
                         }
                         ?>
 

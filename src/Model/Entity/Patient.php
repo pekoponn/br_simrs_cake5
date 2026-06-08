@@ -10,6 +10,7 @@ use Cake\ORM\Entity;
  *
  * @property int $id
  * @property string $code
+ * @property string|null $medical_record_no
  * @property string $full_name
  * @property string $identity_type
  * @property string $identity_number
@@ -42,7 +43,6 @@ use Cake\ORM\Entity;
  * @property string $is_active
  * @property string|null $is_log
  *
- * @property \App\Model\Entity\PatientPic[] $patient_pics
  * @property \App\Model\Entity\Registration[] $registrations
  */
 class Patient extends Entity
@@ -58,6 +58,8 @@ class Patient extends Entity
      */
     protected $_accessible = [
         'code' => true,
+        'medical_record_no' => true,
+        'title' => true,
         'full_name' => true,
         'identity_type' => true,
         'identity_number' => true,
@@ -89,7 +91,6 @@ class Patient extends Entity
         'delete_log' => true,
         'is_active' => true,
         'is_log' => true,
-        'patient_pics' => true,
         'registrations' => true,
     ];
 }

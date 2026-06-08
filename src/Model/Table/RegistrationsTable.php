@@ -74,6 +74,14 @@ class RegistrationsTable extends Table
             'foreignKey' => 'person_responsible_id',
             'joinType' => 'LEFT',
         ]);
+        $this->belongsTo('PolyclinicQueues', [
+            'foreignKey' => 'polyclinic_queue_id',
+            'joinType' => 'LEFT',
+        ]);
+        $this->hasOne('MedicalRecords', [
+            'foreignKey' => 'registration_id',
+            'joinType' => 'LEFT',
+        ]);
         //     $this->hasMany('PersonResponsible', [
         //         'foreignKey' => 'registration_id',
         //     ]);
@@ -150,26 +158,22 @@ class RegistrationsTable extends Table
         $validator
             ->scalar('insurance_type')
             ->maxLength('insurance_type', 255)
-            ->requirePresence('insurance_type', 'create')
-            ->notEmptyString('insurance_type');
+            ->allowEmptyString('insurance_type');
 
         $validator
             ->scalar('insurance_card_no')
             ->maxLength('insurance_card_no', 30)
-            ->requirePresence('insurance_card_no', 'create')
-            ->notEmptyString('insurance_card_no');
+            ->allowEmptyString('insurance_card_no');
 
         $validator
             ->scalar('refferal_no')
             ->maxLength('refferal_no', 30)
-            ->requirePresence('refferal_no', 'create')
-            ->notEmptyString('refferal_no');
+            ->allowEmptyString('refferal_no');
 
         $validator
             ->scalar('sep_no')
             ->maxLength('sep_no', 50)
-            ->requirePresence('sep_no', 'create')
-            ->notEmptyString('sep_no');
+            ->allowEmptyString('sep_no');
 
         $validator
             ->scalar('treatment_type')

@@ -11,7 +11,6 @@ use Cake\Validation\Validator;
 /**
  * Doctors Model
  *
- * @property \App\Model\Table\PolyclinicsTable&\Cake\ORM\Association\BelongsTo $Polyclinics
  * @property \App\Model\Table\DoctorSchedulesTable&\Cake\ORM\Association\HasMany $DoctorSchedules
  *
  * @method \App\Model\Entity\Doctor newEmptyEntity()
@@ -43,15 +42,11 @@ class DoctorsTable extends Table
         parent::initialize($config);
 
         $this->setTable('doctors');
-        $this->setDisplayField('id');
+        $this->setDisplayField('doctor_name');
         $this->setPrimaryKey('id');
 
         $this->addBehavior('Timestamp');
 
-        $this->belongsTo('Polyclinics', [
-            'foreignKey' => 'polyclinic_id',
-            'joinType' => 'INNER',
-        ]);
         $this->hasMany('DoctorSchedules', [
             'foreignKey' => 'doctor_id',
         ]);
@@ -102,6 +97,12 @@ class DoctorsTable extends Table
             ->maxLength('specialist', 255)
             ->requirePresence('specialist', 'create')
             ->notEmptyString('specialist');
+
+        $validator
+            ->scalar('polyclinic_name')
+            ->maxLength('polyclinic_name', 255)
+            ->requirePresence('polyclinic_name', 'create')
+            ->notEmptyString('polyclinic_name');
 
         $validator
             ->scalar('religion')
@@ -181,8 +182,6 @@ class DoctorsTable extends Table
      */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
-        $rules->add($rules->existsIn(['polyclinic_id'], 'Polyclinics'), ['errorField' => 'polyclinic_id']);
-
         return $rules;
     }
 }

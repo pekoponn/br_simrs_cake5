@@ -3,290 +3,445 @@
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\PolyclinicQueue $polyclinicQueue
  */
+
+$polyclinics = $polyclinicButtonData ?? [];
+$selectedPoly = $this->request->getData('poly_name') ?? 'Poli Umum';
 ?>
 
-<!DOCTYPE html>
-<html lang="id">
+<?= $this->Krs->breadcrumb('Polyclinic Queue', 'Tambah Antrian WA') ?>
 
-<head>
-    <meta charset="UTF-8">
-    <title>Tambah Antrian WA</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+    .queue-add-page,
+    .queue-add-page * {
+        box-sizing: border-box;
+    }
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    .queue-add-page {
+        margin: -5px 0 20px;
+        color: #172033;
+        font-family: "Open Sans", "Segoe UI", Arial, sans-serif;
+    }
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    .queue-add-shell {
+        overflow: hidden;
+        border: 1px solid #dfe8f1;
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 8px 24px rgba(31, 45, 61, 0.08);
+    }
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+    .queue-add-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 18px 22px;
+        border-bottom: 1px solid #e8eef4;
+        background: linear-gradient(90deg, #f7fbfa, #f8fbff);
+    }
+
+    .queue-add-brand {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+    }
+
+    .queue-add-logo {
+        width: 52px;
+        height: 52px;
+        padding: 7px;
+        border: 1px solid #d8e3ec;
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 8px 18px rgba(15, 118, 110, 0.12);
+    }
+
+    .queue-add-logo img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .queue-add-title {
+        margin: 0;
+        color: #112136;
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: 0;
+    }
+
+    .queue-add-subtitle {
+        margin-top: 4px;
+        color: #667085;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .queue-add-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: #ecfdf7;
+        color: #0f766e;
+        font-size: 13px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .queue-add-form {
+        padding: 22px 28px 24px;
+        background: #fff;
+    }
+
+    .form-section-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 12px;
+        color: #112136;
+        font-size: 18px;
+        font-weight: 800;
+    }
+
+    .form-section-title i {
+        color: #0f766e;
+    }
+
+    .queue-input-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 18px;
+    }
+
+    .queue-field label,
+    .queue-field .form-label {
+        display: block;
+        margin-bottom: 8px;
+        color: #344054;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .queue-field .form-control {
+        width: 100%;
+        height: 44px;
+        padding: 0 14px;
+        border: 1px solid #d9e2ec;
+        border-radius: 10px;
+        color: #172033;
+        font-size: 15px;
+        box-shadow: none;
+    }
+
+    .queue-field .form-control:focus {
+        border-color: #0f766e;
+        box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.10);
+    }
+
+    .poli-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 9px;
+    }
+
+    .poli-card {
+        min-height: 88px;
+        width: 100%;
+        padding: 12px 14px;
+        border: 2px solid #dce6ef;
+        border-radius: 14px;
+        background: #fff;
+        color: #172033;
+        text-align: left;
+        cursor: pointer;
+        transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+    }
+
+    .poli-card:hover,
+    .poli-card:focus {
+        border-color: #0f766e;
+        box-shadow: 0 10px 22px rgba(15, 118, 110, 0.12);
+        outline: none;
+    }
+
+    .poli-card.is-active {
+        border-color: #0f766e;
+        background: #ecfdf7;
+        box-shadow: 0 12px 28px rgba(15, 118, 110, 0.15);
+    }
+
+    .poli-card.is-featured {
+        grid-column: span 2;
+        min-height: 104px;
+        border-color: #bfe4d8;
+        background: linear-gradient(135deg, #ecfdf7, #ffffff);
+    }
+
+    .poli-card-name {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        font-size: 15px;
+        font-weight: 800;
+        line-height: 1.25;
+    }
+
+    .poli-card-doctor {
+        display: block;
+        margin-top: 6px;
+        color: #344054;
+        font-size: 13px;
+        font-weight: 800;
+        line-height: 1.25;
+    }
+
+    .poli-card-name i {
+        display: none;
+        color: #0f766e;
+        font-size: 20px;
+    }
+
+    .poli-card.is-active .poli-card-name i {
+        display: inline-block;
+    }
+
+    .poli-card-help {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 7px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: #f2f7fb;
+        color: #667085;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .queue-add-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-top: 16px;
+        padding-top: 14px;
+        border-top: 1px solid #e8eef4;
+    }
+
+    .queue-help {
+        color: #667085;
+        font-size: 13px;
+        line-height: 1.45;
+    }
+
+    .queue-help i {
+        margin-right: 6px;
+        color: #1d4ed8;
+    }
+
+    .btn-submit-queue {
+        min-width: 250px;
+        height: 50px;
+        border: 0;
+        border-radius: 12px;
+        background: #149966;
+        color: #fff;
+        font-size: 16px;
+        font-weight: 800;
+        box-shadow: 0 12px 22px rgba(20, 153, 102, 0.20);
+    }
+
+    .btn-submit-queue:hover,
+    .btn-submit-queue:focus {
+        background: #0f8557;
+        color: #fff;
+    }
+
+    .btn-submit-queue:disabled {
+        background: #a8b5c2;
+        box-shadow: none;
+        cursor: not-allowed;
+        opacity: 0.78;
+    }
+
+    @media (max-width: 1200px) {
+        .poli-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 991px) {
+        .queue-input-grid {
+            grid-template-columns: 1fr;
         }
 
-        body {
-            min-height: 100vh;
-            background:
-                linear-gradient(rgba(8, 15, 40, 0.85),
-                    rgba(8, 15, 40, 0.85)),
-                url('https://images.unsplash.com/photo-1587351021759-3e566b3db4f1?q=80&w=1974&auto=format&fit=crop');
-            background-size: cover;
-            background-position: center;
-            font-family: 'Segoe UI', sans-serif;
-            padding: 40px 15px;
+        .poli-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
-        .main-card {
-            border: none;
-            border-radius: 35px;
-            overflow: hidden;
-            background: rgba(255, 255, 255, 0.96);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+        .poli-card.is-featured {
+            grid-column: span 2;
+        }
+    }
+
+    @media (max-width: 575px) {
+        .queue-add-header,
+        .queue-add-form,
+        .queue-add-header,
+        .queue-add-actions {
+            align-items: stretch;
+            flex-direction: column;
         }
 
-        .left-side {
-            background: linear-gradient(180deg, #0d6efd, #003c99);
-            color: white;
-            padding: 50px 40px;
-            height: 100%;
-            position: relative;
-        }
-
-        .left-side::before {
-            content: '';
-            position: absolute;
-            width: 220px;
-            height: 220px;
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 50%;
-            top: -80px;
-            right: -80px;
-        }
-
-        .hospital-logo {
-            width: 90px;
-            height: 90px;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 42px;
-            margin-bottom: 25px;
-        }
-
-        .hospital-title {
-            font-size: 36px;
-            font-weight: bold;
-            line-height: 1.2;
-        }
-
-        .hospital-subtitle {
-            margin-top: 18px;
-            font-size: 18px;
-            opacity: 0.9;
-        }
-
-        .feature-box {
-            margin-top: 45px;
-        }
-
-        .feature-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 22px;
-            font-size: 17px;
-        }
-
-        .feature-item i {
-            width: 42px;
-            height: 42px;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.15);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 15px;
-        }
-
-        .right-side {
-            padding: 50px 45px;
-        }
-
-        .form-title {
-            font-size: 32px;
-            font-weight: bold;
-            color: #0d1b3e;
-        }
-
-        .form-subtitle {
-            color: #6c757d;
-            margin-top: 8px;
-            margin-bottom: 35px;
-            font-size: 17px;
-        }
-
-        .form-label {
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: #0d1b3e;
-        }
-
-        .form-control,
-        .form-select {
-            height: 58px;
-            border-radius: 16px;
-            border: 2px solid #e7ebf3;
-            font-size: 17px;
-            padding-left: 18px;
-            transition: 0.3s;
-        }
-
-        .form-control:focus,
-        .form-select:focus {
-            border-color: #0d6efd;
-            box-shadow: none;
-        }
-
-        .btn-queue {
+        .queue-add-badge,
+        .btn-submit-queue {
             width: 100%;
-            height: 62px;
-            border-radius: 18px;
-            font-size: 20px;
-            font-weight: bold;
-            border: none;
-            background: linear-gradient(90deg, #198754, #0f9d58);
-            transition: 0.3s;
+            justify-content: center;
         }
 
-        .btn-queue:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(25, 135, 84, 0.3);
+        .poli-grid {
+            grid-template-columns: 1fr;
         }
 
-        @media (max-width: 991px) {
-            .left-side {
-                border-radius: 0 0 30px 30px;
-            }
-
-            .right-side {
-                padding: 35px 25px;
-            }
+        .poli-card.is-featured {
+            grid-column: span 1;
         }
-    </style>
-</head>
+    }
+</style>
 
-<body>
-
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-xl-11">
-                <div class="card main-card">
-                    <div class="row g-0">
-
-                        <div class="col-lg-5">
-                            <div class="left-side">
-                                <div class="hospital-logo">
-                                    <i class="fa-solid fa-hospital"></i>
-                                </div>
-
-                                <div class="hospital-title">
-                                    Pendaftaran Antrian WA
-                                </div>
-
-                                <div class="hospital-subtitle">
-                                    Rumah Sakit Bhakti Rahayu
-                                </div>
-
-                                <div class="feature-box">
-                                    <div class="feature-item">
-                                        <i class="fa-solid fa-user"></i>
-                                        <span>Input data pasien</span>
-                                    </div>
-
-                                    <div class="feature-item">
-                                        <i class="fa-brands fa-whatsapp"></i>
-                                        <span>Pendaftaran melalui WhatsApp</span>
-                                    </div>
-
-                                    <div class="feature-item">
-                                        <i class="fa-solid fa-layer-group"></i>
-                                        <span>Pilih tujuan poli</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-7">
-                            <div class="right-side">
-
-                                <?= $this->Flash->render() ?>
-
-                                <div class="form-title">
-                                    Tambah Antrian WA
-                                </div>
-
-                                <div class="form-subtitle">
-                                    Isi data pasien untuk membuat nomor antrian.
-                                </div>
-
-                                <?= $this->Form->create($polyclinicQueue) ?>
-
-                                <div class="mb-4">
-                                    <label class="form-label">Nama Pasien</label>
-                                    <?= $this->Form->control('patients_name', [
-                                        'type' => 'text',
-                                        'label' => false,
-                                        'class' => 'form-control',
-                                        'placeholder' => 'Masukkan nama pasien',
-                                        'required' => true
-                                    ]) ?>
-                                </div>
-
-                                <div class="mb-4">
-                                    <label class="form-label">No. HP / WhatsApp</label>
-                                    <?= $this->Form->control('no_telp', [
-                                        'type' => 'text',
-                                        'label' => false,
-                                        'class' => 'form-control',
-                                        'placeholder' => 'Contoh: 081234567890',
-                                        'required' => true
-                                    ]) ?>
-                                </div>
-
-                                <div class="mb-4">
-                                    <label class="form-label">Pilih Poli</label>
-                                    <?= $this->Form->control('poly_name', [
-                                        'type' => 'select',
-                                        'options' => $this->Krs->polyclinics(),
-                                        'empty' => '-- Pilih Poli --',
-                                        'label' => false,
-                                        'class' => 'form-select',
-                                        'required' => true
-                                    ]) ?>
-                                </div>
-
-                                <div class="mt-4">
-                                    <?= $this->Form->button(
-                                        'Daftar Antrian WA',
-                                        [
-                                            'class' => 'btn btn-success btn-queue'
-                                        ]
-                                    ) ?>
-                                </div>
-
-                                <?= $this->Form->end() ?>
-
-                            </div>
-                        </div>
-
-                    </div>
+<div class="queue-add-page">
+    <div class="queue-add-shell">
+        <div class="queue-add-header">
+            <div class="queue-add-brand">
+                <div class="queue-add-logo">
+                    <?= $this->Html->image('logo_br.png', ['alt' => 'Logo Rumah Sakit Bhakti Rahayu']) ?>
                 </div>
+                <div>
+                    <h1 class="queue-add-title">Tambah Antrian WA</h1>
+                    <div class="queue-add-subtitle">Rumah Sakit Bhakti Rahayu</div>
+                </div>
+            </div>
+
+            <div class="queue-add-badge">
+                <i class="fa fa-whatsapp"></i>
+                Pendaftaran Antrian via WhatsApp
+            </div>
+        </div>
+
+        <div class="queue-add-body">
+            <div class="queue-add-form">
+                <?= $this->Flash->render() ?>
+
+                <?= $this->Form->create($polyclinicQueue, ['id' => 'queue-add-form']) ?>
+                    <h3 class="form-section-title">
+                        <i class="fa fa-id-card"></i>
+                        Data Pasien
+                    </h3>
+
+                    <div class="queue-input-grid">
+                        <div class="queue-field">
+                            <label>Nama Pasien</label>
+                            <?= $this->Form->control('patients_name', [
+                                'type' => 'text',
+                                'label' => false,
+                                'class' => 'form-control',
+                                'placeholder' => 'Masukkan nama pasien',
+                                'required' => true,
+                            ]) ?>
+                        </div>
+
+                        <div class="queue-field">
+                            <label>No. HP / WhatsApp</label>
+                            <?= $this->Form->control('no_telp', [
+                                'type' => 'text',
+                                'label' => false,
+                                'class' => 'form-control',
+                                'placeholder' => 'Contoh: 081234567890',
+                                'required' => true,
+                            ]) ?>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="poly_name" id="selected-poly" value="<?= h($selectedPoly) ?>">
+
+                    <h3 class="form-section-title">
+                        <i class="fa fa-clinic-medical"></i>
+                        Pilih Poli Tujuan
+                    </h3>
+
+                    <div class="poli-grid" role="listbox" aria-label="Pilihan poli tujuan">
+                        <?php foreach ($polyclinics as $poly): ?>
+                            <?php
+                            $polyValue = (string)$poly['value'];
+                            $polyLabel = (string)$poly['label'];
+                            $doctorName = (string)$poly['doctor'];
+                            $queueTotal = (int)$poly['total'];
+                            $isFeatured = !empty($poly['is_featured']);
+                            $isActive = $selectedPoly !== '' && $selectedPoly === $polyValue;
+                            ?>
+                            <button
+                                type="button"
+                                class="poli-card<?= $isActive ? ' is-active' : '' ?><?= $isFeatured ? ' is-featured' : '' ?>"
+                                data-poly-value="<?= h($polyValue) ?>"
+                                aria-pressed="<?= $isActive ? 'true' : 'false' ?>">
+                                <span class="poli-card-name">
+                                    <?= h($polyLabel) ?>
+                                    <i class="fa fa-check-circle"></i>
+                                </span>
+                                <span class="poli-card-doctor"><?= h($doctorName) ?></span>
+                                <span class="poli-card-help">
+                                    <i class="fa fa-users"></i>
+                                    Total Antrian: <?= h($queueTotal) ?>
+                                </span>
+                            </button>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <div class="queue-add-actions">
+                        <div class="queue-help">
+                            <i class="fa fa-info-circle"></i>
+                            Pastikan nama dan nomor WhatsApp pasien sudah benar sebelum menyimpan.
+                        </div>
+
+                        <?= $this->Form->button('Daftar Antrian WA', [
+                            'class' => 'btn-submit-queue',
+                            'id' => 'btn-submit-queue',
+                            'disabled' => $selectedPoly === '',
+                        ]) ?>
+                    </div>
+                <?= $this->Form->end() ?>
             </div>
         </div>
     </div>
+</div>
 
-</body>
+<script>
+    (function() {
+        var selectedPolyInput = document.getElementById('selected-poly');
+        var submitButton = document.getElementById('btn-submit-queue');
+        var poliCards = document.querySelectorAll('.poli-card');
 
-</html>
+        function selectPoly(card) {
+            poliCards.forEach(function(item) {
+                item.classList.remove('is-active');
+                item.setAttribute('aria-pressed', 'false');
+            });
+
+            card.classList.add('is-active');
+            card.setAttribute('aria-pressed', 'true');
+            selectedPolyInput.value = card.getAttribute('data-poly-value') || '';
+            submitButton.disabled = selectedPolyInput.value === '';
+        }
+
+        poliCards.forEach(function(card) {
+            card.addEventListener('click', function() {
+                selectPoly(card);
+            });
+        });
+    })();
+</script>

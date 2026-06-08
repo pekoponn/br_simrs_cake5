@@ -102,6 +102,9 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
             if (strcmp($controller,'Apis') == 0 || $action=='portalApi' || $controller=='Users') {
                 return true;
             }
+            if ($controller === 'Beds' && in_array($action, ['updateStatus', 'searchPatients'], true)) {
+                return true;
+            }
             return false;
         });
         

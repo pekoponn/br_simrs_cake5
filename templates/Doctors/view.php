@@ -44,7 +44,7 @@
                 </tr>
                 <tr>
                     <th><?= __('Polyclinic') ?></th>
-                    <td><?= $doctor->has('polyclinic') ? $this->Html->link($doctor->polyclinic->name, ['controller' => 'Polyclinics', 'action' => 'view', $doctor->polyclinic->id]) : '' ?></td>
+                    <td><?= h($doctor->polyclinic_name ?: '-') ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Religion') ?></th>

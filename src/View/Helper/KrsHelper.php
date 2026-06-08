@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\View\Helper;
@@ -16,7 +17,7 @@ class KrsHelper extends Helper
 	public $company = 'Portal';
 	public $titleLogin = 'SIM-RS RS Bhakti Rahayu Surabaya ';
 	public $titleDesc = 'SIM-RS (Sistem Informasi & Manajemen Rumah Sakit)';
-	public $footer = 'SIBR-Group&#8482; v.2 &copy; 2024&#126;';
+	public $footer = 'SIBR-Group&#8482; v.2 &copy; 2026&#126;';
 	public $titleManifest = 'AAH';
 	public $codeMOU = 'PKS/TMI/DPS';
 	public $invoiceCode = 'TMI-DPS';
@@ -155,14 +156,23 @@ class KrsHelper extends Helper
 		if ($type == "delete") {
 			$view = $this->Form->postLink($btnAttribute['name'], $btnLink, ['confirm' => __('Apakah anda ingin menghapus data tersebut # {0}?', $btnId), 'class' => 'btn btn-' . $btnAttribute['color'] . ' btn-sm m-r-5 p-l-15 p-r-15', 'data-toggle' => 'tooltip', 'data-placement' => 'top', 'data-original-title' => $btnAttribute['title'], 'escape' => false, 'fullBase' => true]);
 		} elseif ($type == 'preview') {
-			// pr($btnLink);
-			/*<a id=' . $id . ' href="javascript:void(0);" class="btn btn-icon btn-primary" data-toggle="tooltip" data-placement="top" data-original-title="Lihat" data-id = ' . $data_id . '>
-				<i class="fa fa-television"></i>
-			</a>*/
+
 			$btnLink = "javascript:void(0)";
-			// $view = $this->Html->tag('a', $btnAttribute['name'], ['class'=>'btn btn-sm btn btn-'.$btnAttribute['color'], 'id'=>'ajax-preview'.$btnLink['action'], 'data-target' => '#preview'.$btnLink['action'], 'escape' => false]);
-			$view = $this->Html->link($btnAttribute['name'], $btnLink, ['class' => 'btn btn-' . $btnAttribute['color'] . ' btn-sm btn-preview m-r-5 p-l-15 p-r-15', 'data-id' => $btnId, 'data-toggle' => 'tooltip', 'data-placement' => 'top', 'data-original-title' => $btnAttribute['title'], 'id' => 'btn-preview' . $btnId, 'escape' => false, 'fullBase' => true]);
-			// $view = $this->Html->tag('a', $btnAttribute['name'], ['class'=>'btn btn-sm btn btn-'.$btnAttribute['color'], 'id'=>'ajax-preview'.$btnLink['action'], 'data-target' => '#preview'.$btnLink['action'], 'escape' => false]);
+
+			$view = $this->Html->link(
+				$btnAttribute['name'],
+				$btnLink,
+				[
+					'class' => 'btn btn-' . $btnAttribute['color'] . ' btn-sm btn-preview m-r-5 p-l-15 p-r-15',
+					'data-id' => $btnId,
+					'data-toggle' => 'tooltip',
+					'data-placement' => 'top',
+					'data-original-title' => $btnAttribute['title'],
+					'id' => 'btn-preview' . $btnId,
+					'escape' => false,
+					'fullBase' => true
+				]
+			);
 		} else {
 			$view = $this->Html->link($btnAttribute['name'], $btnLink, ['class' => 'btn btn-' . $btnAttribute['color'] . ' btn-sm m-r-5 p-l-15 p-r-15', 'data-toggle' => 'tooltip', 'data-placement' => 'top', 'data-original-title' => $btnAttribute['title'], 'escape' => false, 'fullBase' => true]);
 		}
@@ -568,9 +578,7 @@ class KrsHelper extends Helper
 			case 12:
 				return "Desember";
 				break;
-
 		}
-
 	}
 
 	public function fDate($value = null, $formats = 'd-m-Y')
@@ -1009,6 +1017,27 @@ class KrsHelper extends Helper
 		return $result;
 	}
 
+	public function occupations()
+	{
+		return [
+			'PNS' => 'PNS',
+			'TNI' => 'TNI',
+			'POLRI' => 'POLRI',
+			'Pegawai Swasta' => 'Pegawai Swasta',
+			'Wiraswasta' => 'Wiraswasta',
+			'Petani' => 'Petani',
+			'Nelayan' => 'Nelayan',
+			'Buruh' => 'Buruh',
+			'Guru' => 'Guru',
+			'Dosen' => 'Dosen',
+			'Pelajar/Mahasiswa' => 'Pelajar/Mahasiswa',
+			'Ibu Rumah Tangga' => 'Ibu Rumah Tangga',
+			'Pensiunan' => 'Pensiunan',
+			'Tidak Bekerja' => 'Tidak Bekerja',
+			'Lainnya' => 'Lainnya',
+		];
+	}
+
 	public function nutritionTexture($value = null)
 	{
 		$data = array(
@@ -1101,9 +1130,48 @@ class KrsHelper extends Helper
 			'Poli Penyakit Dalam' => 'Poli Penyakit Dalam',
 			'Poli Mata' => 'Poli Mata',
 			'Poli THT' => 'Poli THT',
+			'Poli Bedah' => 'Poli Bedah',
+			'Poli Saraf' => 'Poli Saraf',
+			'Poli Kulit' => 'Poli Kulit',
+			'Poli Jantung' => 'Poli Jantung',
+		];
+	}
+
+	public function religions()
+	{
+		return [
+			'Islam' => 'Islam',
+			'Kristen' => 'Kristen',
+			'Katolik' => 'Katolik',
+			'Hindu' => 'Hindu',
+			'Buddha' => 'Buddha',
+			'Konghucu' => 'Konghucu',
+			'Lainnya' => 'Lainnya',
+		];
+	}
+
+	public function classes()
+	{
+		return [
+			'VIP' => 'VIP',
+			'Kelas I' => 'Kelas I',
+			'Kelas II' => 'Kelas II',
+			'Kelas III' => 'Kelas III',
+			'ICU' => 'ICU',
+			'NICU' => 'NICU',
+			'PICU' => 'PICU',
+			'HCU' => 'HCU',
+			'Isolasi' => 'Isolasi',
+			'Rawat Khusus' => 'Rawat Khusus',
+		];
+	}
+
+	public function floors()
+	{
+		return [
+			'1' => 'Lantai 1',
+			'2' => 'Lantai 2',
+			'3' => 'Lantai 3',
 		];
 	}
 }
-
-
-?>

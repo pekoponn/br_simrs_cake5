@@ -3,264 +3,494 @@
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Patient $patient
  */
+
+$dataChild = $this->Html->link('Patient', ['action' => 'index'], ['full_base' => true]);
+$canViewPatientHistory = !empty($checkUrl['medicalrecords']['history']);
+
+$display = function ($value, $empty = '-') {
+    if ($value === null || $value === '') {
+        return $empty;
+    }
+
+    if (is_object($value) && method_exists($value, 'format')) {
+        return h($value->format('d-m-Y'));
+    }
+
+    return h($value);
+};
+
+$formatDateTime = function ($value) use ($display) {
+    if (empty($value)) {
+        return '-';
+    }
+
+    if (is_object($value) && method_exists($value, 'format')) {
+        return h($value->format('d-m-Y H:i'));
+    }
+
+    $timestamp = strtotime((string)$value);
+
+    return $timestamp ? h(date('d-m-Y H:i', $timestamp)) : $display($value);
+};
+
+$medicalRecordNo = $patient->medical_record_no ?? $patient->code ?? null;
+$patientCode = $patient->code ?? null;
+$genderLabel = [
+    'Male' => 'Laki-laki',
+    'Female' => 'Perempuan',
+    'L' => 'Laki-laki',
+    'P' => 'Perempuan',
+][$patient->gender ?? ''] ?? ($patient->gender ?? null);
+
+$statusLabel = ($patient->is_active ?? 'Y') === 'Y' ? 'Aktif' : 'Tidak Aktif';
+$statusClass = ($patient->is_active ?? 'Y') === 'Y' ? 'label-success' : 'label-danger';
+
+$province = $patient->province ?? $patient->id_prov ?? null;
+$city = $patient->city ?? $patient->id_kab ?? null;
+$district = $patient->district ?? $patient->id_kec ?? null;
+$subdistrict = $patient->subdistrict ?? $patient->id_kel ?? null;
+$personResponsibles = [];
+
+foreach (($patient->registrations ?? []) as $registration) {
+    if (!empty($registration->person_responsible)) {
+        $personResponsibles[$registration->person_responsible->id] = $registration->person_responsible;
+    }
+}
 ?>
-<div class="row">
-    <aside class="column">
-        <div class="side-nav">
-            <h4 class="heading"><?= __('Actions') ?></h4>
-            <?= $this->Html->link(__('Edit Patient'), ['action' => 'edit', $patient->id], ['class' => 'side-nav-item']) ?>
-            <?= $this->Form->postLink(__('Delete Patient'), ['action' => 'delete', $patient->id], ['confirm' => __('Are you sure you want to delete # {0}?', $patient->id), 'class' => 'side-nav-item']) ?>
-            <?= $this->Html->link(__('List Patients'), ['action' => 'index'], ['class' => 'side-nav-item']) ?>
-            <?= $this->Html->link(__('New Patient'), ['action' => 'add'], ['class' => 'side-nav-item']) ?>
+
+<?= $this->Krs->breadcrumb('Master', $dataChild, 'Detail') ?>
+
+<style>
+    .patient-view-hero {
+        border: 1px solid #e5ebf2;
+        border-radius: 8px;
+        background: #fff;
+        padding: 22px 24px;
+        margin-bottom: 18px;
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;
+        align-items: flex-start;
+    }
+
+    .patient-view-hero h3 {
+        margin: 4px 0 6px;
+        font-size: 26px;
+        font-weight: 700;
+        color: #1f2d3d;
+    }
+
+    .patient-view-hero .rm {
+        color: #348fe2;
+        font-weight: 700;
+        font-size: 14px;
+        letter-spacing: .2px;
+    }
+
+    .patient-view-hero .meta {
+        color: #6c7a89;
+        font-size: 13px;
+    }
+
+    .patient-action-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+
+    .patient-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(130px, 1fr));
+        gap: 10px;
+        margin-top: 18px;
+    }
+
+    .patient-summary-item {
+        border: 1px solid #e8edf3;
+        border-radius: 6px;
+        background: #fafbfc;
+        padding: 12px 14px;
+    }
+
+    .patient-summary-item .label-text,
+    .patient-detail-item .label-text {
+        color: #6c757d;
+        text-transform: uppercase;
+        font-size: 11px;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .patient-summary-item .value,
+    .patient-detail-item .value {
+        color: #1f2d3d;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.4;
+        word-break: break-word;
+    }
+
+    .patient-section {
+        border: 1px solid #e5ebf2;
+        border-radius: 8px;
+        background: #fff;
+        margin-bottom: 18px;
+        overflow: hidden;
+    }
+
+    .patient-section-header {
+        padding: 14px 16px;
+        border-bottom: 1px solid #edf1f5;
+        background: #fafbfd;
+        font-size: 15px;
+        font-weight: 700;
+        color: #1f2d3d;
+    }
+
+    .patient-section-header i {
+        margin-right: 7px;
+        color: #348fe2;
+    }
+
+    .patient-section-body {
+        padding: 16px;
+    }
+
+    .patient-detail-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(170px, 1fr));
+        gap: 12px;
+    }
+
+    .patient-detail-grid.two {
+        grid-template-columns: repeat(2, minmax(170px, 1fr));
+    }
+
+    .patient-detail-grid.one {
+        grid-template-columns: 1fr;
+    }
+
+    .patient-detail-item {
+        border-bottom: 1px solid #f0f2f5;
+        padding: 4px 0 10px;
+    }
+
+    .patient-empty {
+        border: 1px dashed #cfd8e3;
+        border-radius: 6px;
+        color: #6c757d;
+        text-align: center;
+        padding: 22px;
+        font-weight: 600;
+        background: #fbfcfd;
+    }
+
+    .patient-related-table th {
+        white-space: nowrap;
+    }
+
+    @media (max-width: 991px) {
+        .patient-view-hero {
+            display: block;
+        }
+
+        .patient-action-bar {
+            justify-content: flex-start;
+            margin-top: 14px;
+        }
+
+        .patient-summary-grid,
+        .patient-detail-grid,
+        .patient-detail-grid.two {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="panel panel-inverse">
+    <div class="panel-heading">
+        <h4 class="panel-title">
+            <i class="fa fa-user"></i> Detail Master Patient
+        </h4>
+
+        <div class="panel-heading-btn">
+            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default" data-click="panel-expand">
+                <i class="fa fa-expand"></i>
+            </a>
         </div>
-    </aside>
-    <div class="column-responsive column-80">
-        <div class="patients view content">
-            <h3><?= h($patient->full_name) ?></h3>
-            <table>
-                <tr>
-                    <th><?= __('Full Name') ?></th>
-                    <td><?= h($patient->full_name) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Identity Type') ?></th>
-                    <td><?= h($patient->identity_type) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Identity Number') ?></th>
-                    <td><?= h($patient->identity_number) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Gender') ?></th>
-                    <td><?= h($patient->gender) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Blood Type') ?></th>
-                    <td><?= h($patient->blood_type) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Mother Name') ?></th>
-                    <td><?= h($patient->mother_name) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Father Name') ?></th>
-                    <td><?= h($patient->father_name) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Phone Number') ?></th>
-                    <td><?= h($patient->phone_number) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Nationality') ?></th>
-                    <td><?= h($patient->nationality) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Citizenship') ?></th>
-                    <td><?= h($patient->citizenship) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Province') ?></th>
-                    <td><?= h($patient->province) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('City') ?></th>
-                    <td><?= h($patient->city) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('District') ?></th>
-                    <td><?= h($patient->district) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Subdistrict') ?></th>
-                    <td><?= h($patient->subdistrict) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Occupation') ?></th>
-                    <td><?= h($patient->occupation) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Religion') ?></th>
-                    <td><?= h($patient->religion) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Education') ?></th>
-                    <td><?= h($patient->education) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Ethnic Group') ?></th>
-                    <td><?= h($patient->ethnic_group) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Marital Status') ?></th>
-                    <td><?= h($patient->marital_status) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Is Active') ?></th>
-                    <td><?= h($patient->is_active) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Id') ?></th>
-                    <td><?= $this->Number->format($patient->id) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Is Create') ?></th>
-                    <td><?= $this->Number->format($patient->is_create) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Is Update') ?></th>
-                    <td><?= $this->Number->format($patient->is_update) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Is Delete') ?></th>
-                    <td><?= $this->Number->format($patient->is_delete) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Birth Date') ?></th>
-                    <td><?= h($patient->birth_date) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Created') ?></th>
-                    <td><?= h($patient->created) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Modified') ?></th>
-                    <td><?= h($patient->modified) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Deleted') ?></th>
-                    <td><?= h($patient->deleted) ?></td>
-                </tr>
-            </table>
-            <div class="text">
-                <strong><?= __('Address') ?></strong>
-                <blockquote>
-                    <?= $this->Text->autoParagraph(h($patient->address)); ?>
-                </blockquote>
-            </div>
-            <div class="text">
-                <strong><?= __('Delete Log') ?></strong>
-                <blockquote>
-                    <?= $this->Text->autoParagraph(h($patient->delete_log)); ?>
-                </blockquote>
-            </div>
-            <div class="text">
-                <strong><?= __('Is Log') ?></strong>
-                <blockquote>
-                    <?= $this->Text->autoParagraph(h($patient->is_log)); ?>
-                </blockquote>
-            </div>
-            <div class="related">
-                <h4><?= __('Related Patient Pics') ?></h4>
-                <?php if (!empty($patient->patient_pics)) : ?>
-                <div class="table-responsive">
-                    <table>
-                        <tr>
-                            <th><?= __('Id') ?></th>
-                            <th><?= __('Patient Id') ?></th>
-                            <th><?= __('Full Name') ?></th>
-                            <th><?= __('Identity Type') ?></th>
-                            <th><?= __('Relationship Type') ?></th>
-                            <th><?= __('Age') ?></th>
-                            <th><?= __('Occupation') ?></th>
-                            <th><?= __('Address') ?></th>
-                            <th><?= __('Phone Number') ?></th>
-                            <th><?= __('Is Create') ?></th>
-                            <th><?= __('Created') ?></th>
-                            <th><?= __('Is Update') ?></th>
-                            <th><?= __('Modified') ?></th>
-                            <th><?= __('Is Delete') ?></th>
-                            <th><?= __('Deleted') ?></th>
-                            <th><?= __('Delete Log') ?></th>
-                            <th><?= __('Is Active') ?></th>
-                            <th><?= __('Is Log') ?></th>
-                            <th class="actions"><?= __('Actions') ?></th>
-                        </tr>
-                        <?php foreach ($patient->patient_pics as $patientPics) : ?>
-                        <tr>
-                            <td><?= h($patientPics->id) ?></td>
-                            <td><?= h($patientPics->patient_id) ?></td>
-                            <td><?= h($patientPics->full_name) ?></td>
-                            <td><?= h($patientPics->identity_type) ?></td>
-                            <td><?= h($patientPics->relationship_type) ?></td>
-                            <td><?= h($patientPics->age) ?></td>
-                            <td><?= h($patientPics->occupation) ?></td>
-                            <td><?= h($patientPics->address) ?></td>
-                            <td><?= h($patientPics->phone_number) ?></td>
-                            <td><?= h($patientPics->is_create) ?></td>
-                            <td><?= h($patientPics->created) ?></td>
-                            <td><?= h($patientPics->is_update) ?></td>
-                            <td><?= h($patientPics->modified) ?></td>
-                            <td><?= h($patientPics->is_delete) ?></td>
-                            <td><?= h($patientPics->deleted) ?></td>
-                            <td><?= h($patientPics->delete_log) ?></td>
-                            <td><?= h($patientPics->is_active) ?></td>
-                            <td><?= h($patientPics->is_log) ?></td>
-                            <td class="actions">
-                                <?= $this->Html->link(__('View'), ['controller' => 'PatientPics', 'action' => 'view', $patientPics->id]) ?>
-                                <?= $this->Html->link(__('Edit'), ['controller' => 'PatientPics', 'action' => 'edit', $patientPics->id]) ?>
-                                <?= $this->Form->postLink(__('Delete'), ['controller' => 'PatientPics', 'action' => 'delete', $patientPics->id], ['confirm' => __('Are you sure you want to delete # {0}?', $patientPics->id)]) ?>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </table>
+    </div>
+
+    <div class="panel-body">
+        <div class="patient-view-hero">
+            <div>
+                <div class="rm"><?= $display($medicalRecordNo) ?></div>
+                <h3><?= $display($patient->full_name) ?></h3>
+                <div class="meta">
+                    Kode Pasien: <?= $display($patientCode) ?> |
+                    <?= $display($patient->identity_type) ?>
+                    <?= !empty($patient->identity_number) ? ' - ' . h($patient->identity_number) : '' ?>
+                    |
+                    <span class="label <?= $statusClass ?>"><?= h($statusLabel) ?></span>
                 </div>
+
+                <div class="patient-summary-grid">
+                    <div class="patient-summary-item">
+                        <div class="label-text">No Rekam Medis</div>
+                        <div class="value"><?= $display($medicalRecordNo) ?></div>
+                    </div>
+                    <div class="patient-summary-item">
+                        <div class="label-text">Kode Pasien</div>
+                        <div class="value"><?= $display($patientCode) ?></div>
+                    </div>
+                    <div class="patient-summary-item">
+                        <div class="label-text">Telepon</div>
+                        <div class="value"><?= $display($patient->phone_number) ?></div>
+                    </div>
+                    <div class="patient-summary-item">
+                        <div class="label-text">Jenis Kelamin</div>
+                        <div class="value"><?= $display($genderLabel) ?></div>
+                    </div>
+                    <div class="patient-summary-item">
+                        <div class="label-text">Tanggal Lahir</div>
+                        <div class="value"><?= $display($patient->birth_date) ?></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="patient-action-bar">
+                <?= $this->Html->link(
+                    '<i class="fa fa-arrow-left"></i> Kembali',
+                    ['action' => 'index'],
+                    ['class' => 'btn btn-default btn-sm', 'escape' => false]
+                ) ?>
+
+                <?= $this->Html->link(
+                    '<i class="fa fa-pencil-alt"></i> Ubah',
+                    ['action' => 'edit', $patient->id],
+                    ['class' => 'btn btn-info btn-sm', 'escape' => false]
+                ) ?>
+
+                <?php if ($canViewPatientHistory): ?>
+                    <?= $this->Html->link(
+                        '<i class="fa fa-history"></i> Riwayat Pasien',
+                        ['controller' => 'MedicalRecords', 'action' => 'history', $patient->id],
+                        ['class' => 'btn btn-primary btn-sm', 'escape' => false]
+                    ) ?>
                 <?php endif; ?>
             </div>
-            <div class="related">
-                <h4><?= __('Related Registrations') ?></h4>
-                <?php if (!empty($patient->registrations)) : ?>
-                <div class="table-responsive">
-                    <table>
-                        <tr>
-                            <th><?= __('Id') ?></th>
-                            <th><?= __('Registration Number') ?></th>
-                            <th><?= __('Patient Id') ?></th>
-                            <th><?= __('Registration Date') ?></th>
-                            <th><?= __('Service Type') ?></th>
-                            <th><?= __('Doctor Name') ?></th>
-                            <th><?= __('Room Name') ?></th>
-                            <th><?= __('Payment Method') ?></th>
-                            <th><?= __('Complaint') ?></th>
-                            <th><?= __('Status') ?></th>
-                            <th><?= __('Is Create') ?></th>
-                            <th><?= __('Created') ?></th>
-                            <th><?= __('Is Update') ?></th>
-                            <th><?= __('Modified') ?></th>
-                            <th><?= __('Is Delete') ?></th>
-                            <th><?= __('Deleted') ?></th>
-                            <th><?= __('Delete Log') ?></th>
-                            <th><?= __('Is Active') ?></th>
-                            <th class="actions"><?= __('Actions') ?></th>
-                        </tr>
-                        <?php foreach ($patient->registrations as $registrations) : ?>
-                        <tr>
-                            <td><?= h($registrations->id) ?></td>
-                            <td><?= h($registrations->registration_number) ?></td>
-                            <td><?= h($registrations->patient_id) ?></td>
-                            <td><?= h($registrations->registration_date) ?></td>
-                            <td><?= h($registrations->service_type) ?></td>
-                            <td><?= h($registrations->doctor_name) ?></td>
-                            <td><?= h($registrations->room_name) ?></td>
-                            <td><?= h($registrations->payment_method) ?></td>
-                            <td><?= h($registrations->complaint) ?></td>
-                            <td><?= h($registrations->status) ?></td>
-                            <td><?= h($registrations->is_create) ?></td>
-                            <td><?= h($registrations->created) ?></td>
-                            <td><?= h($registrations->is_update) ?></td>
-                            <td><?= h($registrations->modified) ?></td>
-                            <td><?= h($registrations->is_delete) ?></td>
-                            <td><?= h($registrations->deleted) ?></td>
-                            <td><?= h($registrations->delete_log) ?></td>
-                            <td><?= h($registrations->is_active) ?></td>
-                            <td class="actions">
-                                <?= $this->Html->link(__('View'), ['controller' => 'Registrations', 'action' => 'view', $registrations->id]) ?>
-                                <?= $this->Html->link(__('Edit'), ['controller' => 'Registrations', 'action' => 'edit', $registrations->id]) ?>
-                                <?= $this->Form->postLink(__('Delete'), ['controller' => 'Registrations', 'action' => 'delete', $registrations->id], ['confirm' => __('Are you sure you want to delete # {0}?', $registrations->id)]) ?>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </table>
+        </div>
+
+        <div class="row">
+            <div class="col-md-7">
+                <div class="patient-section">
+                    <div class="patient-section-header">
+                        <i class="fa fa-id-card"></i> Biodata Pasien
+                    </div>
+                    <div class="patient-section-body">
+                        <div class="patient-detail-grid">
+                            <div class="patient-detail-item">
+                                <div class="label-text">Identitas</div>
+                                <div class="value">
+                                    <?= $display($patient->identity_type) ?>
+                                    <?= !empty($patient->identity_number) ? ' - ' . h($patient->identity_number) : '' ?>
+                                </div>
+                            </div>
+                            <div class="patient-detail-item">
+                                <div class="label-text">Golongan Darah</div>
+                                <div class="value"><?= $display($patient->blood_type) ?></div>
+                            </div>
+                            <div class="patient-detail-item">
+                                <div class="label-text">Umur</div>
+                                <div class="value"><?= $display($patient->age) ?></div>
+                            </div>
+                            <div class="patient-detail-item">
+                                <div class="label-text">Kewarganegaraan</div>
+                                <div class="value"><?= $display($patient->citizenship) ?></div>
+                            </div>
+                            <div class="patient-detail-item">
+                                <div class="label-text">Negara</div>
+                                <div class="value"><?= $display($patient->nationality) ?></div>
+                            </div>
+                            <div class="patient-detail-item">
+                                <div class="label-text">Status Nikah</div>
+                                <div class="value"><?= $display($patient->marital_status) ?></div>
+                            </div>
+                            <div class="patient-detail-item">
+                                <div class="label-text">Pekerjaan</div>
+                                <div class="value"><?= $display($patient->occupation) ?></div>
+                            </div>
+                            <div class="patient-detail-item">
+                                <div class="label-text">Agama</div>
+                                <div class="value"><?= $display($patient->religion) ?></div>
+                            </div>
+                            <div class="patient-detail-item">
+                                <div class="label-text">Pendidikan</div>
+                                <div class="value"><?= $display($patient->education) ?></div>
+                            </div>
+                            <div class="patient-detail-item">
+                                <div class="label-text">Suku Bangsa</div>
+                                <div class="value"><?= $display($patient->ethnic_group) ?></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
+                <div class="patient-section">
+                    <div class="patient-section-header">
+                        <i class="fa fa-map-marker-alt"></i> Alamat
+                    </div>
+                    <div class="patient-section-body">
+                        <div class="patient-detail-grid two">
+                            <div class="patient-detail-item" style="grid-column: 1 / -1;">
+                                <div class="label-text">Alamat Lengkap</div>
+                                <div class="value"><?= $display($patient->address) ?></div>
+                            </div>
+                            <div class="patient-detail-item">
+                                <div class="label-text">Provinsi</div>
+                                <div class="value"><?= $display($province) ?></div>
+                            </div>
+                            <div class="patient-detail-item">
+                                <div class="label-text">Kabupaten/Kota</div>
+                                <div class="value"><?= $display($city) ?></div>
+                            </div>
+                            <div class="patient-detail-item">
+                                <div class="label-text">Kecamatan</div>
+                                <div class="value"><?= $display($district) ?></div>
+                            </div>
+                            <div class="patient-detail-item">
+                                <div class="label-text">Kelurahan</div>
+                                <div class="value"><?= $display($subdistrict) ?></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-5">
+                <div class="patient-section">
+                    <div class="patient-section-header">
+                        <i class="fa fa-users"></i> Keluarga
+                    </div>
+                    <div class="patient-section-body">
+                        <div class="patient-detail-grid one">
+                            <div class="patient-detail-item">
+                                <div class="label-text">Nama Ayah</div>
+                                <div class="value"><?= $display($patient->father_name) ?></div>
+                            </div>
+                            <div class="patient-detail-item">
+                                <div class="label-text">Nama Ibu</div>
+                                <div class="value"><?= $display($patient->mother_name) ?></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="patient-section">
+                    <div class="patient-section-header">
+                        <i class="fa fa-info-circle"></i> Informasi Sistem
+                    </div>
+                    <div class="patient-section-body">
+                        <div class="patient-detail-grid one">
+                            <div class="patient-detail-item">
+                                <div class="label-text">Dibuat</div>
+                                <div class="value"><?= $formatDateTime($patient->created) ?></div>
+                            </div>
+                            <div class="patient-detail-item">
+                                <div class="label-text">Diubah</div>
+                                <div class="value"><?= $formatDateTime($patient->modified) ?></div>
+                            </div>
+                            <div class="patient-detail-item">
+                                <div class="label-text">Status</div>
+                                <div class="value"><span class="label <?= $statusClass ?>"><?= h($statusLabel) ?></span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <?php if (!empty($personResponsibles)): ?>
+                    <div class="patient-section">
+                        <div class="patient-section-header">
+                            <i class="fa fa-address-book"></i> Penanggung Jawab
+                        </div>
+                        <div class="patient-section-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-sm patient-related-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Nama</th>
+                                            <th>Hubungan</th>
+                                            <th>Identitas</th>
+                                            <th>Telepon</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($personResponsibles as $personResponsible): ?>
+                                            <tr>
+                                                <td><?= $display($personResponsible->name ?? null) ?></td>
+                                                <td><?= $display($personResponsible->relation ?? null) ?></td>
+                                                <td>
+                                                    <?= $display($personResponsible->identity_type ?? null) ?>
+                                                    <?= !empty($personResponsible->identity_no) ? ' - ' . h($personResponsible->identity_no) : '' ?>
+                                                </td>
+                                                <td><?= $display($personResponsible->phone ?? null) ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <div class="patient-section">
+            <div class="patient-section-header">
+                <i class="fa fa-list-alt"></i> Riwayat Registrasi
+            </div>
+            <div class="patient-section-body">
+                <?php if (!empty($patient->registrations)): ?>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover table-sm patient-related-table">
+                            <thead>
+                                <tr>
+                                    <th>No Registrasi</th>
+                                    <th>Tanggal</th>
+                                    <th>Layanan</th>
+                                    <th>Poli/Unit</th>
+                                    <th>Status</th>
+                                    <th width="80">&nbsp;</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($patient->registrations as $registration): ?>
+                                    <tr>
+                                        <td><b><?= $display($registration->registration_no ?? $registration->registration_number ?? null) ?></b></td>
+                                        <td><?= $display($registration->registration_date ?? null) ?></td>
+                                        <td><?= $display($registration->service_type ?? null) ?></td>
+                                        <td><?= $display($registration->polyclinic_name ?? null) ?></td>
+                                        <td><?= $display($registration->status ?? null) ?></td>
+                                        <td class="text-center">
+                                            <?= $this->Html->link(
+                                                '<i class="fa fa-eye"></i>',
+                                                ['controller' => 'Registrations', 'action' => 'view', $registration->id],
+                                                [
+                                                    'class' => 'btn btn-yellow btn-sm p-l-15 p-r-15',
+                                                    'escape' => false,
+                                                    'data-toggle' => 'tooltip',
+                                                    'data-placement' => 'top',
+                                                    'data-original-title' => 'Lihat Registrasi'
+                                                ]
+                                            ) ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php else: ?>
+                    <div class="patient-empty">Data registrasi belum tersedia.</div>
                 <?php endif; ?>
             </div>
         </div>

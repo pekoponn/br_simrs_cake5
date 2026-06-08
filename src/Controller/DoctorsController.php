@@ -18,9 +18,6 @@ class DoctorsController extends AppController
      */
     public function index()
     {
-        $this->paginate = [
-            'contain' => ['Polyclinics'],
-        ];
         $doctors = $this->paginate($this->Doctors);
 
         $this->set(compact('doctors'));
@@ -36,7 +33,7 @@ class DoctorsController extends AppController
     public function view($id = null)
     {
         $doctor = $this->Doctors->get($id, [
-            'contain' => ['Polyclinics', 'DoctorSchedules'],
+            'contain' => ['DoctorSchedules'],
         ]);
 
         $this->set(compact('doctor'));
@@ -51,7 +48,13 @@ class DoctorsController extends AppController
     {
         $doctor = $this->Doctors->newEmptyEntity();
         if ($this->request->is('post')) {
-            $doctor = $this->Doctors->patchEntity($doctor, $this->request->getData());
+            $data = $this->request->getData();
+
+            if (empty($data['code'])) {
+                $data['code'] = $this->generateDoctorCode();
+            }
+
+            $doctor = $this->Doctors->patchEntity($doctor, $data);
             if ($this->Doctors->save($doctor)) {
                 $this->Flash->success(__('The doctor has been saved.'));
 
@@ -59,8 +62,11 @@ class DoctorsController extends AppController
             }
             $this->Flash->error(__('The doctor could not be saved. Please, try again.'));
         }
-        $polyclinics = $this->Doctors->Polyclinics->find('list', ['limit' => 200]);
-        $this->set(compact('doctor', 'polyclinics'));
+
+        $polyclinics = $this->getPolyclinicOptions();
+        $religions = $this->getReligionOptions();
+
+        $this->set(compact('doctor', 'polyclinics', 'religions'));
     }
 
     /**
@@ -76,7 +82,9 @@ class DoctorsController extends AppController
             'contain' => [],
         ]);
         if ($this->request->is(['patch', 'post', 'put'])) {
-            $doctor = $this->Doctors->patchEntity($doctor, $this->request->getData());
+            $data = $this->request->getData();
+
+            $doctor = $this->Doctors->patchEntity($doctor, $data);
             if ($this->Doctors->save($doctor)) {
                 $this->Flash->success(__('The doctor has been saved.'));
 
@@ -84,8 +92,50 @@ class DoctorsController extends AppController
             }
             $this->Flash->error(__('The doctor could not be saved. Please, try again.'));
         }
-        $polyclinics = $this->Doctors->Polyclinics->find('list', ['limit' => 200]);
-        $this->set(compact('doctor', 'polyclinics'));
+        $polyclinics = $this->getPolyclinicOptions();
+        $religions = $this->getReligionOptions();
+        $this->set(compact('doctor', 'polyclinics', 'religions'));
+    }
+
+    private function generateDoctorCode(): string
+    {
+        $lastDoctor = $this->Doctors->find()
+            ->select(['id'])
+            ->order(['Doctors.id' => 'DESC'])
+            ->first();
+        $nextId = $lastDoctor ? ((int)$lastDoctor->id + 1) : 1;
+
+        return 'DR-' . str_pad((string)$nextId, 4, '0', STR_PAD_LEFT);
+    }
+
+    private function getPolyclinicOptions(): array
+    {
+        return [
+            'Poli Umum' => 'Poli Umum',
+            'Poli Gigi' => 'Poli Gigi',
+            'Poli Anak' => 'Poli Anak',
+            'Poli Kandungan' => 'Poli Kandungan',
+            'Poli Penyakit Dalam' => 'Poli Penyakit Dalam',
+            'Poli Mata' => 'Poli Mata',
+            'Poli THT' => 'Poli THT',
+            'Poli Bedah' => 'Poli Bedah',
+            'Poli Saraf' => 'Poli Saraf',
+            'Poli Kulit' => 'Poli Kulit',
+            'Poli Jantung' => 'Poli Jantung',
+        ];
+    }
+
+    private function getReligionOptions(): array
+    {
+        return [
+            'Islam' => 'Islam',
+            'Kristen' => 'Kristen',
+            'Katolik' => 'Katolik',
+            'Hindu' => 'Hindu',
+            'Buddha' => 'Buddha',
+            'Konghucu' => 'Konghucu',
+            'Lainnya' => 'Lainnya',
+        ];
     }
 
     /**

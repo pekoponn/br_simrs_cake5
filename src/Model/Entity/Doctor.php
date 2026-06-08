@@ -15,7 +15,7 @@ use Cake\ORM\Entity;
  * @property string $nik
  * @property string $doctor_name
  * @property string $specialist
- * @property int $polyclinic_id
+ * @property string $polyclinic_name
  * @property string $religion
  * @property string $sip_number
  * @property string $str_number
@@ -33,7 +33,6 @@ use Cake\ORM\Entity;
  * @property string|null $delete_log
  * @property string $is_active
  *
- * @property \App\Model\Entity\Polyclinic $polyclinic
  * @property \App\Model\Entity\DoctorSchedule[] $doctor_schedules
  */
 class Doctor extends Entity
@@ -54,7 +53,7 @@ class Doctor extends Entity
         'nik' => true,
         'doctor_name' => true,
         'specialist' => true,
-        'polyclinic_id' => true,
+        'polyclinic_name' => true,
         'religion' => true,
         'sip_number' => true,
         'str_number' => true,
@@ -71,7 +70,6 @@ class Doctor extends Entity
         'deleted' => true,
         'delete_log' => true,
         'is_active' => true,
-        'polyclinic' => true,
         'doctor_schedules' => true,
     ];
 }

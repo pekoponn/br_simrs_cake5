@@ -2,9 +2,15 @@
 /**
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Doctor $doctor
+ * @var array $polyclinics
+ * @var array $religions
  */
 
 $dataChild = $this->Html->link('Doctor', ['action' => 'index'], ['full_base'=>true]);
+$polyclinics = $polyclinics ?? $this->Krs->polyclinics();
+$religions = $religions ?? $this->Krs->religions();
+$selectedPolyclinic = $this->request->getData('polyclinic_name')
+    ?? ($doctor->polyclinic_name ?? '');
 ?>
 
 <?= $this->Krs->breadcrumb('Master', $dataChild, 'Edit') ?>
@@ -125,11 +131,13 @@ $dataChild = $this->Html->link('Doctor', ['action' => 'index'], ['full_base'=>tr
 
             <div class="col-md-3">
                 <?php
-                echo $this->Form->control('polyclinic', [
+                echo $this->Form->control('polyclinic_name', [
+                    'type' => 'select',
                     'label' => false,
-                    'class' => 'form-control',
-                    'placeholder' => 'Polyclinic...',
-                    'value' => $doctor->polyclinic
+                    'class' => 'form-control select2Form',
+                    'options' => $polyclinics,
+                    'empty' => '-- Pilih Polyclinic --',
+                    'value' => $selectedPolyclinic
                 ]);
                 ?>
             </div>
@@ -141,9 +149,11 @@ $dataChild = $this->Html->link('Doctor', ['action' => 'index'], ['full_base'=>tr
             <div class="col-md-3">
                 <?php
                 echo $this->Form->control('religion', [
+                    'type' => 'select',
                     'label' => false,
-                    'class' => 'form-control',
-                    'placeholder' => 'Religion...',
+                    'class' => 'form-control select2Form',
+                    'options' => $religions,
+                    'empty' => '-- Pilih Religion --',
                     'value' => $doctor->religion
                 ]);
                 ?>

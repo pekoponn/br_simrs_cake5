@@ -992,11 +992,13 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
 
     //patient
     $patient = $rules['patients'];
-    $patientsIndex = ($patient['index'] == 1) ? 'checked' : '';
-    $patientsAdd = ($patient['add'] == 1) ? 'checked' : '';
-    $patientsEdit = ($patient['edit'] == 1) ? 'checked' : '';
-    $patientsView = ($patient['view'] == 1) ? 'checked' : '';
-    $patientsDelete = ($patient['delete'] == 1) ? 'checked' : '';
+    $patientsIndex = (($patient['index'] ?? 0) == 1) ? 'checked' : '';
+    $patientsAdd = (($patient['add'] ?? 0) == 1) ? 'checked' : '';
+    $patientsEdit = (($patient['edit'] ?? 0) == 1) ? 'checked' : '';
+    $patientsView = (($patient['view'] ?? 0) == 1) ? 'checked' : '';
+    $patientsDelete = (($patient['delete'] ?? 0) == 1) ? 'checked' : '';
+    $patientsDataExportImport = (($patient['dataExportImport'] ?? 0) == 1) ? 'checked' : '';
+    $patientsDataExportImportXls = (($patient['dataExportImportXls'] ?? 0) == 1) ? 'checked' : '';
 
     //healthfacilities
     $healthfacilities = $rules['healthfacilities'];
@@ -1063,6 +1065,10 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
     $registrationsAdd = ($registrations['add'] == 1) ? 'checked' : '';
     $registrationsEdit = ($registrations['edit'] == 1) ? 'checked' : '';
     $registrationsDelete = ($registrations['delete'] == 1) ? 'checked' : '';
+
+    //medicalrecords
+    $medicalrecords = $rules['medicalrecords'] ?? ['history' => 0];
+    $medicalrecordsHistory = (!empty($medicalrecords['history'])) ? 'checked' : '';
 
     //registrations
     $beds = $rules['beds'];
@@ -3489,6 +3495,17 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
                                         ?>
                                         <label class="form-check-label">Hapus</label>
                                     </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php
+                                        echo $this->Form->checkbox('Rules.medicalrecords.history', [
+                                            'value' => '1',
+                                            'hiddenField' => true,
+                                            'checked' => $medicalrecordsHistory,
+                                            'class' => 'form-check-input'
+                                        ]);
+                                        ?>
+                                        <label class="form-check-label">Riwayat Pasien</label>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
@@ -4228,7 +4245,7 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
                                     </div>
                                     <div class="form-check form-check-inline">
                                         <?php
-                                        echo $this->Form->checkbox('Rules.patients.preview', ['value' => '1', 'hiddenField' => true, 'checked' => $patientsPreview, 'class' => 'form-check-input']);
+                                        echo $this->Form->checkbox('Rules.patients.view', ['value' => '1', 'hiddenField' => true, 'checked' => $patientsView, 'class' => 'form-check-input']);
                                         ?>
                                         <label class="form-check-label">Tampilkan</label>
                                     </div>

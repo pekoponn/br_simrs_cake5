@@ -236,7 +236,7 @@ $pages = (empty($this->request->getQuery('page'))) ? '' : $this->request->getQue
                                     </td>
 
                                     <td align="center">
-                                        <?= h($rowData->polyclinic->name ?? '-') ?>
+                                        <?= h($rowData->polyclinic_name ?? '-') ?>
                                     </td>
 
                                     <td align="center">

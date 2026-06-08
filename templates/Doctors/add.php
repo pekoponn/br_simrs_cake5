@@ -2,9 +2,13 @@
 /**
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Doctor $doctor
+ * @var array $polyclinics
+ * @var array $religions
  */
 
 $dataChild = $this->Html->link('Doctor', ['action' => 'index'], ['full_base' => true]);
+$polyclinics = $polyclinics ?? $this->Krs->polyclinics();
+$religions = $religions ?? $this->Krs->religions();
 ?>
 
 <?= $this->Krs->breadcrumb('Master', $dataChild, 'Buat') ?>
@@ -42,9 +46,7 @@ $dataChild = $this->Html->link('Doctor', ['action' => 'index'], ['full_base' => 
                 echo $this->Form->control('code', [
                     'label' => false,
                     'class' => 'form-control',
-                    'placeholder' => 'Kode...',
-                    'required' => true,
-                    'data-parsley-required-message' => "Kode tidak boleh kosong!"
+                    'placeholder' => 'Kosongkan untuk auto-generate'
                 ]);
                 ?>
 
@@ -133,7 +135,7 @@ $dataChild = $this->Html->link('Doctor', ['action' => 'index'], ['full_base' => 
             <div class="col-md-3">
 
                 <?php
-                echo $this->Form->control('polyclinic_id', [
+                echo $this->Form->control('polyclinic_name', [
                     'label' => false,
                     'class' => 'form-control select2Form',
                     'options' => $polyclinics,
@@ -152,9 +154,11 @@ $dataChild = $this->Html->link('Doctor', ['action' => 'index'], ['full_base' => 
 
                 <?php
                 echo $this->Form->control('religion', [
+                    'type' => 'select',
                     'label' => false,
-                    'class' => 'form-control',
-                    'placeholder' => 'Religion...'
+                    'class' => 'form-control select2Form',
+                    'options' => $religions,
+                    'empty' => '-- Pilih Religion --'
                 ]);
                 ?>
 

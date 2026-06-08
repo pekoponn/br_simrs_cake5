@@ -60,6 +60,11 @@ $routes->scope('/', function (RouteBuilder $builder) {
      * ...and connect the rest of 'Pages' controller's URLs.
      */
     $builder->connect('/pages/*', 'Pages::display');
+    $builder->connect(
+        '/medical-records/history/:patient_id',
+        ['controller' => 'MedicalRecords', 'action' => 'history'],
+        ['pass' => ['patient_id'], 'patient_id' => '\d+']
+    );
 
     /*
      * Connect catchall routes for all controllers.

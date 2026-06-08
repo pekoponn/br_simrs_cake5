@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller;
@@ -47,15 +48,24 @@ class RoomsController extends AppController
     public function add()
     {
         $room = $this->Rooms->newEmptyEntity();
+
         if ($this->request->is('post')) {
-            $room = $this->Rooms->patchEntity($room, $this->request->getData());
+            $data = $this->request->getData();
+
+            if (!empty($data['auto_room_code']) || empty($data['room_code'])) {
+                $data['room_code'] = $this->generateRoomCode();
+            }
+
+            $room = $this->Rooms->patchEntity($room, $data);
+
             if ($this->Rooms->save($room)) {
                 $this->Flash->success(__('The room has been saved.'));
-
                 return $this->redirect(['action' => 'index']);
             }
+
             $this->Flash->error(__('The room could not be saved. Please, try again.'));
         }
+
         $this->set(compact('room'));
     }
 
@@ -101,5 +111,16 @@ class RoomsController extends AppController
         }
 
         return $this->redirect(['action' => 'index']);
+    }
+
+    private function generateRoomCode()
+    {
+        $lastRoom = $this->Rooms->find()
+            ->order(['id' => 'DESC'])
+            ->first();
+
+        $next = $lastRoom ? ((int)$lastRoom->id + 1) : 1;
+
+        return 'RM' . str_pad((string)$next, 3, '0', STR_PAD_LEFT);
     }
 }

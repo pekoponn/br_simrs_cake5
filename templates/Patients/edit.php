@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Patient $patient
@@ -32,29 +33,47 @@ $dataChild = $this->Html->link('Patient', ['action' => 'index'], ['full_base' =>
         <!-- ROW 1 -->
         <div class="form-group row m-b-15">
 
-            <label class="col-form-label col-md-1">
-                Kode
-            </label>
+            <label class="col-form-label col-md-1">Kode</label>
 
             <div class="col-md-2">
 
-                <?php
-                echo $this->Form->control('code', [
-                    'label' => false,
-                    'class' => 'form-control',
-                    'placeholder' => 'Kode...',
-                    'required' => true,
-                    'value' => $patient->code
-                ]);
-                ?>
+                <div class="input-group">
+
+                    <span class="input-group-addon">
+                        <input type="checkbox" id="auto-code" checked>
+                    </span>
+
+                    <?= $this->Form->control('code', [
+                        'label' => false,
+                        'class' => 'form-control',
+                        'placeholder' => 'Kode Otomatis..',
+                        'disabled' => true,
+                        'id' => 'patient-code'
+                    ]); ?>
+
+                </div>
+
+                <small class="text-muted">
+                    Centang bila menggunakan kode otomatis.
+                </small>
 
             </div>
 
-            <label class="col-form-label col-md-2">
-                Nama Pasien
-            </label>
+            <label class="col-form-label col-md-1">No RM</label>
 
-            <div class="col-md-7">
+            <div class="col-md-2">
+                <?= $this->Form->control('medical_record_no', [
+                    'label' => false,
+                    'class' => 'form-control',
+                    'placeholder' => 'No Rekam Medis',
+                    'value' => $patient->medical_record_no ?? $patient->code ?? '',
+                    'readonly' => true
+                ]); ?>
+            </div>
+
+            <label class="col-form-label col-md-2">Nama Pasien</label>
+
+            <div class="col-md-4">
 
                 <?php
                 echo $this->Form->control('full_name', [
@@ -77,10 +96,9 @@ $dataChild = $this->Html->link('Patient', ['action' => 'index'], ['full_base' =>
                 Identitas
             </label>
 
-            <div class="col-md-3">
-
-                <?php
-                echo $this->Form->control('identity_type', [
+            <div class="col-md-2">
+                <?=
+                $this->Form->control('identity_type', [
                     'label' => false,
                     'class' => 'form-control select2Form',
                     'options' => [
@@ -88,11 +106,9 @@ $dataChild = $this->Html->link('Patient', ['action' => 'index'], ['full_base' =>
                         'SIM' => 'SIM',
                         'PASSPORT' => 'Passport'
                     ],
-                    'empty' => '-- Pilih --',
-                    'default' => $patient->identity_type
+                    'empty' => '-- Pilih --'
                 ]);
                 ?>
-
             </div>
 
             <label class="col-form-label col-md-2">
@@ -167,14 +183,14 @@ $dataChild = $this->Html->link('Patient', ['action' => 'index'], ['full_base' =>
 
             <div class="col-md-3">
 
-                <?php
-                echo $this->Form->control('birth_date', [
-                    'type' => 'date',
+                <?= $this->Form->control('birth_date', [
+                    'type' => 'text',
                     'label' => false,
-                    'class' => 'form-control',
-                    'value' => $patient->birth_date
-                ]);
-                ?>
+                    'class' => 'form-control datepicker-autoclose',
+                    'id' => 'birth-date',
+                    'autocomplete' => 'off',
+                    'value' => !empty($patient->birth_date) ? $patient->birth_date->format('Y-m-d') : ''
+                ]); ?>
 
             </div>
 
@@ -184,10 +200,23 @@ $dataChild = $this->Html->link('Patient', ['action' => 'index'], ['full_base' =>
         <div class="form-group row m-b-15">
 
             <label class="col-form-label col-md-1">
+                Umur
+            </label>
+
+            <div class="col-md-2">
+                <?= $this->Form->control('age', [
+                    'label' => false,
+                    'class' => 'form-control',
+                    'id' => 'age',
+                    'readonly' => true,
+                    'value' => $patient->age
+                ]); ?>
+            </div>
+            <label class="col-form-label col-md-1">
                 Ibu
             </label>
 
-            <div class="col-md-5">
+            <div class="col-md-3">
 
                 <?php
                 echo $this->Form->control('mother_name', [
@@ -204,7 +233,7 @@ $dataChild = $this->Html->link('Patient', ['action' => 'index'], ['full_base' =>
                 Ayah
             </label>
 
-            <div class="col-md-5">
+            <div class="col-md-3">
 
                 <?php
                 echo $this->Form->control('father_name', [
@@ -278,55 +307,31 @@ $dataChild = $this->Html->link('Patient', ['action' => 'index'], ['full_base' =>
         <!-- ROW 6 -->
         <div class="form-group row m-b-15">
 
-            <label class="col-form-label col-md-1">
-                Provinsi
-            </label>
-
+            <label class="col-form-label col-md-1">Provinsi</label>
             <div class="col-md-3">
-
-                <?php
-                echo $this->Form->control('province', [
-                    'label' => false,
-                    'class' => 'form-control',
-                    'placeholder' => 'Provinsi...',
-                    'value' => $patient->province
-                ]);
-                ?>
-
+                <select name="id_prov" id="ui-prov" class="form-control select2Form">
+                    <option value="">-- Pilih Provinsi --</option>
+                    <?php foreach (($provinces ?? []) as $prov): ?>
+                        <option value="<?= h($prov['id_prov']) ?>"
+                            <?= ($patient->id_prov == $prov['id_prov']) ? 'selected' : '' ?>>
+                            <?= h($prov['nama']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
             </div>
 
-            <label class="col-form-label col-md-1">
-                Kota
-            </label>
-
+            <label class="col-form-label col-md-1">Kota</label>
             <div class="col-md-3">
-
-                <?php
-                echo $this->Form->control('city', [
-                    'label' => false,
-                    'class' => 'form-control',
-                    'placeholder' => 'Kota...',
-                    'value' => $patient->city
-                ]);
-                ?>
-
+                <select name="id_kab" id="ui-kab" class="form-control select2Form">
+                    <option value="">-- Pilih Kabupaten/Kota --</option>
+                </select>
             </div>
 
-            <label class="col-form-label col-md-1">
-                Kecamatan
-            </label>
-
+            <label class="col-form-label col-md-1">Kecamatan</label>
             <div class="col-md-3">
-
-                <?php
-                echo $this->Form->control('district', [
-                    'label' => false,
-                    'class' => 'form-control',
-                    'placeholder' => 'Kecamatan...',
-                    'value' => $patient->district
-                ]);
-                ?>
-
+                <select name="id_kec" id="ui-kec" class="form-control select2Form">
+                    <option value="">-- Pilih Kecamatan --</option>
+                </select>
             </div>
 
         </div>
@@ -334,21 +339,11 @@ $dataChild = $this->Html->link('Patient', ['action' => 'index'], ['full_base' =>
         <!-- ROW 7 -->
         <div class="form-group row m-b-15">
 
-            <label class="col-form-label col-md-1">
-                Kelurahan
-            </label>
-
+            <label class="col-form-label col-md-1">Kelurahan</label>
             <div class="col-md-3">
-
-                <?php
-                echo $this->Form->control('subdistrict', [
-                    'label' => false,
-                    'class' => 'form-control',
-                    'placeholder' => 'Kelurahan...',
-                    'value' => $patient->subdistrict
-                ]);
-                ?>
-
+                <select name="id_kel" id="ui-kel" class="form-control select2Form">
+                    <option value="">-- Pilih Kelurahan --</option>
+                </select>
             </div>
 
             <label class="col-form-label col-md-1">
@@ -489,26 +484,153 @@ $dataChild = $this->Html->link('Patient', ['action' => 'index'], ['full_base' =>
 </div>
 
 <script type="text/javascript">
-
-    $(document).ready(function () {
+    $(document).ready(function() {
 
         $(".select2Form").select2();
+
+        var selectedKab = "<?= h($patient->id_kab ?? '') ?>";
+        var selectedKec = "<?= h($patient->id_kec ?? '') ?>";
+        var selectedKel = "<?= h($patient->id_kel ?? '') ?>";
+
+        function loadKabupatens(idProv, selectedValue = '') {
+            $('#ui-kab').html('<option value="">-- Pilih Kabupaten/Kota --</option>');
+            $('#ui-kec').html('<option value="">-- Pilih Kecamatan --</option>');
+            $('#ui-kel').html('<option value="">-- Pilih Kelurahan --</option>');
+
+            if (!idProv) return;
+
+            $.getJSON(
+                "<?= $this->Url->build(['controller' => 'Patients', 'action' => 'getKabupatens']) ?>", {
+                    id_prov: idProv
+                },
+                function(data) {
+                    $.each(data, function(index, item) {
+                        var selected = item.id_kab == selectedValue ? 'selected' : '';
+                        $('#ui-kab').append('<option value="' + item.id_kab + '" ' + selected + '>' + item.nama + '</option>');
+                    });
+
+                    $('#ui-kab').trigger('change.select2');
+
+                    if (selectedValue) {
+                        loadKecamatans(selectedValue, selectedKec);
+                    }
+                }
+            );
+        }
+
+        function loadKecamatans(idKab, selectedValue = '') {
+            $('#ui-kec').html('<option value="">-- Pilih Kecamatan --</option>');
+            $('#ui-kel').html('<option value="">-- Pilih Kelurahan --</option>');
+
+            if (!idKab) return;
+
+            $.getJSON(
+                "<?= $this->Url->build(['controller' => 'Patients', 'action' => 'getKecamatans']) ?>", {
+                    id_kab: idKab
+                },
+                function(data) {
+                    $.each(data, function(index, item) {
+                        var selected = item.id_kec == selectedValue ? 'selected' : '';
+                        $('#ui-kec').append('<option value="' + item.id_kec + '" ' + selected + '>' + item.nama + '</option>');
+                    });
+
+                    $('#ui-kec').trigger('change.select2');
+
+                    if (selectedValue) {
+                        loadKelurahans(selectedValue, selectedKel);
+                    }
+                }
+            );
+        }
+
+        function loadKelurahans(idKec, selectedValue = '') {
+            $('#ui-kel').html('<option value="">-- Pilih Kelurahan --</option>');
+
+            if (!idKec) return;
+
+            $.getJSON(
+                "<?= $this->Url->build(['controller' => 'Patients', 'action' => 'getKelurahans']) ?>", {
+                    id_kec: idKec
+                },
+                function(data) {
+                    $.each(data, function(index, item) {
+                        var selected = item.id_kel == selectedValue ? 'selected' : '';
+                        $('#ui-kel').append('<option value="' + item.id_kel + '" ' + selected + '>' + item.nama + '</option>');
+                    });
+
+                    $('#ui-kel').trigger('change.select2');
+                }
+            );
+        }
+
+        $('#ui-prov').on('change', function() {
+            loadKabupatens($(this).val());
+        });
+
+        $('#ui-kab').on('change', function() {
+            loadKecamatans($(this).val());
+        });
+
+        $('#ui-kec').on('change', function() {
+            loadKelurahans($(this).val());
+        });
+
+        if ($('#ui-prov').val()) {
+            loadKabupatens($('#ui-prov').val(), selectedKab);
+        }
+
+        function calculateAge(birthDate) {
+            if (!birthDate) return '';
+
+            var today = new Date();
+            var birth = new Date(birthDate);
+
+            var years = today.getFullYear() - birth.getFullYear();
+            var months = today.getMonth() - birth.getMonth();
+            var days = today.getDate() - birth.getDate();
+
+            if (days < 0) {
+                months--;
+                days += new Date(today.getFullYear(), today.getMonth(), 0).getDate();
+            }
+
+            if (months < 0) {
+                years--;
+                months += 12;
+            }
+
+            return years + ' Tahun ' + months + ' Bulan ' + days + ' Hari';
+        }
+
+        $('.datepicker-autoclose').datepicker({
+            format: 'yyyy-mm-dd',
+            autoclose: true,
+            todayHighlight: true
+        });
+
+        $('#birth-date').on('change changeDate', function() {
+            $('#age').val(calculateAge($(this).val()));
+        });
+
+        if ($('#birth-date').val() && !$('#age').val()) {
+            $('#age').val(calculateAge($('#birth-date').val()));
+        }
 
         var confirmTitle = "Apakah anda ingin menyimpan data tersebut ?";
 
         var formAction = "<?=
-            $this->Url->build(
-                ['controller' => 'Patients', 'action' => 'edit', $patient->id],
-                ['fullBase' => true]
-            );
-        ?>";
+                            $this->Url->build(
+                                ['controller' => 'Patients', 'action' => 'edit', $patient->id],
+                                ['fullBase' => true]
+                            );
+                            ?>";
 
-    handleFormConfirmSubmitValid(
-        'PatientEditForm',
-        'btn-add',
-        confirmTitle,
-        formAction
-    );
+        handleFormConfirmSubmitValid(
+            'PatientEditForm',
+            'btn-add',
+            confirmTitle,
+            formAction
+        );
 
-});
+    });
 </script>

@@ -44,6 +44,11 @@ class PolyclinicQueuesTable extends Table
         $this->setPrimaryKey('id');
 
         $this->addBehavior('Timestamp');
+
+        $this->hasOne('Registrations', [
+            'foreignKey' => 'polyclinic_queue_id',
+            'joinType' => 'LEFT',
+        ]);
     }
 
     /**
@@ -68,6 +73,47 @@ class PolyclinicQueuesTable extends Table
             ->maxLength('source', 255)
             ->requirePresence('source', 'create')
             ->notEmptyString('source');
+
+        $validator
+            ->scalar('booking_code')
+            ->maxLength('booking_code', 100)
+            ->allowEmptyString('booking_code');
+
+        $validator
+            ->scalar('bpjs_number')
+            ->maxLength('bpjs_number', 50)
+            ->allowEmptyString('bpjs_number');
+
+        $validator
+            ->scalar('identity_number')
+            ->maxLength('identity_number', 50)
+            ->allowEmptyString('identity_number');
+
+        $validator
+            ->date('visit_date')
+            ->allowEmptyDate('visit_date');
+
+        $validator
+            ->scalar('checkin_status')
+            ->maxLength('checkin_status', 50)
+            ->allowEmptyString('checkin_status');
+
+        $validator
+            ->dateTime('checkin_time')
+            ->allowEmptyDateTime('checkin_time');
+
+        $validator
+            ->scalar('call_status')
+            ->maxLength('call_status', 50)
+            ->allowEmptyString('call_status');
+
+        $validator
+            ->dateTime('called_time')
+            ->allowEmptyDateTime('called_time');
+
+        $validator
+            ->integer('call_count')
+            ->allowEmptyString('call_count');
 
         $validator
             ->scalar('poly_name')

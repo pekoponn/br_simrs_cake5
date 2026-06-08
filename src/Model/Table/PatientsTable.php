@@ -12,7 +12,6 @@ use Cake\Validation\Validator;
 /**
  * Patients Model
  *
- * @property \App\Model\Table\PatientPicsTable&\Cake\ORM\Association\HasMany $PatientPics
  * @property \App\Model\Table\RegistrationsTable&\Cake\ORM\Association\HasMany $Registrations
  *
  * @method \App\Model\Entity\Patient newEmptyEntity()
@@ -49,9 +48,6 @@ class PatientsTable extends Table
 
         $this->addBehavior('Timestamp');
 
-        $this->hasMany('PatientPics', [
-            'foreignKey' => 'patient_id',
-        ]);
         $this->hasMany('Registrations', [
             'foreignKey' => 'patient_id',
         ]);
@@ -61,12 +57,30 @@ class PatientsTable extends Table
     {
         $lastPatient = $this->find()
             ->select(['code'])
-            ->where(['code LIKE' => 'RM%'])
+            ->where(['code LIKE' => 'PAT-%'])
             ->order(['id' => 'DESC'])
             ->first();
 
         if ($lastPatient && !empty($lastPatient->code)) {
-            $lastNumber = (int) str_replace('RM', '', $lastPatient->code);
+            $lastNumber = (int) str_replace('PAT-', '', $lastPatient->code);
+            $newNumber = $lastNumber + 1;
+        } else {
+            $newNumber = 1;
+        }
+
+        return 'PAT-' . str_pad((string)$newNumber, 5, '0', STR_PAD_LEFT);
+    }
+
+    public function generateMedicalRecordNo()
+    {
+        $lastPatient = $this->find()
+            ->select(['medical_record_no'])
+            ->where(['medical_record_no LIKE' => 'RM%'])
+            ->order(['id' => 'DESC'])
+            ->first();
+
+        if ($lastPatient && !empty($lastPatient->medical_record_no)) {
+            $lastNumber = (int) str_replace('RM', '', $lastPatient->medical_record_no);
             $newNumber = $lastNumber + 1;
         } else {
             $newNumber = 1;
@@ -77,6 +91,18 @@ class PatientsTable extends Table
 
     public function buildRules(RulesChecker $rules): RulesChecker
     {
+        $rules->add($rules->isUnique(['code']), [
+            'errorField' => 'code',
+            'message' => 'Kode pasien sudah terdaftar.'
+        ]);
+
+        if ($this->getSchema()->hasColumn('medical_record_no')) {
+            $rules->add($rules->isUnique(['medical_record_no']), [
+                'errorField' => 'medical_record_no',
+                'message' => 'No rekam medis sudah terdaftar.'
+            ]);
+        }
+
         $rules->add($rules->isUnique(['identity_number']), [
             'errorField' => 'identity_number',
             'message' => 'No identitas sudah terdaftar.'
@@ -101,6 +127,13 @@ class PatientsTable extends Table
             ->scalar('code')
             ->maxLength('code', 50)
             ->notEmptyString('code');
+
+        if ($this->getSchema()->hasColumn('medical_record_no')) {
+            $validator
+                ->scalar('medical_record_no')
+                ->maxLength('medical_record_no', 50)
+                ->allowEmptyString('medical_record_no');
+        }
 
         $validator
             ->scalar('full_name')

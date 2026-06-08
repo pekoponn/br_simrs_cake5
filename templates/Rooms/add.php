@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Room $room
@@ -53,9 +54,23 @@ $dataChild = $this->Html->link(
                 <?= $this->Form->control('room_code', [
                     'label' => false,
                     'class' => 'form-control',
-                    'placeholder' => 'Kode Ruangan..',
-                    'required' => true
+                    'placeholder' => 'Kosongkan untuk auto-generate',
+                    'id' => 'room-code',
+                    'required' => false,
+                    'data-parsley-required' => 'false'
                 ]) ?>
+
+                <div class="form-check mt-2">
+                    <input type="checkbox"
+                        class="form-check-input"
+                        id="auto-room-code"
+                        name="auto_room_code"
+                        value="1"
+                        checked>
+                    <label class="form-check-label" for="auto-room-code">
+                        Generate otomatis
+                    </label>
+                </div>
             </div>
         </div>
 
@@ -68,8 +83,9 @@ $dataChild = $this->Html->link(
             <div class="col-md-4">
                 <?= $this->Form->control('room_class', [
                     'label' => false,
-                    'class' => 'form-control',
-                    'placeholder' => 'Contoh: VIP / Kelas 1'
+                    'class' => 'form-control select2Form',
+                    'options' => $this->Krs->classes(),
+                    'empty' => '-- Pilih Kelas Ruangan --'
                 ]) ?>
             </div>
 
@@ -95,9 +111,11 @@ $dataChild = $this->Html->link(
 
             <div class="col-md-4">
                 <?= $this->Form->control('floor', [
+                    'type' => 'select',
+                    'options' => $this->Krs->floors(),
+                    'empty' => '-- Pilih Lantai --',
                     'label' => false,
-                    'class' => 'form-control',
-                    'placeholder' => 'Lantai..'
+                    'class' => 'form-control select2Form'
                 ]) ?>
             </div>
 
@@ -148,3 +166,38 @@ $dataChild = $this->Html->link(
     <?= $this->Form->end() ?>
 
 </div>
+
+<script>
+    $(document).ready(function() {
+
+        function toggleRoomCode() {
+            if ($('#auto-room-code').is(':checked')) {
+                $('#room-code')
+                    .prop('readonly', true)
+                    .prop('required', false)
+                    .removeAttr('required')
+                    .attr('data-parsley-required', 'false')
+                    .val('')
+                    .css({
+                        'background-color': '#e9ecef',
+                        'cursor': 'not-allowed'
+                    });
+            } else {
+                $('#room-code')
+                    .prop('readonly', false)
+                    .attr('data-parsley-required', 'true')
+                    .css({
+                        'background-color': '',
+                        'cursor': ''
+                    });
+            }
+        }
+
+        toggleRoomCode();
+
+        $('#auto-room-code').on('change', function() {
+            toggleRoomCode();
+        });
+
+    });
+</script>

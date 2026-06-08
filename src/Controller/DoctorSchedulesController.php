@@ -65,7 +65,7 @@ class DoctorSchedulesController extends AppController
             }
             $this->Flash->error(__('The doctor schedule could not be saved. Please, try again.'));
         }
-        $doctors = $this->DoctorSchedules->Doctors->find('list', ['limit' => 200]);
+        $doctors = $this->getDoctorOptions();
         $this->set(compact('doctorSchedule', 'doctors'));
     }
 
@@ -90,8 +90,32 @@ class DoctorSchedulesController extends AppController
             }
             $this->Flash->error(__('The doctor schedule could not be saved. Please, try again.'));
         }
-        $doctors = $this->DoctorSchedules->Doctors->find('list', ['limit' => 200]);
+        $doctors = $this->getDoctorOptions();
         $this->set(compact('doctorSchedule', 'doctors'));
+    }
+
+    private function getDoctorOptions(): array
+    {
+        $rows = $this->DoctorSchedules->Doctors->find()
+            ->select(['id', 'doctor_name', 'polyclinic_name'])
+            ->order([
+                'Doctors.doctor_name' => 'ASC',
+                'Doctors.id' => 'ASC',
+            ])
+            ->all();
+        $options = [];
+
+        foreach ($rows as $doctor) {
+            $label = (string)$doctor->doctor_name;
+
+            if (!empty($doctor->polyclinic_name)) {
+                $label .= ' - ' . $doctor->polyclinic_name;
+            }
+
+            $options[$doctor->id] = $label;
+        }
+
+        return $options;
     }
 
     /**

@@ -46,7 +46,9 @@ $nutritionMenu = (isset($checkUrl['nutritionmenus'])) ? $checkUrl['nutritionmenu
 $pharmacyItem = (isset($checkUrl['pharmacyitems'])) ? $checkUrl['pharmacyitems'] : array();
 $polyclinic = (isset($checkUrl['polyclinics'])) ? $checkUrl['polyclinics'] : array();
 $rooms = (isset($checkUrl['rooms'])) ? $checkUrl['rooms'] : array();
+$beds = (isset($checkUrl['beds'])) ? $checkUrl['beds'] : array();
 $polyclinicQueue = (isset($checkUrl['polyclinicqueues'])) ? $checkUrl['polyclinicqueues'] : array();
+$registration = (isset($checkUrl['registrations'])) ? $checkUrl['registrations'] : array();
 $service = (isset($checkUrl['services'])) ? $checkUrl['services'] : array();
 $laboratoryService = (isset($checkUrl['laboratoryservices'])) ? $checkUrl['laboratoryservices'] : array();
 $icd_service = (isset($checkUrl['icd_services'])) ? $checkUrl['icd_services'] : array();
@@ -125,9 +127,10 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 		// 		</ul>
 		// 	</li>
 		// </ul>
-		
+
 		?>
-		<ul class="nav"><?php //<li class="nav-header">Navigation</li> ?>
+		<ul class="nav"><?php //<li class="nav-header">Navigation</li> 
+						?>
 			<li><a href="javascript:;" class="sidebar-minify-btn" data-click="sidebar-minify"><i
 						class="fa fa-angle-double-left"></i></a></li>
 			<li<?= $menuDashboard ?>>
@@ -170,7 +173,7 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 					$menuAccJournalIndex = ($getController == 'accjournals' && ($getAction == 'index' || $getAction == 'addMany')) ? ' class="active"' : '';
 					$menuAccJournalIndexShort = ($getController == 'accjournals' && ($getAction == 'indexShort' || $getAction == 'addMany' || $getAction == 'editMany')) ? ' class="active"' : '';
 					$menuAccJournalImport = ($getController == 'accjournals' && ($getAction == 'import')) ? ' class="active"' : '';
-					?>
+				?>
 					<li class="has-sub <?= $menuAccounting ?>">
 						<a href="javascript:;">
 							<b class="caret"></b>
@@ -186,43 +189,43 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 								<ul class="sub-menu">
 									<?php
 									if ($accJournal['indexShort'] == 1) {
-										?>
+									?>
 										<li <?= $menuAccJournalIndexShort ?>>
 											<?= $this->Html->link('Daftar', ['controller' => 'AccJournals', 'action' => 'indexShort'], ['fullBase' => true, 'escape' => false]) ?>
 										</li>
-										<?php
+									<?php
 									}
 									if ($accJournal['index'] == 1) {
-										?>
+									?>
 										<li <?= $menuAccJournalIndex ?>>
 											<?= $this->Html->link('Daftar (Detail)', ['controller' => 'AccJournals', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 										</li>
-										<?php
+									<?php
 									}
 									if ($accJournal['import'] == 1) {
-										?>
+									?>
 										<li <?= $menuAccJournalImport ?>>
 											<?= $this->Html->link('Import (Melaui Excel)', ['controller' => 'AccJournals', 'action' => 'import'], ['fullBase' => true, 'escape' => false]) ?>
 										</li>
-										<?php
+									<?php
 									}
 									?>
 								</ul>
 							</li>
 							<?php
 							if ($accChartOfAccount['index'] == 1) {
-								?>
+							?>
 								<li <?= $menuAccCoaIndex ?>>
 									<?= $this->Html->link('Perkiraan (COA)', ['controller' => 'AccChartOfAccounts', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
-								<?php
+							<?php
 							}
 							if ($accChartOfAccount['beginningBalanceExportImport'] == 1) {
-								?>
+							?>
 								<li <?= $menuAccCoaBeginningBalanceExportImport ?>>
 									<?= $this->Html->link('Saldo Awal', ['controller' => 'AccChartOfAccounts', 'action' => 'beginningBalanceExportImport'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
-								<?php
+							<?php
 							}
 							?>
 
@@ -271,7 +274,7 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 									</li>
 									<?php
 									// <li <?= $menuReportEkuitas><?= $this->Html->link('Ekuitas', ['controller' => 'AccJournals', 'action' => 'ekuitasReport'], ['fullBase' => true, 'escape' => false])</li>
-								
+
 									?>
 								</ul>
 							</li>
@@ -299,7 +302,7 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 					$menuDataPlacementOfGood = ($getController == 'placementofgoods') ? ' class="active"' : '';
 					$menuDataMutation = ($getController == 'mutations') ? ' class="active"' : '';
 					$menuDataSubmission = ($getController == 'submissions') ? ' class="active"' : '';
-					?>
+				?>
 					<li class="has-sub <?php echo $menuDataLink; ?>">
 						<a href="javascript:;">
 							<b class="caret pull-right"></b>
@@ -309,32 +312,32 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 						<ul class="sub-menu">
 							<?php
 							if ($purchaseOfGood['index'] == 1) {
-								?>
+							?>
 								<li <?= $menuDataPurchaseOfGood ?>>
 									<?= $this->Html->link('Pembelian Barang', ['controller' => 'PurchaseOfGoods', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
-								<?php
+							<?php
 							}
 							if ($placementOfGood['index'] == 1) {
-								?>
+							?>
 								<li <?= $menuDataPlacementOfGood ?>>
 									<?= $this->Html->link('Penempatan Barang', ['controller' => 'PlacementOfGoods', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
-								<?php
+							<?php
 							}
 							if ($mutation['index'] == 1) {
-								?>
+							?>
 								<li <?= $menuDataMutation ?>>
 									<?= $this->Html->link('Mutasi', ['controller' => 'Mutations', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
-								<?php
+							<?php
 							}
 							if ($submission['index'] == 1) {
-								?>
+							?>
 								<li <?= $menuDataSubmission ?>>
 									<?= $this->Html->link('Permintaan Dana', ['controller' => 'Submissions', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
-								<?php
+							<?php
 							}
 
 							/*
@@ -368,7 +371,7 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 							?>
 						</ul>
 					</li>
-					<?php
+				<?php
 				}
 				if ($order['index'] == 1 || $orderpo['index'] == 1) {
 
@@ -376,7 +379,7 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 
 					$menuDataOrder = ($getController == 'orders') ? ' class="active"' : '';
 					$menuDataOrderPo = ($getController == 'orderpos') ? ' class="active"' : '';
-					?>
+				?>
 					<li class="has-sub <?php echo $menuScmLink; ?>">
 						<a href="javascript:;">
 							<b class="caret pull-right"></b>
@@ -386,18 +389,18 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 						<ul class="sub-menu">
 							<?php
 							if ($order['index'] == 1) {
-								?>
+							?>
 								<li <?= $menuDataOrder ?>>
 									<?= $this->Html->link('Order', ['controller' => 'Orders', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
-								<?php
+							<?php
 							}
 							if ($orderpo['index'] == 1) {
-								?>
+							?>
 								<li <?= $menuDataOrderPo ?>>
 									<?= $this->Html->link('Order (Supplier)', ['controller' => 'OrderPos', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
-								<?php
+							<?php
 							}
 
 							/*
@@ -431,13 +434,13 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 							?>
 						</ul>
 					</li>
-					<?php
+				<?php
 				}
-				if ($polyclinicQueue['index'] == 1) {
+				if (!empty($polyclinicQueue['index']) || !empty($registration['index'])) {
 
 					$menuPolyclinicQueue = ($getController == 'polyclinicqueues') ? 'active' : '';
 					$menuPolyclinicQueueIndex = ($getController == 'polyclinicqueues') ? ' class="active"' : '';
-					?>
+				?>
 					<li class="has-sub <?= $menuPolyclinicQueue ?>">
 						<a href="javascript:;">
 							<b class="caret pull-right"></b>
@@ -475,9 +478,23 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 								) ?>
 							</li>
 
+							<li>
+								<?= $this->Html->link(
+									'Registration',
+									[
+										'controller' => 'Registrations',
+										'action' => 'index'
+									],
+									[
+										'fullBase' => true,
+										'escape' => false
+									]
+								) ?>
+							</li>
+
 						</ul>
 					</li>
-					<?php
+				<?php
 				}
 
 				if (
@@ -493,14 +510,17 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 					$nutritionMenu['index'] == 1 ||
 					$pharmacyItem['index'] == 1 ||
 					$polyclinic['index'] == 1 ||
-					$rooms['index'] == 1
+					$rooms['index'] == 1 ||
+					$beds['index'] == 1
 				) {
 
 					$menuDataLink = (
 						$getController == 'medicines' ||
 						$getController == 'medicinemerks' ||
 						$getController == 'medicinegroups' ||
-						$getController == 'patients'
+						$getController == 'patients' ||
+						$getController == 'beds' ||
+						$getController == 'rooms'
 					) ? 'active' : '';
 
 					$menuMedicine = (
@@ -522,8 +542,9 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 					$menuPharmacyItemIndex = ($getController == 'pharmacyitems') ? ' class="active"' : '';
 					$menuPolyclinicIndex = ($getController == 'polyclinics') ? ' class="active"' : '';
 					$menuRoomIndex = ($getController == 'rooms') ? ' class="active"' : '';
+					$menuBedIndex = ($getController == 'beds') ? ' class="active"' : '';
 
-					?>
+				?>
 					<li class="has-sub <?php echo $menuDataLink; ?>">
 						<a href="javascript:;">
 							<b class="caret pull-right"></b>
@@ -539,7 +560,7 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 								$medicineMerk['index'] == 1 ||
 								$medicineGroup['index'] == 1
 							) {
-								?>
+							?>
 								<li class="has-sub <?= $menuMedicine ?>">
 									<a href="javascript:;">
 										<b class="caret"></b>
@@ -549,119 +570,127 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 									<ul class="sub-menu">
 										<?php
 										if ($medicine['index'] == 1) {
-											?>
+										?>
 											<li <?= $menuMasterMedicine ?>>
 												<?= $this->Html->link('Daftar', ['controller' => 'Medicines', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 											</li>
-											<?php
+										<?php
 										}
 
 										if ($medicineMerk['index'] == 1) {
-											?>
+										?>
 											<li <?= $menuMasterMedicineMerk ?>>
 												<?= $this->Html->link('Merk', ['controller' => 'MedicineMerks', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 											</li>
-											<?php
+										<?php
 										}
 
 										if ($medicineGroup['index'] == 1) {
-											?>
+										?>
 											<li <?= $menuMasterMedicineGroup ?>>
 												<?= $this->Html->link('Group', ['controller' => 'MedicineGroups', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 											</li>
-											<?php
+										<?php
 										}
 										?>
 									</ul>
 								</li>
-								<?php
+							<?php
 							}
 
 							if ($patient['index'] == 1) {
-								?>
+							?>
 								<li <?= $menuPatientIndex ?>>
 									<?= $this->Html->link('Patients', ['controller' => 'Patients', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
-								<?php
+							<?php
 							}
 
 							if ($doctor['index'] == 1) {
-								?>
+							?>
 								<li <?= $menuDoctorIndex ?>>
 									<?= $this->Html->link('Doctor', ['controller' => 'Doctors', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
-								<?php
+							<?php
 							}
 
 							if ($doctorSchedule['index'] == 1) {
-								?>
+							?>
 								<li <?= $menuDoctorScheduleIndex ?>>
 									<?= $this->Html->link('Doctor Schedules', ['controller' => 'DoctorSchedules', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
-								<?php
+							<?php
 							}
 
 							if ($healthFacility['index'] == 1) {
-								?>
+							?>
 								<li <?= $menuHealthFacilityIndex ?>>
 									<?= $this->Html->link('Health Facilities', ['controller' => 'HealthFacilities', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
-								<?php
+							<?php
 							}
 
 							if ($insurance['index'] == 1) {
-								?>
+							?>
 								<li <?= $menuInsuranceIndex ?>>
 									<?= $this->Html->link('Insurances', ['controller' => 'Insurances', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
-								<?php
+							<?php
 							}
 
 							if ($nutritionCombine['index'] == 1) {
-								?>
+							?>
 								<li <?= $menuNutritionCombineIndex ?>>
 									<?= $this->Html->link('Nutrition Combine', ['controller' => 'NutritionCombine', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
-								<?php
+							<?php
 							}
 
 							if ($nutritionMenu['index'] == 1) {
-								?>
+							?>
 								<li <?= $menuNutritionMenuIndex ?>>
 									<?= $this->Html->link('Nutrition Menus', ['controller' => 'NutritionMenus', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
-								<?php
+							<?php
 							}
 
 							if ($pharmacyItem['index'] == 1) {
-								?>
+							?>
 								<li <?= $menuPharmacyItemIndex ?>>
 									<?= $this->Html->link('Pharmacy Items', ['controller' => 'PharmacyItems', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
-								<?php
+							<?php
 							}
 
 							if ($polyclinic['index'] == 1) {
-								?>
+							?>
 								<li <?= $menuPolyclinicIndex ?>>
 									<?= $this->Html->link('Polyclinics', ['controller' => 'Polyclinics', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
-								<?php
+							<?php
 							}
 
 							if ($rooms['index'] == 1) {
-								?>
+							?>
 								<li <?= $menuRoomIndex ?>>
 									<?= $this->Html->link('Rooms', ['controller' => 'Rooms', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
-								<?php
+							<?php
+							}
+
+							if ($beds['index'] == 1) {
+							?>
+								<li <?= $menuBedIndex ?>>
+									<?= $this->Html->link('Bed Management', ['controller' => 'Beds', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+							<?php
 							}
 
 							?>
 
 						</ul>
 					</li>
-					<?php
+				<?php
 				}
 
 				if ($users['changePassword'] == 1 || $users['resetPassword'] == 1 || $users['access'] == 1 || $users['index'] == 1 || $settings['index'] == 1 || $branch['index'] == 1) {
@@ -672,7 +701,7 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 					$menuChangePassword = ($getController == 'users' && $getAction == 'changePassword') ? ' class="active"' : '';
 					$menuBranches = ($getController == 'branches' && $getAction == 'index') ? 'class="active"' : '';
 					$menuSettings = ($getController == 'settings' && $getAction == 'index') ? ' class="active"' : '';
-					?>
+				?>
 
 					<li class="has-sub <?= $menuSetting ?>">
 						<a href="javascript:;">
@@ -686,30 +715,30 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 					</li>
 					<?php
 					if ($users['index'] == 1) {
-						?>
+					?>
 						<li<?= $menuUser ?>>
 							<?= $this->Html->link('User', ['controller' => 'Users', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 							</li>
-							<?php
+						<?php
 					}
 					if ($branch['index'] == 1) {
 						?>
 							<li<?= $menuBranches ?>>
 								<?= $this->Html->link('Cabang', ['controller' => 'Branches', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
-								<?php
-					}
-					if ($settings['index'] == 1) {
-						?>
+							<?php
+						}
+						if ($settings['index'] == 1) {
+							?>
 								<li<?= $menuSettings ?>>
 									<?= $this->Html->link('Perusahaan', ['controller' => 'Settings', 'action' => 'edit/1'], ['fullBase' => true, 'escape' => false]) ?>
 									</li>
 								<?php } ?>
-			</ul>
-			</li>
-		<?php } ?>
-		<li><a href="javascript:;" class="sidebar-minify-btn" data-click="sidebar-minify"><i
-					class="fa fa-angle-double-left"></i></a></li>
 		</ul>
+		</li>
+	<?php } ?>
+	<li><a href="javascript:;" class="sidebar-minify-btn" data-click="sidebar-minify"><i
+				class="fa fa-angle-double-left"></i></a></li>
+	</ul>
 	</div>
 </div>
