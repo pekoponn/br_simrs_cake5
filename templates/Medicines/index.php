@@ -1,258 +1,322 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\Medicine[]|\Cake\Collection\CollectionInterface $medicines
+ * @var \App\Model\Entity\Medicine[]|\Cake\Datasource\ResultSetInterface $medicines
+ * @var array $medicineGroups
+ * @var string $filterGroup
+ * @var string $filterActive
+ * @var string $keyword
  */
-$pages = (empty($this->request->getQuery('page'))) ? '' : $this->request->getQuery('page');
 ?>
-<?= $this->Krs->breadcrumb('Master', 'Obat', 'Tampilkan') ?>
-<div class="panel panel-inverse">
-    <div class="panel-heading">
-        <h4 class="panel-title">Perincian</h4>
-        <div class="panel-heading-btn">
-            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default" data-click="panel-expand"><i
-                    class="fa fa-expand"></i></a>
+
+<div class="medicine-report">
+    <div class="report-window">
+
+        <div class="report-titlebar">
+            <div>Master Data Obat</div>
+            <div>
+                <?= $this->Html->link(
+                    'Tambah Obat',
+                    ['action' => 'add'],
+                    ['class' => 'btn btn-xs btn-light']
+                ) ?>
+            </div>
         </div>
-    </div>
-    <div class="panel-body">
-        <div class="alert alert-primary">
-            Halaman <strong>Obat</strong>, datanya digunakan untuk transaksi Order pada setiap <strong>UBS</strong>
-            serta digunakan <strong>SCM</strong> untuk melakukan Order ke Supplier.
-        </div>
-        <div class="portlet-body form">
-            <div class="table-toolbar">
-                <div class="btn-group">
-                    <div class="portlet-body">
-                        <?= $this->Html->link('<i class="fa fa-plus"></i>', ['action' => 'add', $pages], ['class' => 'btn btn-inverse', 'data-toggle' => 'tooltip', 'data-placement' => 'top', 'data-original-title' => 'Add', 'escape' => false, 'fullBase' => true]) ?>
-                        <?= $this->Html->link('<i class="fa fa-download"></i>', ['action' => 'pdf', $pages], ['class' => 'btn btn-green', 'data-toggle' => 'tooltip', 'data-placement' => 'top', 'data-original-title' => 'Download', 'escape' => false, 'fullBase' => true]) ?>
-                    </div>
+
+        <div class="report-filter">
+            <?= $this->Form->create(null, ['type' => 'get', 'id' => 'search-form-medicine']) ?>
+
+            <div class="row">
+                <div class="col-md-5">
+                    <label>Pencarian</label>
+                    <input type="text"
+                           name="key"
+                           class="form-control input-sm"
+                           placeholder="Cari kode / nama obat / generic / KFA / IFRS..."
+                           value="<?= h($keyword ?? '') ?>"
+                           autocomplete="off"
+                           id="search-q-med">
+                </div>
+
+                <div class="col-md-4">
+                    <label>Kelompok</label>
+                    <select name="medicine_group_id" class="form-control input-sm">
+                        <option value="">Semua Kelompok</option>
+                        <?php foreach (($medicineGroups ?? []) as $gId => $gName): ?>
+                            <option value="<?= h($gId) ?>" <?= (($filterGroup ?? '') == $gId) ? 'selected' : '' ?>>
+                                <?= h($gName) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label>Status</label>
+                    <select name="is_active" class="form-control input-sm">
+                        <option value="" <?= ($filterActive ?? '') === '' ? 'selected' : '' ?>>Semua</option>
+                        <option value="Y" <?= ($filterActive ?? '') === 'Y' ? 'selected' : '' ?>>Aktif</option>
+                        <option value="N" <?= ($filterActive ?? '') === 'N' ? 'selected' : '' ?>>Non Aktif</option>
+                    </select>
                 </div>
             </div>
-            <br>
-            <?= $this->Form->create(null, ['type' => 'get']) ?>
-            <div class="panel-footer bg-aqua text-white p-t-10">
-                <div class="row row-space-10">
-                    <div class="col-md-2 m-b-10">
-                        <?= $this->Form->text('filterCode', ['label' => false, 'class' => 'form-control', 'placeholder' => 'Kode...', 'value' => $this->request->getQuery('filterCode')]); ?>
-                    </div>
-                    <div class="col-md-4 m-b-10">
-                        <?= $this->Form->text('filterName', ['label' => false, 'class' => 'form-control', 'placeholder' => 'Nama...', 'value' => $this->request->getQuery('filterName')]); ?>
-                    </div>
-                    <div class="col-md-1">
-                        <?= $this->Krs->btnSeach(); ?>
-                    </div>
-                </div>
+
+            <div style="margin-top:8px; text-align:right;">
+                <button type="submit" class="btn btn-primary btn-sm">Cari</button>
+                <?= $this->Html->link(
+                    'Reset',
+                    ['action' => 'index'],
+                    ['class' => 'btn btn-default btn-sm']
+                ) ?>
             </div>
+
             <?= $this->Form->end() ?>
+        </div>
+
+        <div class="report-paper">
+            <div class="report-heading">
+                <h4>DAFTAR MASTER DATA OBAT</h4>
+                <div>Semua Depo</div>
+            </div>
+
             <div class="table-responsive">
-                <table class="table table-striped table-hover table-td-valign-middle">
-                    <thead class="thead-dark text-center">
+                <table class="table table-bordered report-table">
+                    <thead>
                         <tr>
-                            <th width="100">Kode Internal</th>
-                            <th width="100">Kode KFA</th>
-                            <th>Nama</th>
-                            <th width="200">Nama Barang</th>
-                            <th width="150">Merk</th>
-                            <th width="80">Aktif</th>
-                            <th width="120" class="actions">&nbsp;</th>
+                            <th width="35">No</th>
+                            <th width="105">Kode Obat</th>
+                            <th>Nama Obat</th>
+                            <th width="130">Generic</th>
+                            <th width="120">Kategori</th>
+                            <th width="85">Satuan</th>
+                            <th width="80">Qty</th>
+                            <th width="110">HNA</th>
+                            <th width="110">Harga Jual</th>
+                            <th width="85">Min Stock</th>
+                            <th width="85">Reorder</th>
+                            <th width="75">Status</th>
+                            <th width="95">Aksi</th>
                         </tr>
                     </thead>
+
                     <tbody>
                         <?php
-                        // pr($medicines);
-                        if (count($medicines) > 0) {
-                            foreach ($medicines as $rowData) {
-                                $statusHiddenActive = ($rowData->is_active == 'Y') ? "" : ' style="display: none;"';
-                                $statusHiddenInactive = ($rowData->is_active == 'N') ? "" : ' style="display: none;"';
-                                $btnActive = "<div id='statusSpin" . $rowData->id . "'></div>";
-                                $btnActive .= "<div id='statusActive" . $rowData->id . "'" . $statusHiddenActive . ">" . $this->Html->link('<i class="fa fa-check"></i>', 'javascript:;', array("escape" => false, "onClick" => "changeStatusActive('" . $rowData->id . "', 'N', '" . $getUser->id . "')", "class" => "btn btn-lime btn-icon btn-circle btn-sm")) . "</div>";
+                        $arr = is_array($medicines) ? $medicines : $medicines->toArray();
+                        $no = ($this->Paginator->current() - 1) * 20 + 1;
+                        ?>
 
-                                $btnActive .= "<div id='statusInactive" . $rowData->id . "'" . $statusHiddenInactive . ">" . $this->Html->link('<i class="fa fa-times"></i>', 'javascript:;', array("escape" => false, "onClick" => "changeStatusInactive('" . $rowData->id . "', 'Y', '" . $getUser->id . "')", "class" => "btn btn-danger btn-icon btn-circle btn-sm")) . "</div>";
-
-
-                                $statusTransaction = ($rowData->transaction == "y") ? "<i class=\"fa fa-check\"></i>" : "";
-                                $bottonUp = $this->Html->link('<i class="fa fa-arrow-up"></i>', array("action" => "moveup", $rowData->id), array("escape" => false));
-                                $buttonDown = $this->Html->link('<i class="fa fa-arrow-down"></i>', array("action" => "movedown", $rowData->id), array("escape" => false));
-                                //$this->Krs->nominal($stock['in'])
-                        
-
-                                //, $pages
-                                $linkEdit = array('action' => 'edit', $rowData->id);
-                                $linkDelete = array('action' => 'delete', $rowData->id);
-
-                                if ($rowData->is_active == 'Y') {
-                                    $classCondition = "";
-                                } else {
-                                    $classCondition = 'class="table-warning"';
-                                }
-
-                                // $medicineGroupName = (!empty($rowData->medicine_group->name)) ? $rowData->medicine_group->name : '';
-                                // $medicineMerkName = (!empty($rowData->medicine_merk->name)) ? $rowData->medicine_merk->name : '';
-                                $medicineGroupName = (!empty($rowData->medicine_group_name)) ? $rowData->medicine_group_name : '';
-                                $medicineMerkName = (!empty($rowData->medicine_merk_name)) ? $rowData->medicine_merk_name : '';
-                                // pr($rowData);
+                        <?php if (empty($arr)): ?>
+                            <tr>
+                                <td colspan="13" class="text-center empty-row">
+                                    Belum ada data obat.
+                                </td>
+                            </tr>
+                        <?php else: ?>
+                            <?php foreach ($medicines as $medicine): ?>
+                                <?php
+                                $qty = (float)($medicine->unit_2_qty ?? 0);
+                                $hna = (float)($medicine->hna ?? 0);
+                                $hargaJual = (float)($medicine->harga_jual ?? 0);
                                 ?>
-                                <tr <?= $classCondition ?>>
-                                    <td align="center"><b><?= h($rowData->code) ?></b></td>
-                                    <td align="center"><b><?= h($rowData->code_kfa) ?></b></td>
-                                    <td><?= $rowData->name ?></td>
-                                    <td><?= $medicineGroupName ?></td>
-                                    <td><?= $medicineMerkName ?></td>
-                                    <td align="center"><?= $btnActive ?></td>
-                                    <td class="actions" width="100">
-                                        <?= $this->Krs->btn('edit', $linkEdit) ?>
-                                        <?= $this->Krs->btn('delete', $linkDelete, $rowData->name) ?>
+                                <tr>
+                                    <td class="text-center"><?= $no++ ?></td>
+
+                                    <td><?= h($medicine->code ?? '-') ?></td>
+
+                                    <td>
+                                        <strong><?= h($medicine->name ?? '-') ?></strong>
+                                        <?php if (!empty($medicine->code_kfa)): ?>
+                                            <br><small>KFA: <?= h($medicine->code_kfa) ?></small>
+                                        <?php endif; ?>
+                                    </td>
+
+                                    <td><?= h($medicine->generic_name ?? '-') ?></td>
+
+                                    <td><?= h($medicine->inventory_category ?? '-') ?></td>
+
+                                    <td class="text-center"><?= h($medicine->unit_1 ?? '-') ?></td>
+
+                                    <td class="text-right"><?= number_format($qty, 0, ',', '.') ?></td>
+
+                                    <td class="text-right"><?= number_format($hna, 0, ',', '.') ?></td>
+
+                                    <td class="text-right"><?= number_format($hargaJual, 0, ',', '.') ?></td>
+
+                                    <td class="text-right"><?= number_format((float)($medicine->minimum_stock ?? 0), 0, ',', '.') ?></td>
+
+                                    <td class="text-right"><?= number_format((float)($medicine->reorder_level ?? 0), 0, ',', '.') ?></td>
+
+                                    <td class="text-center">
+                                        <?php if ((string)($medicine->is_active ?? '') === 'Y' || (string)($medicine->is_active ?? '') === '1'): ?>
+                                            <span class="status active">Aktif</span>
+                                        <?php else: ?>
+                                            <span class="status inactive">Non</span>
+                                        <?php endif; ?>
+                                    </td>
+
+                                    <td class="text-center">
+                                        <?= $this->Html->link(
+                                            'View',
+                                            ['action' => 'view', $medicine->id],
+                                            ['class' => 'btn btn-info btn-xs']
+                                        ) ?>
+
+                                        <?= $this->Html->link(
+                                            'Edit',
+                                            ['action' => 'edit', $medicine->id],
+                                            ['class' => 'btn btn-warning btn-xs']
+                                        ) ?>
                                     </td>
                                 </tr>
-                                <?php
-                            }
-                        } else {
-                            echo $this->Krs->dataNull();
-                        }
-                        ?>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </tbody>
                 </table>
-                <!-- #modal-dialog -->
-                <!-- <div class="modal fade" tabindex="-1" role="dialog" id="modal-detail"></div> -->
             </div>
 
-            <?= $this->Krs->paginators() ?>
-        </div>
-    </div>
-    <div class="panel-footer">
-        <div class="btn-group">
-            <?= $this->Form->create($medicines, ['type' => 'file', 'url' => ['action' => 'dataExportImport', 'save']]) ?>
-            <?php //echo $this->Form->create('UploadExcel',array('id'=>'fileupload', 'type'=>'file', 'enctype'=>'multipart/form-data', 'url' => array('controller' => 'acc_chart_of_accounts', 'action' => 'export_import_saldo_awal/save'))); ?>
-            <div class="portlet-body">
-                <div class="note note-warning">
-                    <div class="note-icon"><i class="fas fa-upload"></i></div>
-                    <div class="note-content text-end">
-                        <h4><b>Upload Data Barang melalui file Excel...</b></h4>
-                        <?php
-                        echo $this->Form->control('user_id', ['type' => 'hidden', 'value' => $getUser->id]);
-                        echo $this->Form->file('filename', array('label' => false, 'size' => '50'));
-
-                        echo $this->Form->button('Upload', ['class' => 'btn btn-primary', 'type' => 'submit', 'escapeTitle' => false, 'data-toggle' => 'tooltip', 'data-original-title' => "Upload", 'id' => 'btn-upload']);
-
-                        // echo $this->Form->button('Upload', array('class'=>'btn btn-success', 'type'=>'button', 'escape' => false, 'id'=> 'btn-upload'));
-                        ?>
-                        <div class="btn-group dropdown">
-                            <a href="javascript:(void);" class="btn btn-inverse"><i class="fa fa-download"></i></a>
-                            <a href="javascript:(void);" class="btn btn-inverse dropdown-toggle" id="dropdownMenuButton"
-                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i
-                                    class="fa fa-caret-down"></i></a>
-                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                <?= $this->Html->link('Contoh Excel', ['action' => 'dataExportImportXls'], ['class' => 'dropdown-item', 'escape' => false, 'fullBase' => true]) ?>
-                            </div>
-                        </div>
-
-                    </div>
+            <div class="report-footer">
+                <div>
+                    <?= $this->Paginator->counter(
+                        'Menampilkan {{current}} dari {{count}} data (Halaman {{page}} / {{pages}})'
+                    ) ?>
                 </div>
+
+                <ul class="pagination pagination-sm m-t-0 m-b-0">
+                    <?= $this->Paginator->first('<<') ?>
+                    <?= $this->Paginator->prev('<') ?>
+                    <?= $this->Paginator->numbers() ?>
+                    <?= $this->Paginator->next('>') ?>
+                    <?= $this->Paginator->last('>>') ?>
+                </ul>
             </div>
-            <?php echo $this->Form->end(); ?>
         </div>
     </div>
 </div>
-<div class="modal fade" id="modal-detail" data-backdrop="static" data-keyboard="true" tabindex="-1" role="dialog">
-</div>
-<?php
-$urlGetData = $this->Url->build(['controller' => 'TruckSchedules', 'action' => 'preview', '_full' => true]);
-?>
+
+<style>
+.medicine-report {
+    font-size:12px;
+}
+
+.report-window {
+    background:#d7e5f5;
+    border:1px solid #9bb3cf;
+}
+
+.report-titlebar {
+    background:#1e3a5f;
+    color:#fff;
+    padding:10px 12px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-weight:700;
+}
+
+.btn-light {
+    background:#f8f9fa;
+    color:#333;
+    border:1px solid #d9dee5;
+}
+
+.report-filter {
+    background:#eef4fb;
+    padding:10px;
+    border-bottom:1px solid #c7d4e5;
+}
+
+.report-filter label {
+    font-weight:600;
+    color:#1e3a5f;
+}
+
+.report-paper {
+    background:#fff;
+    margin:12px;
+    padding:18px;
+    border:1px solid #bfc7d1;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+
+.report-heading {
+    text-align:center;
+    margin-bottom:12px;
+}
+
+.report-heading h4 {
+    margin:0 0 4px;
+    font-weight:700;
+}
+
+.report-table {
+    font-size:11px;
+    color:#111;
+}
+
+.report-table thead tr {
+    background:#f3f5f8;
+}
+
+.report-table th {
+    text-align:center;
+    vertical-align:middle !important;
+    border:1px solid #333 !important;
+}
+
+.report-table td {
+    border:1px solid #333 !important;
+    vertical-align:middle !important;
+    padding:5px 6px !important;
+}
+
+.report-table small {
+    color:#666;
+}
+
+.empty-row {
+    padding:30px !important;
+    color:#777;
+}
+
+.status {
+    padding:2px 7px;
+    border-radius:3px;
+    font-size:10px;
+    font-weight:700;
+}
+
+.status.active {
+    background:#d1e7dd;
+    color:#0f5132;
+}
+
+.status.inactive {
+    background:#e9ecef;
+    color:#495057;
+}
+
+.btn-xs {
+    padding:2px 6px;
+    font-size:11px;
+}
+
+.report-footer {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:12px;
+}
+</style>
+
 <script>
+$(document).ready(function () {
+    var searchTimer;
 
-    $(document).ready(function () {
-        //datePickerReset('input-daterange', 'resetDate', 'filterDate', 'dd-mm-yyyy');
+    $('#search-q-med').on('input', function () {
+        clearTimeout(searchTimer);
 
-        <?php
-        if (count($medicines) > 0) {
-            foreach ($medicines as $rowData) {
-                echo 'handleFormPreview("btn-preview' . $rowData->id . '", "' . $urlGetData . '/' . $rowData->id . '");';
-            }
-        }
-        ?>
+        searchTimer = setTimeout(function () {
+            $('#search-form-medicine').submit();
+        }, 700);
     });
+});
 </script>
-<?php
-/*
-<div class="medicines index content">
-    <?= $this->Html->link(__('New Medicine'), ['action' => 'add'], ['class' => 'button float-right']) ?>
-    <h3><?= __('Medicines') ?></h3>
-    <div class="table-responsive">
-        <table>
-            <thead>
-                <tr>
-                    <th><?= $this->Paginator->sort('id') ?></th>
-                    <th><?= $this->Paginator->sort('branch_id') ?></th>
-                    <th><?= $this->Paginator->sort('medicine_merk_id') ?></th>
-                    <th><?= $this->Paginator->sort('medicine_group_id') ?></th>
-                    <th><?= $this->Paginator->sort('code') ?></th>
-                    <th><?= $this->Paginator->sort('code_kfa') ?></th>
-                    <th><?= $this->Paginator->sort('name') ?></th>
-                    <th><?= $this->Paginator->sort('code_ifrs') ?></th>
-                    <th><?= $this->Paginator->sort('merk') ?></th>
-                    <th><?= $this->Paginator->sort('type') ?></th>
-                    <th><?= $this->Paginator->sort('description') ?></th>
-                    <th><?= $this->Paginator->sort('img') ?></th>
-                    <th><?= $this->Paginator->sort('qty_unit') ?></th>
-                    <th><?= $this->Paginator->sort('unit') ?></th>
-                    <th><?= $this->Paginator->sort('qty_packaging') ?></th>
-                    <th><?= $this->Paginator->sort('packaging') ?></th>
-                    <th><?= $this->Paginator->sort('is_create') ?></th>
-                    <th><?= $this->Paginator->sort('created') ?></th>
-                    <th><?= $this->Paginator->sort('is_update') ?></th>
-                    <th><?= $this->Paginator->sort('modified') ?></th>
-                    <th><?= $this->Paginator->sort('is_print') ?></th>
-                    <th><?= $this->Paginator->sort('printed') ?></th>
-                    <th><?= $this->Paginator->sort('is_active') ?></th>
-                    <th class="actions"><?= __('Actions') ?></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($medicines as $medicine): ?>
-                <tr>
-                    <td><?= $this->Number->format($medicine->id) ?></td>
-                    <td><?= $medicine->has('branch') ? $this->Html->link($medicine->branch->name, ['controller' => 'Branches', 'action' => 'view', $medicine->branch->id]) : '' ?></td>
-                    <td><?= $medicine->has('medicine_merk') ? $this->Html->link($medicine->medicine_merk->name, ['controller' => 'MedicineMerks', 'action' => 'view', $medicine->medicine_merk->id]) : '' ?></td>
-                    <td><?= $medicine->has('medicine_group') ? $this->Html->link($medicine->medicine_group->name, ['controller' => 'MedicineGroups', 'action' => 'view', $medicine->medicine_group->id]) : '' ?></td>
-                    <td><?= h($medicine->code) ?></td>
-                    <td><?= h($medicine->code_kfa) ?></td>
-                    <td><?= h($medicine->name) ?></td>
-                    <td><?= h($medicine->code_ifrs) ?></td>
-                    <td><?= h($medicine->merk) ?></td>
-                    <td><?= h($medicine->type) ?></td>
-                    <td><?= h($medicine->description) ?></td>
-                    <td><?= h($medicine->img) ?></td>
-                    <td><?= $this->Number->format($medicine->qty_unit) ?></td>
-                    <td><?= h($medicine->unit) ?></td>
-                    <td><?= $this->Number->format($medicine->qty_packaging) ?></td>
-                    <td><?= h($medicine->packaging) ?></td>
-                    <td><?= $this->Number->format($medicine->is_create) ?></td>
-                    <td><?= h($medicine->created) ?></td>
-                    <td><?= $this->Number->format($medicine->is_update) ?></td>
-                    <td><?= h($medicine->modified) ?></td>
-                    <td><?= $this->Number->format($medicine->is_print) ?></td>
-                    <td><?= h($medicine->printed) ?></td>
-                    <td><?= h($medicine->is_active) ?></td>
-                    <td class="actions">
-                        <?= $this->Html->link(__('View'), ['action' => 'view', $medicine->id]) ?>
-                        <?= $this->Html->link(__('Edit'), ['action' => 'edit', $medicine->id]) ?>
-                        <?= $this->Form->postLink(__('Delete'), ['action' => 'delete', $medicine->id], ['confirm' => __('Are you sure you want to delete # {0}?', $medicine->id)]) ?>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
-    <div class="paginator">
-        <ul class="pagination">
-            <?= $this->Paginator->first('<< ' . __('first')) ?>
-            <?= $this->Paginator->prev('< ' . __('previous')) ?>
-            <?= $this->Paginator->numbers() ?>
-            <?= $this->Paginator->next(__('next') . ' >') ?>
-            <?= $this->Paginator->last(__('last') . ' >>') ?>
-        </ul>
-        <p><?= $this->Paginator->counter(__('Page {{page}} of {{pages}}, showing {{current}} record(s) out of {{count}} total')) ?></p>
-    </div>
-</div>
-*/
-?>
