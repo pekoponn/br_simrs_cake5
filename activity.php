@@ -101,7 +101,7 @@ ALTER TABLE beds MODIFY COLUMN status TINYINT(4) NOT NULL DEFAULT 0;
 ALTER TABLE `beds`
     ADD COLUMN `notes` TEXT NULL DEFAULT NULL COMMENT 'Catatan perubahan status'
     AFTER `patient_name`;
-	
+
 ALTER TABLE `beds`
     ADD COLUMN `patient_id` INT NULL DEFAULT NULL COMMENT 'FK ke tabel patients' AFTER `patient_name`,
     ADD COLUMN `notes_patient` TEXT NULL DEFAULT NULL COMMENT 'Catatan perubahan status' AFTER `patient_id`,
@@ -372,3 +372,202 @@ ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 ALTER TABLE `patients`
     ADD COLUMN `medical_record_no` VARCHAR(50) NULL AFTER `code`;
+
+ALTER TABLE `rooms`
+    ADD COLUMN `tarif_hari`      DECIMAL(15,2) NOT NULL DEFAULT 0.00
+        COMMENT 'Tarif per hari (Rp)' AFTER `capacity`,
+    ADD COLUMN `tarif_plus_hari` DECIMAL(15,2) NOT NULL DEFAULT 0.00
+        COMMENT 'Tarif tambahan per hari (Rp)' AFTER `tarif_hari`;
+
+ALTER TABLE `beds`
+    -- Tanggal rencana keluar pasien (diisi saat status → Terisi)
+    ADD COLUMN `planned_check_out_date` DATE NULL DEFAULT NULL
+        COMMENT 'Rencana tanggal keluar pasien'
+        AFTER `check_out_date`,
+
+    -- Jenis penjamin: BPJS / Umum / Asuransi / dll
+    ADD COLUMN `payer_type` VARCHAR(30) NULL DEFAULT NULL
+        COMMENT 'Jenis penjamin: BPJS, Umum, Asuransi'
+        AFTER `planned_check_out_date`,
+
+    -- Batas hari tanggungan BPJS (default 3 hari, bisa diubah per pasien)
+    ADD COLUMN `bpjs_limit_days` TINYINT UNSIGNED NULL DEFAULT NULL
+        COMMENT 'Batas hari tanggungan BPJS (hari)'
+        AFTER `payer_type`;
+
+ALTER TABLE `outpatient_visits`
+    ADD COLUMN `queue_id` INT UNSIGNED NULL DEFAULT NULL
+        COMMENT 'FK ke polyclinic_queues jika kunjungan berasal dari antrian'
+        AFTER `doctor_id`;
+
+UPDATE `outpatient_visits` ov
+INNER JOIN `registrations` r ON r.`id` = ov.`registration_id`
+SET ov.`queue_id` = r.`polyclinic_queue_id`
+WHERE ov.`queue_id` IS NULL
+  AND r.`polyclinic_queue_id` IS NOT NULL;
+
+ALTER TABLE `outpatient_visits`
+    ADD UNIQUE KEY `uq_outpatient_visits_registration_id` (`registration_id`),
+    ADD KEY `idx_outpatient_visits_queue_id` (`queue_id`),
+    ADD KEY `idx_outpatient_visits_patient_visit` (`patient_id`, `visit_date`);
+
+ALTER TABLE `medical_records`
+    ADD COLUMN `outpatient_visit_id` INT UNSIGNED NULL DEFAULT NULL
+        COMMENT 'FK ke outpatient_visits sebagai kunjungan rawat jalan'
+        AFTER `registration_id`;
+
+UPDATE `medical_records` mr
+INNER JOIN `outpatient_visits` ov ON ov.`registration_id` = mr.`registration_id`
+SET mr.`outpatient_visit_id` = ov.`id`
+WHERE mr.`outpatient_visit_id` IS NULL;
+
+ALTER TABLE `medical_records`
+    ADD KEY `idx_medical_records_outpatient_visit_id` (`outpatient_visit_id`);
+
+ALTER TABLE `medical_record_prescriptions`
+    ADD COLUMN IF NOT EXISTS `note` TEXT NULL AFTER `status`;
+
+ALTER TABLE `medical_record_laboratories`
+    ADD COLUMN IF NOT EXISTS `note` TEXT NULL AFTER `status`;
+
+ALTER TABLE `medical_record_radiologies`
+    ADD COLUMN IF NOT EXISTS `note` TEXT NULL AFTER `status`;
+
+ALTER TABLE `medical_record_examinations`
+    ADD COLUMN IF NOT EXISTS `payload_json` LONGTEXT NULL AFTER `note`;
+
+ALTER TABLE `outpatient_visits`
+    ADD COLUMN `queue_id` INT UNSIGNED NULL DEFAULT NULL
+        COMMENT 'FK ke polyclinic_queues jika kunjungan berasal dari antrian'
+        AFTER `doctor_id`;
+
+UPDATE `outpatient_visits` ov
+INNER JOIN `registrations` r ON r.`id` = ov.`registration_id`
+SET ov.`queue_id` = r.`polyclinic_queue_id`
+WHERE ov.`queue_id` IS NULL
+  AND r.`polyclinic_queue_id` IS NOT NULL;
+
+ALTER TABLE `outpatient_visits`
+    ADD UNIQUE KEY `uq_outpatient_visits_registration_id` (`registration_id`),
+    ADD KEY `idx_outpatient_visits_queue_id` (`queue_id`),
+    ADD KEY `idx_outpatient_visits_patient_visit` (`patient_id`, `visit_date`);
+
+ALTER TABLE `medical_records`
+    ADD COLUMN `outpatient_visit_id` INT UNSIGNED NULL DEFAULT NULL
+        COMMENT 'FK ke outpatient_visits sebagai kunjungan rawat jalan'
+        AFTER `registration_id`;
+
+UPDATE `medical_records` mr
+INNER JOIN `outpatient_visits` ov ON ov.`registration_id` = mr.`registration_id`
+SET mr.`outpatient_visit_id` = ov.`id`
+WHERE mr.`outpatient_visit_id` IS NULL;
+
+ALTER TABLE `medical_records`
+    ADD KEY `idx_medical_records_outpatient_visit_id` (`outpatient_visit_id`);
+
+ALTER TABLE `medical_record_integrations`
+    ADD COLUMN IF NOT EXISTS `noted_at` DATETIME NULL AFTER `medical_record_id`,
+    ADD COLUMN IF NOT EXISTS `user_id` INT NULL AFTER `noted_at`,
+    ADD COLUMN IF NOT EXISTS `health_worker_name` VARCHAR(255) NULL AFTER `user_id`,
+    ADD COLUMN IF NOT EXISTS `profession` VARCHAR(100) NULL AFTER `health_worker_name`,
+    ADD COLUMN IF NOT EXISTS `doctor_id` INT NULL AFTER `profession`,
+    ADD COLUMN IF NOT EXISTS `doctor_name` VARCHAR(255) NULL AFTER `doctor_id`,
+    ADD COLUMN IF NOT EXISTS `soap_sbar` TEXT NULL AFTER `doctor_name`,
+    ADD COLUMN IF NOT EXISTS `instruction` TEXT NULL AFTER `soap_sbar`,
+    ADD COLUMN IF NOT EXISTS `payload_json` LONGTEXT NULL AFTER `note`;
+
+ALTER TABLE `orders`
+    ADD COLUMN `laboratory_note` TEXT NULL AFTER `catatan`;
+
+ALTER TABLE `master_tindakan`
+    MODIFY COLUMN `kategori`
+        ENUM('Konsultasi', 'Tindakan Medis', 'Administrasi', 'Laboratorium')
+        NOT NULL DEFAULT 'Tindakan Medis';
+
+CREATE TABLE IF NOT EXISTS `order_laboratories` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `order_id` INT NOT NULL,
+    `master_tindakan_id` INT UNSIGNED NULL DEFAULT NULL,
+    `code` VARCHAR(50) NULL DEFAULT NULL,
+    `examination_name` VARCHAR(255) NOT NULL,
+    `price` DECIMAL(14,2) NOT NULL DEFAULT 0,
+    `approval_note` VARCHAR(255) NULL DEFAULT NULL,
+    `created` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    `modified` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_order_laboratories_order_id` (`order_id`),
+    KEY `idx_order_laboratories_master_tindakan_id` (`master_tindakan_id`),
+    CONSTRAINT `fk_order_laboratories_order`
+        FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT `fk_order_laboratories_master_tindakan`
+        FOREIGN KEY (`master_tindakan_id`) REFERENCES `master_tindakan` (`id`)
+        ON UPDATE CASCADE ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+ALTER TABLE `orders`
+    ADD COLUMN `radiology_note` TEXT NULL AFTER `laboratory_note`;
+
+ALTER TABLE `master_tindakan`
+    MODIFY COLUMN `kategori`
+        ENUM('Konsultasi', 'Tindakan Medis', 'Administrasi', 'Laboratorium', 'Radiologi')
+        NOT NULL DEFAULT 'Tindakan Medis';
+
+CREATE TABLE IF NOT EXISTS `order_radiologies` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `order_id` INT NOT NULL,
+    `master_tindakan_id` INT UNSIGNED NULL DEFAULT NULL,
+    `code` VARCHAR(50) NULL DEFAULT NULL,
+    `examination_name` VARCHAR(255) NOT NULL,
+    `price` DECIMAL(14,2) NOT NULL DEFAULT 0,
+    `approval_note` VARCHAR(255) NULL DEFAULT NULL,
+    `created` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    `modified` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_order_radiologies_order_id` (`order_id`),
+    KEY `idx_order_radiologies_master_tindakan_id` (`master_tindakan_id`),
+    CONSTRAINT `fk_order_radiologies_order`
+        FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT `fk_order_radiologies_master_tindakan`
+        FOREIGN KEY (`master_tindakan_id`) REFERENCES `master_tindakan` (`id`)
+        ON UPDATE CASCADE ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+CREATE TABLE `master_icd10` (
+	`id` INT NOT NULL AUTO_INCREMENT,
+	`kode` VARCHAR(10) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`nama` TEXT NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`is_active` TINYINT UNSIGNED NOT NULL DEFAULT '1',
+	`created` DATETIME NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+	`modified` DATETIME NOT NULL DEFAULT (CURRENT_TIMESTAMP) ON UPDATE CURRENT_TIMESTAMP,
+	PRIMARY KEY (`id`) USING BTREE,
+	UNIQUE INDEX `uq_kode` (`kode`) USING BTREE,
+	FULLTEXT INDEX `ft_nama` (`nama`)
+)
+COLLATE='utf8mb4_unicode_ci'
+ENGINE=InnoDB
+AUTO_INCREMENT=18544
+;
+
+CREATE TABLE `master_icd9` (
+	`id` INT NOT NULL AUTO_INCREMENT,
+	`kode` VARCHAR(10) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`nama` TEXT NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`is_active` TINYINT UNSIGNED NOT NULL DEFAULT '1',
+	`created` DATETIME NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+	`modified` DATETIME NOT NULL DEFAULT (CURRENT_TIMESTAMP) ON UPDATE CURRENT_TIMESTAMP,
+	PRIMARY KEY (`id`) USING BTREE,
+	UNIQUE INDEX `uq_kode` (`kode`) USING BTREE,
+	FULLTEXT INDEX `ft_nama` (`nama`)
+)
+COLLATE='utf8mb4_unicode_ci'
+ENGINE=InnoDB
+AUTO_INCREMENT=4627
+;
+
+alter table `orders`
+add column `pesan` text null after `lokasi_depo`;
+
