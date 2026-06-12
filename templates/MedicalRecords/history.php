@@ -34,12 +34,29 @@ $serviceLabels = [
     'rawat_inap' => 'Rawat Inap',
 ];
 
+$statusLabels = [
+    'waiting' => 'Menunggu',
+    'called' => 'Dipanggil',
+    'in_progress' => 'Diperiksa',
+    'done' => 'Selesai',
+    'cancelled' => 'Batal',
+];
+
 $rowValues = function ($row): array {
     if (is_object($row) && method_exists($row, 'toArray')) {
-        return $row->toArray();
+        $values = $row->toArray();
+    } else {
+        $values = is_array($row) ? $row : [];
     }
 
-    return is_array($row) ? $row : [];
+    if (!empty($values['payload_json'])) {
+        $payload = json_decode((string)$values['payload_json'], true);
+        if (is_array($payload)) {
+            $values = $payload + $values;
+        }
+    }
+
+    return $values;
 };
 
 $renderRows = function (array $rows, array $preferred = []) use ($rowValues) {
@@ -116,7 +133,42 @@ $findFirstValue = function (array $rows, array $aliases) use ($rowValues) {
     return null;
 };
 
-$renderSoapSections = function (array $rows) use ($findFirstValue) {
+$formatIcdItems = function ($items): string {
+    if (!is_array($items)) {
+        return (string)$items;
+    }
+
+    $lines = [];
+    foreach ($items as $item) {
+        if (!is_array($item)) {
+            continue;
+        }
+
+        $code = trim((string)($item['kode'] ?? ''));
+        $name = trim((string)($item['nama'] ?? ''));
+        if ($code === '' && $name === '') {
+            continue;
+        }
+
+        $label = trim($code . ($code !== '' && $name !== '' ? ' - ' : '') . $name);
+        $lines[] = !empty($item['utama']) ? '* ' . $label : '- ' . $label;
+    }
+
+    return implode("\n", $lines);
+};
+
+$renderSoapSections = function (array $rows) use ($findFirstValue, $formatIcdItems) {
+    $vitals = [
+        'Tekanan Darah' => ['blood_pressure', 'tekanan_darah'],
+        'Nadi' => ['pulse', 'nadi'],
+        'Pernapasan' => ['respiratory_rate', 'respiration', 'pernapasan'],
+        'Suhu' => ['temperature', 'suhu'],
+        'SpO2' => ['oxygen_saturation', 'spo2'],
+        'Berat Badan' => ['weight', 'berat_badan'],
+        'Tinggi Badan' => ['height', 'tinggi_badan'],
+        'Skala Nyeri' => ['pain_scale', 'skala_nyeri'],
+    ];
+
     $sections = [
         'Keluhan Awal' => [
             'keluhan_awal',
@@ -131,6 +183,7 @@ $renderSoapSections = function (array $rows) use ($findFirstValue) {
             'pemeriksaan',
             'examination',
             'objective',
+            'illness_history',
             'physical_examination',
             'status_lokalis',
             'clinical_examination',
@@ -139,6 +192,9 @@ $renderSoapSections = function (array $rows) use ($findFirstValue) {
             'diagnosa',
             'diagnosis',
             'assessment',
+            'admission_diagnosis',
+            'diagnosis_primary',
+            'diagnosis_secondary',
             'clinical_diagnosis',
         ],
         'Saran / Anjuran' => [
@@ -150,21 +206,53 @@ $renderSoapSections = function (array $rows) use ($findFirstValue) {
             'plan',
             'therapy',
             'terapi',
+            'doctor_notes',
         ],
         'Diagnosa / ICD10' => [
+            'icd10_items',
             'diagnosa_icd10',
             'diagnosis_icd10',
             'icd10',
             'icd10_code',
+            'icd10_nama',
             'diagnosis_code',
             'kode_diagnosa',
             'diagnosa_kode',
         ],
+        'Tindakan / ICD-9 CM' => [
+            'icd9_items',
+            'icd9',
+            'icd9_code',
+            'icd9_nama',
+            'action_notes',
+            'procedure_code',
+            'procedure_name',
+        ],
     ];
 
     echo '<div class="soap-section-grid">';
+    echo '<div class="soap-section vital-section">';
+    echo '<div class="soap-section-title">Tanda Vital</div>';
+    echo '<div class="soap-section-body">';
+    $hasVital = false;
+    foreach ($vitals as $label => $aliases) {
+        $value = $findFirstValue($rows, $aliases);
+        if ($value !== null && $value !== '') {
+            $hasVital = true;
+            echo '<span class="vital-chip">' . h($label) . ': ' . h((string)$value) . '</span> ';
+        }
+    }
+    if (!$hasVital) {
+        echo '<span class="text-muted">Data belum tersedia</span>';
+    }
+    echo '</div>';
+    echo '</div>';
+
     foreach ($sections as $title => $aliases) {
         $value = $findFirstValue($rows, $aliases);
+        if (is_array($value)) {
+            $value = $formatIcdItems($value);
+        }
         $text = $value === null || $value === ''
             ? '<span class="text-muted">Data belum tersedia</span>'
             : nl2br(h((string)$value));
@@ -214,7 +302,7 @@ $renderPrescriptionTable = function (array $rows) use ($findFirstValue) {
         $prescriptionDate = $findFirstValue($rowSet, ['tgl_resep', 'tanggal_resep', 'prescription_date', 'recipe_date', 'date', 'created']);
         $prescriptionTime = $findFirstValue($rowSet, ['jam', 'jam_resep', 'prescription_time', 'recipe_time', 'time']);
         $doctor = $findFirstValue($rowSet, ['dokter', 'doctor', 'doctor_name', 'nama_dokter']);
-        $drugDetail = $findFirstValue($rowSet, ['detail_obat', 'drug_detail', 'medicine_detail', 'obat', 'medicines', 'items', 'detail', 'description', 'notes']);
+        $drugDetail = $findFirstValue($rowSet, ['detail_obat', 'drug_detail', 'medicine_detail', 'obat', 'medicines', 'items', 'detail', 'description', 'notes', 'note']);
 
         echo '<tr>';
         echo '<td><strong>' . $formatPrescriptionValue($prescriptionNo) . '</strong></td>';
@@ -248,8 +336,8 @@ $renderLaboratoryTable = function (array $rows) use ($findFirstValue) {
         return h((string)$value);
     };
 
-    echo '<div class="history-table-wrap">';
-    echo '<table class="table table-striped table-hover table-td-valign-middle mb-0 support-table">';
+    echo '<div class="history-table-wrap integration-table-wrap">';
+    echo '<table class="table table-striped table-hover table-td-valign-middle mb-0 support-table integration-table">';
     echo '<thead class="thead-dark">';
     echo '<tr>';
     echo '<th width="150">No Lab</th>';
@@ -347,6 +435,61 @@ $renderRadiologyTable = function (array $rows) use ($findFirstValue) {
     echo '</table>';
     echo '</div>';
 };
+
+$renderIntegrationTable = function (array $rows) {
+    if (empty($rows)) {
+        echo '<div class="history-empty">Data belum tersedia</div>';
+        return;
+    }
+
+    $formatDate = function ($value, string $format): string {
+        if ($value === null || $value === '') {
+            return '-';
+        }
+
+        if (is_object($value) && method_exists($value, 'format')) {
+            return h($value->format($format));
+        }
+
+        return h(date($format, strtotime((string)$value)));
+    };
+
+    echo '<div class="history-table-wrap">';
+    echo '<table class="table table-striped table-hover table-td-valign-middle mb-0 support-table">';
+    echo '<thead class="thead-dark">';
+    echo '<tr>';
+    echo '<th width="105">Tanggal</th>';
+    echo '<th width="75">Jam</th>';
+    echo '<th width="180">Tenaga Kesehatan</th>';
+    echo '<th width="190">Dokter</th>';
+    echo '<th>SOAP SBAR</th>';
+    echo '<th>Instruksi</th>';
+    echo '</tr>';
+    echo '</thead>';
+    echo '<tbody>';
+
+    foreach ($rows as $row) {
+        $values = is_object($row) && method_exists($row, 'toArray') ? $row->toArray() : (array)$row;
+        $notedAt = $values['noted_at'] ?? $values['created'] ?? null;
+
+        echo '<tr>';
+        echo '<td>' . $formatDate($notedAt, 'd-m-Y') . '</td>';
+        echo '<td>' . $formatDate($notedAt, 'H:i') . '</td>';
+        echo '<td><strong>' . h((string)($values['health_worker_name'] ?? '-')) . '</strong>';
+        if (!empty($values['profession'])) {
+            echo '<br><small>' . h((string)$values['profession']) . '</small>';
+        }
+        echo '</td>';
+        echo '<td>' . h((string)($values['doctor_name'] ?? '-')) . '</td>';
+        echo '<td><div class="support-detail">' . nl2br(h((string)($values['soap_sbar'] ?? $values['note'] ?? '-'))) . '</div></td>';
+        echo '<td><div class="support-detail">' . nl2br(h((string)($values['instruction'] ?? '-'))) . '</div></td>';
+        echo '</tr>';
+    }
+
+    echo '</tbody>';
+    echo '</table>';
+    echo '</div>';
+};
 ?>
 
 <?= $this->Krs->breadcrumb('Medical Record', 'Riwayat Pasien') ?>
@@ -421,6 +564,8 @@ $renderRadiologyTable = function (array $rows) use ($findFirstValue) {
         padding: 10px 12px 0;
         border-bottom: 1px solid #dee2e6;
         background: #fafbfd;
+        overflow-x: auto;
+        white-space: nowrap;
     }
 
     .history-tabs .nav-link {
@@ -433,6 +578,7 @@ $renderRadiologyTable = function (array $rows) use ($findFirstValue) {
     .history-tab-body {
         padding: 14px;
         min-height: 360px;
+        background: #fff;
     }
 
     .history-table-wrap {
@@ -448,7 +594,7 @@ $renderRadiologyTable = function (array $rows) use ($findFirstValue) {
 
     .prescription-detail,
     .support-detail {
-        max-height: 150px;
+        max-height: 180px;
         min-height: 44px;
         overflow: auto;
         white-space: normal;
@@ -468,18 +614,20 @@ $renderRadiologyTable = function (array $rows) use ($findFirstValue) {
 
     .vital-chip {
         display: inline-block;
-        padding: 2px 6px;
-        border-radius: 4px;
-        background: #f2f3f4;
-        color: #495057;
-        font-size: 11px;
-        margin: 1px;
+        padding: 6px 8px;
+        border-radius: 6px;
+        background: #eef7ff;
+        border: 1px solid #d7ebff;
+        color: #1e3a5f;
+        font-size: 12px;
+        font-weight: 700;
+        margin: 3px;
         white-space: nowrap;
     }
 
     .soap-workspace {
         display: grid;
-        grid-template-columns: minmax(430px, 48%) minmax(0, 1fr);
+        grid-template-columns: minmax(420px, 44%) minmax(0, 1fr);
         gap: 14px;
         align-items: start;
     }
@@ -495,7 +643,7 @@ $renderRadiologyTable = function (array $rows) use ($findFirstValue) {
     .soap-panel-header {
         padding: 11px 13px;
         border-bottom: 1px solid #edf1f5;
-        background: #fafbfd;
+        background: #f5f7fa;
         color: #2d353c;
         font-size: 14px;
         font-weight: 700;
@@ -506,8 +654,9 @@ $renderRadiologyTable = function (array $rows) use ($findFirstValue) {
     }
 
     .soap-visit-row.active td {
-        background: #eef7ff;
-        border-color: #d6ebff;
+        background: #eef7ff !important;
+        border-color: #d6ebff !important;
+        color: #1e3a5f;
     }
 
     .soap-detail-content {
@@ -520,9 +669,10 @@ $renderRadiologyTable = function (array $rows) use ($findFirstValue) {
     }
 
     .soap-detail-title {
-        margin-bottom: 12px;
-        padding-bottom: 10px;
+        margin: -14px -14px 12px;
+        padding: 14px;
         border-bottom: 1px solid #edf1f5;
+        background: #fbfcfe;
     }
 
     .soap-detail-title h4 {
@@ -537,8 +687,12 @@ $renderRadiologyTable = function (array $rows) use ($findFirstValue) {
 
     .soap-section-grid {
         display: grid;
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 10px;
+    }
+
+    .vital-section {
+        grid-column: 1 / -1;
     }
 
     .soap-section {
@@ -566,6 +720,37 @@ $renderRadiologyTable = function (array $rows) use ($findFirstValue) {
         font-size: 13px;
         line-height: 1.55;
         word-break: break-word;
+        background: #fff;
+    }
+
+    .history-visit-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+    }
+
+    .history-visit-meta span {
+        display: inline-block;
+        padding: 3px 7px;
+        border-radius: 5px;
+        background: #eef2f7;
+        color: #495057;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .integration-table th {
+        white-space: nowrap;
+    }
+
+    .integration-table td {
+        line-height: 1.45;
+    }
+
+    .integration-table-wrap .support-detail {
+        max-height: 240px;
+        min-width: 260px;
     }
 
     .history-readonly-card {
@@ -600,6 +785,10 @@ $renderRadiologyTable = function (array $rows) use ($findFirstValue) {
 
         .patient-meta-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .soap-section-grid {
+            grid-template-columns: 1fr;
         }
     }
 
@@ -679,10 +868,12 @@ $renderRadiologyTable = function (array $rows) use ($findFirstValue) {
                                     <table class="table table-striped table-hover table-td-valign-middle mb-0">
                                         <thead class="thead-dark">
                                             <tr>
-                                                <th width="150">No Kunjungan / No Registrasi</th>
-                                                <th width="130">Tanggal/Jam</th>
-                                                <th width="135">Layanan/Poli</th>
+                                                <th width="130">Tanggal</th>
+                                                <th width="150">No Registrasi</th>
+                                                <th>Nama Pasien</th>
+                                                <th width="135">Poli</th>
                                                 <th>Dokter</th>
+                                                <th width="95">Status</th>
                                                 <th width="75">Aksi</th>
                                             </tr>
                                         </thead>
@@ -690,16 +881,20 @@ $renderRadiologyTable = function (array $rows) use ($findFirstValue) {
                                             <?php $first = true; ?>
                                             <?php foreach ($registrations as $registration): ?>
                                                 <?php
-                                                $serviceLabel = $serviceLabels[$registration->service_type] ?? ($registration->service_type ?: '-');
+                                                $serviceType = $registration->registration->service_type ?? null;
+                                                $serviceLabel = $serviceLabels[$serviceType] ?? ($serviceType ?: 'Rawat Jalan');
+                                                $statusLabel = $statusLabels[$registration->status] ?? ($registration->status ?: '-');
                                                 ?>
                                                 <tr class="soap-visit-row <?= $first ? 'active' : '' ?>" data-target="soap-detail-<?= h($registration->id) ?>">
-                                                    <td><strong><?= $display($registration->registration_no ?? $registration->registration_number ?? null) ?></strong></td>
-                                                    <td><?= $formatDateTime($registration->registration_date ?? null, $registration->admission_time ?? null) ?></td>
+                                                    <td><?= $formatDateTime($registration->visit_date ?? null, $registration->visit_time ?? null) ?></td>
+                                                    <td><strong><?= $display($registration->registration_no ?? $registration->registration->registration_no ?? null) ?></strong></td>
+                                                    <td><?= $display($registration->patient->full_name ?? $patient->full_name ?? null) ?></td>
                                                     <td>
                                                         <span class="label label-info"><?= h($serviceLabel) ?></span><br>
-                                                        <small><?= $display($registration->polyclinic_name ?? $registration->room->room_name ?? null) ?></small>
+                                                        <small><?= $display($registration->polyclinic_name ?? null) ?></small>
                                                     </td>
                                                     <td><?= $display($registration->doctor->doctor_name ?? $registration->doctor->name ?? null) ?></td>
+                                                    <td><?= h($statusLabel) ?></td>
                                                     <td>
                                                         <button type="button" class="btn btn-info btn-xs btn-view-soap" data-target="soap-detail-<?= h($registration->id) ?>">
                                                             Lihat
@@ -720,21 +915,35 @@ $renderRadiologyTable = function (array $rows) use ($findFirstValue) {
                                     <?php
                                     $medicalRecord = $registration->medical_record ?? null;
                                     $registrationDetails = $detailData[$registration->id] ?? [];
-                                    $serviceLabel = $serviceLabels[$registration->service_type] ?? ($registration->service_type ?: '-');
+                                    $serviceType = $registration->registration->service_type ?? null;
+                                    $serviceLabel = $serviceLabels[$serviceType] ?? ($serviceType ?: 'Rawat Jalan');
                                     $soapRows = [];
                                     if (!empty($medicalRecord)) {
                                         $soapRows[] = $medicalRecord;
                                     }
                                     $soapRows = array_merge($soapRows, $registrationDetails['examinations'] ?? []);
+                                    $medicalRecordStatus = is_array($medicalRecord)
+                                        ? ($medicalRecord['status'] ?? null)
+                                        : ($medicalRecord->status ?? null);
+                                    $noteCount = count($registrationDetails['examinations'] ?? []);
+                                    $recipeCount = count($registrationDetails['prescriptions'] ?? []);
+                                    $integrationCount = count($registrationDetails['integrations'] ?? []);
                                     ?>
                                     <div class="soap-detail-content <?= $first ? 'active' : '' ?>" id="soap-detail-<?= h($registration->id) ?>">
                                         <div class="soap-detail-title">
-                                            <h4><?= $display($registration->registration_no ?? $registration->registration_number ?? null) ?></h4>
+                                            <h4><?= $display($registration->registration_no ?? $registration->registration->registration_no ?? null) ?></h4>
                                             <small>
-                                                <?= $formatDateTime($registration->registration_date ?? null, $registration->admission_time ?? null) ?>
+                                                <?= $formatDateTime($registration->visit_date ?? null, $registration->visit_time ?? null) ?>
                                                 &nbsp;|&nbsp; <?= h($serviceLabel) ?>
                                                 &nbsp;|&nbsp; <?= $display($registration->doctor->doctor_name ?? $registration->doctor->name ?? null) ?>
                                             </small>
+                                            <div class="history-visit-meta">
+                                                <span>Status Kunjungan: <?= h($statusLabels[$registration->status] ?? ($registration->status ?: '-')) ?></span>
+                                                <span>Medical Record: <?= $display($medicalRecordStatus) ?></span>
+                                                <span>Catatan EMR: <?= h((string)$noteCount) ?></span>
+                                                <span>Resep: <?= h((string)$recipeCount) ?></span>
+                                                <span>Form Integrasi: <?= h((string)$integrationCount) ?></span>
+                                            </div>
                                         </div>
 
                                         <?php $renderSoapSections($soapRows); ?>
@@ -774,7 +983,7 @@ $renderRadiologyTable = function (array $rows) use ($findFirstValue) {
                 </div>
 
                 <div class="tab-pane fade" id="tab-integrations" role="tabpanel">
-                    <?php $renderRows($collectRows(['integrations'])); ?>
+                    <?php $renderIntegrationTable($collectRows(['integrations'])); ?>
                 </div>
 
                 <div class="tab-pane fade" id="tab-icares" role="tabpanel">
