@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
+use ArrayObject;
+use Cake\Event\EventInterface;
 use Cake\ORM\Query;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
@@ -50,6 +52,34 @@ class DoctorsTable extends Table
         $this->hasMany('DoctorSchedules', [
             'foreignKey' => 'doctor_id',
         ]);
+    }
+
+    public function beforeMarshal(EventInterface $event, ArrayObject $data, ArrayObject $options): void
+    {
+        if (isset($data['code']) && is_string($data['code'])) {
+            $data['code'] = trim($data['code']);
+        }
+
+        if (empty($data['code'])) {
+            $data['code'] = $this->generateCode();
+        }
+    }
+
+    public function generateCode(): string
+    {
+        $lastDoctor = $this->find()
+            ->select(['code'])
+            ->where(['code LIKE' => 'DR-%'])
+            ->order(['id' => 'DESC'])
+            ->first();
+
+        if ($lastDoctor && preg_match('/DR-(\d+)/', (string)$lastDoctor->code, $matches)) {
+            $nextNumber = (int)$matches[1] + 1;
+        } else {
+            $nextNumber = 1;
+        }
+
+        return 'DR-' . str_pad((string)$nextNumber, 4, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -182,6 +212,11 @@ class DoctorsTable extends Table
      */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
+        $rules->add($rules->isUnique(['code']), [
+            'errorField' => 'code',
+            'message' => 'Kode dokter sudah terdaftar.',
+        ]);
+
         return $rules;
     }
 }

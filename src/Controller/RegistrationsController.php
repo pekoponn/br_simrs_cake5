@@ -6,6 +6,8 @@ namespace App\Controller;
 
 class RegistrationsController extends AppController
 {
+    protected array $lastOutpatientVisitErrors = [];
+
     public function index()
     {
         $q              = $this->request->getQuery('q');
@@ -367,6 +369,14 @@ class RegistrationsController extends AppController
             if (empty($data['status'])) {
                 $data['status'] = 'aktif';
             }
+            $data['treatment_type'] = $data['treatment_type'] ?? 'BIASA';
+            $data['is_create'] = $data['is_create'] ?? 1;
+            $data['is_update'] = $data['is_update'] ?? 0;
+            $data['is_delete'] = $data['is_delete'] ?? 0;
+            $data['is_active'] = $data['is_active'] ?? 'Y';
+
+            $registrationColumns = array_flip($this->Registrations->getSchema()->columns());
+            $data = array_intersect_key($data, $registrationColumns);
 
             $registration = $this->Registrations->patchEntity($registration, $data);
 
@@ -403,6 +413,10 @@ class RegistrationsController extends AppController
             });
 
             if ($saved) {
+                if (($registration->service_type ?? '') === 'rawat_jalan') {
+                    $this->_syncOutpatientVisitFromRegistration($registration);
+                }
+
                 $this->Flash->success(__('Data registrasi berhasil disimpan.'));
                 return $this->redirect(['action' => 'index']);
             }
@@ -559,6 +573,12 @@ class RegistrationsController extends AppController
                     );
                 }
 
+                if ($newServiceType === 'rawat_jalan') {
+                    $this->_syncOutpatientVisitFromRegistration($registration);
+                } elseif ($oldServiceType === 'rawat_jalan') {
+                    $this->_cancelOutpatientVisitFromRegistration($registration);
+                }
+
                 $this->Flash->success(__('Data registrasi berhasil diubah.'));
                 return $this->redirect(['action' => 'index']);
             }
@@ -712,6 +732,55 @@ class RegistrationsController extends AppController
         } catch (\Throwable $e) {
             return;
         }
+    }
+
+    protected function _syncOutpatientVisitFromRegistration($registration): bool
+    {
+        $this->loadModel('OutpatientVisits');
+
+        $saved = $this->OutpatientVisits->syncFromRegistration($registration);
+        if (!$saved) {
+            $this->lastOutpatientVisitErrors = ['outpatient_visit' => ['sync' => 'Gagal membuat data kunjungan rawat jalan.']];
+            if (method_exists($this->OutpatientVisits, 'newEmptyEntity')) {
+                $visit = $this->OutpatientVisits->find()
+                    ->where(['registration_id' => $registration->id])
+                    ->first();
+                if ($visit) {
+                    $this->lastOutpatientVisitErrors = $visit->getErrors();
+                }
+            }
+        }
+
+        return (bool)$saved;
+    }
+
+    protected function _cancelOutpatientVisitFromRegistration($registration): void
+    {
+        $this->loadModel('OutpatientVisits');
+
+        $visit = $this->OutpatientVisits->find()
+            ->where(['registration_id' => $registration->id])
+            ->first();
+
+        if (!$visit || in_array($visit->status, ['done', 'cancelled'], true)) {
+            return;
+        }
+
+        $visit->status = 'cancelled';
+        $this->OutpatientVisits->save($visit);
+    }
+
+    protected function _formatRegistrationDate($date): string
+    {
+        if (empty($date)) {
+            return date('Y-m-d');
+        }
+
+        if (is_object($date) && method_exists($date, 'format')) {
+            return $date->format('Y-m-d');
+        }
+
+        return date('Y-m-d', strtotime((string)$date));
     }
 
     public function delete($id = null)

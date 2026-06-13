@@ -14,6 +14,7 @@ class PolyclinicQueuesController extends AppController
     private const SOURCE_WHATSAPP = 'WA';
     private const SOURCE_KIOSK = 'KIOSK';
     private const SOURCE_MOBILE_JKN = 'Mobile JKN';
+    private const SOURCE_EMR_RUJUK = 'Rujukan';
     private const CHECKIN_PENDING = 'Belum Check-in';
     private const CHECKIN_DONE = 'Sudah Check-in';
     private const CALL_STATUS_WAITING = 'Menunggu';
@@ -635,6 +636,157 @@ class PolyclinicQueuesController extends AppController
         ));
     }
 
+    public function searchPolyQueue()
+    {
+        $this->request->allowMethod(['get']);
+        $this->autoRender = false;
+
+        $q = strtolower(trim((string)$this->request->getQuery('q', '')));
+        $visitDate = trim((string)$this->request->getQuery('visit_date', date('Y-m-d')));
+        if (!$this->isValidVisitDate($visitDate)) {
+            $visitDate = date('Y-m-d');
+        }
+        $results = [];
+
+        foreach ($this->getPolyclinicOptions() as $value => $label) {
+            $name = (string)$value;
+            if ($q !== '' && strpos(strtolower($name), $q) === false && strpos(strtolower((string)$label), $q) === false) {
+                continue;
+            }
+
+            $results[] = [
+                'poly_name' => $name,
+                'name' => (string)$label,
+                'next_queue_number' => $this->getNextQueueNumberByPoly($name, $visitDate),
+            ];
+        }
+
+        return $this->response
+            ->withType('application/json')
+            ->withStringBody(json_encode($results, JSON_UNESCAPED_UNICODE));
+    }
+
+    public function searchPoly()
+    {
+        return $this->searchPolyQueue();
+    }
+
+    public function createReferralQueue()
+    {
+        $this->request->allowMethod(['post']);
+        $this->autoRender = false;
+
+        $polyName = trim((string)$this->request->getData('poly_name', ''));
+        $patientName = trim((string)$this->request->getData('patient_name', ''));
+        $phoneNumber = trim((string)$this->request->getData('phone_number', ''));
+        $visitDate = trim((string)$this->request->getData('visit_date', ''));
+        $visitDate = $visitDate !== '' ? $visitDate : date('Y-m-d');
+
+        if ($polyName === '') {
+            return $this->response
+                ->withStatus(422)
+                ->withType('application/json')
+                ->withStringBody(json_encode([
+                    'success' => false,
+                    'message' => 'Poliklinik wajib dipilih.',
+                ], JSON_UNESCAPED_UNICODE));
+        }
+
+        if (!$this->isValidVisitDate($visitDate)) {
+            return $this->response
+                ->withStatus(422)
+                ->withType('application/json')
+                ->withStringBody(json_encode([
+                    'success' => false,
+                    'message' => 'Format tanggal kunjungan tidak valid.',
+                ], JSON_UNESCAPED_UNICODE));
+        }
+
+        try {
+            $result = $this->PolyclinicQueues->getConnection()->transactional(
+                function () use ($polyName, $patientName, $phoneNumber, $visitDate) {
+                    $existingQueue = $this->PolyclinicQueues->find()
+                        ->where([
+                            'source' => self::SOURCE_EMR_RUJUK,
+                            'poly_name' => $polyName,
+                            'patients_name' => $patientName !== '' ? $patientName : '-',
+                            'no_telp' => $phoneNumber !== '' ? $phoneNumber : '-',
+                            'visit_date' => $visitDate,
+                            'is_delete' => 0,
+                        ])
+                        ->orderDesc('id')
+                        ->first();
+
+                    if ($existingQueue) {
+                        return [
+                            'queue' => $existingQueue,
+                            'created' => false,
+                        ];
+                    }
+
+                    $nextNumber = $this->getNextQueueNumberByPoly($polyName, $visitDate);
+                    $now = date('Y-m-d H:i:s');
+                    $queue = $this->PolyclinicQueues->newEmptyEntity();
+                    $queue = $this->PolyclinicQueues->patchEntity($queue, [
+                        'code' => $this->formatQueueCode($nextNumber),
+                        'source' => self::SOURCE_EMR_RUJUK,
+                        'poly_name' => $polyName,
+                        'patients_name' => $patientName !== '' ? $patientName : '-',
+                        'no_telp' => $phoneNumber !== '' ? $phoneNumber : '-',
+                        'queue_number' => $nextNumber,
+                        'visit_date' => $visitDate,
+                        'checkin_status' => self::CHECKIN_PENDING,
+                        'checkin_time' => null,
+                        'call_status' => self::CALL_STATUS_WAITING,
+                        'called_time' => null,
+                        'call_count' => 0,
+                        'is_create' => 1,
+                        'is_update' => 0,
+                        'is_delete' => 0,
+                        'is_active' => 'Y',
+                        'created' => $now,
+                        'modified' => $now,
+                    ]);
+
+                    if (!$this->PolyclinicQueues->save($queue)) {
+                        throw new \RuntimeException(json_encode($queue->getErrors()));
+                    }
+
+                    return [
+                        'queue' => $queue,
+                        'created' => true,
+                    ];
+                }
+            );
+        } catch (\Throwable $exception) {
+            return $this->response
+                ->withStatus(422)
+                ->withType('application/json')
+                ->withStringBody(json_encode([
+                    'success' => false,
+                    'message' => 'Gagal membuat antrian rujukan.',
+                ], JSON_UNESCAPED_UNICODE));
+        }
+
+        $queue = $result['queue'];
+        $wasCreated = (bool)$result['created'];
+
+        return $this->response
+            ->withType('application/json')
+            ->withStringBody(json_encode([
+                'success' => true,
+                'id' => $queue->id,
+                'code' => $queue->code,
+                'queue_number' => $queue->queue_number,
+                'poly_name' => $queue->poly_name,
+                'source' => $queue->source,
+                'source_label' => $this->getSourceLabel((string)$queue->source),
+                'message' => $wasCreated
+                    ? 'Antrian rujukan berhasil dibuat.'
+                    : 'Antrian rujukan ini sudah pernah dibuat.',
+            ], JSON_UNESCAPED_UNICODE));
+    }
+
     private function getPolyclinicButtonData(): array
     {
         $polyclinics = $this->getPolyclinicOptions();
@@ -770,6 +922,42 @@ class PolyclinicQueuesController extends AppController
         return $lastQueue ? ((int)$lastQueue->queue_number + 1) : 1;
     }
 
+    private function getNextQueueNumberByPoly(string $polyName, ?string $visitDate = null): int
+    {
+        $visitDate = $visitDate ?: date('Y-m-d');
+        $startDate = $visitDate . ' 00:00:00';
+        $endDate = $visitDate . ' 23:59:59';
+
+        $lastQueue = $this->PolyclinicQueues
+            ->find()
+            ->select(['queue_number'])
+            ->where([
+                'poly_name' => $polyName,
+                'is_delete' => 0,
+            ])
+            ->where(function ($expression) use ($visitDate, $startDate, $endDate) {
+                return $expression->or_([
+                    'visit_date' => $visitDate,
+                    $expression->and_([
+                        'visit_date IS' => null,
+                        'created >=' => $startDate,
+                        'created <=' => $endDate,
+                    ]),
+                ]);
+            })
+            ->orderDesc('queue_number')
+            ->first();
+
+        return $lastQueue ? ((int)$lastQueue->queue_number + 1) : 1;
+    }
+
+    private function isValidVisitDate(string $visitDate): bool
+    {
+        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $visitDate);
+
+        return $date !== false && $date->format('Y-m-d') === $visitDate;
+    }
+
     private function formatQueueCode(int $queueNumber): string
     {
         return 'A-' . str_pad((string)$queueNumber, 3, '0', STR_PAD_LEFT);
@@ -787,6 +975,10 @@ class PolyclinicQueuesController extends AppController
 
         if ($source === self::SOURCE_KIOSK) {
             return 'Manual';
+        }
+
+        if ($source === self::SOURCE_EMR_RUJUK) {
+            return 'Rujukan EMR';
         }
 
         return $source !== '' ? $source : 'Manual';

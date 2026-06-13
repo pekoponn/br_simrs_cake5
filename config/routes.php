@@ -65,6 +65,21 @@ $routes->scope('/', function (RouteBuilder $builder) {
         ['controller' => 'MedicalRecords', 'action' => 'history'],
         ['pass' => ['patient_id'], 'patient_id' => '\d+']
     );
+    $builder->connect(
+        '/polyclinic-queues/search-poly',
+        ['controller' => 'PolyclinicQueues', 'action' => 'searchPoly'],
+        ['_method' => 'GET']
+    );
+    $builder->connect(
+        '/polyclinic-queues/search-poly-queue',
+        ['controller' => 'PolyclinicQueues', 'action' => 'searchPolyQueue'],
+        ['_method' => 'GET']
+    );
+    $builder->connect(
+        '/polyclinic-queues/create-referral-queue',
+        ['controller' => 'PolyclinicQueues', 'action' => 'createReferralQueue'],
+        ['_method' => 'POST']
+    );
 
     /*
      * Connect catchall routes for all controllers.

@@ -50,8 +50,12 @@ class DoctorsController extends AppController
         if ($this->request->is('post')) {
             $data = $this->request->getData();
 
+            if (isset($data['code']) && is_string($data['code'])) {
+                $data['code'] = trim($data['code']);
+            }
+
             if (empty($data['code'])) {
-                $data['code'] = $this->generateDoctorCode();
+                $data['code'] = $this->Doctors->generateCode();
             }
 
             $doctor = $this->Doctors->patchEntity($doctor, $data);
@@ -97,17 +101,6 @@ class DoctorsController extends AppController
         $this->set(compact('doctor', 'polyclinics', 'religions'));
     }
 
-    private function generateDoctorCode(): string
-    {
-        $lastDoctor = $this->Doctors->find()
-            ->select(['id'])
-            ->order(['Doctors.id' => 'DESC'])
-            ->first();
-        $nextId = $lastDoctor ? ((int)$lastDoctor->id + 1) : 1;
-
-        return 'DR-' . str_pad((string)$nextId, 4, '0', STR_PAD_LEFT);
-    }
-
     private function getPolyclinicOptions(): array
     {
         return [
@@ -136,6 +129,44 @@ class DoctorsController extends AppController
             'Konghucu' => 'Konghucu',
             'Lainnya' => 'Lainnya',
         ];
+    }
+
+    public function searchByPolyclinic()
+    {
+        $this->request->allowMethod(['get']);
+        $this->autoRender = false;
+
+        $polyName = trim((string)$this->request->getQuery('poly_name', ''));
+        $q = trim((string)$this->request->getQuery('q', ''));
+
+        if ($polyName === '') {
+            return $this->response
+                ->withType('application/json')
+                ->withStringBody(json_encode([], JSON_UNESCAPED_UNICODE));
+        }
+
+        $conditions = [
+            'Doctors.polyclinic_name' => $polyName,
+        ];
+
+        if ($q !== '') {
+            $conditions['OR'] = [
+                'Doctors.doctor_name LIKE' => '%' . $q . '%',
+                'Doctors.specialist LIKE' => '%' . $q . '%',
+            ];
+        }
+
+        $rows = $this->Doctors->find()
+            ->select(['id', 'doctor_name', 'specialist', 'polyclinic_name'])
+            ->where($conditions)
+            ->order(['Doctors.doctor_name' => 'ASC'])
+            ->limit(50)
+            ->enableHydration(false)
+            ->toArray();
+
+        return $this->response
+            ->withType('application/json')
+            ->withStringBody(json_encode($rows, JSON_UNESCAPED_UNICODE));
     }
 
     /**

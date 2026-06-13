@@ -17,6 +17,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use Cake\Controller\Controller;
+use Cake\Http\Exception\ForbiddenException;
 // use Cake\Datasource\ConnectionManager;
 // use Cake\I18n\FrozenTime;
 /**
@@ -83,17 +84,23 @@ class AppController extends Controller
           $dataRule = explode(';', $getUser->rules);
           $checkUrl = array();
           foreach ($dataRule as $idRule => $valRule) {
-            $dataAction = explode('=', $valRule);
-            $controlRule = array($dataAction[0] => $dataAction[1]);
-            $_act = array();
-            foreach ($controlRule as $keyControlRule => $valControlRule) {
-              $getAction = explode(',', $valControlRule);
-              foreach ($getAction as $key => $act) {
-                $splitAct = explode(':', $act);
-                $_act[$splitAct[0]] = $splitAct[1];
-              }
-              $checkUrl[$dataAction[0]] = $_act;
+            $dataAction = explode('=', trim($valRule), 2);
+            if (count($dataAction) !== 2 || $dataAction[0] === '') {
+              continue;
             }
+
+            $_act = array();
+            $getActions = explode(',', $dataAction[1]);
+            foreach ($getActions as $act) {
+              $splitAct = explode(':', trim($act), 2);
+              if (count($splitAct) !== 2 || $splitAct[0] === '') {
+                continue;
+              }
+
+              $_act[$splitAct[0]] = $splitAct[1];
+            }
+
+            $checkUrl[strtolower($dataAction[0])] = $_act;
           }
           $getAction = $this->request->getParam('action');
           $resultCheck = $checkUrl[$getController] ?? [];
@@ -141,16 +148,22 @@ class AppController extends Controller
             'view',
             'pdf',
             'display',
+            'searchPoly',
+            'searchPolyQueue',
           ];
 
           $canAccessPolyclinicQueueHelper = $getController === 'polyclinicqueues'
             && in_array($getAction, $polyclinicQueueHelperActions, true)
-            && !empty($resultCheck['index']);
+            && (
+              !empty($resultCheck['index'])
+              || !empty($checkUrl['outpatientvisits']['emr'])
+            );
 
           $polyclinicQueueEntryActions = [
             'mobileJkn',
             'checkIn',
             'callQueue',
+            'createReferralQueue',
           ];
 
           $canAccessPolyclinicQueueEntry = $getController === 'polyclinicqueues'
@@ -158,10 +171,127 @@ class AppController extends Controller
             && (
               !empty($resultCheck['index'])
               || !empty($resultCheck['add'])
+              || !empty($checkUrl['outpatientvisits']['emr'])
             );
 
-          if(!$canAccessRegistrationHelper && !$canAccessRegistrationView && !$canAccessBedHelper && !$canAccessPolyclinicQueueHelper && !$canAccessPolyclinicQueueEntry && (empty($resultCheck[$getAction]) || $resultCheck[$getAction]==0)) {
-           return $this->redirect($this->referer()); // Halaman akan tidak bisa diakses
+          $canAccessDoctorHelper = $getController === 'doctors'
+            && $getAction === 'searchByPolyclinic'
+            && (
+              !empty($resultCheck['index'])
+              || !empty($checkUrl['outpatientvisits']['emr'])
+            );
+
+          $outpatientVisitHelperActions = [
+            'getSummary',
+            'liveData',
+          ];
+
+          $canAccessOutpatientVisitHelper = $getController === 'outpatientvisits'
+            && in_array($getAction, $outpatientVisitHelperActions, true)
+            && !empty($resultCheck['index']);
+
+          $outpatientVisitCpptActions = [
+            'addCppt',
+            'deleteCppt',
+          ];
+
+          $canAccessOutpatientVisitCppt = $getController === 'outpatientvisits'
+            && in_array($getAction, $outpatientVisitCpptActions, true)
+            && !empty($resultCheck['cppt']);
+
+          $masterDataControllers = [
+            'mastericd9',
+            'mastericd10',
+            'mastertindakan',
+          ];
+
+          $canAccessMasterDataView = in_array($getController, $masterDataControllers, true)
+            && $getAction === 'view'
+            && !empty($resultCheck['index']);
+
+          $canAccessEmrMasterSearch = in_array($getController, $masterDataControllers, true)
+            && $getAction === 'search'
+            && !empty($checkUrl['outpatientvisits']['emr']);
+
+          $orderFormHelperActions = [
+            'cariPasien',
+            'cariObat',
+            'searchLaboratoryActions',
+            'searchRadiologyActions',
+            'historyPasien',
+            'historyOrderDetail',
+          ];
+
+          $canAccessOrderForm = $getController === 'orders'
+            && $getAction === 'form'
+            && (
+              !empty($resultCheck['form'])
+              || !empty($checkUrl['outpatientvisits']['emr'])
+            );
+
+          $canAccessOrderFormHelper = $getController === 'orders'
+            && in_array($getAction, $orderFormHelperActions, true)
+            && (
+              !empty($resultCheck['form'])
+              || !empty($checkUrl['outpatientvisits']['emr'])
+            );
+
+          $canAccessOrderDetail = $getController === 'orders'
+            && in_array($getAction, ['view', 'detail'], true)
+            && (
+              !empty($resultCheck['index'])
+              || !empty($resultCheck['view'])
+              || !empty($resultCheck['detail'])
+              || !empty($resultCheck['form'])
+              || !empty($checkUrl['outpatientvisits']['emr'])
+            );
+
+          $hasDirectAccess = !empty($resultCheck[$getAction]);
+          $hasRelatedAccess = $canAccessRegistrationHelper
+            || $canAccessRegistrationView
+            || $canAccessBedHelper
+            || $canAccessPolyclinicQueueHelper
+            || $canAccessPolyclinicQueueEntry
+            || $canAccessDoctorHelper
+            || $canAccessOutpatientVisitHelper
+            || $canAccessOutpatientVisitCppt
+            || $canAccessMasterDataView
+            || $canAccessEmrMasterSearch
+            || $canAccessOrderForm
+            || $canAccessOrderFormHelper
+            || $canAccessOrderDetail;
+
+          if (!$hasDirectAccess && !$hasRelatedAccess) {
+            $jsonEndpointActions = [
+              'doctors' => ['searchByPolyclinic'],
+              'mastericd9' => ['search', 'toggleActive'],
+              'mastericd10' => ['search', 'toggleActive'],
+              'mastertindakan' => ['search', 'searchDebug', 'toggleActive'],
+              'orders' => [
+                'cariPasien',
+                'cariObat',
+                'searchLaboratoryActions',
+                'searchRadiologyActions',
+                'historyPasien',
+                'historyOrderDetail',
+              ],
+              'outpatientvisits' => ['getSummary', 'liveData', 'addCppt', 'deleteCppt', 'panggil'],
+              'polyclinicqueues' => ['searchPoly', 'searchPolyQueue', 'callQueue', 'createReferralQueue'],
+            ];
+            $expectsJson = $this->request->is('ajax')
+              || in_array($getAction, $jsonEndpointActions[$getController] ?? [], true);
+
+            if ($expectsJson) {
+              return $this->response
+                ->withStatus(403)
+                ->withType('application/json')
+                ->withStringBody(json_encode([
+                  'success' => false,
+                  'message' => 'Anda tidak memiliki hak akses untuk action ini.',
+                ]));
+            }
+
+            throw new ForbiddenException('Anda tidak memiliki hak akses untuk membuka halaman tersebut.');
           }
 
           $this->set('getController', $getController);
