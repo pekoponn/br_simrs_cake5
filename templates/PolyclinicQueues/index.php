@@ -36,6 +36,12 @@ $buildWhatsAppLink = function ($queue) use ($normalizeWhatsAppNumber): ?string {
 $isMobileJknQueue = function ($queue): bool {
     return (string)($queue->source ?? '') === 'Mobile JKN';
 };
+
+$isReferralQueue = function ($queue): bool {
+    $source = strtolower(trim((string)($queue->source ?? '')));
+
+    return in_array($source, ['rujukan', 'emr rujuk', 'emr_rujuk', 'emr rujukan'], true);
+};
 ?>
 
 <?= $this->Krs->breadcrumb('Polyclinic Queue', 'Data Antrian') ?>
@@ -306,11 +312,14 @@ $isMobileJknQueue = function ($queue): bool {
                             <?php foreach ($polyclinicQueues as $queue): ?>
                                 <?php
                                 $isMobileJkn = $isMobileJknQueue($queue);
+                                $isReferral = $isReferralQueue($queue);
 
                                 if (in_array(strtolower((string)$queue->source), ['wa', 'whatsapp'], true)) {
                                     $sourceBadge = '<span class="label label-success">WhatsApp</span>';
                                 } elseif ($isMobileJkn) {
                                     $sourceBadge = '<span class="label label-mobile-jkn">Mobile JKN</span>';
+                                } elseif ($isReferral) {
+                                    $sourceBadge = '<span class="label label-warning">Rujukan EMR</span>';
                                 } else {
                                     $sourceBadge = '<span class="label label-primary">Manual</span>';
                                 }

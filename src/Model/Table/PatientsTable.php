@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
+use ArrayObject;
+use Cake\Event\EventInterface;
 use Cake\ORM\Query;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
@@ -51,6 +53,26 @@ class PatientsTable extends Table
         $this->hasMany('Registrations', [
             'foreignKey' => 'patient_id',
         ]);
+    }
+
+    public function beforeMarshal(EventInterface $event, ArrayObject $data, ArrayObject $options): void
+    {
+        foreach ($data as $field => $value) {
+            if (is_string($value)) {
+                $data[$field] = trim($value);
+            }
+        }
+
+        if (!empty($data['birth_date']) && is_string($data['birth_date']) && strpos($data['birth_date'], '/') !== false) {
+            $parts = explode('/', $data['birth_date']);
+            if (count($parts) === 3) {
+                $data['birth_date'] = $parts[2] . '-' . $parts[1] . '-' . $parts[0];
+            }
+        }
+
+        if (array_key_exists('birth_date', $data) && $data['birth_date'] === '') {
+            $data['birth_date'] = null;
+        }
     }
 
     public function generateCode()
@@ -103,9 +125,20 @@ class PatientsTable extends Table
             ]);
         }
 
-        $rules->add($rules->isUnique(['identity_number']), [
+        $rules->add(function ($entity) {
+            if (empty($entity->identity_number)) {
+                return true;
+            }
+
+            $conditions = ['identity_number' => $entity->identity_number];
+            if (!empty($entity->id)) {
+                $conditions['id !='] = $entity->id;
+            }
+
+            return !$this->exists($conditions);
+        }, 'uniqueIdentityNumber', [
             'errorField' => 'identity_number',
-            'message' => 'No identitas sudah terdaftar.'
+            'message' => 'No identitas sudah terdaftar.',
         ]);
 
         return $rules;
@@ -143,21 +176,21 @@ class PatientsTable extends Table
         $validator
             ->scalar('identity_type')
             ->maxLength('identity_type', 50)
-            ->notEmptyString('identity_type');
+            ->allowEmptyString('identity_type');
 
         $validator
             ->scalar('identity_number')
             ->maxLength('identity_number', 50)
-            ->notEmptyString('identity_number');
+            ->allowEmptyString('identity_number');
 
         $validator
             ->scalar('gender')
-            ->notEmptyString('gender');
+            ->allowEmptyString('gender');
 
         $validator
             ->scalar('blood_type')
             ->maxLength('blood_type', 5)
-            ->notEmptyString('blood_type');
+            ->allowEmptyString('blood_type');
 
         $validator
             ->date('birth_date')
@@ -170,72 +203,72 @@ class PatientsTable extends Table
         $validator
             ->scalar('mother_name')
             ->maxLength('mother_name', 255)
-            ->notEmptyString('mother_name');
+            ->allowEmptyString('mother_name');
 
         $validator
             ->scalar('father_name')
             ->maxLength('father_name', 255)
-            ->notEmptyString('father_name');
+            ->allowEmptyString('father_name');
 
         $validator
             ->scalar('phone_number')
             ->maxLength('phone_number', 20)
-            ->notEmptyString('phone_number');
+            ->allowEmptyString('phone_number');
 
         $validator
             ->scalar('nationality')
             ->maxLength('nationality', 100)
-            ->notEmptyString('nationality');
+            ->allowEmptyString('nationality');
 
         $validator
             ->scalar('citizenship')
             ->maxLength('citizenship', 100)
-            ->notEmptyString('citizenship');
+            ->allowEmptyString('citizenship');
 
         $validator
             ->scalar('province')
             ->maxLength('province', 100)
-            ->notEmptyString('province');
+            ->allowEmptyString('province');
 
         $validator
             ->scalar('city')
             ->maxLength('city', 100)
-            ->notEmptyString('city');
+            ->allowEmptyString('city');
 
         $validator
             ->scalar('district')
             ->maxLength('district', 100)
-            ->notEmptyString('district');
+            ->allowEmptyString('district');
 
         $validator
             ->scalar('subdistrict')
             ->maxLength('subdistrict', 100)
-            ->notEmptyString('subdistrict');
+            ->allowEmptyString('subdistrict');
 
         $validator
             ->scalar('occupation')
             ->maxLength('occupation', 100)
-            ->notEmptyString('occupation');
+            ->allowEmptyString('occupation');
 
         $validator
             ->scalar('religion')
             ->maxLength('religion', 50)
-            ->notEmptyString('religion');
+            ->allowEmptyString('religion');
 
         $validator
             ->scalar('education')
             ->maxLength('education', 100)
-            ->notEmptyString('education');
+            ->allowEmptyString('education');
 
         $validator
             ->scalar('ethnic_group')
             ->maxLength('ethnic_group', 100)
-            ->notEmptyString('ethnic_group');
+            ->allowEmptyString('ethnic_group');
 
         $validator
             ->scalar('marital_status')
             ->maxLength('marital_status', 50)
-            ->notEmptyString('marital_status');
+            ->allowEmptyString('marital_status');
 
         $validator
             ->integer('is_create')

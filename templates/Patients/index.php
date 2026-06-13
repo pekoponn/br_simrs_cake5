@@ -78,14 +78,14 @@ $canViewPatientHistory = !empty($checkUrl['medicalrecords']['history']);
                             [
                                 'label' => false,
                                 'class' => 'form-control',
-                                'placeholder' => 'Kode...',
-                                'value' => $this->request->getQuery('filterCode')
+                                'placeholder' => 'No RM / Kode...',
+                                'value' => $filterCode ?? $this->request->getQuery('filterCode')
                             ]
                         ); ?>
 
                     </div>
 
-                    <div class="col-md-4 m-b-10">
+                    <div class="col-md-3 m-b-10">
 
                         <?= $this->Form->text(
                             'filterName',
@@ -93,7 +93,52 @@ $canViewPatientHistory = !empty($checkUrl['medicalrecords']['history']);
                                 'label' => false,
                                 'class' => 'form-control',
                                 'placeholder' => 'Nama Pasien...',
-                                'value' => $this->request->getQuery('filterName')
+                                'value' => $filterName ?? $this->request->getQuery('filterName')
+                            ]
+                        ); ?>
+
+                    </div>
+
+                    <div class="col-md-2 m-b-10">
+
+                        <?= $this->Form->text(
+                            'filterIdentity',
+                            [
+                                'label' => false,
+                                'class' => 'form-control',
+                                'placeholder' => 'No Identitas...',
+                                'value' => $filterIdentity ?? $this->request->getQuery('filterIdentity')
+                            ]
+                        ); ?>
+
+                    </div>
+
+                    <div class="col-md-2 m-b-10">
+
+                        <?= $this->Form->text(
+                            'filterPhone',
+                            [
+                                'label' => false,
+                                'class' => 'form-control',
+                                'placeholder' => 'Telepon...',
+                                'value' => $filterPhone ?? $this->request->getQuery('filterPhone')
+                            ]
+                        ); ?>
+
+                    </div>
+
+                    <div class="col-md-2 m-b-10">
+
+                        <?= $this->Form->select(
+                            'filterStatus',
+                            [
+                                'Y' => 'Aktif',
+                                'N' => 'Tidak Aktif',
+                            ],
+                            [
+                                'empty' => 'Semua Status',
+                                'class' => 'form-control',
+                                'value' => $filterStatus ?? $this->request->getQuery('filterStatus')
                             ]
                         ); ?>
 
@@ -102,6 +147,22 @@ $canViewPatientHistory = !empty($checkUrl['medicalrecords']['history']);
                     <div class="col-md-1">
 
                         <?= $this->Krs->btnSeach(); ?>
+
+                    </div>
+
+                    <div class="col-md-1">
+
+                        <?= $this->Html->link(
+                            '<i class="fa fa-undo"></i>',
+                            ['action' => 'index'],
+                            [
+                                'class' => 'btn btn-default',
+                                'escape' => false,
+                                'data-toggle' => 'tooltip',
+                                'data-placement' => 'top',
+                                'data-original-title' => 'Reset Filter'
+                            ]
+                        ) ?>
 
                     </div>
 
@@ -163,7 +224,7 @@ $canViewPatientHistory = !empty($checkUrl['medicalrecords']['history']);
                                 Status
                             </th>
 
-                            <th width="120" class="actions">
+                            <th width="220" class="actions">
                                 &nbsp;
                             </th>
 
@@ -265,7 +326,7 @@ $canViewPatientHistory = !empty($checkUrl['medicalrecords']['history']);
                                         <?= $btnActive ?>
                                     </td>
 
-                                    <td class="actions" width="500">
+                                    <td class="actions text-center" style="white-space: nowrap;">
 
                                         <?php if ($canViewPatients): ?>
                                             <?= $this->Html->link(

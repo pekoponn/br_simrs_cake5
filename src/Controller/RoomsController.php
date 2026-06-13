@@ -19,7 +19,32 @@ class RoomsController extends AppController
      */
     public function index()
     {
-        $rooms = $this->paginate($this->Rooms);
+        $query = $this->Rooms->find()
+            ->contain([
+                'Beds' => function ($q) {
+                    return $q
+                        ->where([
+                            'Beds.is_active' => 'Y',
+                            'OR' => [
+                                ['Beds.is_delete !=' => 1],
+                                ['Beds.is_delete IS' => null],
+                            ],
+                        ])
+                        ->order(['Beds.bed_no' => 'ASC']);
+                },
+            ]);
+
+        $filterCode = $this->request->getQuery('filterCode');
+        if (!empty($filterCode)) {
+            $query->where(['Rooms.room_code LIKE' => '%' . $filterCode . '%']);
+        }
+
+        $filterName = $this->request->getQuery('filterName');
+        if (!empty($filterName)) {
+            $query->where(['Rooms.room_name LIKE' => '%' . $filterName . '%']);
+        }
+
+        $rooms = $this->paginate($query);
 
         $this->set(compact('rooms'));
     }

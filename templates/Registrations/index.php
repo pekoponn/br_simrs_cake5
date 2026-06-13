@@ -141,7 +141,7 @@ $canViewPatientHistory = !empty($checkUrl['medicalrecords']['history']);
                             <th width="90">
                                 <?= $this->Paginator->sort('status', 'Status') ?>
                             </th>
-                            <th width="200" class="actions">&nbsp;</th>
+                            <th width="220" class="actions">&nbsp;</th>
                         </tr>
                     </thead>
 
@@ -295,7 +295,7 @@ $canViewPatientHistory = !empty($checkUrl['medicalrecords']['history']);
                                         <?= $statusBtn ?>
                                     </td>
 
-                                    <td class="actions" width="650">
+                                    <td class="actions text-center" style="white-space: nowrap;">
 
                                         <!-- <?= $this->Html->link(
                                             '<i class="fa fa-eye"></i>',
