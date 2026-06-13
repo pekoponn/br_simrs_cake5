@@ -27,8 +27,14 @@ class PatientsController extends AppController
             ])
             ->order(['Patients.id' => 'DESC']);
 
-        $key = $this->request->getQuery('key');
-        if (!empty($key)) {
+        $filterCode = trim((string)$this->request->getQuery('filterCode', ''));
+        $filterName = trim((string)$this->request->getQuery('filterName', ''));
+        $filterIdentity = trim((string)$this->request->getQuery('filterIdentity', ''));
+        $filterPhone = trim((string)$this->request->getQuery('filterPhone', ''));
+        $filterStatus = $this->request->getQuery('filterStatus');
+
+        $key = trim((string)$this->request->getQuery('key', ''));
+        if ($key !== '') {
             $searchConditions = [
                 'Patients.code LIKE' => '%' . $key . '%',
                 'Patients.full_name LIKE' => '%' . $key . '%',
@@ -45,12 +51,38 @@ class PatientsController extends AppController
             ]);
         }
 
+        if ($filterCode !== '') {
+            $codeConditions = [
+                'Patients.code LIKE' => '%' . $filterCode . '%',
+            ];
+
+            if ($schema->hasColumn('medical_record_no')) {
+                $codeConditions[] = ['Patients.medical_record_no LIKE' => '%' . $filterCode . '%'];
+            }
+
+            $query->where(['OR' => $codeConditions]);
+        }
+
+        if ($filterName !== '') {
+            $query->where(['Patients.full_name LIKE' => '%' . $filterName . '%']);
+        }
+
+        if ($filterIdentity !== '') {
+            $query->where(['Patients.identity_number LIKE' => '%' . $filterIdentity . '%']);
+        }
+
+        if ($filterPhone !== '') {
+            $query->where(['Patients.phone_number LIKE' => '%' . $filterPhone . '%']);
+        }
+
         $gender = $this->request->getQuery('gender');
         if (!empty($gender)) {
             $query->where(['Patients.gender' => $gender]);
         }
 
-        $isActive = $this->request->getQuery('is_active');
+        $isActive = $filterStatus !== null && $filterStatus !== ''
+            ? $filterStatus
+            : $this->request->getQuery('is_active');
         if ($isActive !== null && $isActive !== '') {
             $query->where(['Patients.is_active' => $isActive]);
         }
@@ -61,7 +93,17 @@ class PatientsController extends AppController
 
         $patients = $this->paginate($query);
 
-        $this->set(compact('patients', 'key', 'gender', 'isActive'));
+        $this->set(compact(
+            'patients',
+            'key',
+            'filterCode',
+            'filterName',
+            'filterIdentity',
+            'filterPhone',
+            'filterStatus',
+            'gender',
+            'isActive'
+        ));
     }
 
     /**

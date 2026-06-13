@@ -45,10 +45,14 @@ $nutritionCombine = (isset($checkUrl['nutritioncombine'])) ? $checkUrl['nutritio
 $nutritionMenu = (isset($checkUrl['nutritionmenus'])) ? $checkUrl['nutritionmenus'] : array();
 $pharmacyItem = (isset($checkUrl['pharmacyitems'])) ? $checkUrl['pharmacyitems'] : array();
 $polyclinic = (isset($checkUrl['polyclinics'])) ? $checkUrl['polyclinics'] : array();
+$masterTindakan = (isset($checkUrl['mastertindakan'])) ? $checkUrl['mastertindakan'] : array();
+$masterIcd9 = (isset($checkUrl['mastericd9'])) ? $checkUrl['mastericd9'] : array();
+$masterIcd10 = (isset($checkUrl['mastericd10'])) ? $checkUrl['mastericd10'] : array();
 $rooms = (isset($checkUrl['rooms'])) ? $checkUrl['rooms'] : array();
 $beds = (isset($checkUrl['beds'])) ? $checkUrl['beds'] : array();
 $polyclinicQueue = (isset($checkUrl['polyclinicqueues'])) ? $checkUrl['polyclinicqueues'] : array();
 $registration = (isset($checkUrl['registrations'])) ? $checkUrl['registrations'] : array();
+$outpatientVisit = (isset($checkUrl['outpatientvisits'])) ? $checkUrl['outpatientvisits'] : array();
 $service = (isset($checkUrl['services'])) ? $checkUrl['services'] : array();
 $laboratoryService = (isset($checkUrl['laboratoryservices'])) ? $checkUrl['laboratoryservices'] : array();
 $icd_service = (isset($checkUrl['icd_services'])) ? $checkUrl['icd_services'] : array();
@@ -497,6 +501,37 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 				<?php
 				}
 
+				if (!empty($outpatientVisit['index'])) {
+
+					$menuOutpatientVisit = ($getController == 'outpatientvisits') ? 'active' : '';
+					$menuOutpatientVisitIndex = ($getController == 'outpatientvisits') ? ' class="active"' : '';
+				?>
+					<li class="has-sub <?= $menuOutpatientVisit ?>">
+						<a href="javascript:;">
+							<b class="caret pull-right"></b>
+							<i class="fa fa-stethoscope"></i>
+							<span>Rawat Jalan</span>
+						</a>
+
+						<ul class="sub-menu">
+							<li <?= $menuOutpatientVisitIndex ?>>
+								<?= $this->Html->link(
+									'Kunjungan Rawat Jalan',
+									[
+										'controller' => 'OutpatientVisits',
+										'action' => 'index'
+									],
+									[
+										'fullBase' => true,
+										'escape' => false
+									]
+								) ?>
+							</li>
+						</ul>
+					</li>
+				<?php
+				}
+
 				if (
 					$medicine['index'] == 1 ||
 					$medicineMerk['index'] == 1 ||
@@ -510,6 +545,9 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 					$nutritionMenu['index'] == 1 ||
 					$pharmacyItem['index'] == 1 ||
 					$polyclinic['index'] == 1 ||
+					!empty($masterTindakan['index']) ||
+					!empty($masterIcd9['index']) ||
+					!empty($masterIcd10['index']) ||
 					$rooms['index'] == 1 ||
 					$beds['index'] == 1
 				) {
@@ -519,6 +557,9 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 						$getController == 'medicinemerks' ||
 						$getController == 'medicinegroups' ||
 						$getController == 'patients' ||
+						$getController == 'mastertindakan' ||
+						$getController == 'mastericd9' ||
+						$getController == 'mastericd10' ||
 						$getController == 'beds' ||
 						$getController == 'rooms'
 					) ? 'active' : '';
@@ -541,6 +582,9 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 					$menuNutritionMenuIndex = ($getController == 'nutritionmenus') ? ' class="active"' : '';
 					$menuPharmacyItemIndex = ($getController == 'pharmacyitems') ? ' class="active"' : '';
 					$menuPolyclinicIndex = ($getController == 'polyclinics') ? ' class="active"' : '';
+					$menuMasterTindakanIndex = ($getController == 'mastertindakan') ? ' class="active"' : '';
+					$menuMasterIcd9Index = ($getController == 'mastericd9') ? ' class="active"' : '';
+					$menuMasterIcd10Index = ($getController == 'mastericd10') ? ' class="active"' : '';
 					$menuRoomIndex = ($getController == 'rooms') ? ' class="active"' : '';
 					$menuBedIndex = ($getController == 'beds') ? ' class="active"' : '';
 
@@ -658,6 +702,30 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 							?>
 								<li <?= $menuPharmacyItemIndex ?>>
 									<?= $this->Html->link('Pharmacy Items', ['controller' => 'PharmacyItems', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+							<?php
+							}
+
+							if (!empty($masterTindakan['index'])) {
+							?>
+								<li <?= $menuMasterTindakanIndex ?>>
+									<?= $this->Html->link('Master Tindakan', ['controller' => 'MasterTindakan', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+							<?php
+							}
+
+							if (!empty($masterIcd9['index'])) {
+							?>
+								<li <?= $menuMasterIcd9Index ?>>
+									<?= $this->Html->link('Master ICD-9 CM', ['controller' => 'MasterIcd9', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+							<?php
+							}
+
+							if (!empty($masterIcd10['index'])) {
+							?>
+								<li <?= $menuMasterIcd10Index ?>>
+									<?= $this->Html->link('Master ICD-10', ['controller' => 'MasterIcd10', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
 							<?php
 							}

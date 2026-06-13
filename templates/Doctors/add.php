@@ -46,7 +46,8 @@ $religions = $religions ?? $this->Krs->religions();
                 echo $this->Form->control('code', [
                     'label' => false,
                     'class' => 'form-control',
-                    'placeholder' => 'Kosongkan untuk auto-generate'
+                    'placeholder' => 'Kosongkan untuk auto-generate',
+                    'required' => false
                 ]);
                 ?>
 

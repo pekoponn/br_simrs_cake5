@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
+use ArrayObject;
+use Cake\Event\EventInterface;
 use Cake\ORM\Query;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
@@ -87,6 +89,72 @@ class RegistrationsTable extends Table
         //     ]);
     }
 
+    public function beforeMarshal(EventInterface $event, ArrayObject $data, ArrayObject $options): void
+    {
+        foreach ($data as $field => $value) {
+            if (is_string($value)) {
+                $data[$field] = trim($value);
+            }
+        }
+
+        foreach (['registration_date'] as $field) {
+            if (!empty($data[$field]) && is_string($data[$field]) && strpos($data[$field], '/') !== false) {
+                $parts = explode('/', $data[$field]);
+                if (count($parts) === 3) {
+                    $data[$field] = $parts[2] . '-' . $parts[1] . '-' . $parts[0];
+                }
+            }
+        }
+
+        foreach ($this->nullableFields() as $field) {
+            if (array_key_exists($field, $data) && $data[$field] === '') {
+                $data[$field] = null;
+            }
+        }
+
+        $data['treatment_type'] = $data['treatment_type'] ?? 'BIASA';
+        $data['status'] = $data['status'] ?? 'aktif';
+        $data['is_create'] = $data['is_create'] ?? 1;
+        $data['is_update'] = $data['is_update'] ?? 0;
+        $data['is_delete'] = $data['is_delete'] ?? 0;
+        $data['is_active'] = $data['is_active'] ?? 'Y';
+    }
+
+    private function nullableFields(): array
+    {
+        return [
+            'admission_time',
+            'doctor_id',
+            'doctor_schedule_id',
+            'polyclinic_queue_id',
+            'queue_number',
+            'polyclinic_name',
+            'room_id',
+            'bed_id',
+            'class_name',
+            'insurance_type',
+            'insurance_category',
+            'insurance_card_no',
+            'refferal_no',
+            'skdp_no',
+            'reference_type',
+            'sep_no',
+            'bpjs_nik',
+            'bpjs_name',
+            'bpjs_group',
+            'bpjs_type',
+            'bpjs_class',
+            'provider',
+            'person_responsible_id',
+            'referral_type',
+            'referral_doctor',
+            'referral_origin',
+            'referral_name',
+            'deleted',
+            'delete_log',
+        ];
+    }
+
     /**
      * Default validation rules.
      *
@@ -102,13 +170,13 @@ class RegistrationsTable extends Table
         $validator
             ->scalar('registration_no')
             ->maxLength('registration_no', 50)
+            ->requirePresence('registration_no', 'create')
             ->notEmptyString('registration_no');
 
         $validator
-            ->scalar('registration_date')
-            ->maxLength('registration_date', 255)
+            ->date('registration_date')
             ->requirePresence('registration_date', 'create')
-            ->notEmptyString('registration_date');
+            ->notEmptyDate('registration_date');
 
         $validator
             ->scalar('service_type')
@@ -117,10 +185,40 @@ class RegistrationsTable extends Table
             ->notEmptyString('service_type');
 
         $validator
+            ->integer('patient_id')
+            ->requirePresence('patient_id', 'create')
+            ->notEmptyString('patient_id');
+
+        $validator
+            ->integer('doctor_id')
+            ->allowEmptyString('doctor_id');
+
+        $validator
+            ->integer('doctor_schedule_id')
+            ->allowEmptyString('doctor_schedule_id');
+
+        $validator
+            ->integer('polyclinic_queue_id')
+            ->allowEmptyString('polyclinic_queue_id');
+
+        $validator
             ->scalar('polyclinic_name')
             ->maxLength('polyclinic_name', 255)
-            ->requirePresence('polyclinic_name', 'create')
-            ->notEmptyString('polyclinic_name');
+            ->allowEmptyString('polyclinic_name')
+            ->add('polyclinic_name', 'requiredForOutpatient', [
+                'rule' => function ($value, $context) {
+                    return ($context['data']['service_type'] ?? '') !== 'rawat_jalan' || !empty($value);
+                },
+                'message' => 'Poli wajib diisi untuk rawat jalan',
+            ]);
+
+        $validator
+            ->integer('room_id')
+            ->allowEmptyString('room_id');
+
+        $validator
+            ->integer('bed_id')
+            ->allowEmptyString('bed_id');
 
         $validator
             ->scalar('class_name')
@@ -178,11 +276,13 @@ class RegistrationsTable extends Table
         $validator
             ->scalar('treatment_type')
             ->maxLength('treatment_type', 50)
+            ->requirePresence('treatment_type', 'create')
             ->notEmptyString('treatment_type');
 
         $validator
             ->scalar('status')
             ->maxLength('status', 50)
+            ->requirePresence('status', 'create')
             ->notEmptyString('status');
 
         $validator
@@ -209,6 +309,28 @@ class RegistrationsTable extends Table
             ->scalar('is_active')
             ->notEmptyString('is_active');
 
+        foreach ([
+            'insurance_category',
+            'skdp_no',
+            'reference_type',
+            'bpjs_nik',
+            'bpjs_name',
+            'bpjs_group',
+            'bpjs_type',
+            'bpjs_class',
+            'provider',
+            'referral_type',
+            'referral_doctor',
+            'referral_origin',
+            'referral_name',
+        ] as $field) {
+            if ($this->getSchema()->hasColumn($field)) {
+                $validator
+                    ->scalar($field)
+                    ->allowEmptyString($field);
+            }
+        }
+
         return $validator;
     }
 
@@ -222,10 +344,28 @@ class RegistrationsTable extends Table
     public function buildRules(RulesChecker $rules): RulesChecker
     {
         $rules->add($rules->existsIn(['patient_id'], 'Patients'), ['errorField' => 'patient_id']);
-        $rules->add($rules->existsIn(['doctor_id'], 'Doctors'), ['errorField' => 'doctor_id']);
+        $rules->add(function ($entity) {
+            if (empty($entity->doctor_id)) {
+                return true;
+            }
+
+            return $this->Doctors->exists(['Doctors.id' => (int)$entity->doctor_id]);
+        }, 'doctorExists', [
+            'errorField' => 'doctor_id',
+            'message' => 'Dokter tidak ditemukan.',
+        ]);
         // $rules->add($rules->existsIn(['room_id'], 'Rooms'), ['errorField' => 'room_id']);
         // $rules->add($rules->existsIn(['bed_id'], 'Beds'), ['errorField' => 'bed_id']);
-        $rules->add($rules->existsIn(['person_responsible_id'], 'PersonResponsibles'), ['errorField' => 'person_responsible_id']);
+        $rules->add(function ($entity) {
+            if (empty($entity->person_responsible_id)) {
+                return true;
+            }
+
+            return $this->PersonResponsibles->exists(['PersonResponsibles.id' => (int)$entity->person_responsible_id]);
+        }, 'personResponsibleExists', [
+            'errorField' => 'person_responsible_id',
+            'message' => 'Penanggung jawab tidak ditemukan.',
+        ]);
 
         return $rules;
     }
