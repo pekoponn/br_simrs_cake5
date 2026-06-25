@@ -32,10 +32,12 @@ if ($serviceType === 'rawat_jalan') {
         <i class="fa fa-file-prescription"></i> Form E-Order Obat &amp; Pemeriksaan
     </h4>
     <?= $this->Html->link(
-        '<i class="fa fa-arrow-left"></i> Kembali',
-        ['action' => 'index'],
-        ['escape' => false, 'class' => 'btn btn-default btn-sm']
-    ) ?>
+    'Kembali',
+    !empty($outpatientVisit->id)
+        ? ['controller' => 'OutpatientVisits', 'action' => 'emr', $outpatientVisit->id]
+        : ['controller' => 'OutpatientVisits', 'action' => 'index'],
+    ['class' => 'btn btn-default btn-sm']
+) ?>
 </div>
 
 <div class="row">

@@ -1,0 +1,80 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Test\TestCase\Model\Table;
+
+use App\Model\Table\InpatientEntriesTable;
+use Cake\TestSuite\TestCase;
+
+/**
+ * App\Model\Table\InpatientEntriesTable Test Case
+ */
+class InpatientEntriesTableTest extends TestCase
+{
+    /**
+     * Test subject
+     *
+     * @var \App\Model\Table\InpatientEntriesTable
+     */
+    protected $InpatientEntries;
+
+    /**
+     * Fixtures
+     *
+     * @var array
+     */
+    protected $fixtures = [
+        'app.InpatientEntries',
+        'app.Registrations',
+        'app.Patients',
+        'app.Doctors',
+        'app.Rooms',
+        'app.Beds',
+    ];
+
+    /**
+     * setUp method
+     *
+     * @return void
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $config = $this->getTableLocator()->exists('InpatientEntries') ? [] : ['className' => InpatientEntriesTable::class];
+        $this->InpatientEntries = $this->getTableLocator()->get('InpatientEntries', $config);
+    }
+
+    /**
+     * tearDown method
+     *
+     * @return void
+     */
+    public function tearDown(): void
+    {
+        unset($this->InpatientEntries);
+
+        parent::tearDown();
+    }
+
+    /**
+     * Test validationDefault method
+     *
+     * @return void
+     * @uses \App\Model\Table\InpatientEntriesTable::validationDefault()
+     */
+    public function testValidationDefault(): void
+    {
+        $this->markTestIncomplete('Not implemented yet.');
+    }
+
+    /**
+     * Test buildRules method
+     *
+     * @return void
+     * @uses \App\Model\Table\InpatientEntriesTable::buildRules()
+     */
+    public function testBuildRules(): void
+    {
+        $this->markTestIncomplete('Not implemented yet.');
+    }
+}

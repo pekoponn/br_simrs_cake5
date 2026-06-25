@@ -1077,6 +1077,14 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
     $outpatientvisitsGetSummary = (($outpatientvisits['getSummary'] ?? 0) == 1) ? 'checked' : '';
     $outpatientvisitsDelete = (($outpatientvisits['delete'] ?? 0) == 1) ? 'checked' : '';
 
+    //inpatiententries
+    $inpatiententries = $rules['inpatiententries'] ?? [];
+    $inpatiententriesIndex = (($inpatiententries['index'] ?? 0) == 1) ? 'checked' : '';
+    $inpatiententriesView = (($inpatiententries['view'] ?? 0) == 1) ? 'checked' : '';
+    $inpatiententriesAdd = (($inpatiententries['add'] ?? 0) == 1) ? 'checked' : '';
+    $inpatiententriesEdit = (($inpatiententries['edit'] ?? 0) == 1) ? 'checked' : '';
+    $inpatiententriesDelete = (($inpatiententries['delete'] ?? 0) == 1) ? 'checked' : '';
+
     //mastertindakan
     $mastertindakan = $rules['mastertindakan'] ?? [];
     $mastertindakanIndex = (($mastertindakan['index'] ?? 0) == 1) ? 'checked' : '';
@@ -3539,6 +3547,33 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
                                     </div>
                                     <div class="form-check form-check-inline">
                                         <?php echo $this->Form->checkbox('Rules.outpatientvisits.delete', ['value' => '1', 'hiddenField' => true, 'checked' => $outpatientvisitsDelete, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Hapus</label>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Rawat Inap</td>
+                            <td>
+                                <div class="col-md-12">
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.inpatiententries.index', ['value' => '1', 'hiddenField' => true, 'checked' => $inpatiententriesIndex, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Daftar</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.inpatiententries.view', ['value' => '1', 'hiddenField' => true, 'checked' => $inpatiententriesView, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Tampilkan</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.inpatiententries.add', ['value' => '1', 'hiddenField' => true, 'checked' => $inpatiententriesAdd, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Tambah</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.inpatiententries.edit', ['value' => '1', 'hiddenField' => true, 'checked' => $inpatiententriesEdit, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Ubah</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.inpatiententries.delete', ['value' => '1', 'hiddenField' => true, 'checked' => $inpatiententriesDelete, 'class' => 'form-check-input']); ?>
                                         <label class="form-check-label">Hapus</label>
                                     </div>
                                 </div>

@@ -53,6 +53,7 @@ $beds = (isset($checkUrl['beds'])) ? $checkUrl['beds'] : array();
 $polyclinicQueue = (isset($checkUrl['polyclinicqueues'])) ? $checkUrl['polyclinicqueues'] : array();
 $registration = (isset($checkUrl['registrations'])) ? $checkUrl['registrations'] : array();
 $outpatientVisit = (isset($checkUrl['outpatientvisits'])) ? $checkUrl['outpatientvisits'] : array();
+$inpatientEntry = (isset($checkUrl['inpatiententries'])) ? $checkUrl['inpatiententries'] : array();
 $service = (isset($checkUrl['services'])) ? $checkUrl['services'] : array();
 $laboratoryService = (isset($checkUrl['laboratoryservices'])) ? $checkUrl['laboratoryservices'] : array();
 $icd_service = (isset($checkUrl['icd_services'])) ? $checkUrl['icd_services'] : array();
@@ -519,6 +520,37 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 									'Kunjungan Rawat Jalan',
 									[
 										'controller' => 'OutpatientVisits',
+										'action' => 'index'
+									],
+									[
+										'fullBase' => true,
+										'escape' => false
+									]
+								) ?>
+							</li>
+						</ul>
+					</li>
+				<?php
+				}
+
+				if (!empty($inpatientEntry['index'])) {
+
+					$menuInpatientEntry = ($getController == 'inpatiententries') ? 'active' : '';
+					$menuInpatientEntryIndex = ($getController == 'inpatiententries') ? ' class="active"' : '';
+				?>
+					<li class="has-sub <?= $menuInpatientEntry ?>">
+						<a href="javascript:;">
+							<b class="caret pull-right"></b>
+							<i class="fa fa-bed"></i>
+							<span>Rawat Inap</span>
+						</a>
+
+						<ul class="sub-menu">
+							<li <?= $menuInpatientEntryIndex ?>>
+								<?= $this->Html->link(
+									'Pasien Rawat Inap',
+									[
+										'controller' => 'InpatientEntries',
 										'action' => 'index'
 									],
 									[

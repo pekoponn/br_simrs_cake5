@@ -571,3 +571,96 @@ AUTO_INCREMENT=4627
 alter table `orders`
 add column `pesan` text null after `lokasi_depo`;
 
+ALTER TABLE medicines
+ADD COLUMN gol VARCHAR(255) NULL AFTER code_ifrs,
+ADD COLUMN therapy_class VARCHAR(255) NULL AFTER gol,
+ADD COLUMN golongan VARCHAR(255) NULL AFTER therapy_class,
+ADD COLUMN pabrik VARCHAR(255) NULL AFTER golongan,
+ADD COLUMN sediaan VARCHAR(255) NULL AFTER pabrik,
+ADD COLUMN supplier VARCHAR(255) NULL AFTER sediaan,
+ADD COLUMN lead_time INT NULL DEFAULT 0 AFTER supplier,
+ADD COLUMN depkes_link VARCHAR(100) NULL AFTER lead_time,
+ADD COLUMN ppn_status ENUM('Y','N') NOT NULL DEFAULT 'Y' AFTER hna,
+ADD COLUMN jenis_harga ENUM('PROSENTASE','MANUAL') NOT NULL DEFAULT 'PROSENTASE' AFTER hna_ppn;
+
+CREATE TABLE `inpatient_entries` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+
+  `registration_id` INT NULL,
+  `registration_no` VARCHAR(50) NULL,
+
+  `patient_id` INT NULL,
+  `patient_name` VARCHAR(255) NULL,
+  `patient_rm` VARCHAR(50) NULL,
+
+  `doctor_id` INT NULL,
+  `doctor_name` VARCHAR(255) NULL,
+
+  `room_id` INT NULL,
+  `room_name` VARCHAR(100) NULL,
+
+  `bed_id` INT NULL,
+  `bed_no` VARCHAR(50) NULL,
+
+  `check_in_date` DATETIME NULL,
+  `planned_discharge_date` DATE NULL,
+  `check_out_date` DATETIME NULL,
+
+  `notes` TEXT NULL,
+
+  `status` VARCHAR(30) NOT NULL DEFAULT 'dirawat',
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+
+  `created` DATETIME NULL,
+  `modified` DATETIME NULL,
+
+  PRIMARY KEY (`id`),
+  KEY `idx_inpatient_registration_id` (`registration_id`),
+  KEY `idx_inpatient_patient_id` (`patient_id`),
+  KEY `idx_inpatient_doctor_id` (`doctor_id`),
+  KEY `idx_inpatient_room_id` (`room_id`),
+  KEY `idx_inpatient_bed_id` (`bed_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `emergency_entries` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+
+  `registration_id` INT NULL,
+  `registration_no` VARCHAR(50) NULL,
+
+  `patient_id` INT NULL,
+  `patient_rm` VARCHAR(50) NULL,
+  `patient_name` VARCHAR(255) NULL,
+
+  `doctor_id` INT NULL,
+  `doctor_name` VARCHAR(255) NULL,
+
+  `service_date` DATE NULL,
+  `service_time` TIME NULL,
+
+  `chief_complaint` TEXT NULL,
+  `triage_category` VARCHAR(50) NULL,
+  `triage_notes` TEXT NULL,
+
+  `blood_pressure` VARCHAR(50) NULL,
+  `temperature` VARCHAR(50) NULL,
+  `pulse` VARCHAR(50) NULL,
+  `respiration` VARCHAR(50) NULL,
+  `spo2` VARCHAR(50) NULL,
+
+  `diagnosis` TEXT NULL,
+  `notes` TEXT NULL,
+
+  `status` VARCHAR(30) NOT NULL DEFAULT 'waiting',
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+
+  `created` DATETIME NULL,
+  `modified` DATETIME NULL,
+
+  PRIMARY KEY (`id`),
+  KEY `idx_emergency_registration_id` (`registration_id`),
+  KEY `idx_emergency_patient_id` (`patient_id`),
+  KEY `idx_emergency_doctor_id` (`doctor_id`),
+  KEY `idx_emergency_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
