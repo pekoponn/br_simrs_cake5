@@ -148,4 +148,69 @@ class RoomsController extends AppController
 
         return 'RM' . str_pad((string)$next, 3, '0', STR_PAD_LEFT);
     }
+
+    public function monitoring()
+    {
+        $selectedClass = $this->request->getQuery('class');
+    
+        $query = $this->Rooms->find()
+            ->contain(['Beds'])
+            ->where([
+                'OR' => [
+                    ['Rooms.is_active' => 'Y'],
+                    ['Rooms.is_active' => 1],
+                    ['Rooms.is_active IS' => null],
+                ]
+            ])
+            ->order([
+                'Rooms.room_class' => 'ASC',
+                'Rooms.floor' => 'ASC',
+                'Rooms.room_name' => 'ASC',
+            ]);
+    
+        if ($selectedClass !== null && $selectedClass !== '') {
+            $query->where(['Rooms.room_class' => $selectedClass]);
+        }
+    
+        $rooms = $query->all();
+    
+        $roomGroups = [];
+        $summary = [
+            'rooms' => 0,
+            'beds' => 0,
+            'used' => 0,
+            'free' => 0,
+        ];
+    
+        foreach ($rooms as $room) {
+            $className = $room->room_class ?: 'Tanpa Kelas';
+    
+            if (!isset($roomGroups[$className])) {
+                $roomGroups[$className] = [
+                    'rooms' => [],
+                    'beds' => 0,
+                    'used' => 0,
+                    'free' => 0,
+                ];
+            }
+    
+            $summary['rooms']++;
+            $roomGroups[$className]['rooms'][] = $room;
+    
+            foreach (($room->beds ?? []) as $bed) {
+                $summary['beds']++;
+                $roomGroups[$className]['beds']++;
+    
+                if ((int)($bed->status ?? 0) === 1) {
+                    $summary['used']++;
+                    $roomGroups[$className]['used']++;
+                } else {
+                    $summary['free']++;
+                    $roomGroups[$className]['free']++;
+                }
+            }
+        }
+    
+        $this->set(compact('rooms', 'roomGroups', 'summary', 'selectedClass'));
+    }
 }

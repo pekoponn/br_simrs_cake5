@@ -73,6 +73,16 @@ $bedStatusColor = [
                             ]
                         ) ?>
 
+                        <?= $this->Html->link(
+                            '<i class="fa fa-tv"></i> Monitoring Bed',
+                            ['action' => 'monitoring'],
+                            [
+                                'class' => 'btn btn-success btn-sm',
+                                'escape' => false,
+                                'style' => 'margin-left:5px;'
+                            ]
+                        ) ?>
+
                     </div>
 
                 </div>

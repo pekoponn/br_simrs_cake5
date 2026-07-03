@@ -164,6 +164,7 @@ class AppController extends Controller
             'checkIn',
             'callQueue',
             'createReferralQueue',
+            'searchPatients',
           ];
 
           $canAccessPolyclinicQueueEntry = $getController === 'polyclinicqueues'
@@ -276,7 +277,7 @@ class AppController extends Controller
                 'historyOrderDetail',
               ],
               'outpatientvisits' => ['getSummary', 'liveData', 'addCppt', 'deleteCppt', 'panggil'],
-              'polyclinicqueues' => ['searchPoly', 'searchPolyQueue', 'callQueue', 'createReferralQueue'],
+              'polyclinicqueues' => ['searchPoly', 'searchPolyQueue', 'callQueue', 'createReferralQueue', 'searchPatients'],
             ];
             $expectsJson = $this->request->is('ajax')
               || in_array($getAction, $jsonEndpointActions[$getController] ?? [], true);

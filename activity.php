@@ -664,3 +664,263 @@ CREATE TABLE `emergency_entries` (
   KEY `idx_emergency_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+
+CREATE TABLE `outpatient_billings` (
+    `id`                    INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `billing_no`            VARCHAR(30)     NOT NULL COMMENT 'Nomor tagihan, contoh: BILL-20260613-00001',
+    `outpatient_visit_id`   INT UNSIGNED    NOT NULL,
+    `registration_id`       INT UNSIGNED    NULL,
+    `patient_id`            INT UNSIGNED    NOT NULL,
+    `doctor_id`             INT UNSIGNED    NULL,
+
+    -- Info kunjungan
+    `visit_date`            DATE            NOT NULL,
+    `polyclinic_name`       VARCHAR(100)    NULL,
+    `insurance_type`        VARCHAR(50)     NULL DEFAULT 'Umum' COMMENT 'Umum, BPJS, Asuransi, dll',
+    `insurance_no`          VARCHAR(50)     NULL COMMENT 'No kartu BPJS / asuransi',
+
+    -- Status billing
+    `status`                ENUM('draft','waiting_payment','paid','cancelled','void')
+                            NOT NULL DEFAULT 'draft',
+
+    -- Rincian biaya
+    `total_action`          DECIMAL(15,2)   NOT NULL DEFAULT 0 COMMENT 'Total biaya tindakan',
+    `total_medicine`        DECIMAL(15,2)   NOT NULL DEFAULT 0 COMMENT 'Total biaya obat/resep',
+    `total_lab`             DECIMAL(15,2)   NOT NULL DEFAULT 0 COMMENT 'Total biaya laboratorium',
+    `total_radiology`       DECIMAL(15,2)   NOT NULL DEFAULT 0 COMMENT 'Total biaya radiologi',
+    `total_other`           DECIMAL(15,2)   NOT NULL DEFAULT 0 COMMENT 'Biaya lain-lain',
+    `subtotal`              DECIMAL(15,2)   NOT NULL DEFAULT 0,
+
+    -- Diskon & pembayaran
+    `discount_type`         ENUM('nominal','percent') NULL DEFAULT 'nominal',
+    `discount_value`        DECIMAL(15,2)   NOT NULL DEFAULT 0,
+    `discount_amount`       DECIMAL(15,2)   NOT NULL DEFAULT 0 COMMENT 'Hasil kalkulasi diskon',
+    `grand_total`           DECIMAL(15,2)   NOT NULL DEFAULT 0,
+
+    -- Pembayaran
+    `payment_method`        ENUM('tunai','transfer','bpjs','asuransi','piutang','lainnya')
+                            NULL DEFAULT 'tunai',
+    `paid_amount`           DECIMAL(15,2)   NOT NULL DEFAULT 0 COMMENT 'Jumlah yang dibayarkan',
+    `change_amount`         DECIMAL(15,2)   NOT NULL DEFAULT 0 COMMENT 'Kembalian',
+    `paid_at`               DATETIME        NULL,
+    `cashier_id`            INT UNSIGNED    NULL COMMENT 'User kasir yang memproses',
+    `cashier_name`          VARCHAR(100)    NULL,
+
+    -- Rujukan / Rawat Inap
+    `is_referred`           TINYINT(1)      NOT NULL DEFAULT 0,
+    `referred_to`           VARCHAR(100)    NULL,
+    `is_inpatient`          TINYINT(1)      NOT NULL DEFAULT 0,
+    `inpatient_referral_no` VARCHAR(50)     NULL,
+
+    -- Catatan
+    `notes`                 TEXT            NULL,
+    `void_reason`           VARCHAR(255)    NULL,
+    `voided_at`             DATETIME        NULL,
+    `voided_by`             INT UNSIGNED    NULL,
+
+    -- Audit
+    `is_create`             TINYINT(1)      DEFAULT 1,
+    `is_update`             TINYINT(1)      DEFAULT 0,
+    `is_delete`             TINYINT(1)      DEFAULT 0,
+    `is_active`             CHAR(1)         DEFAULT 'Y',
+    `created`               DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `modified`              DATETIME        NULL ON UPDATE CURRENT_TIMESTAMP,
+    `created_by`            INT UNSIGNED    NULL,
+    `modified_by`           INT UNSIGNED    NULL,
+
+    INDEX `idx_visit`       (`outpatient_visit_id`),
+    INDEX `idx_patient`     (`patient_id`),
+    INDEX `idx_billing_no`  (`billing_no`),
+    INDEX `idx_status`      (`status`),
+    INDEX `idx_visit_date`  (`visit_date`),
+    UNIQUE KEY `uq_billing_no` (`billing_no`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Tagihan rawat jalan per kunjungan';
+
+CREATE TABLE `outpatient_billing_items` (
+    `id`                INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `billing_id`        INT UNSIGNED    NOT NULL,
+    `item_type`         ENUM('tindakan','obat','laboratorium','radiologi','administrasi','lainnya')
+                        NOT NULL DEFAULT 'tindakan',
+    `item_code`         VARCHAR(50)     NULL,
+    `item_name`         VARCHAR(255)    NOT NULL,
+    `quantity`          DECIMAL(10,2)   NOT NULL DEFAULT 1,
+    `unit`              VARCHAR(20)     NULL DEFAULT 'kali',
+    `unit_price`        DECIMAL(15,2)   NOT NULL DEFAULT 0,
+    `total_price`       DECIMAL(15,2)   NOT NULL DEFAULT 0,
+    `discount_amount`   DECIMAL(15,2)   NOT NULL DEFAULT 0,
+    `final_price`       DECIMAL(15,2)   NOT NULL DEFAULT 0,
+    `notes`             VARCHAR(255)    NULL,
+    `is_covered`        TINYINT(1)      NOT NULL DEFAULT 0 COMMENT '1=ditanggung asuransi/BPJS',
+    `sort_order`        INT             NOT NULL DEFAULT 0,
+
+    `is_delete`         TINYINT(1)      DEFAULT 0,
+    `created`           DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    INDEX `idx_billing` (`billing_id`),
+    CONSTRAINT `fk_billing_items_billing`
+        FOREIGN KEY (`billing_id`) REFERENCES `outpatient_billings`(`id`)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Rincian item tagihan rawat jalan';
+
+
+-- ============================================================
+-- 3. Riwayat pembayaran (support cicilan / multi-payment)
+-- ============================================================
+CREATE TABLE `outpatient_billing_payments` (
+    `id`                INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `billing_id`        INT UNSIGNED    NOT NULL,
+    `payment_no`        VARCHAR(30)     NOT NULL COMMENT 'Nomor transaksi pembayaran',
+    `payment_method`    ENUM('tunai','transfer','bpjs','asuransi','debit','kredit','qris','lainnya')
+                        NOT NULL DEFAULT 'tunai',
+    `bank_name`         VARCHAR(50)     NULL COMMENT 'Nama bank jika transfer/debit/kredit',
+    `account_no`        VARCHAR(50)     NULL COMMENT 'No rekening / no kartu (masked)',
+    `amount`            DECIMAL(15,2)   NOT NULL DEFAULT 0,
+    `verified`          TINYINT(1)      NOT NULL DEFAULT 0,
+    `verified_at`       DATETIME        NULL,
+    `verified_by`       INT UNSIGNED    NULL,
+    `notes`             VARCHAR(255)    NULL,
+    `created`           DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `created_by`        INT UNSIGNED    NULL,
+
+    INDEX `idx_billing` (`billing_id`),
+    UNIQUE KEY `uq_payment_no` (`payment_no`),
+    CONSTRAINT `fk_billing_payments_billing`
+        FOREIGN KEY (`billing_id`) REFERENCES `outpatient_billings`(`id`)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Riwayat pembayaran tagihan rawat jalan';
+
+
+-- ============================================================
+-- 4. Tambah kolom di outpatient_visits untuk link ke billing
+-- ============================================================
+ALTER TABLE `outpatient_visits`
+    ADD COLUMN `billing_id`     INT UNSIGNED NULL DEFAULT NULL
+        COMMENT 'FK ke outpatient_billings.id'
+        AFTER `status`,
+    ADD COLUMN `billing_status` VARCHAR(30)  NULL DEFAULT NULL
+        COMMENT 'Cache status billing: draft/waiting_payment/paid'
+        AFTER `billing_id`,
+    ADD INDEX `idx_billing_id` (`billing_id`);
+    
+    CREATE TABLE master_laboratories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(50) NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    tariff DECIMAL(15,2) DEFAULT 0,
+    category VARCHAR(100) NULL,
+    is_active TINYINT(1) DEFAULT 1,
+    created DATETIME NULL,
+    modified DATETIME NULL
+);
+
+CREATE TABLE order_laboratories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    registration_id INT NULL,
+    patient_id INT NULL,
+    doctor_id INT NULL,
+
+    lab_code VARCHAR(50) NULL,
+    lab_name VARCHAR(150) NOT NULL,
+    tariff DECIMAL(15,2) DEFAULT 0,
+    approval_note TEXT NULL,
+    notes TEXT NULL,
+
+    status VARCHAR(30) DEFAULT 'draft',
+    is_active TINYINT(1) DEFAULT 1,
+    is_delete TINYINT(1) DEFAULT 0,
+
+    created DATETIME NULL,
+    modified DATETIME NULL,
+
+    INDEX idx_order_id (order_id),
+    INDEX idx_registration_id (registration_id),
+    INDEX idx_patient_id (patient_id),
+    INDEX idx_doctor_id (doctor_id)
+);
+
+CREATE TABLE master_radiologies (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(50) NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    tariff DECIMAL(15,2) DEFAULT 0,
+    category VARCHAR(100) NULL,
+    is_active TINYINT(1) DEFAULT 1,
+    created DATETIME NULL,
+    modified DATETIME NULL
+);
+
+CREATE TABLE order_radiologies (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    order_id INT NOT NULL,
+    registration_id INT NULL,
+    patient_id INT NULL,
+    doctor_id INT NULL,
+
+    master_radiology_id INT NULL,
+
+    code VARCHAR(50) NULL,
+    examination_name VARCHAR(150) NOT NULL,
+
+    tariff DECIMAL(15,2) DEFAULT 0,
+    qty INT DEFAULT 1,
+    total DECIMAL(15,2) DEFAULT 0,
+
+    approval_note TEXT NULL,
+    notes TEXT NULL,
+
+    status VARCHAR(30) DEFAULT 'draft',
+
+    is_active TINYINT(1) DEFAULT 1,
+    created DATETIME NULL,
+    modified DATETIME NULL
+);
+
+
+
+CREATE TABLE master_penjamins (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(50) NULL,
+  name VARCHAR(255) NOT NULL,
+  type VARCHAR(100) NULL,
+  is_active CHAR(1) DEFAULT 'Y',
+  created DATETIME NULL,
+  modified DATETIME NULL
+);
+
+CREATE TABLE master_treatment_packages (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(50) NULL,
+  name VARCHAR(255) NOT NULL,
+  price DECIMAL(15,2) DEFAULT 0,
+  is_active CHAR(1) DEFAULT 'Y',
+  created DATETIME NULL,
+  modified DATETIME NULL
+);
+
+CREATE TABLE master_patient_referrers (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(50) NULL,
+  name VARCHAR(255) NOT NULL,
+  type VARCHAR(50) NULL,
+  phone VARCHAR(50) NULL,
+  address TEXT NULL,
+  is_active CHAR(1) DEFAULT 'Y',
+  created DATETIME NULL,
+  modified DATETIME NULL
+);
+
+ALTER TABLE master_patient_referrers
+DROP COLUMN phone,
+DROP COLUMN type,
+DROP COLUMN address;
+
+ALTER TABLE master_patient_referrers
+ADD COLUMN referral_origin VARCHAR(255) NULL AFTER name;
+
+ALTER TABLE master_patient_referrers
+ADD COLUMN doctor_sender VARCHAR(255) NULL AFTER referral_origin;

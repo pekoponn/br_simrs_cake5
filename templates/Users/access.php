@@ -1118,6 +1118,61 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
     $mastericd10Search = (($mastericd10['search'] ?? 0) == 1) ? 'checked' : '';
     $mastericd10Delete = (($mastericd10['delete'] ?? 0) == 1) ? 'checked' : '';
 
+    //masterlaboratories
+    $masterlaboratories = $rules['masterlaboratories'] ?? [];
+    $masterlaboratoriesIndex = (($masterlaboratories['index'] ?? 0) == 1) ? 'checked' : '';
+    $masterlaboratoriesView = (($masterlaboratories['view'] ?? 0) == 1) ? 'checked' : '';
+    $masterlaboratoriesAdd = (($masterlaboratories['add'] ?? 0) == 1) ? 'checked' : '';
+    $masterlaboratoriesEdit = (($masterlaboratories['edit'] ?? 0) == 1) ? 'checked' : '';
+    $masterlaboratoriesImport = (($masterlaboratories['import'] ?? 0) == 1) ? 'checked' : '';
+    $masterlaboratoriesToggleActive = (($masterlaboratories['toggleActive'] ?? 0) == 1) ? 'checked' : '';
+    $masterlaboratoriesSearch = (($masterlaboratories['search'] ?? 0) == 1) ? 'checked' : '';
+    $masterlaboratoriesDelete = (($masterlaboratories['delete'] ?? 0) == 1) ? 'checked' : '';
+
+    //masterradiologies
+    $masterradiologies = $rules['masterradiologies'] ?? [];
+    $masterradiologiesIndex = (($masterradiologies['index'] ?? 0) == 1) ? 'checked' : '';
+    $masterradiologiesView = (($masterradiologies['view'] ?? 0) == 1) ? 'checked' : '';
+    $masterradiologiesAdd = (($masterradiologies['add'] ?? 0) == 1) ? 'checked' : '';
+    $masterradiologiesEdit = (($masterradiologies['edit'] ?? 0) == 1) ? 'checked' : '';
+    $masterradiologiesImport = (($masterradiologies['import'] ?? 0) == 1) ? 'checked' : '';
+    $masterradiologiesToggleActive = (($masterradiologies['toggleActive'] ?? 0) == 1) ? 'checked' : '';
+    $masterradiologiesSearch = (($masterradiologies['search'] ?? 0) == 1) ? 'checked' : '';
+    $masterradiologiesDelete = (($masterradiologies['delete'] ?? 0) == 1) ? 'checked' : '';
+
+    //masterpenjamins
+    $masterpenjamins = $rules['masterpenjamins'] ?? [];
+    $masterpenjaminsIndex = (($masterpenjamins['index'] ?? 0) == 1) ? 'checked' : '';
+    $masterpenjaminsView = (($masterpenjamins['view'] ?? 0) == 1) ? 'checked' : '';
+    $masterpenjaminsAdd = (($masterpenjamins['add'] ?? 0) == 1) ? 'checked' : '';
+    $masterpenjaminsEdit = (($masterpenjamins['edit'] ?? 0) == 1) ? 'checked' : '';
+    $masterpenjaminsImport = (($masterpenjamins['import'] ?? 0) == 1) ? 'checked' : '';
+    $masterpenjaminsToggleActive = (($masterpenjamins['toggleActive'] ?? 0) == 1) ? 'checked' : '';
+    $masterpenjaminsSearch = (($masterpenjamins['search'] ?? 0) == 1) ? 'checked' : '';
+    $masterpenjaminsDelete = (($masterpenjamins['delete'] ?? 0) == 1) ? 'checked' : '';
+
+    //masterpatientreferrers
+    $masterpatientreferrers = $rules['masterpatientreferrers'] ?? [];
+    $masterpatientreferrersIndex = (($masterpatientreferrers['index'] ?? 0) == 1) ? 'checked' : '';
+    $masterpatientreferrersView = (($masterpatientreferrers['view'] ?? 0) == 1) ? 'checked' : '';
+    $masterpatientreferrersAdd = (($masterpatientreferrers['add'] ?? 0) == 1) ? 'checked' : '';
+    $masterpatientreferrersEdit = (($masterpatientreferrers['edit'] ?? 0) == 1) ? 'checked' : '';
+    $masterpatientreferrersImport = (($masterpatientreferrers['import'] ?? 0) == 1) ? 'checked' : '';
+    $masterpatientreferrersToggleActive = (($masterpatientreferrers['toggleActive'] ?? 0) == 1) ? 'checked' : '';
+    $masterpatientreferrersSearch = (($masterpatientreferrers['search'] ?? 0) == 1) ? 'checked' : '';
+    $masterpatientreferrersDelete = (($masterpatientreferrers['delete'] ?? 0) == 1) ? 'checked' : '';
+
+    //mastertreatmentpackages
+    $mastertreatmentpackages = $rules['mastertreatmentpackages'] ?? [];
+    $mastertreatmentpackagesIndex = (($mastertreatmentpackages['index'] ?? 0) == 1) ? 'checked' : '';
+    $mastertreatmentpackagesView = (($mastertreatmentpackages['view'] ?? 0) == 1) ? 'checked' : '';
+    $mastertreatmentpackagesAdd = (($mastertreatmentpackages['add'] ?? 0) == 1) ? 'checked' : '';
+    $mastertreatmentpackagesEdit = (($mastertreatmentpackages['edit'] ?? 0) == 1) ? 'checked' : '';
+    $mastertreatmentpackagesImport = (($mastertreatmentpackages['import'] ?? 0) == 1) ? 'checked' : '';
+    $mastertreatmentpackagesToggleActive = (($mastertreatmentpackages['toggleActive'] ?? 0) == 1) ? 'checked' : '';
+    $mastertreatmentpackagesSearch = (($mastertreatmentpackages['search'] ?? 0) == 1) ? 'checked' : '';
+    $mastertreatmentpackagesDelete = (($mastertreatmentpackages['delete'] ?? 0) == 1) ? 'checked' : '';
+
     //registrations
     $beds = $rules['beds'];
     $bedsIndex = ($beds['index'] == 1) ? 'checked' : '';
@@ -4578,6 +4633,201 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
                             </td>
                         </tr>
                         <tr>
+                            <td>Master Laboratories</td>
+                            <td>
+                                <div class="col-md-12">
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterlaboratories.index', ['value' => '1', 'hiddenField' => true, 'checked' => $masterlaboratoriesIndex, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Daftar</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterlaboratories.view', ['value' => '1', 'hiddenField' => true, 'checked' => $masterlaboratoriesView, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Lihat</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterlaboratories.add', ['value' => '1', 'hiddenField' => true, 'checked' => $masterlaboratoriesAdd, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Tambah</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterlaboratories.edit', ['value' => '1', 'hiddenField' => true, 'checked' => $masterlaboratoriesEdit, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Ubah</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterlaboratories.import', ['value' => '1', 'hiddenField' => true, 'checked' => $masterlaboratoriesImport, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Import</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterlaboratories.toggleActive', ['value' => '1', 'hiddenField' => true, 'checked' => $masterlaboratoriesToggleActive, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Status</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterlaboratories.search', ['value' => '1', 'hiddenField' => true, 'checked' => $masterlaboratoriesSearch, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Cari</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterlaboratories.delete', ['value' => '1', 'hiddenField' => true, 'checked' => $masterlaboratoriesDelete, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Hapus</label>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Master Radiologies</td>
+                            <td>
+                                <div class="col-md-12">
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterradiologies.index', ['value' => '1', 'hiddenField' => true, 'checked' => $masterradiologiesIndex, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Daftar</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterradiologies.view', ['value' => '1', 'hiddenField' => true, 'checked' => $masterradiologiesView, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Lihat</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterradiologies.add', ['value' => '1', 'hiddenField' => true, 'checked' => $masterradiologiesAdd, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Tambah</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterradiologies.edit', ['value' => '1', 'hiddenField' => true, 'checked' => $masterradiologiesEdit, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Ubah</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterradiologies.import', ['value' => '1', 'hiddenField' => true, 'checked' => $masterradiologiesImport, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Import</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterradiologies.toggleActive', ['value' => '1', 'hiddenField' => true, 'checked' => $masterradiologiesToggleActive, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Status</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterradiologies.search', ['value' => '1', 'hiddenField' => true, 'checked' => $masterradiologiesSearch, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Cari</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterradiologies.delete', ['value' => '1', 'hiddenField' => true, 'checked' => $masterradiologiesDelete, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Hapus</label>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Master Penjamins</td>
+                            <td>
+                                <div class="col-md-12">
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterpenjamins.index', ['value' => '1', 'hiddenField' => true, 'checked' => $masterpenjaminsIndex, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Daftar</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterpenjamins.view', ['value' => '1', 'hiddenField' => true, 'checked' => $masterpenjaminsView, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Lihat</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterpenjamins.add', ['value' => '1', 'hiddenField' => true, 'checked' => $masterpenjaminsAdd, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Tambah</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterpenjamins.edit', ['value' => '1', 'hiddenField' => true, 'checked' => $masterpenjaminsEdit, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Ubah</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterpenjamins.import', ['value' => '1', 'hiddenField' => true, 'checked' => $masterpenjaminsImport, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Import</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterpenjamins.toggleActive', ['value' => '1', 'hiddenField' => true, 'checked' => $masterpenjaminsToggleActive, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Status</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterpenjamins.search', ['value' => '1', 'hiddenField' => true, 'checked' => $masterpenjaminsSearch, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Cari</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterpenjamins.delete', ['value' => '1', 'hiddenField' => true, 'checked' => $masterpenjaminsDelete, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Hapus</label>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Master Perujuk Pasien</td>
+                            <td>
+                                <div class="col-md-12">
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterpatientreferrers.index', ['value' => '1', 'hiddenField' => true, 'checked' => $masterpatientreferrersIndex, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Daftar</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterpatientreferrers.view', ['value' => '1', 'hiddenField' => true, 'checked' => $masterpatientreferrersView, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Lihat</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterpatientreferrers.add', ['value' => '1', 'hiddenField' => true, 'checked' => $masterpatientreferrersAdd, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Tambah</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterpatientreferrers.edit', ['value' => '1', 'hiddenField' => true, 'checked' => $masterpatientreferrersEdit, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Ubah</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterpatientreferrers.import', ['value' => '1', 'hiddenField' => true, 'checked' => $masterpatientreferrersImport, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Import</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterpatientreferrers.toggleActive', ['value' => '1', 'hiddenField' => true, 'checked' => $masterpatientreferrersToggleActive, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Status</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterpatientreferrers.search', ['value' => '1', 'hiddenField' => true, 'checked' => $masterpatientreferrersSearch, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Cari</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.masterpatientreferrers.delete', ['value' => '1', 'hiddenField' => true, 'checked' => $masterpatientreferrersDelete, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Hapus</label>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Master Paket Tindakan</td>
+                            <td>
+                                <div class="col-md-12">
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.mastertreatmentpackages.index', ['value' => '1', 'hiddenField' => true, 'checked' => $mastertreatmentpackagesIndex, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Daftar</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.mastertreatmentpackages.view', ['value' => '1', 'hiddenField' => true, 'checked' => $mastertreatmentpackagesView, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Lihat</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.mastertreatmentpackages.add', ['value' => '1', 'hiddenField' => true, 'checked' => $mastertreatmentpackagesAdd, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Tambah</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.mastertreatmentpackages.edit', ['value' => '1', 'hiddenField' => true, 'checked' => $mastertreatmentpackagesEdit, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Ubah</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.mastertreatmentpackages.import', ['value' => '1', 'hiddenField' => true, 'checked' => $mastertreatmentpackagesImport, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Import</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.mastertreatmentpackages.toggleActive', ['value' => '1', 'hiddenField' => true, 'checked' => $mastertreatmentpackagesToggleActive, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Status</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.mastertreatmentpackages.search', ['value' => '1', 'hiddenField' => true, 'checked' => $mastertreatmentpackagesSearch, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Cari</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php echo $this->Form->checkbox('Rules.mastertreatmentpackages.delete', ['value' => '1', 'hiddenField' => true, 'checked' => $mastertreatmentpackagesDelete, 'class' => 'form-check-input']); ?>
+                                        <label class="form-check-label">Hapus</label>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
                             <td>Master ICD-9 CM</td>
                             <td>
                                 <div class="col-md-12">
@@ -4606,11 +4856,11 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
                                         <label class="form-check-label">Status</label>
                                     </div>
                                     <div class="form-check form-check-inline">
-                                        <?php echo $this->Form->checkbox('Rules.mastericd9.search', ['value' => '1', 'hiddenField' => true, 'checked' => $mastericd9Search, 'class' => 'form-check-input']); ?>
+                                        <?php echo $this->Form->checkbox('Rules.mastericd10.search', ['value' => '1', 'hiddenField' => true, 'checked' => $mastericd10Search, 'class' => 'form-check-input']); ?>
                                         <label class="form-check-label">Cari</label>
                                     </div>
                                     <div class="form-check form-check-inline">
-                                        <?php echo $this->Form->checkbox('Rules.mastericd9.delete', ['value' => '1', 'hiddenField' => true, 'checked' => $mastericd9Delete, 'class' => 'form-check-input']); ?>
+                                        <?php echo $this->Form->checkbox('Rules.mastericd10.delete', ['value' => '1', 'hiddenField' => true, 'checked' => $mastericd10Delete, 'class' => 'form-check-input']); ?>
                                         <label class="form-check-label">Hapus</label>
                                     </div>
                                 </div>

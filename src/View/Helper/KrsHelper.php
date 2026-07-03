@@ -1174,4 +1174,42 @@ class KrsHelper extends Helper
 			'3' => 'Lantai 3',
 		];
 	}
+
+	public function syncFromRegistration($registration)
+	{
+		$schema = $this->getSchema();
+
+		$visit = $this->find()
+			->where(['OutpatientVisits.registration_id' => $registration->id])
+			->first();
+
+		if (!$visit) {
+			$visit = $this->newEmptyEntity();
+		}
+
+		$data = [
+			'registration_id' => $registration->id,
+			'registration_no' => $registration->registration_no ?? null,
+			'patient_id' => $registration->patient_id,
+			'doctor_id' => $registration->doctor_id ?? null,
+			'queue_number' => $registration->queue_number ?? null,
+			'polyclinic_name' => $registration->polyclinic_name ?? null,
+			'visit_date' => !empty($registration->registration_date)
+				? $registration->registration_date
+				: date('Y-m-d'),
+			'visit_time' => !empty($registration->admission_time)
+				? $registration->admission_time
+				: date('H:i:s'),
+			'status' => 'waiting',
+			'payment_method' => $registration->payment_method ?? null,
+			'paid' => 0,
+			'total_fee' => 0,
+		];
+
+		$data = array_intersect_key($data, array_flip($schema->columns()));
+
+		$visit = $this->patchEntity($visit, $data);
+
+		return $this->save($visit);
+	}
 }

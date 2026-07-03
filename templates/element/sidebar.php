@@ -43,11 +43,18 @@ $healthFacility = (isset($checkUrl['healthfacilities'])) ? $checkUrl['healthfaci
 $insurance = (isset($checkUrl['insurances'])) ? $checkUrl['insurances'] : array();
 $nutritionCombine = (isset($checkUrl['nutritioncombine'])) ? $checkUrl['nutritioncombine'] : array();
 $nutritionMenu = (isset($checkUrl['nutritionmenus'])) ? $checkUrl['nutritionmenus'] : array();
+$outpatientBilling = (isset($checkUrl['outpatientbillings'])) ? $checkUrl['outpatientbillings'] : array();
 $pharmacyItem = (isset($checkUrl['pharmacyitems'])) ? $checkUrl['pharmacyitems'] : array();
 $polyclinic = (isset($checkUrl['polyclinics'])) ? $checkUrl['polyclinics'] : array();
 $masterTindakan = (isset($checkUrl['mastertindakan'])) ? $checkUrl['mastertindakan'] : array();
 $masterIcd9 = (isset($checkUrl['mastericd9'])) ? $checkUrl['mastericd9'] : array();
 $masterIcd10 = (isset($checkUrl['mastericd10'])) ? $checkUrl['mastericd10'] : array();
+$masterLaboratories = (isset($checkUrl['masterlaboratories'])) ? $checkUrl['masterlaboratories'] : array();
+$masterRadiologies = (isset($checkUrl['masterradiologies'])) ? $checkUrl['masterradiologies'] : array();
+$masterPenjamins = (isset($checkUrl['masterpenjamins'])) ? $checkUrl['masterpenjamins'] : array();
+$masterPatientReferrers = (isset($checkUrl['masterpatientreferrers'])) ? $checkUrl['masterpatientreferrers'] : array();
+$masterTreatmentPackages = (isset($checkUrl['mastertreatmentpackages'])) ? $checkUrl['mastertreatmentpackages'] : array();
+
 $rooms = (isset($checkUrl['rooms'])) ? $checkUrl['rooms'] : array();
 $beds = (isset($checkUrl['beds'])) ? $checkUrl['beds'] : array();
 $polyclinicQueue = (isset($checkUrl['polyclinicqueues'])) ? $checkUrl['polyclinicqueues'] : array();
@@ -575,11 +582,17 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 					$insurance['index'] == 1 ||
 					$nutritionCombine['index'] == 1 ||
 					$nutritionMenu['index'] == 1 ||
+					$outpatientBilling['index'] == 1 ||
 					$pharmacyItem['index'] == 1 ||
 					$polyclinic['index'] == 1 ||
 					!empty($masterTindakan['index']) ||
 					!empty($masterIcd9['index']) ||
 					!empty($masterIcd10['index']) ||
+					!empty($masterRadiologies['index']) ||
+					!empty($masterLaboratories['index']) ||
+					!empty($masterPenjamins['index']) ||
+					!empty($masterPatientReferrers['index']) ||
+					!empty($masterTreatmentPackages['index']) ||
 					$rooms['index'] == 1 ||
 					$beds['index'] == 1
 				) {
@@ -592,6 +605,12 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 						$getController == 'mastertindakan' ||
 						$getController == 'mastericd9' ||
 						$getController == 'mastericd10' ||
+						$getController == 'masterradiologies' ||
+						$getController == 'masterlaboratories' ||
+						$getController == 'masterpenjamins' ||
+						$getController == 'masterpatientreferrers' ||
+						$getController == 'mastertreatmentpackages' ||
+						$getController == 'outpatientbillings' ||
 						$getController == 'beds' ||
 						$getController == 'rooms'
 					) ? 'active' : '';
@@ -605,6 +624,12 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 					$menuMasterMedicine = ($getController == 'medicines') ? ' class="active"' : '';
 					$menuMasterMedicineMerk = ($getController == 'medicinemerks') ? ' class="active"' : '';
 					$menuMasterMedicineGroup = ($getController == 'medicinegroups') ? ' class="active"' : '';
+					$menuMasterRadiologies = ($getController == 'masterradiologies') ? ' class="active"' : '';
+					$menuMasterLaboratories = ($getController == 'masterlaboratories') ? ' class="active"' : '';
+					$menuMasterPenjamins = ($getController == 'masterpenjamins') ? ' class="active"' : '';
+					$menuMasterPatientReferrers = ($getController == 'masterpatientreferrers') ? ' class="active"' : '';
+					$menuMasterTreatmentPackages = ($getController == 'mastertreatmentpackages') ? ' class="active"' : '';
+					$menuOutpatientBilling = ($getController == 'outpatientbillings') ? ' class="active"' : '';
 					$menuPatientIndex = ($getController == 'patients') ? ' class="active"' : '';
 					$menuDoctorIndex = ($getController == 'doctors') ? ' class="active"' : '';
 					$menuDoctorScheduleIndex = ($getController == 'doctorschedules') ? ' class="active"' : '';
@@ -617,6 +642,11 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 					$menuMasterTindakanIndex = ($getController == 'mastertindakan') ? ' class="active"' : '';
 					$menuMasterIcd9Index = ($getController == 'mastericd9') ? ' class="active"' : '';
 					$menuMasterIcd10Index = ($getController == 'mastericd10') ? ' class="active"' : '';
+					$menuMasterRadiologiesIndex = ($getController == 'masterradiologies') ? ' class="active"' : '';
+					$menuMasterLaboratoriesIndex = ($getController == 'masterlaboratories') ? ' class="active"' : '';
+					$menuMasterPenjaminsIndex = ($getController == 'masterpenjamins') ? ' class="active"' : '';
+					$menuMasterPatientReferrersIndex = ($getController == 'masterpatientreferrers') ? ' class="active"' : '';
+					$menuMasterTreatmentPackagesIndex = ($getController == 'mastertreatmentpackages') ? ' class="active"' : '';
 					$menuRoomIndex = ($getController == 'rooms') ? ' class="active"' : '';
 					$menuBedIndex = ($getController == 'beds') ? ' class="active"' : '';
 
@@ -730,6 +760,14 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 							<?php
 							}
 
+							if ($outpatientBilling['index'] == 1) {
+							?>
+								<li <?= $menuOutpatientBilling ?>>
+									<?= $this->Html->link('Outpatient Billing', ['controller' => 'OutpatientBillings', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+							<?php
+							}
+
 							if ($pharmacyItem['index'] == 1) {
 							?>
 								<li <?= $menuPharmacyItemIndex ?>>
@@ -761,6 +799,46 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 								</li>
 							<?php
 							}
+
+							if (!empty($masterRadiologies['index'])) {
+							?>
+								<li <?= $menuMasterRadiologiesIndex ?>>
+									<?= $this->Html->link('Master Radiologies', ['controller' => 'MasterRadiologies', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+							<?php
+							}
+
+							if (!empty($masterLaboratories['index'])) {
+							?>
+								<li <?= $menuMasterLaboratoriesIndex ?>>
+									<?= $this->Html->link('Master Laboratories', ['controller' => 'MasterLaboratories', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+							<?php
+							}
+
+							if (!empty($masterPenjamins['index'])) {
+							?>
+								<li <?= $menuMasterPenjaminsIndex ?>>
+									<?= $this->Html->link('Master Penjamin', ['controller' => 'MasterPenjamins', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+							<?php
+							}
+							if (!empty($masterPatientReferrers['index'])) {
+							?>
+								<li <?= $menuMasterPatientReferrersIndex ?>>
+									<?= $this->Html->link('Master Patient Referrers', ['controller' => 'MasterPatientReferrers', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+							<?php
+							}
+							if (!empty($masterTreatmentPackages['index'])) {
+							?>
+								<li <?= $menuMasterTreatmentPackagesIndex ?>>
+									<?= $this->Html->link('Master Treatment Packages', ['controller' => 'MasterTreatmentPackages', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+							<?php
+							}
+							
+							
 
 							if ($polyclinic['index'] == 1) {
 							?>
