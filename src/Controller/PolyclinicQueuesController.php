@@ -19,6 +19,10 @@ class PolyclinicQueuesController extends AppController
     private const CHECKIN_DONE = 'Sudah Check-in';
     private const CALL_STATUS_WAITING = 'Menunggu';
     private const CALL_STATUS_CALLED = 'Dipanggil';
+    private const QUEUE_SESSION_MORNING = 'morning';
+    private const QUEUE_SESSION_AFTERNOON = 'afternoon';
+    private const QUEUE_CODE_PREFIX_MORNING = 'A';
+    private const QUEUE_CODE_PREFIX_AFTERNOON = 'B';
 
     public function initialize(): void
     {
@@ -31,16 +35,9 @@ class PolyclinicQueuesController extends AppController
     {
         $key = $this->request->getQuery('key');
 
-        //Reset setiap hari tampilan antrian
-        $todayStart = date('Y-m-d 00:00:00');
-        $todayEnd   = date('Y-m-d 23:59:59');
-
         $query = $this->PolyclinicQueues->find()
-            ->contain(['Registrations'])
-            ->where([
-                'PolyclinicQueues.created >=' => $todayStart,
-                'PolyclinicQueues.created <=' => $todayEnd,
-            ]);
+            ->contain(['Registrations']);
+        $query = $this->applyQueueVisitDateFilter($query, date('Y-m-d'));
 
         if (!empty($key)) {
             $query->where([
@@ -69,32 +66,24 @@ class PolyclinicQueuesController extends AppController
 
     public function display()
     {
-        $todayStart = date('Y-m-d 00:00:00');
-        $todayEnd = date('Y-m-d 23:59:59');
-
         $queues = $this->PolyclinicQueues->find()
             ->contain(['Registrations'])
-            ->where([
-                'PolyclinicQueues.created >=' => $todayStart,
-                'PolyclinicQueues.created <=' => $todayEnd,
-            ])
             ->order([
                 'PolyclinicQueues.queue_number' => 'ASC',
                 'PolyclinicQueues.id' => 'ASC',
             ])
-            ->limit(60)
-            ->all();
+            ->limit(60);
+        $queues = $this->applyQueueVisitDateFilter($queues, date('Y-m-d'))->all();
 
         $calledQueueConditions = [
-            'PolyclinicQueues.created >=' => $todayStart,
-            'PolyclinicQueues.created <=' => $todayEnd,
             'PolyclinicQueues.call_status' => self::CALL_STATUS_CALLED,
             'PolyclinicQueues.called_time IS NOT' => null,
         ];
 
         $calledQueue = $this->PolyclinicQueues->find()
             ->contain(['Registrations'])
-            ->where($calledQueueConditions)
+            ->where($calledQueueConditions);
+        $calledQueue = $this->applyQueueVisitDateFilter($calledQueue, date('Y-m-d'))
             ->order([
                 'PolyclinicQueues.called_time' => 'DESC',
                 'PolyclinicQueues.id' => 'DESC',
@@ -103,9 +92,11 @@ class PolyclinicQueuesController extends AppController
 
         $calledOnlineQueue = $this->PolyclinicQueues->find()
             ->contain(['Registrations'])
-            ->where($calledQueueConditions + [
+            ->where($calledQueueConditions)
+            ->where([
                 'PolyclinicQueues.source' => self::SOURCE_MOBILE_JKN,
-            ])
+            ]);
+        $calledOnlineQueue = $this->applyQueueVisitDateFilter($calledOnlineQueue, date('Y-m-d'))
             ->order([
                 'PolyclinicQueues.called_time' => 'DESC',
                 'PolyclinicQueues.id' => 'DESC',
@@ -120,7 +111,8 @@ class PolyclinicQueuesController extends AppController
                     'PolyclinicQueues.source !=' => self::SOURCE_MOBILE_JKN,
                     'PolyclinicQueues.source IS' => null,
                 ]);
-            })
+            });
+        $calledOnsiteQueue = $this->applyQueueVisitDateFilter($calledOnsiteQueue, date('Y-m-d'))
             ->order([
                 'PolyclinicQueues.called_time' => 'DESC',
                 'PolyclinicQueues.id' => 'DESC',
@@ -143,6 +135,7 @@ class PolyclinicQueuesController extends AppController
         $onsiteTotal = 0;
         $onlineWaiting = 0;
         $onsiteWaiting = 0;
+        $waitingQueueList = [];
 
         foreach ($queues as $queue) {
             $stats['total']++;
@@ -151,6 +144,17 @@ class PolyclinicQueuesController extends AppController
             $isWaitingQueue = empty($queue->registration)
                 && $queue->is_active === 'Y'
                 && $queue->call_status !== self::CALL_STATUS_CALLED;
+
+            $isQueueStillOnDisplayList = empty($queue->registration)
+                && $queue->is_active === 'Y';
+
+            // Daftar antrian aktif untuk panel kanan display.
+            // Catatan: nomor yang sudah Dipanggil tetap ditampilkan selama belum menjadi registrasi.
+            // Jika pasien sudah dibuatkan registrasi, relasi registration akan terisi
+            // sehingga nomor antrian otomatis tidak masuk ke tabel ini.
+            if ($isQueueStillOnDisplayList) {
+                $waitingQueueList[] = $queue;
+            }
 
             if ($isOnlineQueue) {
                 $onlineTotal++;
@@ -214,6 +218,18 @@ class PolyclinicQueuesController extends AppController
                     : 'Loket Rumah Sakit';
             }
 
+            $waitingQueuePayload = [];
+
+            foreach ($waitingQueueList as $queueItem) {
+                $waitingQueuePayload[] = [
+                    'code' => (string)($queueItem->code ?: '-'),
+                    'poly_name' => (string)($queueItem->poly_name ?: '-'),
+                    'patients_name' => (string)($queueItem->patients_name ?: '-'),
+                    'source' => $this->getSourceLabel((string)$queueItem->source),
+                    'call_status' => (string)($queueItem->call_status ?: self::CALL_STATUS_WAITING),
+                ];
+            }
+
             $payload = [
                 'currentCode' => $calledQueue ? (string)($calledQueue->code ?: '-') : '-',
                 'currentPoly' => $calledQueue ? (string)($calledQueue->poly_name ?: '-') : '-',
@@ -224,6 +240,7 @@ class PolyclinicQueuesController extends AppController
                 'onsiteTotal' => $onsiteTotal,
                 'onlineWaiting' => $onlineWaiting,
                 'onsiteWaiting' => $onsiteWaiting,
+                'waitingQueueList' => $waitingQueuePayload,
             ];
 
             return $this->response
@@ -233,6 +250,7 @@ class PolyclinicQueuesController extends AppController
 
         $this->set(compact(
             'queues',
+            'waitingQueueList',
             'stats',
             'polyclinicSummary',
             'nextQueue',
@@ -254,6 +272,10 @@ class PolyclinicQueuesController extends AppController
         $polyclinicQueue = $this->PolyclinicQueues->get($id, [
             'contain' => ['Registrations'],
         ]);
+
+        // Tambahan: sumber ditampilkan dalam bentuk label.
+        // Ini menjaga halaman view tetap tampil "Rujukan" walaupun template menampilkan field source langsung.
+        $polyclinicQueue->source_label = $this->getSourceLabel((string)$polyclinicQueue->source);
 
         $this->set(compact('polyclinicQueue'));
     }
@@ -387,48 +409,175 @@ class PolyclinicQueuesController extends AppController
         $polyclinicQueue = $this->PolyclinicQueues->newEmptyEntity();
 
         if ($this->request->is('post')) {
-
             $data = $this->request->getData();
 
-            $nextNumber = $this->getNextQueueNumber();
+            $polyName = trim((string)($data['poly_name'] ?? ''));
+            $patientId = !empty($data['patient_id']) ? (int)$data['patient_id'] : null;
+            $patientName = trim((string)($data['patients_name'] ?? ''));
+            $phoneNumber = trim((string)($data['no_telp'] ?? ''));
+            $visitDate = $this->normalizeQueueVisitDate((string)($data['visit_date'] ?? date('Y-m-d')));
+            $queueSession = (string)($data['queue_session'] ?? '');
 
+            if ($patientId !== null) {
+                $this->loadModel('Patients');
+                $patient = $this->Patients->find()
+                    ->select([
+                        'id',
+                        'code',
+                        'full_name',
+                        'identity_number',
+                        'phone_number',
+                    ])
+                    ->where(['Patients.id' => $patientId])
+                    ->first();
+
+                if ($patient) {
+                    $patientName = trim((string)$patient->full_name) !== ''
+                        ? trim((string)$patient->full_name)
+                        : $patientName;
+                    $phoneNumber = trim((string)$patient->phone_number) !== ''
+                        ? trim((string)$patient->phone_number)
+                        : $phoneNumber;
+                }
+            }
+
+            if ($polyName === '') {
+                $this->Flash->error(__('Poli tujuan belum dipilih.'));
+                return $this->redirect(['action' => 'add']);
+            }
+
+            if ($patientName === '') {
+                $this->Flash->error(__('Nama pasien wajib diisi.'));
+                return $this->redirect(['action' => 'add']);
+            }
+
+            if ($phoneNumber === '') {
+                $this->Flash->error(__('No HP / WhatsApp wajib diisi.'));
+                return $this->redirect(['action' => 'add']);
+            }
+
+            if (!$this->isAllowedQueueVisitDate($visitDate)) {
+                $this->Flash->error(__('Tanggal kunjungan hanya boleh hari ini atau besok.'));
+                return $this->redirect(['action' => 'add']);
+            }
+
+            $queueSessionError = $this->getQueueSessionErrorForVisitDate($polyName, $queueSession, $visitDate);
+
+            if ($queueSessionError !== null) {
+                $this->Flash->error(__($queueSessionError));
+                return $this->redirect(['action' => 'add']);
+            }
+
+            $queueCodePrefix = $this->getKioskQueueCodePrefix($queueSession);
+            $nextNumber = $this->getNextQueueNumberByCodePrefix($queueCodePrefix, $visitDate);
+
+            $data['poly_name'] = $polyName;
+            $data['patients_name'] = $patientName;
+            $data['no_telp'] = $phoneNumber;
             $data['queue_number'] = $nextNumber;
-
-            $data['code'] = $this->formatQueueCode($nextNumber);
-
-            // SOURCE WA
+            $data['code'] = $this->formatQueueCode($nextNumber, $queueCodePrefix);
             $data['source'] = self::SOURCE_WHATSAPP;
-
+            $data['visit_date'] = $visitDate;
+            $data['checkin_status'] = self::CHECKIN_PENDING;
+            $data['call_status'] = self::CALL_STATUS_WAITING;
+            $data['call_count'] = 0;
             $data['is_create'] = 1;
             $data['is_update'] = 0;
             $data['is_delete'] = 0;
             $data['is_active'] = 'Y';
 
-            $polyclinicQueue = $this->PolyclinicQueues
-                ->patchEntity($polyclinicQueue, $data);
-
-            if ($this->PolyclinicQueues->save($polyclinicQueue)) {
-
-                $this->Flash->success(
-                    __('Pendaftaran WA berhasil.')
-                );
-
-                return $this->redirect([
-                    'action' => 'index'
-                ]);
+            if (!$this->PolyclinicQueues->getSchema()->hasColumn('patient_id')) {
+                unset($data['patient_id']);
             }
 
-            $this->Flash->error(
-                __('Pendaftaran WA gagal.')
-            );
+            unset($data['queue_session']);
+
+            $polyclinicQueue = $this->PolyclinicQueues->patchEntity($polyclinicQueue, $data);
+
+            if ($patientId !== null && $this->PolyclinicQueues->getSchema()->hasColumn('patient_id')) {
+                $polyclinicQueue->patient_id = $patientId;
+            }
+
+            if ($this->PolyclinicQueues->save($polyclinicQueue)) {
+                $this->Flash->success(__('Pendaftaran antrian poli berhasil disimpan.'));
+                return $this->redirect(['action' => 'index']);
+            }
+
+            debug($polyclinicQueue->getErrors());
+            $this->Flash->error(__('Pendaftaran antrian poli gagal disimpan.'));
         }
 
         $polyclinicButtonData = $this->getPolyclinicButtonData();
 
-        $this->set(compact(
-            'polyclinicQueue',
-            'polyclinicButtonData'
-        ));
+        $this->set(compact('polyclinicQueue', 'polyclinicButtonData'));
+    }
+
+    public function searchPatients()
+    {
+        $this->request->allowMethod(['get']);
+        $this->autoRender = false;
+
+        $q = trim((string)$this->request->getQuery('q'));
+
+        $this->loadModel('Patients');
+
+        $schema = $this->Patients->getSchema();
+        $selectFields = [
+            'id',
+            'code',
+            'full_name',
+            'identity_number',
+            'phone_number',
+            'birth_date',
+            'address',
+        ];
+
+        if ($schema->hasColumn('medical_record_no')) {
+            $selectFields[] = 'medical_record_no';
+        }
+
+        $query = $this->Patients->find()
+            ->select($selectFields)
+            ->order([
+                'Patients.full_name' => 'ASC',
+                'Patients.id' => 'ASC',
+            ])
+            ->limit(15);
+
+        if ($q !== '') {
+            $searchConditions = [
+                'Patients.full_name LIKE' => '%' . $q . '%',
+                'Patients.code LIKE' => '%' . $q . '%',
+                'Patients.identity_number LIKE' => '%' . $q . '%',
+                'Patients.phone_number LIKE' => '%' . $q . '%',
+            ];
+
+            if ($schema->hasColumn('medical_record_no')) {
+                $searchConditions[] = ['Patients.medical_record_no LIKE' => '%' . $q . '%'];
+            }
+
+            $query->where([
+                'OR' => $searchConditions,
+            ]);
+        }
+
+        $data = [];
+
+        foreach ($query as $patient) {
+            $data[] = [
+                'id' => $patient->id,
+                'code' => (string)($patient->medical_record_no ?? $patient->code ?? ''),
+                'full_name' => (string)($patient->full_name ?? ''),
+                'identity_number' => (string)($patient->identity_number ?? ''),
+                'phone_number' => (string)($patient->phone_number ?? ''),
+                'birth_date' => !empty($patient->birth_date) ? $patient->birth_date->format('d-m-Y') : '',
+                'address' => (string)($patient->address ?? ''),
+            ];
+        }
+
+        return $this->response
+            ->withType('application/json')
+            ->withStringBody(json_encode($data));
     }
 
     public function mobileJkn()
@@ -604,26 +753,37 @@ class PolyclinicQueuesController extends AppController
     {
         $queueNumber = null;
         $queueCode = null;
+        $queueVisitDate = null;
 
         if ($this->request->is('post')) {
-            $polyclinicName = $this->request->getData('poly_name');
+            $polyclinicName = trim((string)$this->request->getData('poly_name'));
+            $queueSession = (string)$this->request->getData('queue_session');
+            $queueSessionError = $this->getKioskQueueSessionError($polyclinicName, $queueSession);
 
-            $nextNumber = $this->getNextQueueNumber();
+            if ($queueSessionError !== null) {
+                $this->Flash->error(__($queueSessionError));
+            } else {
+                $queueCodePrefix = $this->getKioskQueueCodePrefix($queueSession);
+                $visitDate = $this->getKioskQueueVisitDate($queueSession);
+                $nextNumber = $this->getNextQueueNumberByCodePrefix($queueCodePrefix, $visitDate);
 
-            $queue = $this->PolyclinicQueues->newEmptyEntity();
+                $queue = $this->PolyclinicQueues->newEmptyEntity();
 
-            $queue->code = $this->formatQueueCode($nextNumber);
-            $queue->source = self::SOURCE_KIOSK;
-            $queue->poly_name = $polyclinicName;
-            $queue->queue_number = $nextNumber;
-            $queue->is_create = 1;
-            $queue->is_update = 0;
-            $queue->is_delete = 0;
-            $queue->is_active = 'Y';
+                $queue->code = $this->formatQueueCode($nextNumber, $queueCodePrefix);
+                $queue->source = self::SOURCE_KIOSK;
+                $queue->poly_name = $polyclinicName;
+                $queue->queue_number = $nextNumber;
+                $queue->visit_date = $visitDate;
+                $queue->is_create = 1;
+                $queue->is_update = 0;
+                $queue->is_delete = 0;
+                $queue->is_active = 'Y';
 
-            if ($this->PolyclinicQueues->save($queue)) {
-                $queueNumber = $nextNumber;
-                $queueCode = $queue->code;
+                if ($this->PolyclinicQueues->save($queue)) {
+                    $queueNumber = $nextNumber;
+                    $queueCode = $queue->code;
+                    $queueVisitDate = $visitDate;
+                }
             }
         }
 
@@ -632,166 +792,14 @@ class PolyclinicQueuesController extends AppController
         $this->set(compact(
             'queueNumber',
             'queueCode',
+            'queueVisitDate',
             'polyclinicButtonData'
         ));
-    }
-
-    public function searchPolyQueue()
-    {
-        $this->request->allowMethod(['get']);
-        $this->autoRender = false;
-
-        $q = strtolower(trim((string)$this->request->getQuery('q', '')));
-        $visitDate = trim((string)$this->request->getQuery('visit_date', date('Y-m-d')));
-        if (!$this->isValidVisitDate($visitDate)) {
-            $visitDate = date('Y-m-d');
-        }
-        $results = [];
-
-        foreach ($this->getPolyclinicOptions() as $value => $label) {
-            $name = (string)$value;
-            if ($q !== '' && strpos(strtolower($name), $q) === false && strpos(strtolower((string)$label), $q) === false) {
-                continue;
-            }
-
-            $results[] = [
-                'poly_name' => $name,
-                'name' => (string)$label,
-                'next_queue_number' => $this->getNextQueueNumberByPoly($name, $visitDate),
-            ];
-        }
-
-        return $this->response
-            ->withType('application/json')
-            ->withStringBody(json_encode($results, JSON_UNESCAPED_UNICODE));
-    }
-
-    public function searchPoly()
-    {
-        return $this->searchPolyQueue();
-    }
-
-    public function createReferralQueue()
-    {
-        $this->request->allowMethod(['post']);
-        $this->autoRender = false;
-
-        $polyName = trim((string)$this->request->getData('poly_name', ''));
-        $patientName = trim((string)$this->request->getData('patient_name', ''));
-        $phoneNumber = trim((string)$this->request->getData('phone_number', ''));
-        $visitDate = trim((string)$this->request->getData('visit_date', ''));
-        $visitDate = $visitDate !== '' ? $visitDate : date('Y-m-d');
-
-        if ($polyName === '') {
-            return $this->response
-                ->withStatus(422)
-                ->withType('application/json')
-                ->withStringBody(json_encode([
-                    'success' => false,
-                    'message' => 'Poliklinik wajib dipilih.',
-                ], JSON_UNESCAPED_UNICODE));
-        }
-
-        if (!$this->isValidVisitDate($visitDate)) {
-            return $this->response
-                ->withStatus(422)
-                ->withType('application/json')
-                ->withStringBody(json_encode([
-                    'success' => false,
-                    'message' => 'Format tanggal kunjungan tidak valid.',
-                ], JSON_UNESCAPED_UNICODE));
-        }
-
-        try {
-            $result = $this->PolyclinicQueues->getConnection()->transactional(
-                function () use ($polyName, $patientName, $phoneNumber, $visitDate) {
-                    $existingQueue = $this->PolyclinicQueues->find()
-                        ->where([
-                            'source' => self::SOURCE_EMR_RUJUK,
-                            'poly_name' => $polyName,
-                            'patients_name' => $patientName !== '' ? $patientName : '-',
-                            'no_telp' => $phoneNumber !== '' ? $phoneNumber : '-',
-                            'visit_date' => $visitDate,
-                            'is_delete' => 0,
-                        ])
-                        ->orderDesc('id')
-                        ->first();
-
-                    if ($existingQueue) {
-                        return [
-                            'queue' => $existingQueue,
-                            'created' => false,
-                        ];
-                    }
-
-                    $nextNumber = $this->getNextQueueNumberByPoly($polyName, $visitDate);
-                    $now = date('Y-m-d H:i:s');
-                    $queue = $this->PolyclinicQueues->newEmptyEntity();
-                    $queue = $this->PolyclinicQueues->patchEntity($queue, [
-                        'code' => $this->formatQueueCode($nextNumber),
-                        'source' => self::SOURCE_EMR_RUJUK,
-                        'poly_name' => $polyName,
-                        'patients_name' => $patientName !== '' ? $patientName : '-',
-                        'no_telp' => $phoneNumber !== '' ? $phoneNumber : '-',
-                        'queue_number' => $nextNumber,
-                        'visit_date' => $visitDate,
-                        'checkin_status' => self::CHECKIN_PENDING,
-                        'checkin_time' => null,
-                        'call_status' => self::CALL_STATUS_WAITING,
-                        'called_time' => null,
-                        'call_count' => 0,
-                        'is_create' => 1,
-                        'is_update' => 0,
-                        'is_delete' => 0,
-                        'is_active' => 'Y',
-                        'created' => $now,
-                        'modified' => $now,
-                    ]);
-
-                    if (!$this->PolyclinicQueues->save($queue)) {
-                        throw new \RuntimeException(json_encode($queue->getErrors()));
-                    }
-
-                    return [
-                        'queue' => $queue,
-                        'created' => true,
-                    ];
-                }
-            );
-        } catch (\Throwable $exception) {
-            return $this->response
-                ->withStatus(422)
-                ->withType('application/json')
-                ->withStringBody(json_encode([
-                    'success' => false,
-                    'message' => 'Gagal membuat antrian rujukan.',
-                ], JSON_UNESCAPED_UNICODE));
-        }
-
-        $queue = $result['queue'];
-        $wasCreated = (bool)$result['created'];
-
-        return $this->response
-            ->withType('application/json')
-            ->withStringBody(json_encode([
-                'success' => true,
-                'id' => $queue->id,
-                'code' => $queue->code,
-                'queue_number' => $queue->queue_number,
-                'poly_name' => $queue->poly_name,
-                'source' => $queue->source,
-                'source_label' => $this->getSourceLabel((string)$queue->source),
-                'message' => $wasCreated
-                    ? 'Antrian rujukan berhasil dibuat.'
-                    : 'Antrian rujukan ini sudah pernah dibuat.',
-            ], JSON_UNESCAPED_UNICODE));
     }
 
     private function getPolyclinicButtonData(): array
     {
         $polyclinics = $this->getPolyclinicOptions();
-        $todayStart = date('Y-m-d 00:00:00');
-        $todayEnd = date('Y-m-d 23:59:59');
         $queueTotals = [];
         $doctorNames = [];
 
@@ -799,11 +807,8 @@ class PolyclinicQueuesController extends AppController
             ->select([
                 'poly_name',
                 'total' => $this->PolyclinicQueues->find()->func()->count('*'),
-            ])
-            ->where([
-                'created >=' => $todayStart,
-                'created <=' => $todayEnd,
-            ])
+            ]);
+        $queueRows = $this->applyQueueVisitDateFilter($queueRows, date('Y-m-d'))
             ->group(['poly_name'])
             ->enableHydration(false)
             ->toArray();
@@ -903,6 +908,185 @@ class PolyclinicQueuesController extends AppController
         ]));
     }
 
+    private function applyQueueVisitDateFilter($query, string $visitDate)
+    {
+        $startDate = $visitDate . ' 00:00:00';
+        $endDate = $visitDate . ' 23:59:59';
+
+        return $query->where(function ($expression) use ($visitDate, $startDate, $endDate) {
+            return $expression->or_([
+                'PolyclinicQueues.visit_date' => $visitDate,
+                $expression->and_([
+                    'PolyclinicQueues.visit_date IS' => null,
+                    'PolyclinicQueues.created >=' => $startDate,
+                    'PolyclinicQueues.created <=' => $endDate,
+                ]),
+            ]);
+        });
+    }
+
+    private function getKioskQueueSessionError(string $polyclinicName, string $queueSession): ?string
+    {
+        if ($polyclinicName === '') {
+            return 'Silakan pilih poli tujuan terlebih dahulu.';
+        }
+
+        $currentTime = date('H:i');
+
+        if ($queueSession === self::QUEUE_SESSION_MORNING) {
+            if ($currentTime < '07:00') {
+                return 'Antrian pagi dapat diambil mulai pukul 07:00.';
+            }
+
+            return null;
+        }
+
+        if ($queueSession === self::QUEUE_SESSION_AFTERNOON) {
+            $polyclinicCloseTime = $this->getTodayPolyclinicCloseTime($polyclinicName);
+
+            if ($currentTime < '07:00') {
+                return 'Antrian sore hanya dapat diambil mulai pukul 07:00.';
+            }
+
+            if ($polyclinicCloseTime !== null && $currentTime > $polyclinicCloseTime) {
+                return 'Antrian sore hanya dapat diambil sampai poli tutup.';
+            }
+
+            return null;
+        }
+
+        return 'Silakan pilih sesi antrian pagi atau sore.';
+    }
+
+    private function getKioskQueueCodePrefix(string $queueSession): string
+    {
+        if ($queueSession === self::QUEUE_SESSION_AFTERNOON) {
+            return self::QUEUE_CODE_PREFIX_AFTERNOON;
+        }
+
+        return self::QUEUE_CODE_PREFIX_MORNING;
+    }
+
+    private function getQueueSessionErrorForVisitDate(string $polyclinicName, string $queueSession, string $visitDate): ?string
+    {
+        if (!in_array($queueSession, [self::QUEUE_SESSION_MORNING, self::QUEUE_SESSION_AFTERNOON], true)) {
+            return 'Silakan pilih sesi antrian pagi atau sore.';
+        }
+
+        if ($visitDate !== date('Y-m-d')) {
+            return null;
+        }
+
+        $currentTime = date('H:i');
+
+        if ($currentTime < '07:00') {
+            return 'Antrian dapat dibuat mulai pukul 07:00.';
+        }
+
+        if ($queueSession === self::QUEUE_SESSION_MORNING && $currentTime > '14:00') {
+            return 'Antrian pagi untuk hari ini sudah lewat. Silakan pilih tanggal besok.';
+        }
+
+        if ($queueSession === self::QUEUE_SESSION_AFTERNOON) {
+            $polyclinicCloseTime = $this->getTodayPolyclinicCloseTime($polyclinicName);
+
+            if ($polyclinicCloseTime !== null && $currentTime > $polyclinicCloseTime) {
+                return 'Antrian sore hanya dapat dibuat sampai poli tutup.';
+            }
+        }
+
+        return null;
+    }
+
+    private function getKioskQueueVisitDate(string $queueSession): string
+    {
+        if ($queueSession === self::QUEUE_SESSION_MORNING && date('H:i') > '14:00') {
+            return date('Y-m-d', strtotime('+1 day'));
+        }
+
+        return date('Y-m-d');
+    }
+
+    private function isAllowedQueueVisitDate(string $visitDate): bool
+    {
+        return in_array($visitDate, [
+            date('Y-m-d'),
+            date('Y-m-d', strtotime('+1 day')),
+        ], true);
+    }
+
+    private function normalizeQueueVisitDate(string $visitDate): string
+    {
+        $visitDate = trim($visitDate);
+
+        foreach (['Y-m-d', 'd-m-Y'] as $format) {
+            $date = \DateTimeImmutable::createFromFormat('!' . $format, $visitDate);
+
+            if ($date !== false && $date->format($format) === $visitDate) {
+                return $date->format('Y-m-d');
+            }
+        }
+
+        return $visitDate;
+    }
+
+    private function getTodayPolyclinicCloseTime(string $polyclinicName): ?string
+    {
+        $this->loadModel('DoctorSchedules');
+
+        $scheduleRows = $this->DoctorSchedules->find()
+            ->contain([
+                'Doctors',
+            ])
+            ->where([
+                'DoctorSchedules.day IN' => $this->getTodayDayLabels(),
+                'DoctorSchedules.is_active' => 'Y',
+            ])
+            ->all();
+
+        $closeTime = null;
+
+        foreach ($scheduleRows as $schedule) {
+            $doctor = $schedule->doctor ?? null;
+            $schedulePolyName = $doctor ? (string)($doctor->polyclinic_name ?? '') : '';
+
+            if ($schedulePolyName !== $polyclinicName) {
+                continue;
+            }
+
+            $endTime = $this->formatScheduleTime($schedule->end_time ?? null);
+
+            if ($endTime === null) {
+                continue;
+            }
+
+            if ($closeTime === null || $endTime > $closeTime) {
+                $closeTime = $endTime;
+            }
+        }
+
+        return $closeTime;
+    }
+
+    private function formatScheduleTime($timeValue): ?string
+    {
+        if (empty($timeValue)) {
+            return null;
+        }
+
+        if (is_object($timeValue) && method_exists($timeValue, 'format')) {
+            return $timeValue->format('H:i');
+        }
+
+        $timestamp = strtotime((string)$timeValue);
+
+        if ($timestamp === false) {
+            return null;
+        }
+
+        return date('H:i', $timestamp);
+    }
+
     private function getNextQueueNumber(): int
     {
         $startDate = date('Y-m-d 00:00:00');
@@ -922,6 +1106,7 @@ class PolyclinicQueuesController extends AppController
         return $lastQueue ? ((int)$lastQueue->queue_number + 1) : 1;
     }
 
+
     private function getNextQueueNumberByPoly(string $polyName, ?string $visitDate = null): int
     {
         $visitDate = $visitDate ?: date('Y-m-d');
@@ -930,42 +1115,69 @@ class PolyclinicQueuesController extends AppController
 
         $lastQueue = $this->PolyclinicQueues
             ->find()
-            ->select(['queue_number'])
             ->where([
-                'poly_name' => $polyName,
-                'is_delete' => 0,
+                'PolyclinicQueues.poly_name' => $polyName,
+                'PolyclinicQueues.is_active' => 'Y',
             ])
             ->where(function ($expression) use ($visitDate, $startDate, $endDate) {
                 return $expression->or_([
-                    'visit_date' => $visitDate,
+                    'PolyclinicQueues.visit_date' => $visitDate,
                     $expression->and_([
-                        'visit_date IS' => null,
-                        'created >=' => $startDate,
-                        'created <=' => $endDate,
+                        'PolyclinicQueues.visit_date IS' => null,
+                        'PolyclinicQueues.created >=' => $startDate,
+                        'PolyclinicQueues.created <=' => $endDate,
                     ]),
                 ]);
             })
-            ->orderDesc('queue_number')
+            ->order([
+                'PolyclinicQueues.queue_number' => 'DESC',
+                'PolyclinicQueues.id' => 'DESC',
+            ])
             ->first();
 
         return $lastQueue ? ((int)$lastQueue->queue_number + 1) : 1;
     }
 
-    private function isValidVisitDate(string $visitDate): bool
+    private function getNextQueueNumberByCodePrefix(string $codePrefix, ?string $visitDate = null): int
     {
-        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $visitDate);
+        $visitDate = $visitDate ?: date('Y-m-d');
+        $startDate = $visitDate . ' 00:00:00';
+        $endDate = $visitDate . ' 23:59:59';
 
-        return $date !== false && $date->format('Y-m-d') === $visitDate;
+        $lastQueue = $this->PolyclinicQueues
+            ->find()
+            ->where([
+                'PolyclinicQueues.code LIKE' => $codePrefix . '-%',
+            ])
+            ->where(function ($expression) use ($visitDate, $startDate, $endDate) {
+                return $expression->or_([
+                    'PolyclinicQueues.visit_date' => $visitDate,
+                    $expression->and_([
+                        'PolyclinicQueues.visit_date IS' => null,
+                        'PolyclinicQueues.created >=' => $startDate,
+                        'PolyclinicQueues.created <=' => $endDate,
+                    ]),
+                ]);
+            })
+            ->order([
+                'PolyclinicQueues.queue_number' => 'DESC',
+                'PolyclinicQueues.id' => 'DESC',
+            ])
+            ->first();
+
+        return $lastQueue ? ((int)$lastQueue->queue_number + 1) : 1;
     }
 
-    private function formatQueueCode(int $queueNumber): string
+    private function formatQueueCode(int $queueNumber, string $codePrefix = self::QUEUE_CODE_PREFIX_MORNING): string
     {
-        return 'A-' . str_pad((string)$queueNumber, 3, '0', STR_PAD_LEFT);
+        return $codePrefix . '-' . str_pad((string)$queueNumber, 3, '0', STR_PAD_LEFT);
     }
 
     private function getSourceLabel(string $source): string
     {
-        if (in_array(strtolower($source), ['wa', 'whatsapp'], true)) {
+        $sourceLower = strtolower(trim($source));
+
+        if (in_array($sourceLower, ['wa', 'whatsapp'], true)) {
             return 'WhatsApp';
         }
 
@@ -973,15 +1185,152 @@ class PolyclinicQueuesController extends AppController
             return self::SOURCE_MOBILE_JKN;
         }
 
+        if (in_array($sourceLower, ['rujukan', 'emr rujuk', 'emr_rujuk', 'emr rujukan'], true)) {
+            return 'Rujukan';
+        }
+
         if ($source === self::SOURCE_KIOSK) {
             return 'Manual';
         }
 
-        if ($source === self::SOURCE_EMR_RUJUK) {
-            return 'Rujukan EMR';
+        return $source !== '' ? $source : 'Manual';
+    }
+
+
+    public function createReferralQueue()
+    {
+        $this->request->allowMethod(['post']);
+        $this->autoRender = false;
+
+        $polyName = trim((string)$this->request->getData('poly_name'));
+        $patientName = trim((string)$this->request->getData('patient_name'));
+        $phoneNumber = trim((string)$this->request->getData('phone_number'));
+        $visitDate = trim((string)$this->request->getData('visit_date'));
+
+        if ($polyName === '') {
+            return $this->response
+                ->withType('application/json')
+                ->withStringBody(json_encode([
+                    'success' => false,
+                    'message' => 'Poliklinik belum dipilih.',
+                ]));
         }
 
-        return $source !== '' ? $source : 'Manual';
+        if ($visitDate === '') {
+            $visitDate = date('Y-m-d');
+        }
+
+        $nextNumber = $this->getNextQueueNumberByPoly($polyName, $visitDate);
+
+        $queue = $this->PolyclinicQueues->newEmptyEntity();
+
+        $queueData = [
+            'code' => $this->formatQueueCode($nextNumber),
+            'source' => self::SOURCE_EMR_RUJUK,
+            'poly_name' => $polyName,
+            'patients_name' => $patientName,
+            'no_telp' => $phoneNumber,
+            'queue_number' => $nextNumber,
+            'visit_date' => $visitDate,
+            'checkin_status' => self::CHECKIN_PENDING,
+            'checkin_time' => null,
+            'call_status' => self::CALL_STATUS_WAITING,
+            'called_time' => null,
+            'call_count' => 0,
+            'is_create' => 1,
+            'is_update' => 0,
+            'is_delete' => 0,
+            'is_active' => 'Y',
+            'created' => date('Y-m-d H:i:s'),
+            'modified' => date('Y-m-d H:i:s'),
+        ];
+
+        $queue = $this->PolyclinicQueues->patchEntity($queue, $queueData);
+
+        // Dipaksa lagi supaya tidak ketimpa default/source lama.
+        $queue->source = self::SOURCE_EMR_RUJUK;
+
+        if (!$this->PolyclinicQueues->save($queue)) {
+            return $this->response
+                ->withType('application/json')
+                ->withStringBody(json_encode([
+                    'success' => false,
+                    'message' => 'Gagal membuat antrian.',
+                    'errors' => $queue->getErrors(),
+                ]));
+        }
+
+        return $this->response
+            ->withType('application/json')
+            ->withStringBody(json_encode([
+                'success' => true,
+                'id' => $queue->id,
+                'code' => $queue->code,
+                'queue_number' => $queue->queue_number,
+                'poly_name' => $queue->poly_name,
+                'source' => $queue->source,
+                'source_label' => $this->getSourceLabel((string)$queue->source),
+                'message' => 'Antrian berhasil dibuat.',
+            ]));
+    }
+
+    public function searchPoly()
+    {
+        // Alias lama, biar kalau masih ada JS yang memanggil searchPoly tetap jalan.
+        return $this->searchPolyQueue();
+    }
+
+    public function searchPolyQueue()
+    {
+        $this->request->allowMethod(['get']);
+        $this->autoRender = false;
+
+        $q = trim((string)$this->request->getQuery('q'));
+        $todayStart = date('Y-m-d 00:00:00');
+        $todayEnd = date('Y-m-d 23:59:59');
+
+        // Sumber pilihan poli dari helper statis, bukan dari data antrian.
+        // Jadi meskipun poli belum pernah ada di polyclinic_queues, tetap muncul dan nomor antri mulai dari 1.
+        $polyclinics = $this->getPolyclinicOptions();
+        $data = [];
+
+        foreach ($polyclinics as $polyName => $label) {
+            $polyName = (string)$polyName;
+            $label = (string)$label;
+
+            if ($q !== '' && stripos($polyName, $q) === false && stripos($label, $q) === false) {
+                continue;
+            }
+
+            $lastQueue = $this->PolyclinicQueues->find()
+                ->where([
+                    'PolyclinicQueues.poly_name' => $polyName,
+                    'PolyclinicQueues.created >=' => $todayStart,
+                    'PolyclinicQueues.created <=' => $todayEnd,
+                    'PolyclinicQueues.is_active' => 'Y',
+                ])
+                ->order([
+                    'PolyclinicQueues.queue_number' => 'DESC',
+                    'PolyclinicQueues.id' => 'DESC',
+                ])
+                ->first();
+
+            $nextQueue = !empty($lastQueue)
+                ? ((int)$lastQueue->queue_number + 1)
+                : 1;
+
+            $data[] = [
+                'poly_name' => $polyName,
+                'name' => $label,
+                'nama' => $label,
+                'queue_number' => $nextQueue,
+                'queue_code' => $this->formatQueueCode($nextQueue),
+            ];
+        }
+
+        return $this->response
+            ->withType('application/json')
+            ->withStringBody(json_encode(array_values($data)));
     }
 
     // public function wa()

@@ -322,8 +322,14 @@ $todayLabel = date('d F Y');
         color: #1d4ed8;
     }
 
+    .queue-buttons {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
     .btn-queue {
-        min-width: 260px;
+        min-width: 190px;
         height: 48px;
         padding: 0 22px;
         border: 0;
@@ -341,6 +347,16 @@ $todayLabel = date('d F Y');
     .btn-queue:focus {
         background: #0f8557;
         outline: none;
+    }
+
+    .btn-queue-afternoon {
+        background: #1d4ed8;
+        box-shadow: 0 16px 28px rgba(29, 78, 216, 0.22);
+    }
+
+    .btn-queue-afternoon:hover,
+    .btn-queue-afternoon:focus {
+        background: #1e40af;
     }
 
     .btn-queue:disabled {
@@ -500,6 +516,11 @@ $todayLabel = date('d F Y');
             width: 100%;
             min-width: 0;
         }
+
+        .queue-buttons {
+            flex-direction: column;
+            width: 100%;
+        }
     }
 
     @media (max-width: 575px) {
@@ -564,7 +585,7 @@ $todayLabel = date('d F Y');
         <div class="kiosk-card">
             <div class="kiosk-card-header">
                 <h2 class="kiosk-title">Ambil Nomor Antrian</h2>
-                <p class="kiosk-description">Pilih poli tujuan lalu tekan tombol ambil nomor.</p>
+                <p class="kiosk-description">Pilih poli tujuan lalu tekan tombol antrian sesuai sesi kunjungan.</p>
             </div>
 
             <div class="kiosk-card-body">
@@ -612,11 +633,21 @@ $todayLabel = date('d F Y');
                             Jika mengalami kesulitan, hubungi petugas loket.
                         </div>
 
-                        <?= $this->Form->button('Ambil Nomor Sekarang', [
-                            'class' => 'btn-queue',
-                            'id' => 'btn-submit-queue',
-                            'disabled' => $selectedPoly === '',
-                        ]) ?>
+                        <div class="queue-buttons">
+                            <?= $this->Form->button('Antrian Pagi (A)', [
+                                'class' => 'btn-queue',
+                                'name' => 'queue_session',
+                                'value' => 'morning',
+                                'disabled' => $selectedPoly === '',
+                            ]) ?>
+
+                            <?= $this->Form->button('Antrian Sore (B)', [
+                                'class' => 'btn-queue btn-queue-afternoon',
+                                'name' => 'queue_session',
+                                'value' => 'afternoon',
+                                'disabled' => $selectedPoly === '',
+                            ]) ?>
+                        </div>
                     </div>
                 <?= $this->Form->end() ?>
             </div>
@@ -633,6 +664,10 @@ $todayLabel = date('d F Y');
                 <div class="queue-modal-code"><?= h($queueCode) ?></div>
                 <div class="queue-modal-label">Tujuan Poli</div>
                 <div class="queue-modal-poli"><?= h($this->request->getData('poly_name')) ?></div>
+                <?php if (!empty($queueVisitDate)): ?>
+                    <div class="queue-modal-label">Tanggal Kunjungan</div>
+                    <div class="queue-modal-poli"><?= h(date('d-m-Y', strtotime((string)$queueVisitDate))) ?></div>
+                <?php endif; ?>
                 <p class="queue-modal-note">Silakan menunggu panggilan petugas.</p>
                 <button type="button" class="btn-finish" id="btn-finish-queue">Selesai</button>
             </div>
@@ -643,7 +678,7 @@ $todayLabel = date('d F Y');
 <script>
     (function() {
         var selectedPolyInput = document.getElementById('selected-poly');
-        var submitButton = document.getElementById('btn-submit-queue');
+        var submitButtons = document.querySelectorAll('.btn-queue');
         var poliCards = document.querySelectorAll('.poli-card');
         var clock = document.getElementById('kiosk-clock');
         var queueModal = document.querySelector('.queue-modal');
@@ -671,7 +706,13 @@ $todayLabel = date('d F Y');
             card.classList.add('is-active');
             card.setAttribute('aria-pressed', 'true');
             selectedPolyInput.value = card.getAttribute('data-poly-value') || '';
-            submitButton.disabled = selectedPolyInput.value === '';
+            setSubmitButtonsDisabled(selectedPolyInput.value === '');
+        }
+
+        function setSubmitButtonsDisabled(isDisabled) {
+            submitButtons.forEach(function(button) {
+                button.disabled = isDisabled;
+            });
         }
 
         function resetSelection() {
@@ -686,12 +727,12 @@ $todayLabel = date('d F Y');
                 defaultCard.classList.add('is-active');
                 defaultCard.setAttribute('aria-pressed', 'true');
                 selectedPolyInput.value = 'Poli Umum';
-                submitButton.disabled = false;
+                setSubmitButtonsDisabled(false);
                 return;
             }
 
             selectedPolyInput.value = '';
-            submitButton.disabled = true;
+            setSubmitButtonsDisabled(true);
         }
 
         function closeQueueModal() {

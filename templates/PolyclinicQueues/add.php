@@ -6,6 +6,10 @@
 
 $polyclinics = $polyclinicButtonData ?? [];
 $selectedPoly = $this->request->getData('poly_name') ?? 'Poli Umum';
+$todayDate = date('Y-m-d');
+$tomorrowDate = date('Y-m-d', strtotime('+1 day'));
+$selectedVisitDate = $this->request->getData('visit_date') ?? $todayDate;
+$selectedQueueSession = $this->request->getData('queue_session') ?? 'morning';
 ?>
 
 <?= $this->Krs->breadcrumb('Polyclinic Queue', 'Tambah Antrian WA') ?>
@@ -223,8 +227,82 @@ $selectedPoly = $this->request->getData('poly_name') ?? 'Poli Umum';
         font-weight: 800;
     }
 
-    .queue-add-actions {
-        display: flex;
+
+
+    .patient-search-wrapper {
+        position: relative;
+    }
+
+    .patient-search-result {
+        display: none;
+        position: absolute;
+        top: 76px;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        max-height: 260px;
+        overflow-y: auto;
+        border: 1px solid #d9e2ec;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 14px 32px rgba(31, 45, 61, 0.16);
+    }
+
+    .patient-result-item {
+        display: block;
+        width: 100%;
+        padding: 11px 13px;
+        border: 0;
+        border-bottom: 1px solid #edf2f7;
+        background: #fff;
+        color: #172033;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .patient-result-item:hover,
+    .patient-result-item:focus {
+        background: #ecfdf7;
+        outline: none;
+    }
+
+    .patient-result-name {
+        display: block;
+        font-size: 14px;
+        font-weight: 800;
+        line-height: 1.3;
+    }
+
+    .patient-result-meta {
+        display: block;
+        margin-top: 4px;
+        color: #667085;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.35;
+    }
+
+    .patient-selected-info {
+        display: none;
+        margin-top: 8px;
+        padding: 8px 10px;
+        border: 1px solid #bfe4d8;
+        border-radius: 10px;
+        background: #ecfdf7;
+        color: #0f766e;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.35;
+    }
+
+    .patient-empty-result {
+        padding: 11px 13px;
+        color: #667085;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .queue-add-actions {        display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 14px;
@@ -344,15 +422,20 @@ $selectedPoly = $this->request->getData('poly_name') ?? 'Poli Umum';
                     </h3>
 
                     <div class="queue-input-grid">
-                        <div class="queue-field">
+                        <div class="queue-field patient-search-wrapper">
                             <label>Nama Pasien</label>
                             <?= $this->Form->control('patients_name', [
                                 'type' => 'text',
                                 'label' => false,
                                 'class' => 'form-control',
-                                'placeholder' => 'Masukkan nama pasien',
+                                'id' => 'patient-search',
+                                'placeholder' => 'Cari nama / no RM / NIK / no WA',
+                                'autocomplete' => 'off',
                                 'required' => true,
                             ]) ?>
+                            <?= $this->Form->hidden('patient_id', ['id' => 'patient-id']) ?>
+                            <div id="patient-search-result" class="patient-search-result"></div>
+                            <div id="patient-selected-info" class="patient-selected-info"></div>
                         </div>
 
                         <div class="queue-field">
@@ -361,7 +444,39 @@ $selectedPoly = $this->request->getData('poly_name') ?? 'Poli Umum';
                                 'type' => 'text',
                                 'label' => false,
                                 'class' => 'form-control',
+                                'id' => 'patient-phone',
                                 'placeholder' => 'Contoh: 081234567890',
+                                'required' => true,
+                            ]) ?>
+                        </div>
+
+                        <div class="queue-field">
+                            <label>Tanggal Kunjungan</label>
+                            <?= $this->Form->control('visit_date', [
+                                'type' => 'text',
+                                'label' => false,
+                                'class' => 'form-control date-picker filterDate',
+                                'id' => 'visit-date',
+                                'readonly' => true,
+                                'placeholder' => 'Tanggal...',
+                                'value' => $selectedVisitDate,
+                                'required' => true,
+                            ]) ?>
+                            <small class="text-muted">*Tanggal kunjungan hanya hari ini atau besok</small>
+                        </div>
+
+                        <div class="queue-field">
+                            <label>Sesi Antrian</label>
+                            <?= $this->Form->control('queue_session', [
+                                'type' => 'select',
+                                'label' => false,
+                                'class' => 'form-control',
+                                'id' => 'queue-session',
+                                'value' => $selectedQueueSession,
+                                'options' => [
+                                    'morning' => 'Antrian Pagi (A)',
+                                    'afternoon' => 'Antrian Sore (B)',
+                                ],
                                 'required' => true,
                             ]) ?>
                         </div>
@@ -442,6 +557,190 @@ $selectedPoly = $this->request->getData('poly_name') ?? 'Poli Umum';
             card.addEventListener('click', function() {
                 selectPoly(card);
             });
+        });
+    })();
+
+    (function() {
+        var visitDateInput = document.getElementById('visit-date');
+        var todayDate = '<?= h($todayDate) ?>';
+        var tomorrowDate = '<?= h($tomorrowDate) ?>';
+
+        if (!visitDateInput) {
+            return;
+        }
+
+        function normalizeDateInput() {
+            if (visitDateInput.value !== todayDate && visitDateInput.value !== tomorrowDate) {
+                visitDateInput.value = todayDate;
+            }
+        }
+
+        function initVisitDatePicker() {
+            if (!window.jQuery || !jQuery.fn.datepicker) {
+                return false;
+            }
+
+            jQuery(visitDateInput).datepicker('destroy').datepicker({
+                format: 'yyyy-mm-dd',
+                startDate: todayDate,
+                endDate: tomorrowDate,
+                orientation: 'bottom',
+                autoclose: true,
+                todayHighlight: true
+            }).on('changeDate', function() {
+                normalizeDateInput();
+            });
+
+            return true;
+        }
+
+        window.addEventListener('load', function() {
+            if (!initVisitDatePicker()) {
+                setTimeout(initVisitDatePicker, 250);
+            }
+        });
+
+        visitDateInput.addEventListener('change', function() {
+            normalizeDateInput();
+        });
+
+        visitDateInput.addEventListener('click', function() {
+            if (window.jQuery && jQuery.fn.datepicker) {
+                jQuery(visitDateInput).datepicker('show');
+            }
+        });
+    })();
+
+    (function() {
+        var patientInput = document.getElementById('patient-search');
+        var resultBox = document.getElementById('patient-search-result');
+        var phoneInput = document.getElementById('patient-phone');
+        var patientIdInput = document.getElementById('patient-id');
+        var selectedInfo = document.getElementById('patient-selected-info');
+        var searchUrl = '<?= $this->Url->build(['controller' => 'PolyclinicQueues', 'action' => 'searchPatients']) ?>';
+        var typingTimer = null;
+
+        if (!patientInput || !resultBox || !phoneInput || !patientIdInput) {
+            return;
+        }
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function hideResult() {
+            resultBox.style.display = 'none';
+            resultBox.innerHTML = '';
+        }
+
+        function showSelectedInfo(item) {
+            if (!selectedInfo) {
+                return;
+            }
+
+            var code = item.code || '-';
+            var identityNumber = item.identity_number || '-';
+            var phone = item.phone_number || '-';
+
+            selectedInfo.innerHTML = '<i class="fa fa-check-circle"></i> Pasien dipilih | RM: ' +
+                escapeHtml(code) + ' | NIK: ' + escapeHtml(identityNumber) + ' | WA: ' + escapeHtml(phone);
+            selectedInfo.style.display = 'block';
+        }
+
+        function clearSelectedPatient() {
+            patientIdInput.value = '';
+            if (selectedInfo) {
+                selectedInfo.style.display = 'none';
+                selectedInfo.innerHTML = '';
+            }
+        }
+
+        function renderResults(data) {
+            resultBox.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                resultBox.innerHTML = '<div class="patient-empty-result">Pasien tidak ditemukan. Tetap bisa isi manual untuk pasien baru.</div>';
+                resultBox.style.display = 'block';
+                return;
+            }
+
+            data.forEach(function(item) {
+                var button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'patient-result-item';
+                button.innerHTML =
+                    '<span class="patient-result-name">' + escapeHtml(item.full_name || '-') + '</span>' +
+                    '<span class="patient-result-meta">RM: ' + escapeHtml(item.code || '-') +
+                    ' | NIK: ' + escapeHtml(item.identity_number || '-') +
+                    ' | WA: ' + escapeHtml(item.phone_number || '-') + '</span>';
+
+                button.addEventListener('click', function() {
+                    patientInput.value = item.full_name || '';
+                    phoneInput.value = item.phone_number || '';
+                    patientIdInput.value = item.id || '';
+                    showSelectedInfo(item);
+                    hideResult();
+                });
+
+                resultBox.appendChild(button);
+            });
+
+            resultBox.style.display = 'block';
+        }
+
+        patientInput.addEventListener('input', function() {
+            var keyword = patientInput.value.trim();
+            clearSelectedPatient();
+            clearTimeout(typingTimer);
+
+            if (keyword.length < 2) {
+                hideResult();
+                return;
+            }
+
+            typingTimer = setTimeout(function() {
+                fetch(searchUrl + '?q=' + encodeURIComponent(keyword), {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                    .then(function(response) {
+                        return response.json().then(function(payload) {
+                            if (!response.ok) {
+                                throw new Error(payload.message || 'Gagal mencari data pasien.');
+                            }
+
+                            return payload;
+                        });
+                    })
+                    .then(function(data) {
+                        if (data && data.patients) {
+                            data = data.patients;
+                        }
+
+                        if (!Array.isArray(data)) {
+                            throw new Error('Format data pasien tidak sesuai.');
+                        }
+
+                        renderResults(data);
+                    })
+                    .catch(function(error) {
+                        resultBox.innerHTML = '<div class="patient-empty-result">' + escapeHtml(error.message || 'Gagal mencari data pasien.') + '</div>';
+                        resultBox.style.display = 'block';
+                    });
+            }, 300);
+        });
+
+        document.addEventListener('click', function(event) {
+            if (!resultBox.contains(event.target) && event.target !== patientInput) {
+                hideResult();
+            }
         });
     })();
 </script>

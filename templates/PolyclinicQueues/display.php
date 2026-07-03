@@ -9,6 +9,7 @@
  * @var int $onsiteTotal
  * @var int $onlineWaiting
  * @var int $onsiteWaiting
+ * @var array|\Cake\Collection\CollectionInterface $waitingQueueList
  * @var string $todayLabel
  */
 
@@ -163,11 +164,28 @@ $currentStatus = $calledQueue ? 'Sedang dipanggil' : 'Belum ada panggilan';
 
     .display-center {
         display: flex;
-        align-items: flex-start;
+        align-items: stretch;
         justify-content: center;
         flex: 1 1 auto;
         min-height: 0;
         padding: 8px 0;
+    }
+
+    .display-layout {
+        display: grid;
+        grid-template-columns: minmax(560px, 1fr) 410px;
+        gap: 20px;
+        width: 100%;
+        min-height: 0;
+        align-items: stretch;
+    }
+
+    .display-left {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 0;
+        min-height: 0;
     }
 
     .queue-board {
@@ -336,6 +354,149 @@ $currentStatus = $calledQueue ? 'Sedang dipanggil' : 'Belum ada panggilan';
         font-weight: 900;
     }
 
+    .queue-list-panel {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+        border: 1px solid rgba(214, 226, 236, 0.94);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 10px 24px rgba(31, 45, 61, 0.10);
+    }
+
+    .queue-list-header {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 14px 16px;
+        border-bottom: 1px solid #e5edf4;
+        background: linear-gradient(90deg, #f8fbff, #ecfdf7);
+    }
+
+    .queue-list-title {
+        margin: 0;
+        color: #112136;
+        font-size: 18px;
+        font-weight: 900;
+        line-height: 1.1;
+    }
+
+    .queue-list-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 34px;
+        height: 34px;
+        padding: 0 10px;
+        border-radius: 999px;
+        background: #0f766e;
+        color: #fff;
+        font-size: 15px;
+        font-weight: 900;
+    }
+
+    .queue-list-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 10px;
+    }
+
+    .queue-list-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 8px;
+    }
+
+    .queue-list-table th {
+        padding: 0 8px 4px;
+        color: #667085;
+        font-size: 11px;
+        font-weight: 900;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .queue-list-table td {
+        padding: 10px 8px;
+        background: #f8fbfd;
+        border-top: 1px solid #e5edf4;
+        border-bottom: 1px solid #e5edf4;
+        color: #172033;
+        font-size: 13px;
+        font-weight: 800;
+        vertical-align: middle;
+    }
+
+    .queue-list-table td:first-child {
+        border-left: 1px solid #e5edf4;
+        border-radius: 12px 0 0 12px;
+    }
+
+    .queue-list-table td:last-child {
+        border-right: 1px solid #e5edf4;
+        border-radius: 0 12px 12px 0;
+    }
+
+    .queue-list-code {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 54px;
+        padding: 7px 8px;
+        border-radius: 10px;
+        background: #1d4ed8;
+        color: #fff;
+        font-size: 16px;
+        font-weight: 900;
+        line-height: 1;
+    }
+
+    .queue-list-patient {
+        display: block;
+        max-width: 150px;
+        overflow: hidden;
+        color: #112136;
+        font-weight: 900;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .queue-list-poly {
+        display: block;
+        max-width: 140px;
+        overflow: hidden;
+        color: #667085;
+        font-size: 12px;
+        font-weight: 800;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .queue-list-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 8px;
+        border-radius: 999px;
+        background: #ecfdf7;
+        color: #0f766e;
+        font-size: 11px;
+        font-weight: 900;
+        white-space: nowrap;
+    }
+
+    .queue-list-empty {
+        padding: 28px 14px;
+        color: #667085;
+        font-size: 14px;
+        font-weight: 900;
+        text-align: center;
+    }
+
     .display-help {
         flex: 0 0 auto;
         padding-top: 4px;
@@ -370,6 +531,18 @@ $currentStatus = $calledQueue ? 'Sedang dipanggil' : 'Belum ada panggilan';
 
         .time-panel {
             min-width: 180px;
+        }
+
+        .display-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .display-left {
+            align-items: stretch;
+        }
+
+        .queue-list-panel {
+            min-height: 360px;
         }
 
         .queue-board {
@@ -410,50 +583,98 @@ $currentStatus = $calledQueue ? 'Sedang dipanggil' : 'Belum ada panggilan';
     </div>
 
     <main class="display-center">
-        <div class="queue-board">
-            <section class="display-card summary-card online">
-                <div class="card-icon">
-                    <i class="fa fa-mobile"></i>
-                </div>
-                <div class="card-kicker">Online</div>
-                <h2 class="card-title">Mobile JKN</h2>
-                <div class="total-number" id="online-total"><?= h($onlineTotal ?? 0) ?></div>
-                <div class="total-label">Total antrian hari ini</div>
-                <div class="mini-info">
-                    <i class="fa fa-clock-o"></i>
-                    Menunggu: <span id="online-waiting"><?= h($onlineWaiting ?? 0) ?></span>
-                </div>
-            </section>
+        <div class="display-layout">
+            <div class="display-left">
+                <div class="queue-board">
+                    <section class="display-card summary-card online">
+                        <div class="card-icon">
+                            <i class="fa fa-mobile"></i>
+                        </div>
+                        <div class="card-kicker">Online</div>
+                        <h2 class="card-title">Mobile JKN</h2>
+                        <div class="total-number" id="online-total"><?= h($onlineTotal ?? 0) ?></div>
+                        <div class="total-label">Total antrian hari ini</div>
+                        <div class="mini-info">
+                            <i class="fa fa-clock-o"></i>
+                            Menunggu: <span id="online-waiting"><?= h($onlineWaiting ?? 0) ?></span>
+                        </div>
+                    </section>
 
-            <section class="display-card current-card">
-                <div class="card-icon">
-                    <i class="fa fa-volume-up"></i>
-                </div>
-                <div class="card-kicker">Antrian Saat Ini</div>
-                <h2 class="card-title">Sedang Dipanggil</h2>
-                <div class="current-status<?= $calledQueue ? '' : ' empty' ?>" id="current-status">
-                    <?= h($currentStatus) ?>
-                </div>
-                <div class="current-number" id="current-code"><?= h($queueCode($calledQueue)) ?></div>
-                <div class="current-poly" id="current-poly"><?= h($queuePoly($calledQueue)) ?></div>
-                <div class="current-source">
-                    Sumber: <span id="current-source"><?= h($queueSource($calledQueue)) ?></span>
-                </div>
-            </section>
+                    <section class="display-card current-card">
+                        <div class="card-icon">
+                            <i class="fa fa-volume-up"></i>
+                        </div>
+                        <div class="card-kicker">Antrian Saat Ini</div>
+                        <h2 class="card-title">Sedang Dipanggil</h2>
+                        <div class="current-status<?= $calledQueue ? '' : ' empty' ?>" id="current-status">
+                            <?= h($currentStatus) ?>
+                        </div>
+                        <div class="current-number" id="current-code"><?= h($queueCode($calledQueue)) ?></div>
+                        <div class="current-source">
+                        </div>
+                    </section>
 
-            <section class="display-card summary-card onsite">
-                <div class="card-icon">
-                    <i class="fa fa-desktop"></i>
+                    <section class="display-card summary-card onsite">
+                        <div class="card-icon">
+                            <i class="fa fa-desktop"></i>
+                        </div>
+                        <div class="card-kicker">Onsite</div>
+                        <h2 class="card-title">Loket Rumah Sakit</h2>
+                        <div class="total-number" id="onsite-total"><?= h($onsiteTotal ?? 0) ?></div>
+                        <div class="total-label">Total antrian hari ini</div>
+                        <div class="mini-info">
+                            <i class="fa fa-clock-o"></i>
+                            Menunggu: <span id="onsite-waiting"><?= h($onsiteWaiting ?? 0) ?></span>
+                        </div>
+                    </section>
                 </div>
-                <div class="card-kicker">Onsite</div>
-                <h2 class="card-title">Loket Rumah Sakit</h2>
-                <div class="total-number" id="onsite-total"><?= h($onsiteTotal ?? 0) ?></div>
-                <div class="total-label">Total antrian hari ini</div>
-                <div class="mini-info">
-                    <i class="fa fa-clock-o"></i>
-                    Menunggu: <span id="onsite-waiting"><?= h($onsiteWaiting ?? 0) ?></span>
+            </div>
+
+            <aside class="queue-list-panel">
+                <div class="queue-list-header">
+                    <h2 class="queue-list-title">Daftar Nomor Antrian</h2>
+                    <div class="queue-list-badge" id="waiting-list-count"><?= h(!empty($waitingQueueList) ? count($waitingQueueList) : 0) ?></div>
                 </div>
-            </section>
+
+                <div class="queue-list-body">
+                    <table class="queue-list-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Pasien / Poli</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="waiting-queue-table-body">
+                            <?php if (!empty($waitingQueueList)): ?>
+                                <?php foreach ($waitingQueueList as $queueItem): ?>
+                                    <tr>
+                                        <td>
+                                            <span class="queue-list-code"><?= h($queueItem->code ?: '-') ?></span>
+                                        </td>
+                                        <td>
+                                            <span class="queue-list-patient"><?= h($queueItem->patients_name ?: '-') ?></span>
+                                            <span class="queue-list-poly"><?= h($queueItem->poly_name ?: '-') ?></span>
+                                        </td>
+                                        <td>
+                                            <span class="queue-list-status">
+                                                <i class="fa fa-clock-o"></i>
+                                                <?= h($queueItem->call_status ?: 'Menunggu') ?>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="3">
+                                        <div class="queue-list-empty">Tidak ada antrian belum registrasi</div>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </aside>
         </div>
     </main>
 </div>
@@ -484,6 +705,54 @@ $currentStatus = $calledQueue ? 'Sedang dipanggil' : 'Belum ada panggilan';
             }
         }
 
+        function escapeHtml(value) {
+            return String(value === null || value === undefined ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function renderWaitingQueueList(items) {
+            var tbody = document.getElementById('waiting-queue-table-body');
+            var count = document.getElementById('waiting-list-count');
+
+            if (!tbody) {
+                return;
+            }
+
+            items = Array.isArray(items) ? items : [];
+
+            if (count) {
+                count.textContent = items.length;
+            }
+
+            if (!items.length) {
+                tbody.innerHTML = '<tr><td colspan="3"><div class="queue-list-empty">Tidak ada antrian belum registrasi</div></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = items.map(function(item) {
+                var code = escapeHtml(item.code || '-');
+                var patient = escapeHtml(item.patients_name || '-');
+                var poly = escapeHtml(item.poly_name || '-');
+                var status = escapeHtml(item.call_status || 'Menunggu');
+
+                return '' +
+                    '<tr>' +
+                        '<td><span class="queue-list-code">' + code + '</span></td>' +
+                        '<td>' +
+                            '<span class="queue-list-patient">' + patient + '</span>' +
+                            '<span class="queue-list-poly">' + poly + '</span>' +
+                        '</td>' +
+                        '<td>' +
+                            '<span class="queue-list-status"><i class="fa fa-clock-o"></i> ' + status + '</span>' +
+                        '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
         function updateQueueData() {
             fetch(window.location.pathname + '?ajax=1', {
                 cache: 'no-store',
@@ -510,6 +779,8 @@ $currentStatus = $calledQueue ? 'Sedang dipanggil' : 'Belum ada panggilan';
                     if (status) {
                         status.classList.toggle('empty', !data.hasCurrent);
                     }
+
+                    renderWaitingQueueList(data.waitingQueueList || []);
                 })
                 .catch(function() {
                     // Display tetap dibiarkan apa adanya kalau jaringan/data sedang belum siap.
