@@ -59,8 +59,11 @@ $rooms = (isset($checkUrl['rooms'])) ? $checkUrl['rooms'] : array();
 $beds = (isset($checkUrl['beds'])) ? $checkUrl['beds'] : array();
 $polyclinicQueue = (isset($checkUrl['polyclinicqueues'])) ? $checkUrl['polyclinicqueues'] : array();
 $registration = (isset($checkUrl['registrations'])) ? $checkUrl['registrations'] : array();
+$patientAdmission = (isset($checkUrl['patientadmissions'])) ? $checkUrl['patientadmissions'] : array();
 $outpatientVisit = (isset($checkUrl['outpatientvisits'])) ? $checkUrl['outpatientvisits'] : array();
+$emergencyEntry = (isset($checkUrl['emergencyentries'])) ? $checkUrl['emergencyentries'] : array();
 $inpatientEntry = (isset($checkUrl['inpatiententries'])) ? $checkUrl['inpatiententries'] : array();
+$medicalRecord = (isset($checkUrl['medicalrecords'])) ? $checkUrl['medicalrecords'] : array();
 $service = (isset($checkUrl['services'])) ? $checkUrl['services'] : array();
 $laboratoryService = (isset($checkUrl['laboratoryservices'])) ? $checkUrl['laboratoryservices'] : array();
 $icd_service = (isset($checkUrl['icd_services'])) ? $checkUrl['icd_services'] : array();
@@ -448,10 +451,12 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 					</li>
 				<?php
 				}
-				if (!empty($polyclinicQueue['index']) || !empty($registration['index'])) {
+				if (!empty($polyclinicQueue['index']) || !empty($registration['index']) || !empty($patientAdmission['index'])) {
 
-					$menuPolyclinicQueue = ($getController == 'polyclinicqueues') ? 'active' : '';
+					$menuPolyclinicQueue = ($getController == 'polyclinicqueues' || $getController == 'registrations' || $getController == 'patientadmissions') ? 'active' : '';
 					$menuPolyclinicQueueIndex = ($getController == 'polyclinicqueues') ? ' class="active"' : '';
+					$menuRegistrationIndex = ($getController == 'registrations') ? ' class="active"' : '';
+					$menuPatientAdmissionIndex = ($getController == 'patientadmissions') ? ' class="active"' : '';
 				?>
 					<li class="has-sub <?= $menuPolyclinicQueue ?>">
 						<a href="javascript:;">
@@ -490,7 +495,7 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 								) ?>
 							</li>
 
-							<li>
+							<li <?= $menuRegistrationIndex ?>>
 								<?= $this->Html->link(
 									'Registration',
 									[
@@ -504,15 +509,37 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 								) ?>
 							</li>
 
+							<?php
+							if (!empty($patientAdmission['index'])) {
+							?>
+								<li <?= $menuPatientAdmissionIndex ?>>
+									<?= $this->Html->link(
+										'Pendaftaran Pasien',
+										[
+											'controller' => 'PatientAdmissions',
+											'action' => 'index'
+										],
+										[
+											'fullBase' => true,
+											'escape' => false
+										]
+									) ?>
+								</li>
+							<?php
+							}
+							?>
+
 						</ul>
 					</li>
 				<?php
 				}
 
-				if (!empty($outpatientVisit['index'])) {
+				if (!empty($outpatientVisit['index']) || !empty($outpatientBilling['index']) || !empty($medicalRecord['index'])) {
 
-					$menuOutpatientVisit = ($getController == 'outpatientvisits') ? 'active' : '';
+					$menuOutpatientVisit = ($getController == 'outpatientvisits' || $getController == 'outpatientbillings' || $getController == 'medicalrecords') ? 'active' : '';
 					$menuOutpatientVisitIndex = ($getController == 'outpatientvisits') ? ' class="active"' : '';
+					$menuOutpatientBillingIndex = ($getController == 'outpatientbillings') ? ' class="active"' : '';
+					$menuMedicalRecordIndex = ($getController == 'medicalrecords') ? ' class="active"' : '';
 				?>
 					<li class="has-sub <?= $menuOutpatientVisit ?>">
 						<a href="javascript:;">
@@ -527,6 +554,75 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 									'Kunjungan Rawat Jalan',
 									[
 										'controller' => 'OutpatientVisits',
+										'action' => 'index'
+									],
+									[
+										'fullBase' => true,
+										'escape' => false
+									]
+								) ?>
+							</li>
+
+							<?php
+							if (!empty($outpatientBilling['index'])) {
+							?>
+								<li <?= $menuOutpatientBillingIndex ?>>
+									<?= $this->Html->link(
+										'Kasir Rawat Jalan',
+										[
+											'controller' => 'OutpatientBillings',
+											'action' => 'index'
+										],
+										[
+											'fullBase' => true,
+											'escape' => false
+										]
+									) ?>
+								</li>
+							<?php
+							}
+
+							if (!empty($medicalRecord['index'])) {
+							?>
+								<li <?= $menuMedicalRecordIndex ?>>
+									<?= $this->Html->link(
+										'Rekam Medis',
+										[
+											'controller' => 'MedicalRecords',
+											'action' => 'index'
+										],
+										[
+											'fullBase' => true,
+											'escape' => false
+										]
+									) ?>
+								</li>
+							<?php
+							}
+							?>
+						</ul>
+					</li>
+				<?php
+				}
+
+				if (!empty($emergencyEntry['index'])) {
+
+					$menuEmergencyEntry = ($getController == 'emergencyentries') ? 'active' : '';
+					$menuEmergencyEntryIndex = ($getController == 'emergencyentries') ? ' class="active"' : '';
+				?>
+					<li class="has-sub <?= $menuEmergencyEntry ?>">
+						<a href="javascript:;">
+							<b class="caret pull-right"></b>
+							<i class="fa fa-ambulance"></i>
+							<span>Rawat IGD</span>
+						</a>
+
+						<ul class="sub-menu">
+							<li <?= $menuEmergencyEntryIndex ?>>
+								<?= $this->Html->link(
+									'Instansi Rawat IGD',
+									[
+										'controller' => 'EmergencyEntries',
 										'action' => 'index'
 									],
 									[

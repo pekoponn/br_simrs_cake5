@@ -130,6 +130,10 @@ class AppController extends Controller
               || !empty($checkUrl['polyclinicqueues']['index'])
             );
 
+          $canAccessRegistrationSummary = $getController === 'registrations'
+            && $getAction === 'getSummary'
+            && !empty($resultCheck['index']);
+
           $bedHelperActions = [
             'monitoring',
             'view',
@@ -200,6 +204,39 @@ class AppController extends Controller
             && in_array($getAction, $outpatientVisitCpptActions, true)
             && !empty($resultCheck['cppt']);
 
+          $outpatientVisitEmrHelperActions = [
+            'searchIcd10',
+            'searchIcd9',
+            'hasilPemeriksaan',
+          ];
+
+          $canAccessOutpatientVisitEmrHelper = $getController === 'outpatientvisits'
+            && in_array($getAction, $outpatientVisitEmrHelperActions, true)
+            && !empty($resultCheck['emr']);
+
+          $medicalRecordHelperActions = [
+            'searchPatients',
+          ];
+
+          $canAccessMedicalRecordHelper = $getController === 'medicalrecords'
+            && in_array($getAction, $medicalRecordHelperActions, true)
+            && (
+              !empty($resultCheck['index'])
+              || !empty($resultCheck['history'])
+            );
+
+          $patientHistoryHelperActions = [
+            'searchPatients',
+          ];
+
+          $canAccessPatientHistoryHelper = $getController === 'patienthistories'
+            && in_array($getAction, $patientHistoryHelperActions, true)
+            && (
+              !empty($resultCheck['index'])
+              || !empty($resultCheck['periksa'])
+              || !empty($resultCheck['history'])
+            );
+
           $masterDataControllers = [
             'mastericd9',
             'mastericd10',
@@ -217,8 +254,12 @@ class AppController extends Controller
           $orderFormHelperActions = [
             'cariPasien',
             'cariObat',
-            'searchLaboratoryActions',
-            'searchRadiologyActions',
+            'cariLaboratorium',
+            'cariRadiologi',
+            'cariPenunjang',
+            'cariNutritionCombine',
+            'cariJenisMcu',
+            'cariJenisOperasi',
             'historyPasien',
             'historyOrderDetail',
           ];
@@ -250,12 +291,16 @@ class AppController extends Controller
           $hasDirectAccess = !empty($resultCheck[$getAction]);
           $hasRelatedAccess = $canAccessRegistrationHelper
             || $canAccessRegistrationView
+            || $canAccessRegistrationSummary
             || $canAccessBedHelper
             || $canAccessPolyclinicQueueHelper
             || $canAccessPolyclinicQueueEntry
             || $canAccessDoctorHelper
             || $canAccessOutpatientVisitHelper
             || $canAccessOutpatientVisitCppt
+            || $canAccessOutpatientVisitEmrHelper
+            || $canAccessMedicalRecordHelper
+            || $canAccessPatientHistoryHelper
             || $canAccessMasterDataView
             || $canAccessEmrMasterSearch
             || $canAccessOrderForm
@@ -268,16 +313,23 @@ class AppController extends Controller
               'mastericd9' => ['search', 'toggleActive'],
               'mastericd10' => ['search', 'toggleActive'],
               'mastertindakan' => ['search', 'searchDebug', 'toggleActive'],
+              'medicalrecords' => ['searchPatients'],
               'orders' => [
                 'cariPasien',
                 'cariObat',
-                'searchLaboratoryActions',
-                'searchRadiologyActions',
+                'cariLaboratorium',
+                'cariRadiologi',
+                'cariPenunjang',
+                'cariNutritionCombine',
+                'cariJenisMcu',
+                'cariJenisOperasi',
                 'historyPasien',
                 'historyOrderDetail',
               ],
-              'outpatientvisits' => ['getSummary', 'liveData', 'addCppt', 'deleteCppt', 'panggil'],
+              'outpatientvisits' => ['getSummary', 'liveData', 'addCppt', 'deleteCppt', 'panggil', 'searchIcd10', 'searchIcd9', 'hasilPemeriksaan'],
+              'patienthistories' => ['searchPatients'],
               'polyclinicqueues' => ['searchPoly', 'searchPolyQueue', 'callQueue', 'createReferralQueue', 'searchPatients'],
+              'registrations' => ['getSummary', 'searchPatients', 'getKabupatens', 'getKecamatans', 'getKelurahans', 'getBedClass', 'getAvailableBeds', 'getDoctorSchedules'],
             ];
             $expectsJson = $this->request->is('ajax')
               || in_array($getAction, $jsonEndpointActions[$getController] ?? [], true);

@@ -1,387 +1,314 @@
 <?php
-
 /**
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Patient[]|\Cake\Collection\CollectionInterface $patients
+ * @var string|null $key
+ * @var string|null $gender
+ * @var string|null $isActive
  */
 
-$pages = (empty($this->request->getQuery('page'))) ? '' : $this->request->getQuery('page');
-$canViewPatients = !empty($checkUrl['patients']['view']);
-$canViewPatientHistory = !empty($checkUrl['medicalrecords']['history']);
+// Helper hitung umur dari tanggal lahir
+function hitungUmur($birthDate) {
+    if (empty($birthDate)) return '—';
+    try {
+        if ($birthDate instanceof \Cake\I18n\FrozenDate || $birthDate instanceof \Cake\I18n\Date) {
+            $birth = new \DateTime($birthDate->format('Y-m-d'));
+        } else {
+            $birth = new \DateTime((string)$birthDate);
+        }
+        $now  = new \DateTime();
+        $diff = $now->diff($birth);
+        return $diff->y . ' th';
+    } catch (\Exception $e) {
+        return '—';
+    }
+}
 ?>
 
-<?= $this->Krs->breadcrumb('Master', 'Patient', 'Tampilkan') ?>
+<?= $this->Krs->breadcrumb('Pasien', 'Tampilkan') ?>
 
 <div class="panel panel-inverse">
 
     <div class="panel-heading">
-
         <h4 class="panel-title">
-            Perincian
+            <i class="fa fa-users"></i> Data Pasien
         </h4>
-
         <div class="panel-heading-btn">
-            <a href="javascript:;"
-                class="btn btn-xs btn-icon btn-circle btn-default"
-                data-click="panel-expand">
+            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default"
+               data-click="panel-expand">
                 <i class="fa fa-expand"></i>
             </a>
         </div>
-
     </div>
 
     <div class="panel-body">
 
-        <div class="alert alert-primary">
-            Halaman <strong>Patient</strong>, digunakan untuk data master pasien rumah sakit.
-        </div>
+        <!-- ── TOOLBAR ──────────────────────────────────────────────────── -->
+        <div class="row m-b-10 align-items-end">
 
-        <div class="portlet-body form">
+            <!-- Kiri: Tambah + Filter Gender + Filter Active -->
+            <div class="col-md-6" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
 
-            <div class="table-toolbar">
+                <?= $this->Html->link(
+                    '<i class="fa fa-plus"></i> Tambah',
+                    ['action' => 'add'],
+                    ['class' => 'btn btn-inverse btn-sm', 'escape' => false]
+                ) ?>
 
-                <div class="btn-group">
+                <!-- Filter Gender -->
+                <div class="btn-group btn-group-sm">
+                    <?php
+                    $genderFilters = [
+                        ''       => ['label' => 'Semua',      'class' => 'btn-default'],
+                        'Male'   => ['label' => '♂ Laki-laki', 'class' => 'btn-primary'],
+                        'Female' => ['label' => '♀ Perempuan', 'class' => 'btn-pink'],
+                    ];
+                    foreach ($genderFilters as $val => $opt):
+                        $active = ((string)($gender ?? '') === $val) ? 'active' : '';
+                    ?>
+                        <a href="<?= $this->Url->build(['action' => 'index', '?' => [
+                            'gender'    => $val,
+                            'key'       => $this->request->getQuery('key'),
+                            'is_active' => $this->request->getQuery('is_active'),
+                        ]]) ?>" class="btn <?= $opt['class'] ?> <?= $active ?>">
+                            <?= $opt['label'] ?>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
 
-                    <div class="portlet-body">
-
-                        <?= $this->Html->link(
-                            '<i class="fa fa-plus"></i>',
-                            ['action' => 'add', $pages],
-                            [
-                                'class' => 'btn btn-inverse',
-                                'data-toggle' => 'tooltip',
-                                'data-placement' => 'top',
-                                'data-original-title' => 'Add',
-                                'escape' => false,
-                                'fullBase' => true
-                            ]
-                        ) ?>
-
-                    </div>
-
+                <!-- Filter Active -->
+                <div class="btn-group btn-group-sm">
+                    <?php
+                    $activeFilters = [
+                        ''  => ['label' => 'Semua',      'class' => 'btn-default'],
+                        'Y' => ['label' => '✔ Aktif',     'class' => 'btn-success'],
+                        'N' => ['label' => '✖ Non Aktif', 'class' => 'btn-danger'],
+                    ];
+                    foreach ($activeFilters as $val => $opt):
+                        $active = ((string)($isActive ?? '') === $val) ? 'active' : '';
+                    ?>
+                        <a href="<?= $this->Url->build(['action' => 'index', '?' => [
+                            'is_active' => $val,
+                            'key'       => $this->request->getQuery('key'),
+                            'gender'    => $this->request->getQuery('gender'),
+                        ]]) ?>" class="btn <?= $opt['class'] ?> <?= $active ?>">
+                            <?= $opt['label'] ?>
+                        </a>
+                    <?php endforeach; ?>
                 </div>
 
             </div>
 
-            <br>
-
-            <?= $this->Form->create(null, ['type' => 'get']) ?>
-
-            <div class="panel-footer bg-aqua text-white p-t-10">
-
-                <div class="row row-space-10">
-
-                    <div class="col-md-2 m-b-10">
-
-                        <?= $this->Form->text(
-                            'filterCode',
-                            [
-                                'label' => false,
-                                'class' => 'form-control',
-                                'placeholder' => 'No RM / Kode...',
-                                'value' => $filterCode ?? $this->request->getQuery('filterCode')
-                            ]
-                        ); ?>
-
-                    </div>
-
-                    <div class="col-md-3 m-b-10">
-
-                        <?= $this->Form->text(
-                            'filterName',
-                            [
-                                'label' => false,
-                                'class' => 'form-control',
-                                'placeholder' => 'Nama Pasien...',
-                                'value' => $filterName ?? $this->request->getQuery('filterName')
-                            ]
-                        ); ?>
-
-                    </div>
-
-                    <div class="col-md-2 m-b-10">
-
-                        <?= $this->Form->text(
-                            'filterIdentity',
-                            [
-                                'label' => false,
-                                'class' => 'form-control',
-                                'placeholder' => 'No Identitas...',
-                                'value' => $filterIdentity ?? $this->request->getQuery('filterIdentity')
-                            ]
-                        ); ?>
-
-                    </div>
-
-                    <div class="col-md-2 m-b-10">
-
-                        <?= $this->Form->text(
-                            'filterPhone',
-                            [
-                                'label' => false,
-                                'class' => 'form-control',
-                                'placeholder' => 'Telepon...',
-                                'value' => $filterPhone ?? $this->request->getQuery('filterPhone')
-                            ]
-                        ); ?>
-
-                    </div>
-
-                    <div class="col-md-2 m-b-10">
-
-                        <?= $this->Form->select(
-                            'filterStatus',
-                            [
-                                'Y' => 'Aktif',
-                                'N' => 'Tidak Aktif',
-                            ],
-                            [
-                                'empty' => 'Semua Status',
-                                'class' => 'form-control',
-                                'value' => $filterStatus ?? $this->request->getQuery('filterStatus')
-                            ]
-                        ); ?>
-
-                    </div>
-
-                    <div class="col-md-1">
-
-                        <?= $this->Krs->btnSeach(); ?>
-
-                    </div>
-
-                    <div class="col-md-1">
-
-                        <?= $this->Html->link(
-                            '<i class="fa fa-undo"></i>',
-                            ['action' => 'index'],
-                            [
-                                'class' => 'btn btn-default',
-                                'escape' => false,
-                                'data-toggle' => 'tooltip',
-                                'data-placement' => 'top',
-                                'data-original-title' => 'Reset Filter'
-                            ]
-                        ) ?>
-
-                    </div>
-
+            <!-- Kanan: Search -->
+            <div class="col-md-6">
+                <?= $this->Form->create(null, ['type' => 'get']) ?>
+                <div class="input-group pull-right" style="max-width:400px; width:100%;">
+                    <input type="text" name="key" class="form-control"
+                           placeholder="Cari kode pasien / nama / NIK / telepon..."
+                           value="<?= h($this->request->getQuery('key')) ?>">
+                    <span class="input-group-btn">
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        <a href="<?= $this->Url->build(['action' => 'index']) ?>"
+                           class="btn btn-default" title="Reset filter">
+                            <i class="fa fa-rotate-left"></i>
+                        </a>
+                    </span>
                 </div>
-
+                <?= $this->Form->end() ?>
             </div>
-
-            <?= $this->Form->end() ?>
-
-            <div class="table-responsive">
-
-                <table class="table table-striped table-hover table-td-valign-middle">
-
-                    <thead class="thead-dark text-center">
-
-                        <tr>
-
-                            <th width="105">
-                                Kode Pasien
-                            </th>
-
-                            <th width="120">
-                                No RM
-                            </th>
-
-                            <th>
-                                Nama Pasien
-                            </th>
-
-                            <th width="120">
-                                Identitas
-                            </th>
-
-                            <th width="150">
-                                No Identitas
-                            </th>
-
-                            <th width="80">
-                                Gender
-                            </th>
-
-                            <th width="80">
-                                Gol. Darah
-                            </th>
-
-                            <th width="120">
-                                Tgl Lahir
-                            </th>
-
-                            <th width="150">
-                                Phone
-                            </th>
-
-                            <th width="120">
-                                Agama
-                            </th>
-
-                            <th width="120">
-                                Status
-                            </th>
-
-                            <th width="220" class="actions">
-                                &nbsp;
-                            </th>
-
-                        </tr>
-
-                    </thead>
-
-                    <tbody>
-
-                        <?php
-                        if (count($patients) > 0) {
-
-                            foreach ($patients as $rowData) {
-
-                                $statusHiddenActive = ($rowData->is_active == 'Y') ? "" : ' style="display:none;"';
-                                $statusHiddenInactive = ($rowData->is_active == 'N') ? "" : ' style="display:none;"';
-
-                                $btnActive = "<div id='statusSpin" . $rowData->id . "'></div>";
-
-                                $btnActive .= "<div id='statusActive" . $rowData->id . "'" . $statusHiddenActive . ">" .
-                                    $this->Html->link(
-                                        '<i class="fa fa-check"></i>',
-                                        'javascript:;',
-                                        [
-                                            "escape" => false,
-                                            "class" => "btn btn-lime btn-icon btn-circle btn-sm"
-                                        ]
-                                    ) .
-                                    "</div>";
-
-                                $btnActive .= "<div id='statusInactive" . $rowData->id . "'" . $statusHiddenInactive . ">" .
-                                    $this->Html->link(
-                                        '<i class="fa fa-times"></i>',
-                                        'javascript:;',
-                                        [
-                                            "escape" => false,
-                                            "class" => "btn btn-danger btn-icon btn-circle btn-sm"
-                                        ]
-                                    ) .
-                                    "</div>";
-
-                                if ($rowData->is_active == 'Y') {
-
-                                    $classCondition = "";
-                                } else {
-
-                                    $classCondition = 'class="table-warning"';
-                                }
-
-                                $linkEdit = ['action' => 'edit', $rowData->id];
-                                $linkView = ['action' => 'view', $rowData->id];
-                                $linkDelete = ['action' => 'delete', $rowData->id];
-                                $linkHistory = ['controller' => 'MedicalRecords', 'action' => 'history', $rowData->id];
-                        ?>
-
-                                <tr <?= $classCondition ?>>
-
-                                    <td align="center">
-                                        <b><?= h($rowData->code) ?></b>
-                                    </td>
-
-                                    <td align="center">
-                                        <b><?= h($rowData->medical_record_no ?? $rowData->code ?? '-') ?></b>
-                                    </td>
-
-                                    <td>
-                                        <?= h($rowData->full_name) ?>
-                                    </td>
-
-                                    <td align="center">
-                                        <?= h($rowData->identity_type) ?>
-                                    </td>
-
-                                    <td>
-                                        <?= h($rowData->identity_number) ?>
-                                    </td>
-
-                                    <td align="center">
-                                        <?= h($rowData->gender) ?>
-                                    </td>
-
-                                    <td align="center">
-                                        <?= h($rowData->blood_type) ?>
-                                    </td>
-
-                                    <td align="center">
-                                        <?= !empty($rowData->birth_date) ? $rowData->birth_date->format('Y-m-d') : '-' ?>
-                                    </td>
-
-                                    <td>
-                                        <?= h($rowData->phone_number) ?>
-                                    </td>
-
-                                    <td align="center">
-                                        <?= h($rowData->religion) ?>
-                                    </td>
-
-                                    <td align="center">
-                                        <?= $btnActive ?>
-                                    </td>
-
-                                    <td class="actions text-center" style="white-space: nowrap;">
-
-                                        <?php if ($canViewPatients): ?>
-                                            <?= $this->Html->link(
-                                                '<i class="fa fa-eye"></i>',
-                                                $linkView,
-                                                [
-                                                    'class' => 'btn btn-yellow btn-sm m-r-5 p-l-15 p-r-15',
-                                                    'escape' => false,
-                                                    'data-toggle' => 'tooltip',
-                                                    'data-placement' => 'top',
-                                                    'data-original-title' => 'Lihat'
-                                                ]
-                                            ) ?>
-                                        <?php endif; ?>
-
-                                        <?= $this->Krs->btn('edit', $linkEdit) ?>
-
-                                        <?php if ($canViewPatientHistory): ?>
-                                            <?= $this->Html->link(
-                                                '<i class="fa fa-history"></i>',
-                                                $linkHistory,
-                                                [
-                                                    'class' => 'btn btn-primary btn-sm m-r-5 p-l-15 p-r-15',
-                                                    'escape' => false,
-                                                    'data-toggle' => 'tooltip',
-                                                    'data-placement' => 'top',
-                                                    'data-original-title' => 'Riwayat Pasien'
-                                                ]
-                                            ) ?>
-                                        <?php endif; ?>
-
-                                        <?= $this->Krs->btn('delete', $linkDelete, $rowData->full_name) ?>
-
-                                    </td>
-
-                                </tr>
-
-                        <?php
-                            }
-                        } else {
-
-                            echo $this->Krs->dataNull();
-                        }
-                        ?>
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-            <?= $this->Krs->paginators() ?>
 
         </div>
+
+        <!-- ── TABLE ────────────────────────────────────────────────────── -->
+        <div class="table-responsive">
+            <table class="table table-striped table-hover table-bordered table-patients"
+                   style="font-size:13px;">
+                <thead>
+                    <tr class="text-center">
+                        <th width="40">#</th>
+                        <th width="120">Kode Pasien</th>
+                        <th>Nama Lengkap</th>
+                        <th width="80">Gender</th>
+                        <th width="60">Umur</th>
+                        <th width="120">No. Identitas</th>
+                        <th width="130">No. Telepon</th>
+                        <th width="150">Kota / Kab</th>
+                        <th width="80">Status</th>
+                        <th width="110">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php
+                $no = 1;
+                foreach ($patients as $patient):
+                    $isAktif  = ($patient->is_active === 'Y' || $patient->is_active === 1);
+                    $isMale   = (strtolower($patient->gender ?? '') === 'male');
+                    $umur     = hitungUmur($patient->birth_date);
+                ?>
+                <tr>
+                    <td class="text-center"><?= $no++ ?></td>
+
+                    <!-- Kode Pasien -->
+                    <td class="text-center">
+                        <code style="font-size:11px;"><?= h($patient->code) ?></code>
+                    </td>
+
+                    <!-- Nama -->
+                    <td>
+                        <div style="display:flex; align-items:center; gap:7px;">
+                            <span style="width:28px; height:28px; border-radius:50%;
+                                         background:<?= $isMale ? '#dbeafe' : '#fce7f3' ?>;
+                                         color:<?= $isMale ? '#1d4ed8' : '#be185d' ?>;
+                                         display:flex; align-items:center; justify-content:center;
+                                         font-size:13px; flex-shrink:0;">
+                                <?= $isMale ? '♂' : '♀' ?>
+                            </span>
+                            <span style="font-weight:600;"><?= h($patient->full_name) ?></span>
+                        </div>
+                        <?php if (!empty($patient->identity_type)): ?>
+                        <small style="color:#888; font-size:10px; margin-left:35px;">
+                            <?= h($patient->identity_type) ?>
+                        </small>
+                        <?php endif; ?>
+                    </td>
+
+                    <!-- Gender -->
+                    <td class="text-center">
+                        <?php if ($isMale): ?>
+                            <span style="background:#dbeafe; color:#1d4ed8; padding:2px 9px;
+                                         border-radius:12px; font-size:11px; font-weight:600;">
+                                ♂ L
+                            </span>
+                        <?php else: ?>
+                            <span style="background:#fce7f3; color:#be185d; padding:2px 9px;
+                                         border-radius:12px; font-size:11px; font-weight:600;">
+                                ♀ P
+                            </span>
+                        <?php endif; ?>
+                    </td>
+
+                    <!-- Umur -->
+                    <td class="text-center">
+                        <span style="font-size:12px; color:#495057;">
+                            <?php if (!empty($patient->birth_date)): ?>
+                                <strong><?= $umur ?></strong>
+                                <br>
+                                <span style="font-size:10px; color:#aaa;">
+                                    <?php
+                                    $bd = $patient->birth_date;
+                                    if ($bd instanceof \Cake\I18n\FrozenDate || $bd instanceof \Cake\I18n\Date) {
+                                        echo $bd->format('d-m-Y');
+                                    } else {
+                                        $ts = strtotime((string)$bd);
+                                        echo $ts ? date('d-m-Y', $ts) : '—';
+                                    }
+                                    ?>
+                                </span>
+                            <?php else: ?>
+                                <span style="color:#ccc;">—</span>
+                            <?php endif; ?>
+                        </span>
+                    </td>
+
+                    <!-- No Identitas -->
+                    <td style="font-size:11px;">
+                        <?= !empty($patient->identity_number) ? h($patient->identity_number) : '<span style="color:#ccc;">—</span>' ?>
+                    </td>
+
+                    <!-- Telepon -->
+                    <td style="font-size:12px;">
+                        <?php if (!empty($patient->phone_number)): ?>
+                            <i class="fa fa-phone" style="color:#28a745; font-size:10px;"></i>
+                            <?= h($patient->phone_number) ?>
+                        <?php else: ?>
+                            <span style="color:#ccc;">—</span>
+                        <?php endif; ?>
+                    </td>
+
+                    <!-- Kota -->
+                    <td style="font-size:12px;">
+                        <?php if (!empty($patient->city)): ?>
+                            <i class="fa fa-map-marker-alt" style="color:#6c757d; font-size:10px;"></i>
+                            <?= h($patient->city) ?>
+                            <?php if (!empty($patient->province)): ?>
+                                <br><small style="color:#aaa; font-size:10px;"><?= h($patient->province) ?></small>
+                            <?php endif; ?>
+                        <?php else: ?>
+                            <span style="color:#ccc;">—</span>
+                        <?php endif; ?>
+                    </td>
+
+                    <!-- Status Active -->
+                    <td class="text-center">
+                        <?php if ($isAktif): ?>
+                            <span class="label label-success">Active</span>
+                        <?php else: ?>
+                            <span class="label label-default">Non</span>
+                        <?php endif; ?>
+                    </td>
+
+                    <!-- Aksi -->
+                    <td class="text-center">
+                        <div style="display:flex; gap:3px; justify-content:center;">
+                            <?= $this->Html->link(
+                                '<i class="fa fa-eye"></i>',
+                                ['action' => 'view', $patient->id],
+                                ['escape' => false, 'class' => 'btn btn-info btn-xs',
+                                 'data-toggle' => 'tooltip', 'title' => 'Detail']
+                            ) ?>
+                            <?= $this->Html->link(
+                                '<i class="fa fa-edit"></i>',
+                                ['action' => 'edit', $patient->id],
+                                ['escape' => false, 'class' => 'btn btn-warning btn-xs',
+                                 'data-toggle' => 'tooltip', 'title' => 'Edit']
+                            ) ?>
+                            <?= $this->Form->postLink(
+                                '<i class="fa fa-trash"></i>',
+                                ['action' => 'delete', $patient->id],
+                                ['escape' => false, 'class' => 'btn btn-danger btn-xs',
+                                 'confirm' => __('Yakin hapus pasien {0}?', $patient->full_name),
+                                 'data-toggle' => 'tooltip', 'title' => 'Hapus']
+                            ) ?>
+                        </div>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <?= $this->Krs->paginators() ?>
 
     </div>
-
 </div>
+
+<style>
+.table-patients > thead > tr > th {
+    background: #2c3e50 !important;
+    color: #ffffff !important;
+    border-color: #3d5166 !important;
+    padding: 10px 8px;
+    vertical-align: middle;
+    font-size: 12px;
+    font-weight: 600;
+}
+.table-patients > thead > tr > th a,
+.table-patients > thead > tr > th a:hover {
+    color: #ffffff !important;
+    text-decoration: none;
+}
+.btn-xs  { padding:3px 8px; font-size:12px; line-height:1.5; border-radius:4px; }
+.btn-pink { background:#ec4899; border-color:#db2777; color:#fff; }
+.btn-pink:hover, .btn-pink.active { background:#db2777; color:#fff; }
+.label   { padding:4px 9px; border-radius:6px; font-size:11px; font-weight:600; display:inline-block; }
+.label-success { background:#d1e7dd; color:#0f5132; }
+.label-default { background:#e9ecef; color:#495057; }
+</style>
+
+<script>
+$(document).ready(function () {
+    $('[data-toggle="tooltip"]').tooltip();
+});
+</script> 

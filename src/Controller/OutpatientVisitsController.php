@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use Cake\Datasource\ConnectionManager;
-
 class OutpatientVisitsController extends AppController
 {
     // ─────────────────────────────────────────────────────────────────────────
@@ -24,8 +22,6 @@ class OutpatientVisitsController extends AppController
         if ($filterDateTo < $filterDateFrom) {
             $filterDateTo = $filterDateFrom;
         }
-
-        $this->_syncMissingVisitsFromRegistrations($filterDateFrom, $filterDateTo);
 
         $conditions = [
             'OutpatientVisits.visit_date >=' => $filterDateFrom,
@@ -48,11 +44,12 @@ class OutpatientVisitsController extends AppController
             $conditions['OR'] = [
                 'Patients.full_name LIKE'                   => '%' . $q . '%',
                 'OutpatientVisits.registration_no LIKE'     => '%' . $q . '%',
+                'OutpatientVisits.room_name LIKE'           => '%' . $q . '%',
             ];
         }
 
         $this->paginate = [
-            'contain'    => ['Patients', 'Doctors', 'Registrations'],
+            'contain'    => ['Patients', 'Doctors', 'Registrations' => ['Rooms']],
             'conditions' => $conditions,
             'order'      => [
                 'OutpatientVisits.visit_date'    => 'ASC',
@@ -145,7 +142,7 @@ class OutpatientVisitsController extends AppController
             $data = $this->request->getData();
 
             $nullableFields = [
-                'doctor_id', 'queue_number', 'polyclinic_name',
+                'doctor_id', 'queue_number', 'polyclinic_name', 'room_name',
                 'blood_pressure', 'pulse', 'temperature', 'respiratory_rate',
                 'oxygen_saturation', 'weight', 'height',
                 'chief_complaint', 'illness_history', 'allergy', 'pain_scale',
@@ -180,16 +177,27 @@ class OutpatientVisitsController extends AppController
                 $data['visit_date'] = date('Y-m-d');
             }
 
-            if (empty($data['queue_number']) && !empty($data['polyclinic_name'])) {
+            // Nomor antrian rawat jalan otomatis per hari.
+            // Data pertama hari ini = 1, berikutnya 2, 3, 4, dst.
+            // Besok otomatis reset lagi karena filter berdasarkan visit_date.
+            if (empty($data['queue_number'])) {
                 $lastQueue = $this->OutpatientVisits->find()
                     ->select(['queue_number'])
                     ->where([
-                        'visit_date'      => $data['visit_date'],
-                        'polyclinic_name' => $data['polyclinic_name'],
+                        'OutpatientVisits.visit_date' => $data['visit_date'],
+                        'OutpatientVisits.queue_number IS NOT' => null,
                     ])
-                    ->order(['queue_number' => 'DESC'])
+                    ->order(['OutpatientVisits.queue_number' => 'DESC'])
                     ->first();
-                $data['queue_number'] = $lastQueue ? ($lastQueue->queue_number + 1) : 1;
+
+                $data['queue_number'] = $lastQueue && !empty($lastQueue->queue_number)
+                    ? ((int)$lastQueue->queue_number + 1)
+                    : 1;
+            }
+
+            // Kalau ruang belum keisi di outpatient_visits, ambil dari data registrasi.
+            if (empty($data['room_name']) && !empty($registration)) {
+                $data['room_name'] = $registration->room_name ?? null;
             }
 
             $visit = $this->OutpatientVisits->patchEntity($visit, $data);
@@ -224,7 +232,7 @@ class OutpatientVisitsController extends AppController
             $data = $this->request->getData();
 
             $nullableFields = [
-                'doctor_id', 'queue_number', 'polyclinic_name',
+                'doctor_id', 'queue_number', 'polyclinic_name', 'room_name',
                 'blood_pressure', 'pulse', 'temperature', 'respiratory_rate',
                 'oxygen_saturation', 'weight', 'height',
                 'chief_complaint', 'illness_history', 'allergy', 'pain_scale',
@@ -271,139 +279,104 @@ class OutpatientVisitsController extends AppController
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // CPPT — Catatan Perkembangan Pasien Terintegrasi
+    // CPPT — Tampilan seperti aplikasi lama: input SOAP/SBAR + instruksi + riwayat
     // ─────────────────────────────────────────────────────────────────────────
     public function cppt($id = null)
     {
+        if (empty($id)) {
+            $this->Flash->error(__('ID kunjungan tidak ditemukan.'));
+            return $this->redirect(['action' => 'index']);
+        }
+
+        $this->loadModel('OutpatientCpptNotes');
+
         $visit = $this->OutpatientVisits->get($id, [
             'contain' => ['Patients', 'Doctors', 'Registrations', 'OutpatientActions'],
         ]);
 
-        $connection = ConnectionManager::get('default');
-        $medicalRecordId = $this->findOrCreateMedicalRecordId($connection, (int)$visit->registration_id);
-        $cpptNotes = $this->readIntegrationRows($connection, $medicalRecordId);
-        $doctors = $this->OutpatientVisits->Doctors->find('list', [
-            'keyField' => 'id',
-            'valueField' => 'doctor_name',
-        ])->limit(200)->all()->toArray();
-        $currentUser = $this->currentUserData();
-        $currentUserName = $currentUser['name'] ?? '-';
+        $cpptNotes = $this->OutpatientCpptNotes->find()
+            ->where(['outpatient_visit_id' => $visit->id])
+            ->order(['noted_at' => 'ASC', 'id' => 'ASC'])
+            ->all();
 
-        $this->set(compact('visit', 'cpptNotes', 'doctors', 'currentUserName'));
+        $this->set(compact('visit', 'cpptNotes'));
     }
 
     public function addCppt($id = null)
     {
         $this->request->allowMethod(['post']);
 
-        $visit = $this->OutpatientVisits->get($id, [
-            'contain' => ['Doctors'],
-        ]);
-        $data = $this->request->getData();
+        if (empty($id)) {
+            $this->Flash->error(__('ID kunjungan tidak ditemukan.'));
+            return $this->redirect(['action' => 'index']);
+        }
 
-        if (empty($data['doctor_id']) || trim((string)($data['soap_sbar'] ?? '')) === '') {
-            $this->Flash->error(__('Dokter dan SOAP SBAR wajib diisi.'));
+        $this->loadModel('OutpatientCpptNotes');
+
+        $visit = $this->OutpatientVisits->get($id);
+        $data  = $this->request->getData();
+
+        $assessmentText = trim((string)($data['assessment_text'] ?? ''));
+        $instruction    = trim((string)($data['instruction'] ?? ''));
+
+        if ($assessmentText === '' && $instruction === '') {
+            $this->Flash->error(__('Asesmen atau instruksi wajib diisi.'));
             return $this->redirect(['action' => 'cppt', $id]);
         }
 
-        $connection = ConnectionManager::get('default');
-        $currentUser = $this->currentUserData();
-        $doctor = null;
+        $note = $this->OutpatientCpptNotes->newEmptyEntity();
 
-        if (!empty($data['doctor_id'])) {
-            try {
-                $doctor = $this->OutpatientVisits->Doctors->get((int)$data['doctor_id']);
-            } catch (\Exception $e) {
-                $doctor = null;
-            }
-        }
+        $noteData = [
+            'outpatient_visit_id' => $visit->id,
+            'registration_id'     => $visit->registration_id ?? null,
+            'patient_id'          => $visit->patient_id ?? null,
+            'doctor_id'           => !empty($data['doctor_id']) ? (int)$data['doctor_id'] : ($visit->doctor_id ?? null),
+            'noted_at'            => !empty($data['noted_at'])
+                ? str_replace('T', ' ', $data['noted_at']) . ':00'
+                : date('Y-m-d H:i:s'),
+            'health_worker_name'  => $data['health_worker_name'] ?? null,
+            'doctor_name'         => $data['doctor_name'] ?? null,
+            'nurse_name'          => $data['nurse_name'] ?? null,
+            'assessment_text'     => $assessmentText,
+            'instruction'         => $instruction,
+            'created_by'          => $this->request->getSession()->read('Auth.User.username') ?? null,
+        ];
 
-        $saved = $connection->transactional(function () use ($connection, $visit, $data, $currentUser, $doctor) {
-            $medicalRecordId = $this->findOrCreateMedicalRecordId($connection, (int)$visit->registration_id);
-            if (!$medicalRecordId) {
-                return false;
-            }
+        $note = $this->OutpatientCpptNotes->patchEntity($note, $noteData);
 
-            $notedAt = !empty($data['noted_at'])
-                ? date('Y-m-d H:i:s', strtotime((string)$data['noted_at']))
-                : date('Y-m-d H:i:s');
-            $healthWorkerName = $currentUser['name'] ?? 'User';
-            $doctorName = $doctor->doctor_name ?? $visit->doctor->doctor_name ?? null;
-            $soapSbar = trim((string)($data['soap_sbar'] ?? ''));
-            $instruction = trim((string)($data['instruction'] ?? ''));
-
-            $payload = [
-                'noted_at' => $notedAt,
-                'health_worker_name' => $healthWorkerName,
-                'doctor_name' => $doctorName,
-                'soap_sbar' => $soapSbar,
-                'instruction' => $instruction,
-            ];
-
-            return $this->insertSchemaAware($connection, 'medical_record_integrations', [
-                'medical_record_id' => $medicalRecordId,
-                'noted_at' => $notedAt,
-                'user_id' => $currentUser['id'] ?? null,
-                'health_worker_name' => $healthWorkerName,
-                'profession' => $currentUser['staff'] ?? $currentUser['devision'] ?? null,
-                'doctor_id' => $doctor->id ?? $visit->doctor_id ?? null,
-                'doctor_name' => $doctorName,
-                'soap_sbar' => $soapSbar,
-                'instruction' => $instruction,
-                'status' => 'Draft',
-                'note' => trim("SOAP SBAR:\n" . $soapSbar . "\n\nInstruksi:\n" . $instruction),
-                'payload_json' => json_encode($payload, JSON_UNESCAPED_UNICODE),
-                'is_create' => 1,
-                'is_update' => 0,
-                'is_delete' => 0,
-                'is_active' => 'Y',
-                'created' => date('Y-m-d H:i:s'),
-            ]);
-        });
-
-        if ($saved) {
-            if (in_array($visit->status, ['waiting', 'called'], true)) {
+        if ($this->OutpatientCpptNotes->save($note)) {
+            if (in_array($visit->status, ['waiting', 'called'])) {
                 $visit->status = 'in_progress';
-                $visit->start_time = date('Y-m-d H:i:s');
+                if (empty($visit->start_time)) {
+                    $visit->start_time = date('Y-m-d H:i:s');
+                }
                 $this->OutpatientVisits->save($visit);
             }
 
-            $this->Flash->success(__('Catatan CPPT berhasil disimpan ke Form Integrasi rekam medis.'));
+            $this->Flash->success(__('CPPT berhasil ditambahkan.'));
         } else {
-            $this->Flash->error(__('Catatan CPPT gagal disimpan.'));
+            $err = json_encode($note->getErrors(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+            $this->Flash->error(__('Gagal menyimpan CPPT. Error: ' . $err));
         }
 
         return $this->redirect(['action' => 'cppt', $id]);
     }
 
-    public function deleteCppt($id = null)
+    public function deleteCppt($noteId = null)
     {
         $this->request->allowMethod(['post', 'delete']);
+        $this->loadModel('OutpatientCpptNotes');
 
-        $connection = ConnectionManager::get('default');
-        $row = $connection->execute(
-            'SELECT mri.id, ov.id AS outpatient_visit_id
-            FROM medical_record_integrations mri
-            INNER JOIN medical_records mr ON mr.id = mri.medical_record_id
-            INNER JOIN outpatient_visits ov ON ov.registration_id = mr.registration_id
-            WHERE mri.id = :id
-            LIMIT 1',
-            ['id' => (int)$id]
-        )->fetch('assoc');
+        $note = $this->OutpatientCpptNotes->get($noteId);
+        $visitId = $note->outpatient_visit_id;
 
-        if (!$row) {
-            $this->Flash->error(__('Catatan CPPT tidak ditemukan.'));
-            return $this->redirect(['action' => 'index']);
+        if ($this->OutpatientCpptNotes->delete($note)) {
+            $this->Flash->success(__('Catatan CPPT berhasil dihapus.'));
+        } else {
+            $this->Flash->error(__('Catatan CPPT gagal dihapus.'));
         }
 
-        $connection->update('medical_record_integrations', [
-            'is_delete' => 1,
-            'deleted' => date('Y-m-d H:i:s'),
-            'modified' => date('Y-m-d H:i:s'),
-        ], ['id' => (int)$id]);
-
-        $this->Flash->success(__('Catatan CPPT berhasil dihapus.'));
-        return $this->redirect(['action' => 'cppt', (int)$row['outpatient_visit_id']]);
+        return $this->redirect(['action' => 'cppt', $visitId]);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -418,18 +391,8 @@ class OutpatientVisitsController extends AppController
         $visit->end_time = date('Y-m-d H:i:s');
 
         if ($this->OutpatientVisits->save($visit)) {
-            if ($this->request->is('ajax')) {
-                $this->autoRender = false;
-                return $this->response->withType('application/json')
-                    ->withStringBody(json_encode(['success' => true, 'message' => 'Kunjungan ditandai selesai']));
-            }
             $this->Flash->success(__('Kunjungan ditandai selesai.'));
         } else {
-            if ($this->request->is('ajax')) {
-                $this->autoRender = false;
-                return $this->response->withType('application/json')
-                    ->withStringBody(json_encode(['success' => false, 'message' => 'Gagal menandai selesai']));
-            }
             $this->Flash->error(__('Gagal menandai selesai.'));
         }
 
@@ -491,18 +454,8 @@ class OutpatientVisitsController extends AppController
         $visit->status = 'cancelled';
 
         if ($this->OutpatientVisits->save($visit)) {
-            if ($this->request->is('ajax')) {
-                $this->autoRender = false;
-                return $this->response->withType('application/json')
-                    ->withStringBody(json_encode(['success' => true, 'message' => 'Kunjungan dibatalkan']));
-            }
             $this->Flash->success(__('Kunjungan dibatalkan.'));
         } else {
-            if ($this->request->is('ajax')) {
-                $this->autoRender = false;
-                return $this->response->withType('application/json')
-                    ->withStringBody(json_encode(['success' => false, 'message' => 'Gagal membatalkan kunjungan']));
-            }
             $this->Flash->error(__('Gagal membatalkan kunjungan.'));
         }
 
@@ -542,101 +495,12 @@ class OutpatientVisitsController extends AppController
     // ─────────────────────────────────────────────────────────────────────────
     // EMR — Electronic Medical Record
     // ─────────────────────────────────────────────────────────────────────────
-    public function liveData()
-    {
-        $this->request->allowMethod(['get']);
-        $this->autoRender = false;
-
-        $filterDateFrom = $this->request->getQuery('date_from', date('Y-m-d'));
-        $filterDateTo = $this->request->getQuery('date_to', date('Y-m-d'));
-        $filterPoli = $this->request->getQuery('poli');
-        $filterDoctor = $this->request->getQuery('doctor_id');
-        $filterStatus = $this->request->getQuery('status');
-        $q = $this->request->getQuery('q');
-
-        if ($filterDateTo < $filterDateFrom) {
-            $filterDateTo = $filterDateFrom;
-        }
-
-        $this->_syncMissingVisitsFromRegistrations($filterDateFrom, $filterDateTo);
-
-        $conditions = [
-            'OutpatientVisits.visit_date >=' => $filterDateFrom,
-            'OutpatientVisits.visit_date <=' => $filterDateTo,
-        ];
-
-        if (!empty($filterPoli)) {
-            $conditions['OutpatientVisits.polyclinic_name'] = $filterPoli;
-        }
-
-        if (!empty($filterDoctor)) {
-            $conditions['OutpatientVisits.doctor_id'] = (int)$filterDoctor;
-        }
-
-        if (!empty($filterStatus)) {
-            $conditions['OutpatientVisits.status'] = $filterStatus;
-        }
-
-        if (!empty($q)) {
-            $conditions['OR'] = [
-                'Patients.full_name LIKE' => '%' . $q . '%',
-                'OutpatientVisits.registration_no LIKE' => '%' . $q . '%',
-            ];
-        }
-
-        $visits = $this->OutpatientVisits->find()
-            ->contain(['Patients', 'Doctors', 'Registrations'])
-            ->where($conditions)
-            ->order([
-                'OutpatientVisits.visit_date' => 'ASC',
-                'OutpatientVisits.queue_number' => 'ASC',
-            ])
-            ->limit(50)
-            ->all();
-
-        $base = $this->OutpatientVisits->find()
-            ->where([
-                'OutpatientVisits.visit_date >=' => $filterDateFrom,
-                'OutpatientVisits.visit_date <=' => $filterDateTo,
-            ]);
-
-        $summary = [
-            'waiting' => (clone $base)->where(['status' => 'waiting'])->count(),
-            'called' => (clone $base)->where(['status' => 'called'])->count(),
-            'in_progress' => (clone $base)->where(['status' => 'in_progress'])->count(),
-            'done' => (clone $base)->where(['status' => 'done'])->count(),
-            'total' => (clone $base)->count(),
-        ];
-
-        $rows = [];
-        foreach ($visits as $visit) {
-            $visitDate = $visit->visit_date;
-            $rows[] = [
-                'id' => $visit->id,
-                'queue_number' => $visit->queue_number,
-                'status' => $visit->status,
-                'registration_no' => $visit->registration_no,
-                'polyclinic_name' => $visit->polyclinic_name,
-                'visit_date' => is_object($visitDate) ? $visitDate->format('d-m-Y') : date('d-m-Y', strtotime((string)$visitDate)),
-                'visit_time' => !empty($visit->visit_time) ? substr((string)$visit->visit_time, 0, 5) : null,
-                'chief_complaint' => $visit->chief_complaint,
-                'patient_name' => $visit->patient->full_name ?? '-',
-                'patient_medical_record_no' => $visit->patient->medical_record_no ?? '-',
-                'doctor_name' => $visit->doctor->doctor_name ?? '-',
-            ];
-        }
-
-        return $this->response
-            ->withType('application/json')
-            ->withStringBody(json_encode([
-                'summary' => $summary,
-                'rows' => $rows,
-                'server_time' => date('H:i:s'),
-            ], JSON_UNESCAPED_UNICODE));
-    }
-
     public function emr($id = null)
     {
+        if (empty($id)) {
+            $this->Flash->error(__('ID kunjungan rawat jalan tidak ditemukan.'));
+            return $this->redirect(['action' => 'index']);
+        }
         $visit = $this->OutpatientVisits->get($id, [
             'contain' => [
                 'Patients',
@@ -646,11 +510,6 @@ class OutpatientVisitsController extends AppController
             ],
         ]);
 
-        if (!$this->request->is(['patch', 'post', 'put'])) {
-            $this->hydrateVisitFromLatestMedicalRecord($visit);
-        }
-        $emrMeta = $this->readLatestEmrMeta($visit);
-
         if ($this->request->is(['patch', 'post', 'put'])) {
             $data = $this->request->getData();
 
@@ -658,24 +517,87 @@ class OutpatientVisitsController extends AppController
             $actionsRaw = $data['outpatient_actions'] ?? [];
             unset($data['outpatient_actions']);
 
-            $data = $this->normalizeLegacyIcdSelections($data);
+            // ── Simpan ICD-10 & ICD-9 dari form EMR ke JSON agar Resume Medis bisa auto-fill ──
+            $schema = $this->OutpatientVisits->getSchema();
 
-            if (!$this->hasText($data['chief_complaint'] ?? null) || !$this->hasText($data['diagnosis_primary'] ?? null)) {
-                $this->Flash->error(__('Keluhan awal dan diagnosa utama wajib diisi sebelum EMR disimpan.'));
-                $visit = $this->OutpatientVisits->patchEntity($visit, $data);
-                $this->set(compact('visit', 'emrMeta'));
-                return;
+            $icd10Items = [];
+            $icd10Codes = $data['icd10_code'] ?? [];
+            $icd10Names = $data['icd10_nama'] ?? ($data['icd10_name'] ?? []);
+            $icd10Utama = $data['icd10_utama'] ?? null;
+
+            if (is_array($icd10Codes) || is_array($icd10Names)) {
+                $maxIcd10 = max(count((array)$icd10Codes), count((array)$icd10Names));
+                for ($i = 0; $i < $maxIcd10; $i++) {
+                    $kode = trim((string)($icd10Codes[$i] ?? ''));
+                    $nama = trim((string)($icd10Names[$i] ?? ''));
+                    if ($kode === '' && $nama === '') {
+                        continue;
+                    }
+                    $isUtama = is_array($icd10Utama)
+                        ? !empty($icd10Utama[$i])
+                        : ((string)$icd10Utama === (string)$i);
+                    $icd10Items[] = [
+                        'kode'  => $kode,
+                        'nama'  => $nama,
+                        'utama' => $isUtama ? 1 : 0,
+                    ];
+                }
             }
+
+            // ICD-10 hanya disimpan ke JSON.
+            // Jangan menimpa Diagnosa Utama / Diagnosa Deskripsi manual.
+            $icd10Json = null;
+            if ($schema->hasColumn('icd10_items')) {
+                $icd10Json = !empty($icd10Items)
+                    ? json_encode($icd10Items, JSON_UNESCAPED_UNICODE)
+                    : null;
+                $data['icd10_items'] = $icd10Json;
+            }
+            unset($data['icd10_selected'], $data['icd10_code'], $data['icd10_nama'], $data['icd10_name'], $data['icd10_utama']);
+
+            $icd9Items = [];
+            $icd9Codes = $data['icd9_code'] ?? [];
+            $icd9Names = $data['icd9_nama'] ?? ($data['icd9_name'] ?? []);
+            $icd9Utama = $data['icd9_utama'] ?? null;
+
+            if (is_array($icd9Codes) || is_array($icd9Names)) {
+                $maxIcd9 = max(count((array)$icd9Codes), count((array)$icd9Names));
+                for ($i = 0; $i < $maxIcd9; $i++) {
+                    $kode = trim((string)($icd9Codes[$i] ?? ''));
+                    $nama = trim((string)($icd9Names[$i] ?? ''));
+                    if ($kode === '' && $nama === '') {
+                        continue;
+                    }
+                    $isUtama = is_array($icd9Utama)
+                        ? !empty($icd9Utama[$i])
+                        : ((string)$icd9Utama === (string)$i);
+                    $icd9Items[] = [
+                        'kode'  => $kode,
+                        'nama'  => $nama,
+                        'utama' => $isUtama ? 1 : 0,
+                    ];
+                }
+            }
+
+            // ICD-9 hanya disimpan ke JSON.
+            // Jangan menimpa Tindakan Utama manual.
+            $icd9Json = null;
+            if ($schema->hasColumn('icd9_items')) {
+                $icd9Json = !empty($icd9Items)
+                    ? json_encode($icd9Items, JSON_UNESCAPED_UNICODE)
+                    : null;
+                $data['icd9_items'] = $icd9Json;
+            }
+            unset($data['icd9_selected'], $data['icd9_code'], $data['icd9_nama'], $data['icd9_name'], $data['icd9_utama'], $data['icd9_kategori']);
 
             // ── Nullable fields ───────────────────────────────────────────────
             $nullableFields = [
                 'blood_pressure', 'pulse', 'temperature', 'respiratory_rate',
                 'oxygen_saturation', 'weight', 'height', 'bmi', 'bmi_category',
                 'pain_scale', 'chief_complaint', 'illness_history', 'allergy',
-                'diagnosis_primary', 'diagnosis_secondary', 'diagnosis_desc',
-                'action_notes', 'doctor_notes', 'prescription_notes',
+               'diagnosis_primary', 'diagnosis_secondary', 'diagnosis_desc',
+                'admission_diagnosis','action_notes', 'doctor_notes', 'prescription_notes',
                 'body_chart_notes', 'follow_up_date', 'referral_to', 'referral_reason',
-                'inpatient_referral_no',
             ];
 
             foreach ($nullableFields as $field) {
@@ -710,8 +632,20 @@ class OutpatientVisitsController extends AppController
                 $data['start_time'] = date('Y-m-d H:i:s');
             }
 
-            $medicalRecordSaved = $this->saveLegacyEmrToMedicalRecord($visit, $data, $actionsRaw);
-            $visit = $this->OutpatientVisits->patchEntity($visit, $this->filterOutpatientVisitUpdateData($data));
+            $visit = $this->OutpatientVisits->patchEntity($visit, $data);
+
+            if ($schema->hasColumn('admission_diagnosis')) {
+                $visit->admission_diagnosis = $data['admission_diagnosis'] ?? null;
+            }
+
+            // Paksa set JSON ICD langsung ke entity supaya tetap tersimpan
+            // meskipun field belum ada di $_accessible Entity.
+            if ($schema->hasColumn('icd10_items')) {
+                $visit->icd10_items = $icd10Json;
+            }
+            if ($schema->hasColumn('icd9_items')) {
+                $visit->icd9_items = $icd9Json;
+            }
 
             // ── Proses tindakan ───────────────────────────────────────────────
             $actionsToSave = [];
@@ -739,24 +673,347 @@ class OutpatientVisitsController extends AppController
                 'outpatient_visit_id' => $visit->id,
             ]);
 
-            if ($medicalRecordSaved && $this->OutpatientVisits->save($visit)) {
+            if ($this->OutpatientVisits->save($visit)) {
                 if (!empty($actionsToSave)) {
                     $this->OutpatientVisits->OutpatientActions->saveMany($actionsToSave);
                 }
                 $this->Flash->success(__('EMR berhasil disimpan.'));
-                return $this->redirect(['action' => 'emr', $visit->id]);
+                return $this->redirect(['action' => 'index']);
             }
 
             $err = json_encode($visit->getErrors(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
             $this->Flash->error(__('Gagal menyimpan EMR. Error: ' . $err));
         }
 
-        $this->set(compact('visit', 'emrMeta'));
+        $this->set(compact('visit'));
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // DELETE
-    // ─────────────────────────────────────────────────────────────────────────
+    public function resumeMedis($id = null)
+    {
+        if (empty($id)) {
+            $this->Flash->error(__('ID kunjungan rawat jalan tidak ditemukan.'));
+            return $this->redirect(['action' => 'index']);
+        }
+
+        $visit = $this->OutpatientVisits->get($id, [
+            'contain' => [
+                'Patients',
+                'Doctors',
+                'Registrations',
+                'OutpatientActions',
+            ],
+        ]);
+
+        // Resume medis tetap bisa dibuka walaupun tabel MedicalResumes belum ada.
+        $medicalResume = null;
+        try {
+            $this->loadModel('MedicalResumes');
+
+            $medicalResume = $this->MedicalResumes->find()
+                ->where(['outpatient_visit_id' => $visit->id])
+                ->first();
+
+            if (!$medicalResume) {
+                $medicalResume = $this->MedicalResumes->newEmptyEntity();
+                $medicalResume->outpatient_visit_id = $visit->id;
+                $medicalResume->registration_id = $visit->registration_id ?? null;
+                $medicalResume->patient_id = $visit->patient_id ?? null;
+            }
+
+            if ($this->request->is(['patch', 'post', 'put'])) {
+                $data = $this->request->getData();
+
+                $data['outpatient_visit_id'] = $visit->id;
+                $data['registration_id']     = $visit->registration_id ?? null;
+                $data['patient_id']          = $visit->patient_id ?? null;
+                $data['doctor1_id']          = $visit->doctor_id ?? null;
+
+                foreach (['print_classic', 'send_digital_claim'] as $flag) {
+                    $data[$flag] = !empty($data[$flag]) ? 1 : 0;
+                }
+
+                $medicalResume = $this->MedicalResumes->patchEntity($medicalResume, $data);
+
+                if ($this->MedicalResumes->save($medicalResume)) {
+                    $this->Flash->success(__('Resume medis berhasil disimpan.'));
+                    return $this->redirect(['action' => 'resumeMedis', $visit->id]);
+                }
+
+                $err = json_encode($medicalResume->getErrors(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+                $this->Flash->error(__('Gagal menyimpan resume medis. Error: ' . $err));
+            }
+        } catch (\Throwable $e) {
+            $medicalResume = null;
+        }
+
+        // Normalisasi ICD: hanya tampilkan data yang berasal dari pilihan ICD master.
+        // Data manual seperti Diagnosa Utama/Tindakan Utama tidak dipakai untuk tabel ICD.
+        $normalizeIcdItems = function ($rawItems) {
+            $items = [];
+
+            if (empty($rawItems)) {
+                return $items;
+            }
+
+            if (is_string($rawItems)) {
+                $decoded = json_decode($rawItems, true);
+                $rawItems = is_array($decoded) ? $decoded : [];
+            }
+
+            foreach ((array)$rawItems as $item) {
+                if (is_object($item)) {
+                    $item = (array)$item;
+                }
+
+                $kode = trim((string)(
+                    $item['kode'] ??
+                    $item['code'] ??
+                    $item['icd_code'] ??
+                    $item['icd10_code'] ??
+                    $item['icd9_code'] ??
+                    ''
+                ));
+
+                $nama = trim((string)(
+                    $item['nama'] ??
+                    $item['name'] ??
+                    $item['diagnosa'] ??
+                    $item['diagnosis'] ??
+                    $item['description'] ??
+                    $item['diagnosis_name'] ??
+                    $item['icd_name'] ??
+                    $item['action_name'] ??
+                    $item['title'] ??
+                    ''
+                ));
+
+                // Syarat agar dianggap dari master: kode dan nama harus sama-sama ada.
+                // Kalau hanya ada tulisan manual, jangan tampilkan di Resume Medis.
+                if ($kode === '' || $nama === '') {
+                    continue;
+                }
+
+                $items[] = [
+                    'kode'  => $kode,
+                    'nama'  => $nama,
+                    'utama' => !empty($item['utama']) || !empty($item['is_primary']) ? 1 : 0,
+                ];
+            }
+
+            if (!empty($items)) {
+                $hasPrimary = false;
+                foreach ($items as $row) {
+                    if (!empty($row['utama'])) {
+                        $hasPrimary = true;
+                        break;
+                    }
+                }
+                if (!$hasPrimary) {
+                    $items[0]['utama'] = 1;
+                }
+            }
+
+            return $items;
+        };
+
+        $icd10Items = $normalizeIcdItems($visit->icd10_items ?? []);
+        $icd9Items  = $normalizeIcdItems($visit->icd9_items ?? []);
+
+        // Obat/Terapi lanjutan hanya ambil dari order resep/master obat, bukan dari Tindakan & Tarif.
+        $medicineItems = [];
+
+        $appendMedicine = function ($rx) use (&$medicineItems) {
+            $medicine = $rx->medicine ?? null;
+
+            $name = trim((string)(
+                $rx->medicine_name ??
+                $rx->drug_name ??
+                $rx->nama_obat ??
+                $rx->name ??
+                $rx->item_name ??
+                $rx->prescription_name ??
+                ($medicine->medicine_name ?? null) ??
+                ($medicine->name ?? null) ??
+                ($medicine->generic_name ?? null) ??
+                ''
+            ));
+
+            if ($name === '') {
+                return;
+            }
+
+            $medicineItems[] = [
+                'name'  => $name,
+                'qty'   => $rx->quantity ?? $rx->qty ?? '',
+                'dose'  => $rx->dose ?? $rx->dosis ?? '',
+                'route' => $rx->route ?? $rx->cara_pemberian ?? $rx->instruction ?? $rx->notes ?? '',
+            ];
+        };
+
+        // Cara 1: lewat Orders -> OrderPrescriptions -> Medicines
+        try {
+            $this->loadModel('Orders');
+
+            $ordersQuery = $this->Orders->find();
+
+            if (!empty($visit->registration_id)) {
+                $ordersQuery->where(['Orders.registration_id' => $visit->registration_id]);
+            } elseif (!empty($visit->registration_no)) {
+                $ordersQuery->where(['Orders.registration_no' => $visit->registration_no]);
+            } else {
+                $ordersQuery->where(['Orders.patient_id' => $visit->patient_id]);
+            }
+
+            try {
+                $ordersQuery->contain(['OrderPrescriptions' => ['Medicines']]);
+            } catch (\Throwable $e) {
+                try {
+                    $ordersQuery->contain(['OrderPrescriptions']);
+                } catch (\Throwable $e2) {
+                }
+            }
+
+            foreach ($ordersQuery->all() as $order) {
+                foreach (($order->order_prescriptions ?? []) as $rx) {
+                    $appendMedicine($rx);
+                }
+            }
+        } catch (\Throwable $e) {
+        }
+
+        // Cara 2: langsung dari OrderPrescriptions kalau asosiasi Orders belum jalan.
+        if (empty($medicineItems)) {
+            try {
+                $this->loadModel('OrderPrescriptions');
+
+                $rxQuery = $this->OrderPrescriptions->find();
+
+                if (!empty($visit->registration_id)) {
+                    $rxQuery->where(['OrderPrescriptions.registration_id' => $visit->registration_id]);
+                } elseif (!empty($visit->registration_no)) {
+                    $rxQuery->where(['OrderPrescriptions.registration_no' => $visit->registration_no]);
+                } else {
+                    $rxQuery->where(['OrderPrescriptions.patient_id' => $visit->patient_id]);
+                }
+
+                try {
+                    $rxQuery->contain(['Medicines']);
+                } catch (\Throwable $e) {
+                }
+
+                foreach ($rxQuery->all() as $rx) {
+                    $appendMedicine($rx);
+                }
+            } catch (\Throwable $e) {
+            }
+        }
+
+
+        // Fallback terakhir: kalau belum ada tabel resep/order, ambil dari prescription_notes agar tidak kosong.
+        // Nanti kalau order resep sudah tersambung penuh, bagian ini tetap aman karena hanya jalan saat medicineItems kosong.
+        if (empty($medicineItems) && !empty($visit->prescription_notes)) {
+            $lines = preg_split('/\r\n|\r|\n/', (string)$visit->prescription_notes);
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if ($line !== '') {
+                    $medicineItems[] = [
+                        'name'  => $line,
+                        'qty'   => '',
+                        'dose'  => '',
+                        'route' => '',
+                    ];
+                }
+            }
+        }
+
+        $this->set(compact('visit', 'medicalResume', 'icd10Items', 'icd9Items', 'medicineItems'));
+    }
+
+
+    public function searchIcd10()
+    {
+        $this->request->allowMethod(['get']);
+        $this->autoRender = false;
+
+        $q = trim((string)$this->request->getQuery('q', ''));
+        $rows = [];
+
+        if ($q !== '') {
+            try {
+                $this->loadModel('MasterIcd10');
+                $query = $this->MasterIcd10->find()
+                    ->select(['id', 'kode', 'nama'])
+                    ->where([
+                        'MasterIcd10.is_active' => 1,
+                        'OR' => [
+                            'MasterIcd10.kode LIKE' => '%' . $q . '%',
+                            'MasterIcd10.nama LIKE' => '%' . $q . '%',
+                        ],
+                    ])
+                    ->order(['MasterIcd10.kode' => 'ASC'])
+                    ->limit(20)
+                    ->enableHydration(false)
+                    ->toArray();
+
+                foreach ($query as $row) {
+                    $rows[] = [
+                        'id' => $row['id'] ?? null,
+                        'kode' => $row['kode'] ?? '',
+                        'nama' => $row['nama'] ?? '',
+                    ];
+                }
+            } catch (\Throwable $e) {
+                $rows = [];
+            }
+        }
+
+        return $this->response
+            ->withType('application/json')
+            ->withStringBody(json_encode(['success' => true, 'results' => $rows], JSON_UNESCAPED_UNICODE));
+    }
+
+    public function searchIcd9()
+    {
+        $this->request->allowMethod(['get']);
+        $this->autoRender = false;
+
+        $q = trim((string)$this->request->getQuery('q', ''));
+        $rows = [];
+
+        if ($q !== '') {
+            try {
+                $this->loadModel('MasterIcd9');
+                $query = $this->MasterIcd9->find()
+                    ->select(['id', 'kode', 'nama'])
+                    ->where([
+                        'MasterIcd9.is_active' => 1,
+                        'OR' => [
+                            'MasterIcd9.kode LIKE' => '%' . $q . '%',
+                            'MasterIcd9.nama LIKE' => '%' . $q . '%',
+                        ],
+                    ])
+                    ->order(['MasterIcd9.kode' => 'ASC'])
+                    ->limit(20)
+                    ->enableHydration(false)
+                    ->toArray();
+
+                foreach ($query as $row) {
+                    $rows[] = [
+                        'id' => $row['id'] ?? null,
+                        'kode' => $row['kode'] ?? '',
+                        'nama' => $row['nama'] ?? '',
+                    ];
+                }
+            } catch (\Throwable $e) {
+                $rows = [];
+            }
+        }
+
+        return $this->response
+            ->withType('application/json')
+            ->withStringBody(json_encode(['success' => true, 'results' => $rows], JSON_UNESCAPED_UNICODE));
+    }
+
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
@@ -772,590 +1029,138 @@ class OutpatientVisitsController extends AppController
         return $this->redirect(['action' => 'index']);
     }
 
-    protected function _syncMissingVisitsFromRegistrations(string $dateFrom, string $dateTo): void
+    public function selesaiPeriksa($id = null)
     {
-        $this->loadModel('Registrations');
-
-        $registrations = $this->Registrations->find()
-            ->where([
-                'Registrations.service_type' => 'rawat_jalan',
-                'Registrations.registration_date >=' => $dateFrom,
-                'Registrations.registration_date <=' => $dateTo,
-            ])
-            ->limit(300)
-            ->all();
-
-        foreach ($registrations as $registration) {
-            if (empty($registration->id) || empty($registration->patient_id)) {
-                continue;
-            }
-
-            $this->OutpatientVisits->syncFromRegistration($registration);
-        }
-    }
-
-    protected function _formatRegistrationDate($date, string $fallback): string
-    {
-        if (empty($date)) {
-            return $fallback;
-        }
-
-        if (is_object($date) && method_exists($date, 'format')) {
-            return $date->format('Y-m-d');
-        }
-
-        return date('Y-m-d', strtotime((string)$date));
-    }
-
-    private function hydrateVisitFromLatestMedicalRecord($visit): void
-    {
-        $registrationId = (int)($visit->registration_id ?? 0);
-        if (!$registrationId) {
-            return;
-        }
-
-        $connection = ConnectionManager::get('default');
-        if (!$this->tableHasColumn($connection, 'medical_record_examinations', 'payload_json')) {
-            return;
-        }
-
-        $sql = 'SELECT mre.payload_json
-            FROM medical_record_examinations mre
-            INNER JOIN medical_records mr ON mr.id = mre.medical_record_id
-            WHERE mr.registration_id = :registration_id
-                AND (mr.is_delete = 0 OR mr.is_delete IS NULL)
-                AND (mre.is_delete = 0 OR mre.is_delete IS NULL)
-                AND mre.payload_json IS NOT NULL
-            ORDER BY mre.id DESC
-            LIMIT 1';
-
-        $row = $connection->execute($sql, ['registration_id' => $registrationId])->fetch('assoc');
-        if (empty($row['payload_json'])) {
-            return;
-        }
-
-        $payload = json_decode((string)$row['payload_json'], true);
-        if (!is_array($payload)) {
-            return;
-        }
-
-        $associationFields = [
-            'outpatient_actions',
-            'patient',
-            'doctor',
-            'registration',
-            'polyclinic_queue',
-        ];
-
-        foreach ($payload as $field => $value) {
-            if (in_array($field, $associationFields, true)) {
-                continue;
-            }
-
-            $visit->set($field, $value);
-        }
-    }
-
-    private function readLatestEmrMeta($visit): array
-    {
-        $registrationId = (int)($visit->registration_id ?? 0);
-        if (!$registrationId) {
-            return [];
-        }
-
-        $connection = ConnectionManager::get('default');
-        $tables = array_map('strtolower', $connection->getSchemaCollection()->listTables());
-        if (!in_array('medical_records', $tables, true)) {
-            return [];
-        }
-
-        if (!in_array('medical_record_examinations', $tables, true)) {
-            $sql = 'SELECT id AS medical_record_id,
-                    status AS medical_record_status,
-                    COALESCE(modified, created) AS last_saved
-                FROM medical_records
-                WHERE registration_id = :registration_id
-                    AND (is_delete = 0 OR is_delete IS NULL)
-                ORDER BY id DESC
-                LIMIT 1';
-
-            return $connection->execute($sql, ['registration_id' => $registrationId])->fetch('assoc') ?: [];
-        }
-
-        $sql = 'SELECT mr.id AS medical_record_id,
-                mr.status AS medical_record_status,
-                mre.id AS examination_id,
-                mre.status AS examination_status,
-                COALESCE(mre.modified, mre.created, mr.modified, mr.created) AS last_saved
-            FROM medical_records mr
-            LEFT JOIN medical_record_examinations mre
-                ON mre.medical_record_id = mr.id
-                AND (mre.is_delete = 0 OR mre.is_delete IS NULL)
-            WHERE mr.registration_id = :registration_id
-                AND (mr.is_delete = 0 OR mr.is_delete IS NULL)
-            ORDER BY mre.id DESC, mr.id DESC
-            LIMIT 1';
-
-        return $connection->execute($sql, ['registration_id' => $registrationId])->fetch('assoc') ?: [];
-    }
-
-    private function readIntegrationRows($connection, ?int $medicalRecordId): array
-    {
-        if (!$medicalRecordId || !$this->tableHasColumn($connection, 'medical_record_integrations', 'medical_record_id')) {
-            return [];
-        }
-
-        return $connection->execute(
-            'SELECT *
-            FROM medical_record_integrations
-            WHERE medical_record_id = :medical_record_id
-                AND (is_delete = 0 OR is_delete IS NULL)
-            ORDER BY COALESCE(noted_at, created) DESC, id DESC
-            LIMIT 100',
-            ['medical_record_id' => $medicalRecordId]
-        )->fetchAll('assoc');
-    }
-
-    private function currentUserData(): array
-    {
-        $identity = $this->request->getAttribute('identity');
-        if ($identity && method_exists($identity, 'getOriginalData')) {
-            $identity = $identity->getOriginalData();
-        }
-
-        if ($identity && method_exists($identity, 'toArray')) {
-            return $identity->toArray();
-        }
-
-        if (is_array($identity)) {
-            return $identity;
-        }
-
-        return [];
-    }
-
-    private function hasText($value): bool
-    {
-        return trim((string)$value) !== '';
-    }
-
-    private function saveLegacyEmrToMedicalRecord($visit, array $data, array $actionsRaw): bool
-    {
-        $registrationId = (int)($visit->registration_id ?? 0);
-        if (!$registrationId) {
-            return false;
-        }
-
-        $connection = ConnectionManager::get('default');
-
-        return (bool)$connection->transactional(function () use ($connection, $registrationId, $data, $actionsRaw) {
-            $medicalRecordId = $this->findOrCreateMedicalRecordId($connection, $registrationId);
-            if (!$medicalRecordId) {
-                return false;
-            }
-
-            $payload = $this->buildLegacyEmrPayload($data, $actionsRaw);
-            $payloadJson = json_encode($payload, JSON_UNESCAPED_UNICODE);
-            $examination = [
-                'medical_record_id' => $medicalRecordId,
-                'status' => 'Draft',
-                'note' => $this->buildLegacyEmrNote($payload),
-                'payload_json' => $payloadJson,
-                'is_create' => 1,
-                'is_update' => 0,
-                'is_delete' => 0,
-                'is_active' => 'Y',
-                'created' => date('Y-m-d H:i:s'),
-            ];
-
-            if (!$this->saveOrUpdateLatestDraftDetail($connection, 'medical_record_examinations', $examination)) {
-                return false;
-            }
-
-            if (!empty($data['prescription_notes'])) {
-                $this->saveOrUpdateLatestDraftDetail($connection, 'medical_record_prescriptions', [
-                    'medical_record_id' => $medicalRecordId,
-                    'status' => 'Draft',
-                    'note' => trim((string)$data['prescription_notes']),
-                    'is_create' => 1,
-                    'is_update' => 0,
-                    'is_delete' => 0,
-                    'is_active' => 'Y',
-                    'created' => date('Y-m-d H:i:s'),
-                ]);
-            }
-
-            $hasReferral = !empty($data['referral_note'])
-                || !empty($data['referral_polyclinic'])
-                || !empty($data['referral_doctor']);
-
-            if ($hasReferral) {
-                $this->saveOrUpdateLatestDraftDetail($connection, 'medical_record_referrals', [
-                    'medical_record_id' => $medicalRecordId,
-                    'referral_type' => trim((string)($data['referral_polyclinic'] ?? '')),
-                    'note' => trim((string)($data['referral_note'] ?? $data['referral_doctor'] ?? '')),
-                    'status' => 'Draft',
-                    'is_create' => 1,
-                    'is_update' => 0,
-                    'is_delete' => 0,
-                    'is_active' => 'Y',
-                    'created' => date('Y-m-d H:i:s'),
-                ]);
-            }
-
-            return true;
-        });
-    }
-
-    private function findOrCreateMedicalRecordId($connection, int $registrationId): ?int
-    {
-        $row = $connection->execute(
-            'SELECT id FROM medical_records
-            WHERE registration_id = :registration_id
-                AND (is_delete = 0 OR is_delete IS NULL)
-            ORDER BY id DESC
-            LIMIT 1',
-            ['registration_id' => $registrationId]
-        )->fetch('assoc');
-
-        if (!empty($row['id'])) {
-            return (int)$row['id'];
-        }
-
-        $connection->insert('medical_records', [
-            'registration_id' => $registrationId,
-            'status' => 'Draft',
-            'is_create' => 1,
-            'is_update' => 0,
-            'is_delete' => 0,
-            'is_active' => 'Y',
-            'created' => date('Y-m-d H:i:s'),
+        $this->request->allowMethod(['post']);
+    
+        $this->loadModel('OutpatientBillings');
+        $this->loadModel('OutpatientBillingItems');
+    
+        $visit = $this->OutpatientVisits->get($id, [
+            'contain' => [
+                'Patients',
+                'Doctors',
+                'Registrations',
+                'OutpatientActions',
+            ],
         ]);
-
-        return (int)$connection->execute('SELECT LAST_INSERT_ID() AS id')->fetch('assoc')['id'];
-    }
-
-    private function buildLegacyEmrPayload(array $data, array $actionsRaw): array
-    {
-        $fields = [
-                'allergy', 'referral_polyclinic', 'referral_doctor', 'referral_date', 'referral_time',
-                'referral_queue_no', 'praktek2', 'referral_inpatient', 'inpatient_referral_no', 'referral_note',
-            'bpjs_control_date', 'bpjs_control_notes', 'bpjs_control_plan', 'skdp_notes',
-            'diagnosis_primary', 'diagnosis_secondary', 'action_notes',
-            'pulse', 'respiratory_rate', 'blood_pressure', 'temperature', 'oxygen_saturation',
-            'pain_scale', 'weight', 'height', 'bmi', 'bmi_category',
-            'chief_complaint', 'illness_history', 'admission_diagnosis',
-            'prescription_notes', 'doctor_notes', 'total_fee',
-        ];
-
-        $payload = [];
-        foreach ($fields as $field) {
-            if (array_key_exists($field, $data)) {
-                $payload[$field] = $data[$field];
+    
+        $existing = $this->OutpatientBillings->find()
+            ->where(['outpatient_visit_id' => $visit->id])
+            ->first();
+    
+        if ($existing) {
+            $this->Flash->success('Pemeriksaan sudah selesai. Tagihan sudah ada.');
+            return $this->redirect([
+                'controller' => 'OutpatientBillings',
+                'action' => 'kasir',
+                $existing->id,
+            ]);
+        }
+    
+        $conn = $this->OutpatientBillings->getConnection();
+        $billingId = null;
+    
+        $conn->transactional(function () use ($visit, &$billingId) {
+    
+            $subtotal = 0;
+            $itemsData = [];
+    
+            foreach ($visit->outpatient_actions ?? [] as $action) {
+                $qty = (int)($action->quantity ?? 1);
+                $price = (float)($action->unit_price ?? 0);
+                $total = $qty * $price;
+    
+                if ($total <= 0) {
+                    continue;
+                }
+    
+                $subtotal += $total;
+    
+                $itemsData[] = [
+                    'item_type' => 'tindakan',
+                    'item_code' => $action->action_code ?? null,
+                    'item_name' => $action->action_name ?? 'Tindakan',
+                    'quantity' => $qty,
+                    'unit' => null,
+                    'unit_price' => $price,
+                    'total_price' => $total,
+                    'discount_amount' => 0,
+                    'final_price' => $total,
+                    'created' => date('Y-m-d H:i:s'),
+                    'modified' => date('Y-m-d H:i:s'),
+                ];
             }
-        }
-
-        foreach (['icd10_items', 'icd9_items', 'icd10_selected', 'icd10_utama', 'icd10_code', 'icd10_nama', 'icd9_selected', 'icd9_utama', 'icd9_kategori', 'icd9_code', 'icd9_nama'] as $field) {
-            if (array_key_exists($field, $data)) {
-                $payload[$field] = $data[$field];
+    
+            $billing = $this->OutpatientBillings->newEntity([
+                'billing_no' => 'RJ-' . date('YmdHis') . '-' . $visit->id,
+                'outpatient_visit_id' => $visit->id,
+                'registration_id' => $visit->registration_id ?? null,
+                'patient_id' => $visit->patient_id ?? null,
+                'doctor_id' => $visit->doctor_id ?? null,
+                'visit_date' => $visit->visit_date ?? date('Y-m-d'),
+                'polyclinic_name' => $visit->polyclinic_name ?? null,
+                'insurance_type' => $visit->insurance_type ?? 'Umum',
+                'subtotal' => $subtotal,
+                'discount_type' => 'nominal',
+                'discount_value' => 0,
+                'discount_amount' => 0,
+                'grand_total' => $subtotal,
+                'paid_amount' => 0,
+                'change_amount' => 0,
+                'status' => 'waiting_payment',
+                'created' => date('Y-m-d H:i:s'),
+                'modified' => date('Y-m-d H:i:s'),
+            ]);
+    
+            if (!$this->OutpatientBillings->save($billing)) {
+                throw new \Exception('Gagal membuat billing.');
             }
-        }
-
-        if (!empty($actionsRaw)) {
-            $payload['outpatient_actions'] = $actionsRaw;
-        }
-
-        return $payload;
-    }
-
-    private function normalizeLegacyIcdSelections(array $data): array
-    {
-        $icd10Items = $this->buildIcdItems(
-            (array)($data['icd10_code'] ?? []),
-            (array)($data['icd10_nama'] ?? []),
-            [],
-            (string)($data['icd10_utama'] ?? '')
-        );
-
-        $icd9Items = $this->buildIcdItems(
-            (array)($data['icd9_code'] ?? []),
-            (array)($data['icd9_nama'] ?? []),
-            (array)($data['icd9_kategori'] ?? []),
-            (string)($data['icd9_utama'] ?? '')
-        );
-
-        if (!empty($icd10Items)) {
-            $data['icd10_items'] = $icd10Items;
-            $primary = $this->firstPrimaryIcdItem($icd10Items);
-            if (!$this->hasText($data['diagnosis_primary'] ?? null)) {
-                $data['diagnosis_primary'] = $this->formatIcdItemLabel($primary);
+    
+            $billingId = $billing->id;
+    
+            foreach ($itemsData as $row) {
+                $row['billing_id'] = $billing->id;
+                $item = $this->OutpatientBillingItems->newEntity($row);
+    
+                if (!$this->OutpatientBillingItems->save($item)) {
+                    throw new \Exception('Gagal menyimpan item billing.');
+                }
             }
-            if (!$this->hasText($data['diagnosis_desc'] ?? null)) {
-                $data['diagnosis_desc'] = $primary['nama'] ?? null;
+    
+            $visit->status = 'done';
+            $visit->end_time = date('Y-m-d H:i:s');
+    
+            if (!$this->OutpatientVisits->save($visit)) {
+                throw new \Exception('Gagal update status pemeriksaan.');
             }
-        }
-
-        if (!empty($icd9Items)) {
-            $data['icd9_items'] = $icd9Items;
-        }
-
-        return $data;
-    }
-
-    private function buildIcdItems(array $codes, array $names, array $categories, string $primaryIndex): array
-    {
-        $items = [];
-
-        foreach ($codes as $index => $code) {
-            $code = trim((string)$code);
-            $name = trim((string)($names[$index] ?? ''));
-
-            if ($code === '' && $name === '') {
-                continue;
-            }
-
-            $items[] = [
-                'kode' => $code,
-                'nama' => $name,
-                'kategori' => trim((string)($categories[$index] ?? '')),
-                'utama' => (string)$index === $primaryIndex,
-            ];
-        }
-
-        if (!empty($items) && !in_array(true, array_column($items, 'utama'), true)) {
-            $items[0]['utama'] = true;
-        }
-
-        return $items;
-    }
-
-    private function firstPrimaryIcdItem(array $items): array
-    {
-        foreach ($items as $item) {
-            if (!empty($item['utama'])) {
-                return $item;
-            }
-        }
-
-        return $items[0] ?? [];
-    }
-
-    private function formatIcdItemLabel(array $item): ?string
-    {
-        $code = trim((string)($item['kode'] ?? ''));
-        $name = trim((string)($item['nama'] ?? ''));
-
-        if ($code !== '' && $name !== '') {
-            return $code . ' - ' . $name;
-        }
-
-        return $code !== '' ? $code : ($name !== '' ? $name : null);
-    }
-
-    private function buildLegacyEmrNote(array $payload): string
-    {
-        $blocks = [
-            'Keluhan Awal' => $payload['chief_complaint'] ?? null,
-            'Pemeriksaan' => $payload['illness_history'] ?? null,
-            'Diagnosa Saat Masuk' => $payload['admission_diagnosis'] ?? null,
-            'Diagnosa Utama' => $payload['diagnosis_primary'] ?? null,
-            'Diagnosa Sekunder' => $payload['diagnosis_secondary'] ?? null,
-            'Tindakan Utama' => $payload['action_notes'] ?? null,
-            'Obat / Resep' => $payload['prescription_notes'] ?? null,
-            'Saran / Anjuran' => $payload['doctor_notes'] ?? null,
-            'Alergi' => $payload['allergy'] ?? null,
-        ];
-
-        $vitals = [
-            'Tekanan darah' => $payload['blood_pressure'] ?? null,
-            'Nadi' => $payload['pulse'] ?? null,
-            'Respirasi' => $payload['respiratory_rate'] ?? null,
-            'Suhu' => $payload['temperature'] ?? null,
-            'SpO2' => $payload['oxygen_saturation'] ?? null,
-            'BB' => $payload['weight'] ?? null,
-            'TB' => $payload['height'] ?? null,
-            'Skala nyeri' => $payload['pain_scale'] ?? null,
-        ];
-
-        $lines = ['EMR Rawat Jalan'];
-        foreach ($vitals as $label => $value) {
-            $value = trim((string)$value);
-            if ($value !== '') {
-                $lines[] = $label . ': ' . $value;
-            }
-        }
-
-        foreach ($blocks as $label => $value) {
-            $value = trim((string)$value);
-            if ($value !== '') {
-                $lines[] = "\n" . $label . ":\n" . $value;
-            }
-        }
-
-        if (!empty($payload['icd10_items']) && is_array($payload['icd10_items'])) {
-            $lines[] = "\nICD-10:\n" . $this->formatIcdItemsForNote($payload['icd10_items']);
-        }
-
-        if (!empty($payload['icd9_items']) && is_array($payload['icd9_items'])) {
-            $lines[] = "\nICD-9 CM:\n" . $this->formatIcdItemsForNote($payload['icd9_items']);
-        }
-
-        return trim(implode("\n", $lines));
-    }
-
-    private function formatIcdItemsForNote(array $items): string
-    {
-        $lines = [];
-
-        foreach ($items as $item) {
-            if (!is_array($item)) {
-                continue;
-            }
-
-            $label = $this->formatIcdItemLabel($item);
-            if ($label === null) {
-                continue;
-            }
-
-            $lines[] = !empty($item['utama']) ? '* ' . $label : '- ' . $label;
-        }
-
-        return implode("\n", $lines);
-    }
-
-    private function filterOutpatientVisitUpdateData(array $data): array
-    {
-        $allowed = [
-            'status',
-            'start_time',
-            'end_time',
-            'total_fee',
-        ];
-
-        return array_intersect_key($data, array_flip($allowed));
-    }
-
-    private function insertSchemaAware($connection, string $table, array $data): bool
-    {
-        $tables = array_map('strtolower', $connection->getSchemaCollection()->listTables());
-        if (!in_array(strtolower($table), $tables, true)) {
-            return true;
-        }
-
-        $schema = $connection->getSchemaCollection()->describe($table);
-        $data = array_filter($data, function ($value) {
-            return $value !== null && $value !== '';
         });
-        $data = array_intersect_key($data, array_flip($schema->columns()));
-
-        if (empty($data)) {
-            return true;
-        }
-
-        if ($this->isRecentDuplicateDetail($connection, $table, $data, $schema)) {
-            return true;
-        }
-
-        return (bool)$connection->insert($table, $data);
+    
+        $this->Flash->success('Pemeriksaan selesai. Tagihan berhasil dibuat.');
+    
+        return $this->redirect([
+            'controller' => 'OutpatientBillings',
+            'action' => 'kasir',
+            $billingId,
+        ]);
     }
 
-    private function saveOrUpdateLatestDraftDetail($connection, string $table, array $data): bool
-    {
-        $tables = array_map('strtolower', $connection->getSchemaCollection()->listTables());
-        if (!in_array(strtolower($table), $tables, true)) {
-            return true;
-        }
-
-        $schema = $connection->getSchemaCollection()->describe($table);
-        if (empty($data['medical_record_id']) || !$schema->hasColumn('medical_record_id')) {
-            return true;
-        }
-
-        $statusCondition = $schema->hasColumn('status')
-            ? ' AND (`status` = :status OR `status` IS NULL)'
-            : '';
-        $deleteCondition = $schema->hasColumn('is_delete')
-            ? ' AND (`is_delete` = 0 OR `is_delete` IS NULL)'
-            : '';
-        $params = [
-            'medical_record_id' => (int)$data['medical_record_id'],
-        ];
-        if ($schema->hasColumn('status')) {
-            $params['status'] = $data['status'] ?? 'Draft';
-        }
-
-        $sql = 'SELECT `id` FROM `' . $table . '`
-            WHERE `medical_record_id` = :medical_record_id
-                ' . $statusCondition . '
-                ' . $deleteCondition . '
-            ORDER BY `id` DESC
-            LIMIT 1';
-        $existing = $connection->execute($sql, $params)->fetch('assoc');
-
-        if (!$existing) {
-            return $this->insertSchemaAware($connection, $table, $data);
-        }
-
-        $update = $data;
-        unset($update['id'], $update['medical_record_id'], $update['created'], $update['is_create']);
-        $update['is_update'] = 1;
-        $update['modified'] = date('Y-m-d H:i:s');
-        $update = array_filter($update, function ($value) {
-            return $value !== null && $value !== '';
-        });
-        $update = array_intersect_key($update, array_flip($schema->columns()));
-
-        if (empty($update)) {
-            return true;
-        }
-
-        return (bool)$connection->update($table, $update, ['id' => (int)$existing['id']]);
+    public function hasilPemeriksaan($id = null)
+{
+    if (empty($id)) {
+        $this->Flash->error(__('ID kunjungan tidak ditemukan.'));
+        return $this->redirect(['action' => 'index']);
     }
 
-    private function isRecentDuplicateDetail($connection, string $table, array $data, $schema): bool
-    {
-        if (empty($data['medical_record_id']) || !$schema->hasColumn('created')) {
-            return false;
-        }
+    $visit = $this->OutpatientVisits->get($id, [
+        'contain' => [
+            'Patients',
+            'Doctors',
+            'Registrations',
+            'OutpatientActions',
+        ],
+    ]);
 
-        $compareColumn = null;
-        if (!empty($data['payload_json']) && $schema->hasColumn('payload_json')) {
-            $compareColumn = 'payload_json';
-        } elseif (!empty($data['note']) && $schema->hasColumn('note')) {
-            $compareColumn = 'note';
-        }
-
-        if ($compareColumn === null) {
-            return false;
-        }
-
-        $conditions = [
-            'medical_record_id' => (int)$data['medical_record_id'],
-            'compare_value' => (string)$data[$compareColumn],
-        ];
-
-        $deleteCondition = $schema->hasColumn('is_delete')
-            ? ' AND (`is_delete` = 0 OR `is_delete` IS NULL)'
-            : '';
-
-        $sql = 'SELECT id FROM `' . $table . '`
-            WHERE `medical_record_id` = :medical_record_id
-                AND `' . $compareColumn . '` = :compare_value
-                ' . $deleteCondition . '
-                AND `created` >= DATE_SUB(NOW(), INTERVAL 30 SECOND)
-            ORDER BY `id` DESC
-            LIMIT 1';
-
-        return (bool)$connection->execute($sql, $conditions)->fetch('assoc');
-    }
-
-    private function tableHasColumn($connection, string $table, string $column): bool
-    {
-        $tables = array_map('strtolower', $connection->getSchemaCollection()->listTables());
-        if (!in_array(strtolower($table), $tables, true)) {
-            return false;
-        }
-
-        return $connection->getSchemaCollection()->describe($table)->hasColumn($column);
-    }
+    $this->set(compact('visit'));
+}
 }

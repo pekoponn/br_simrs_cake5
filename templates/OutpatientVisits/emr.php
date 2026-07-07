@@ -2,12 +2,10 @@
 /**
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\OutpatientVisit $visit
- * @var array $emrMeta
  */
 $p = $visit->patient;
 $d = $visit->doctor;
 $isDone = in_array($visit->status, ['done', 'cancelled']);
-$emrMeta = $emrMeta ?? [];
 
 $patientBirthDate = '-';
 if (!empty($p->birth_date)) {
@@ -18,29 +16,15 @@ if (!empty($p->birth_date)) {
     }
 }
 
-$formatDateTime = function ($value): string {
-    if (empty($value)) {
-        return '-';
-    }
-
-    if (is_object($value) && method_exists($value, 'format')) {
-        return $value->format('d-m-Y H:i');
-    }
-
-    return date('d-m-Y H:i', strtotime((string)$value));
-};
-
+// Poliklinik untuk konsul/rujuk memakai AJAX supaya dropdown tidak memuat data terlalu banyak.
+// Nomor Surat Pengantar Rawat Inap otomatis dan readonly.
+// Untuk sementara dibuat dari ID kunjungan + tanggal; nanti bisa disimpan ke field khusus jika sudah disiapkan.
 $inpatientReferralNo = $visit->inpatient_referral_no
     ?? $visit->referral_inpatient_letter_no
     ?? ('SPRI-' . date('Ymd') . '-' . str_pad((string)($visit->id ?? 0), 5, '0', STR_PAD_LEFT));
 
-$referralTime = $visit->referral_time ?? date('H:i');
-if (is_object($referralTime) && method_exists($referralTime, 'format')) {
-    $referralTime = $referralTime->format('H:i');
-} else {
-    $referralTime = substr((string)$referralTime, 0, 5);
-}
-
+// ID registrasi untuk membuka halaman E-Order.
+// Prioritas: registration_id dari outpatient_visit, lalu relasi registration->id, terakhir fallback visit id.
 $orderRegistrationId = $visit->registration_id
     ?? ($visit->registration->id ?? null);
 
@@ -48,7 +32,6 @@ $orderRegistrationNo = $visit->registration_no
     ?? ($visit->registration->registration_no ?? null)
     ?? ($visit->registration->registration_number ?? null);
 ?>
-
 
 <?= $this->Krs->breadcrumb('Outpatient Visits', 'EMR — Pemeriksaan Pasien') ?>
 
@@ -67,11 +50,6 @@ $orderRegistrationNo = $visit->registration_no
                  'data-toggle' => 'tooltip', 'title' => 'Catatan Perkembangan Pasien']
             ) ?>
             <?= $this->Html->link(
-                '<i class="fa fa-history"></i> Riwayat Rekam Medis',
-                ['controller' => 'MedicalRecords', 'action' => 'history', $visit->patient_id],
-                ['escape' => false, 'class' => 'btn btn-info btn-sm']
-            ) ?>
-            <?= $this->Html->link(
                 '<i class="fa fa-arrow-left"></i> Kembali',
                 ['action' => 'index'],
                 ['escape' => false, 'class' => 'btn btn-default btn-sm']
@@ -80,13 +58,6 @@ $orderRegistrationNo = $visit->registration_no
     </div>
 
    <!-- ── Info Pasien ── -->
-    <div class="alert alert-info" style="padding:8px 12px; font-size:12px; margin-bottom:10px;">
-        <strong>Status EMR:</strong> <?= h($emrMeta['examination_status'] ?? $emrMeta['medical_record_status'] ?? 'Draft') ?>
-        <span style="margin-left:14px;"><strong>Medical Record:</strong> <?= !empty($emrMeta['medical_record_id']) ? '#' . h($emrMeta['medical_record_id']) : '-' ?></span>
-        <span style="margin-left:14px;"><strong>Catatan EMR:</strong> <?= !empty($emrMeta['examination_id']) ? '#' . h($emrMeta['examination_id']) : 'Belum ada' ?></span>
-        <span style="margin-left:14px;"><strong>Terakhir disimpan:</strong> <?= h($formatDateTime($emrMeta['last_saved'] ?? null)) ?></span>
-    </div>
-
 <div class="panel panel-default" style="margin-bottom:8px;">
     <div class="panel-body" style="padding:8px 10px; background:#f8f9fa; font-size:12px;">
 
@@ -212,31 +183,12 @@ $orderRegistrationNo = $visit->registration_no
                         <tbody id="actions-body">
                             <?php if (!empty($visit->outpatient_actions)): ?>
                                 <?php foreach ($visit->outpatient_actions as $i => $action): ?>
-                                    <?php
-                                    $actionValue = static function ($item, string $field, $default = null) {
-                                        if (is_array($item)) {
-                                            return $item[$field] ?? $default;
-                                        }
-
-                                        if (is_object($item)) {
-                                            return $item->{$field} ?? $default;
-                                        }
-
-                                        return $default;
-                                    };
-                                    $actionCode = $actionValue($action, 'action_code', '');
-                                    $actionName = $actionValue($action, 'action_name', '');
-                                    $actionCategory = $actionValue($action, 'action_category', '');
-                                    $actionNotes = $actionValue($action, 'notes', '');
-                                    $actionQuantity = (int)$actionValue($action, 'quantity', 1);
-                                    $actionUnitPrice = (float)$actionValue($action, 'unit_price', 0);
-                                    ?>
                                     <tr class="action-row">
                                         <td>
                                             <input type="text"
                                                    name="outpatient_actions[<?= $i ?>][action_code]"
                                                    class="form-control input-sm"
-                                                   value="<?= h($actionCode) ?>"
+                                                   value="<?= h($action->action_code ?? '') ?>"
                                                    placeholder="Kode..."
                                                    <?= $isDone ? 'readonly' : '' ?>>
                                         </td>
@@ -244,22 +196,22 @@ $orderRegistrationNo = $visit->registration_no
                                             <input type="text"
                                                    name="outpatient_actions[<?= $i ?>][action_name]"
                                                    class="form-control input-sm action-name"
-                                                   value="<?= h($actionName) ?>"
+                                                   value="<?= h($action->action_name) ?>"
                                                    placeholder="Ketik nama tindakan..."
                                                    autocomplete="off"
                                                    <?= $isDone ? 'readonly' : 'required' ?>>
                                             <input type="hidden"
                                                    name="outpatient_actions[<?= $i ?>][action_category]"
-                                                   value="<?= h($actionCategory) ?>">
+                                                   value="<?= h($action->action_category ?? '') ?>">
                                             <input type="hidden"
                                                    name="outpatient_actions[<?= $i ?>][notes]"
-                                                   value="<?= h($actionNotes) ?>">
+                                                   value="<?= h($action->notes ?? '') ?>">
                                         </td>
                                         <td>
                                             <input type="number"
                                                    name="outpatient_actions[<?= $i ?>][quantity]"
                                                    class="form-control input-sm action-qty"
-                                                   value="<?= $actionQuantity ?>"
+                                                   value="<?= (int)($action->quantity ?? 1) ?>"
                                                    min="1"
                                                    style="text-align:center; -moz-appearance:textfield;"
                                                    <?= $isDone ? 'readonly' : '' ?>>
@@ -268,29 +220,29 @@ $orderRegistrationNo = $visit->registration_no
                                             <?php if (!$isDone): ?>
                                                 <input type="text"
                                                        class="form-control input-sm action-unit-price-display"
-                                                       value="<?= number_format($actionUnitPrice, 0, ',', '.') ?>"
+                                                       value="<?= number_format((float)($action->unit_price ?? 0), 0, ',', '.') ?>"
                                                        readonly
                                                        style="text-align:right; background:#f0f0f0; cursor:default; color:#333;">
                                                 <input type="hidden"
                                                        name="outpatient_actions[<?= $i ?>][unit_price]"
                                                        class="action-unit-price"
-                                                       value="<?= $actionUnitPrice ?>">
+                                                       value="<?= (float)($action->unit_price ?? 0) ?>">
                                             <?php else: ?>
                                                 <input type="text"
                                                        class="form-control input-sm"
-                                                       value="<?= number_format($actionUnitPrice, 0, ',', '.') ?>"
+                                                       value="<?= number_format((float)($action->unit_price ?? 0), 0, ',', '.') ?>"
                                                        readonly
                                                        style="text-align:right; background:#f5f5f5;">
                                                 <input type="hidden"
                                                        name="outpatient_actions[<?= $i ?>][unit_price]"
-                                                       value="<?= $actionUnitPrice ?>">
+                                                       value="<?= (float)($action->unit_price ?? 0) ?>">
                                             <?php endif; ?>
                                         </td>
                                         <td>
                                             <input type="text"
                                                    class="form-control input-sm action-total"
                                                    readonly
-                                                   value="<?= number_format($actionUnitPrice * $actionQuantity, 0, ',', '.') ?>"
+                                                   value="<?= number_format((float)(($action->unit_price ?? 0) * ($action->quantity ?? 1)), 0, ',', '.') ?>"
                                                    style="background:#f5f5f5; text-align:right;">
                                         </td>
                                         <?php if (!$isDone): ?>
@@ -342,7 +294,7 @@ $orderRegistrationNo = $visit->registration_no
             <!-- Tombol aksi utama kiri (posisi disesuaikan seperti SIMRS client) -->
             <div class="row" style="margin-bottom:18px;">
                 <div class="col-xs-4">
-                    <?php if (!empty($orderRegistrationId)): ?>
+                <?php if (!empty($orderRegistrationId)): ?>
                         <?= $this->Html->link(
                             '<i class="fa fa-flask"></i> ORDER LAB/RADIO/RESEP',
                             [
@@ -594,33 +546,10 @@ $orderRegistrationNo = $visit->registration_no
 
                 <div class="col-md-4">
                     <label>Jam</label>
-                    <div class="input-group referral-clock-wrap">
-                        <input type="text"
-                               name="referral_time"
-                               id="referral-time-picker"
-                               class="form-control input-sm referral-clockpicker"
-                               value="<?= h($referralTime) ?>"
-                               autocomplete="off"
-                               <?= $isDone ? 'readonly' : '' ?>>
-                        <span class="input-group-addon">
-                            <i class="fa fa-clock"></i>
-                        </span>
-                        <div id="referral-clock-panel" class="referral-clock-panel">
-                            <div class="referral-clock-display">
-                                <button type="button" class="clock-display-part active" data-mode="hour" id="clock-display-hour">00</button>
-                                <span>:</span>
-                                <button type="button" class="clock-display-part" data-mode="minute" id="clock-display-minute">00</button>
-                            </div>
-                            <div class="referral-clock-face" id="referral-clock-face">
-                                <div class="clock-hand" id="referral-clock-hand"></div>
-                                <div class="clock-center"></div>
-                            </div>
-                            <div class="referral-clock-actions">
-                                <button type="button" class="btn btn-xs btn-default" id="clock-cancel">Batal</button>
-                                <button type="button" class="btn btn-xs btn-primary" id="clock-ok">OK</button>
-                            </div>
-                        </div>
-                    </div>
+                    <input type="time"
+                           name="referral_time"
+                           class="form-control input-sm"
+                           value="<?= h($visit->referral_time ?? date('H:i')) ?>">
                 </div>
 
                 <div class="col-md-4">
@@ -691,6 +620,7 @@ $orderRegistrationNo = $visit->registration_no
                        readonly
                        style="background:#f5f5f5; font-weight:600; cursor:not-allowed;">
             </div>
+
 
             <button type="button"
                     class="btn btn-default btn-block">
@@ -852,7 +782,7 @@ $orderRegistrationNo = $visit->registration_no
                             <input type="text" name="diagnosis_primary" class="form-control input-sm"
                                    value="<?= h($visit->diagnosis_primary ?? '') ?>"
                                    placeholder="Diagnosa utama..."
-                                   <?= $isDone ? 'readonly' : 'required' ?>>
+                                   <?= $isDone ? 'readonly' : '' ?>>
                         </div>
                         <div class="col-xs-6">
                             <label style="font-size:11px; color:#555;">Tindakan Utama</label>
@@ -935,11 +865,6 @@ $orderRegistrationNo = $visit->registration_no
                                     $icd10Items = is_string($visit->icd10_items)
                                         ? json_decode($visit->icd10_items, true) ?? []
                                         : (array)$visit->icd10_items;
-                                } elseif (!empty($visit->diagnosis_primary)) {
-                                    $icd10Items = [[
-                                        'kode' => $visit->diagnosis_primary,
-                                        'nama' => $visit->diagnosis_desc ?? '',
-                                    ]];
                                 }
                                 ?>
                                 <?php foreach ($icd10Items as $idx => $item): ?>
@@ -1058,12 +983,6 @@ $orderRegistrationNo = $visit->registration_no
                                     $icd9Items = is_string($visit->icd9_items)
                                         ? json_decode($visit->icd9_items, true) ?? []
                                         : (array)$visit->icd9_items;
-                                } elseif (!empty($visit->diagnosis_secondary)) {
-                                    $icd9Items = [[
-                                        'kode'     => $visit->diagnosis_secondary,
-                                        'nama'     => $visit->diagnosis_secondary,
-                                        'kategori' => '',
-                                    ]];
                                 }
                                 ?>
                                 <?php foreach ($icd9Items as $idx => $item): ?>
@@ -1152,15 +1071,29 @@ $orderRegistrationNo = $visit->registration_no
             </div>
 
             <div class="col-md-2 col-xs-6" style="margin-bottom:5px;">
-                <button type="button" class="btn btn-success btn-sm btn-block">
+                <button type="button"
+                        class="btn btn-success btn-sm btn-block btn-hasil-pemeriksaan-emr"
+                        data-noreg="<?= h($visit->registration_no ?? '-') ?>"
+                        data-rekmed="<?= h($p->code ?? '-') ?>"
+                        data-nama="<?= h($p->full_name ?? '-') ?>"
+                        data-dokter="<?= h($d->doctor_name ?? '-') ?>"
+                        data-tanggal="<?= !empty($visit->visit_date) && is_object($visit->visit_date) ? $visit->visit_date->format('d-m-Y') : h($visit->visit_date ?? '-') ?>"
+                        data-hasil="<?= h(trim((string)($visit->illness_history ?? $visit->doctor_notes ?? $visit->diagnosis_primary ?? '')) ?: '-') ?>">
                     <i class="fa fa-stethoscope"></i> HASIL PEMERIKSAAN
                 </button>
             </div>
 
             <div class="col-md-2 col-xs-6" style="margin-bottom:5px;">
-                <button type="button" class="btn btn-danger btn-sm btn-block">
-                    <i class="fa fa-check-circle"></i> SELESAI PERIKSA
-                </button>
+            <button type="button"
+                    id="btn-selesai-periksa"
+                    class="btn btn-danger btn-sm btn-block"
+                    data-url="<?= $this->Url->build([
+                        'controller' => 'OutpatientVisits',
+                        'action' => 'selesaiPeriksa',
+                        $visit->id
+                    ]) ?>">
+                <i class="fa fa-check-circle"></i> SELESAI PERIKSA
+            </button>
             </div>
 
             <div class="col-md-2 col-xs-6" style="margin-bottom:5px;">
@@ -1308,7 +1241,7 @@ $orderRegistrationNo = $visit->registration_no
                     <textarea name="chief_complaint" class="form-control" rows="3"
                               style="font-size:12px; resize:none;"
                               placeholder="Keluhan utama yang disampaikan pasien..."
-                              <?= $isDone ? 'readonly' : 'required' ?>><?= h($visit->chief_complaint ?? '') ?></textarea>
+                              <?= $isDone ? 'readonly' : '' ?>><?= h($visit->chief_complaint ?? '') ?></textarea>
                 </div>
             </div>
 
@@ -1371,6 +1304,92 @@ $orderRegistrationNo = $visit->registration_no
 
     <?= $this->Form->end() ?>
 
+</div>
+
+
+<!-- ── POPUP HASIL PEMERIKSAAN EMR ── -->
+<div class="modal fade" id="modal-hasil-pemeriksaan-emr" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-hasil-dialog" role="document">
+        <div class="modal-content hasil-window">
+            <div class="hasil-title">
+                <span><i class="fa fa-list"></i> VIEW HASIL PEMERIKSAAN</span>
+                <button type="button" class="hasil-close" data-dismiss="modal" aria-label="Close">&times;</button>
+            </div>
+
+            <div class="hasil-body">
+                <div class="row hasil-row">
+                    <label class="col-xs-2">No. Registrasi</label>
+                    <div class="col-xs-3">
+                        <input type="text" id="emr-hp-noreg" class="form-control input-sm" readonly>
+                    </div>
+
+                    <label class="col-xs-1">Rekmed</label>
+                    <div class="col-xs-2">
+                        <input type="text" id="emr-hp-rekmed" class="form-control input-sm" readonly>
+                    </div>
+
+                    <label class="col-xs-1">View By</label>
+                    <div class="col-xs-3 hasil-radio">
+                        <label><input type="radio" name="emr_hp_view_by" value="noreg" checked> Noreg</label>
+                        <label><input type="radio" name="emr_hp_view_by" value="rekmed"> Rekmed</label>
+                    </div>
+                </div>
+
+                <div class="row hasil-row">
+                    <label class="col-xs-2">Nama Pasien</label>
+                    <div class="col-xs-6">
+                        <input type="text" id="emr-hp-nama" class="form-control input-sm" readonly>
+                    </div>
+                </div>
+
+                <div class="row hasil-row">
+                    <label class="col-xs-2">Hasil Pemeriksaan</label>
+                    <div class="col-xs-5 hasil-radio">
+                        <label><input type="radio" name="emr_hp_jenis" value="laboratorium" checked> Laboratorium</label>
+                        <label><input type="radio" name="emr_hp_jenis" value="radiologi"> Radiologi</label>
+                        <label><input type="radio" name="emr_hp_jenis" value="penunjang"> Penunjang</label>
+                    </div>
+
+                    <div class="col-xs-5 text-right hasil-actions">
+                        <button type="button" class="btn btn-xs btn-default">
+                            <i class="fa fa-cog"></i> Proses
+                        </button>
+                        <button type="button" class="btn btn-xs btn-default">
+                            hasil dari upload
+                        </button>
+                        <button type="button" class="btn btn-xs btn-default" data-dismiss="modal">
+                            <i class="fa fa-sign-out-alt"></i> KELUAR
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive hasil-table-wrap">
+                    <table class="table table-bordered hasil-table">
+                        <thead>
+                            <tr>
+                                <th style="width:150px;">No. Pemeriksaan</th>
+                                <th style="width:120px;">Tanggal</th>
+                                <th>Hasil</th>
+                                <th style="width:170px;">Nama Dokter</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td id="emr-hp-no-pemeriksaan"></td>
+                                <td id="emr-hp-tanggal"></td>
+                                <td id="emr-hp-hasil"></td>
+                                <td id="emr-hp-dokter"></td>
+                            </tr>
+                            <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+                            <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+                            <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+                            <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- ══════════════════════════════════════════════
@@ -1446,6 +1465,50 @@ $orderRegistrationNo = $visit->registration_no
     margin-top:0;
 }
 
+.poly-dd-item {
+    padding:7px 10px;
+    cursor:pointer;
+    border-bottom:1px solid #f0f0f0;
+}
+.poly-dd-item:hover {
+    background:#e8f0fe;
+}
+.poly-dd-name {
+    font-weight:600;
+    color:#1e3a5f;
+}
+.poly-dd-empty,
+.poly-dd-loading {
+    padding:10px;
+    text-align:center;
+    color:#888;
+    font-size:12px;
+}
+
+.doctor-dd-item {
+    padding:7px 10px;
+    cursor:pointer;
+    border-bottom:1px solid #f0f0f0;
+}
+.doctor-dd-item:hover {
+    background:#e8f0fe;
+}
+.doctor-dd-name {
+    font-weight:600;
+    color:#1e3a5f;
+}
+.doctor-dd-meta,
+.doctor-dd-empty,
+.doctor-dd-loading {
+    padding:10px;
+    color:#888;
+    font-size:12px;
+}
+.doctor-dd-empty,
+.doctor-dd-loading {
+    text-align:center;
+}
+
 /* Hilangkan spinner qty */
 input.action-qty::-webkit-outer-spin-button,
 input.action-qty::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
@@ -1480,121 +1543,82 @@ input.action-unit-price-display:focus {
 #tindakan-dropdown .dd-empty { padding: 12px; text-align: center; color: #aaa; font-size: 12px; }
 #tindakan-dropdown .dd-loading { padding: 12px; text-align: center; color: #888; font-size: 12px; }
 #tindakan-dropdown .dd-error { padding: 10px 12px; color: #721c24; background: #f8d7da; font-size: 11px; }
-.poly-dd-item,
-.doctor-dd-item {
-    padding: 8px 10px;
-    cursor: pointer;
-    border-bottom: 1px solid #f0f0f0;
+
+/* Popup Hasil Pemeriksaan EMR */
+.modal-hasil-dialog {
+    width: 760px;
+    max-width: 95%;
+    margin-top: 90px;
 }
-.poly-dd-item:hover,
-.doctor-dd-item:hover {
-    background: #eef4ff;
+.hasil-window {
+    border: 1px solid #5b78a5;
+    background: #dfe8f7;
+    box-shadow: 0 3px 12px rgba(0,0,0,.25);
+    border-radius: 2px;
 }
-.poly-dd-name,
-.doctor-dd-name {
+.hasil-title {
+    background: #2c64b7;
+    color: #fff;
+    padding: 5px 8px;
+    font-size: 12px;
     font-weight: 700;
-    color: #1e3a5f;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
-.poly-dd-empty,
-.doctor-dd-empty,
-.poly-dd-loading,
-.doctor-dd-loading {
-    padding: 12px;
-    text-align: center;
-    color: #777;
+.hasil-close {
+    border: 0;
+    background: transparent;
+    color: #fff;
+    font-size: 18px;
+    line-height: 18px;
+    padding: 0 4px;
+    opacity: 1;
+}
+.hasil-body {
+    padding: 10px;
     font-size: 12px;
 }
-.referral-clock-wrap {
-    position: relative;
+.hasil-row {
+    margin-bottom: 6px;
 }
-.referral-clock-panel {
-    display: none;
-    position: absolute;
-    top: 38px;
-    left: -92px;
-    width: 320px;
-    background: #fff;
-    border: 1px solid #d8dee6;
-    border-radius: 6px;
-    box-shadow: 0 10px 28px rgba(0,0,0,.18);
-    z-index: 20000;
-    overflow: hidden;
+.hasil-row label {
+    font-size: 12px;
+    font-weight: 600;
+    padding-top: 4px;
 }
-.referral-clock-panel.open {
-    display: block;
+.hasil-radio label {
+    margin-right: 10px;
+    font-weight: 500;
 }
-.referral-clock-display {
-    padding: 16px 10px;
+.hasil-actions .btn {
+    margin-left: 3px;
+}
+.hasil-table-wrap {
+    max-height: 250px;
+    overflow: auto;
+    border: 1px solid #9eb2d1;
+    background: #eef3ff;
+}
+.hasil-table {
+    background: #eef3ff;
+    margin: 0;
+    font-size: 12px;
+}
+.hasil-table th {
+    background: #c8d8f0 !important;
     text-align: center;
-    font-size: 34px;
     font-weight: 700;
-    color: #8a9199;
-    background: #fff;
+    padding: 5px;
+    color: #1f2937;
 }
-.clock-display-part {
-    border: 0;
-    background: transparent;
-    color: #8a9199;
-    font: inherit;
-    padding: 0 2px;
-}
-.clock-display-part.active {
-    color: #00acac;
-}
-.referral-clock-face {
-    position: relative;
-    width: 260px;
-    height: 260px;
-    margin: 12px auto 18px;
-    border: 1px solid #d1d5db;
-    border-radius: 50%;
-    background: #fff;
-}
-.clock-number {
-    position: absolute;
-    width: 34px;
+.hasil-table td {
     height: 34px;
-    margin: -17px 0 0 -17px;
-    border: 0;
-    border-radius: 50%;
-    background: transparent;
-    color: #4b5563;
-    font-size: 18px;
-    line-height: 34px;
-    text-align: center;
+    background: #f7f9ff;
+    vertical-align: top;
+    padding: 5px;
 }
-.clock-number:hover,
-.clock-number.selected {
-    background: #bfe7fb;
-    color: #1f6f8b;
-}
-.clock-hand {
-    position: absolute;
-    left: 130px;
-    top: 130px;
-    width: 2px;
-    height: 96px;
-    background: #168fd4;
-    transform-origin: 1px 0;
-    z-index: 1;
-}
-.clock-center {
-    position: absolute;
-    left: 126px;
-    top: 126px;
-    width: 8px;
-    height: 8px;
-    background: #168fd4;
-    border-radius: 50%;
-    z-index: 2;
-}
-.referral-clock-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 6px;
-    padding: 8px 10px 10px;
-    border-top: 1px solid #eef0f2;
-}
+
 </style>
 
 <script>
@@ -1628,14 +1652,15 @@ $(document).ready(function () {
         'action'     => 'searchPolyQueue',
     ])) ?>;
 
-    var DOCTOR_BY_POLY_URL = <?= json_encode($this->Url->build([
-        'controller' => 'Doctors',
-        'action'     => 'searchByPolyclinic',
-    ])) ?>;
 
     var CREATE_REFERRAL_QUEUE_URL = <?= json_encode($this->Url->build([
         'controller' => 'PolyclinicQueues',
         'action'     => 'createReferralQueue',
+    ])) ?>;
+
+    var DOCTOR_BY_POLY_URL = <?= json_encode($this->Url->build([
+        'controller' => 'Doctors',
+        'action'     => 'searchByPolyclinic',
     ])) ?>;
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -1644,131 +1669,33 @@ $(document).ready(function () {
     function escHtml(str) { return $('<div>').text(String(str || '')).html(); }
     function setDebug(msg) { $('#debug-text').text(msg); }
 
-    var clockMode = 'hour';
-    var selectedHour = 0;
-    var selectedMinute = 0;
-    var $clockPanel = $('#referral-clock-panel');
-    var $clockFace = $('#referral-clock-face');
-    var $clockHand = $('#referral-clock-hand');
-    var $clockInput = $('#referral-time-picker');
 
-    function padClock(value) {
-        value = parseInt(value, 10) || 0;
-        return value < 10 ? '0' + value : String(value);
-    }
+    // ── Popup Hasil Pemeriksaan EMR ─────────────────────────────────────────
+    $(document).on('click', '.btn-hasil-pemeriksaan-emr', function (e) {
+        e.preventDefault();
 
-    function parseClockValue() {
-        var value = $.trim($clockInput.val() || '');
-        var match = value.match(/^(\d{1,2}):(\d{1,2})/);
-        selectedHour = match ? Math.min(23, parseInt(match[1], 10) || 0) : 0;
-        selectedMinute = match ? Math.min(59, parseInt(match[2], 10) || 0) : 0;
-    }
+        var $btn = $(this);
 
-    function setClockInput() {
-        $clockInput.val(padClock(selectedHour) + ':' + padClock(selectedMinute));
-        $('#clock-display-hour').text(padClock(selectedHour));
-        $('#clock-display-minute').text(padClock(selectedMinute));
-    }
+        $('#emr-hp-noreg').val($btn.data('noreg') || '-');
+        $('#emr-hp-rekmed').val($btn.data('rekmed') || '-');
+        $('#emr-hp-nama').val($btn.data('nama') || '-');
+        $('#emr-hp-dokter').text($btn.data('dokter') || '-');
+        $('#emr-hp-tanggal').text($btn.data('tanggal') || '-');
+        $('#emr-hp-no-pemeriksaan').text($btn.data('noreg') || '-');
+        $('#emr-hp-hasil').text($btn.data('hasil') || '-');
 
-    function positionClockNumber($node, value, radius) {
-        var angle = (value * 30) - 90;
-        var rad = angle * Math.PI / 180;
-        var center = 130;
-        $node.css({
-            left: center + Math.cos(rad) * radius,
-            top: center + Math.sin(rad) * radius
-        });
-    }
-
-    function setClockHand(value, radius, maxValue) {
-        var angle = (value * (360 / maxValue));
-        $clockHand.css({
-            height: radius + 'px',
-            transform: 'rotate(' + (angle - 180) + 'deg)'
-        });
-    }
-
-    function renderClockFace() {
-        $clockFace.find('.clock-number').remove();
-        $('.clock-display-part').removeClass('active');
-        $('.clock-display-part[data-mode="' + clockMode + '"]').addClass('active');
-        setClockInput();
-
-        if (clockMode === 'hour') {
-            for (var h = 0; h < 24; h++) {
-                var hourRadius = (h === 0 || h > 12) ? 108 : 76;
-                var hourValueForPosition = h > 12 ? h - 12 : h;
-                var $hour = $('<button type="button" class="clock-number"></button>')
-                    .text(h === 0 ? '00' : h)
-                    .attr('data-value', h)
-                    .toggleClass('selected', h === selectedHour);
-                positionClockNumber($hour, hourValueForPosition, hourRadius);
-                $clockFace.append($hour);
-            }
-
-            setClockHand(selectedHour > 12 ? selectedHour - 12 : selectedHour, selectedHour === 0 || selectedHour > 12 ? 108 : 76, 12);
-            return;
-        }
-
-        for (var m = 0; m < 60; m += 5) {
-            var $minute = $('<button type="button" class="clock-number"></button>')
-                .text(padClock(m))
-                .attr('data-value', m)
-                .toggleClass('selected', m === selectedMinute);
-            positionClockNumber($minute, m / 5, 108);
-            $clockFace.append($minute);
-        }
-
-        setClockHand(selectedMinute / 5, 108, 12);
-    }
-
-    function openReferralClock() {
-        parseClockValue();
-        clockMode = 'hour';
-        renderClockFace();
-        $clockPanel.addClass('open');
-    }
-
-    $clockInput.on('focus click', function () {
-        openReferralClock();
+        $('#modal-hasil-pemeriksaan-emr').modal('show');
     });
 
-    $('.referral-clock-wrap .input-group-addon').on('click', function () {
-        openReferralClock();
-    });
 
-    $('.clock-display-part').on('click', function () {
-        clockMode = $(this).data('mode');
-        renderClockFace();
-    });
-
-    $clockFace.on('click', '.clock-number', function () {
-        var value = parseInt($(this).data('value'), 10) || 0;
-        if (clockMode === 'hour') {
-            selectedHour = value;
-            clockMode = 'minute';
-        } else {
-            selectedMinute = value;
-        }
-        setClockInput();
-        renderClockFace();
-    });
-
-    $('#clock-cancel').on('click', function () {
-        $clockPanel.removeClass('open');
-    });
-
-    $('#clock-ok').on('click', function () {
-        setClockInput();
-        $clockPanel.removeClass('open');
-    });
-
-    $(document).on('mousedown', function (e) {
-        if (!$(e.target).closest('.referral-clock-wrap').length) {
-            $clockPanel.removeClass('open');
-        }
-    });
-
+    // ══════════════════════════════════════════════════════════════════════════
+    // AJAX POLIKLINIK KONSUL/RUJUK
+    // Tidak memakai select biasa agar daftar poli tidak turun terlalu panjang.
+    // Data diambil dari tabel polyclinic_queues.
+    // Saat poli dipilih, nomor antrian otomatis diisi dari urutan queue_number poli tersebut.
+    // Endpoint yang dipakai: /polyclinic-queues/search-poly-queue?q=...
+    // Response disarankan: [{poly_name, next_queue_number}]
+    // ══════════════════════════════════════════════════════════════════════════
     var polyclinicTimer = null;
     var $polyInput = $('#referral-polyclinic-search');
     var $polyValue = $('#referral-polyclinic-value');
@@ -1783,18 +1710,25 @@ $(document).ready(function () {
         $polyDropdown.empty();
 
         if (!data || !Array.isArray(data) || data.length === 0) {
-            $polyDropdown.html('<div class="poly-dd-empty"><i class="fa fa-search"></i> Poliklinik tidak ditemukan</div>').show();
+            $polyDropdown.html(
+                '<div class="poly-dd-empty">' +
+                '<i class="fa fa-search"></i> Poliklinik tidak ditemukan' +
+                '</div>'
+            ).show();
             return;
         }
 
         $.each(data, function (_, item) {
             var nama = item.poly_name || item.name || item.nama || item.polyclinic_name || '';
             var nextQueue = item.next_queue_number || item.next_queue_no || item.queue_number || item.queue_no || 0;
+            var label = nama;
             var meta = nextQueue ? 'No antrian berikutnya: ' + nextQueue : 'No antrian akan dibuat otomatis';
 
             var $item = $(
-                '<div class="poly-dd-item" data-name="' + escHtml(nama) + '" data-queue="' + escHtml(nextQueue) + '">' +
-                    '<div class="poly-dd-name">' + escHtml(nama) + '</div>' +
+                '<div class="poly-dd-item" ' +
+                    'data-name="' + escHtml(nama) + '" ' +
+                    'data-queue="' + escHtml(nextQueue) + '">' +
+                    '<div class="poly-dd-name">' + escHtml(label) + '</div>' +
                     '<div style="font-size:10px;color:#777;margin-top:2px;">' + escHtml(meta) + '</div>' +
                 '</div>'
             );
@@ -1804,9 +1738,12 @@ $(document).ready(function () {
                 $polyInput.val(nama);
                 $polyValue.val(nama);
                 $polyQueue.val(nextQueue || 0);
+
+                // Kalau poli diganti, dokter harus dipilih ulang sesuai poli tersebut
                 $('#referral-doctor-search').val('');
                 $('#referral-doctor-value').val('');
                 $('#doctor-dropdown').hide().empty();
+
                 closePolyclinicDropdown();
             });
 
@@ -1829,23 +1766,24 @@ $(document).ready(function () {
             return;
         }
 
-        $polyDropdown.html('<div class="poly-dd-loading"><i class="fa fa-spinner fa-spin"></i> Mencari poliklinik...</div>').show();
+        $polyDropdown.html(
+            '<div class="poly-dd-loading"><i class="fa fa-spinner fa-spin"></i> Mencari poliklinik...</div>'
+        ).show();
 
         polyclinicTimer = setTimeout(function () {
             $.ajax({
                 url: POLYCLINIC_SEARCH_URL,
                 method: 'GET',
-                data: {
-                    q: q,
-                    visit_date: $('input[name="referral_date"]').val() || <?= json_encode(date('Y-m-d')) ?>
-                },
+                data: { q: q },
                 dataType: 'json',
                 timeout: 5000,
                 success: function (data) {
                     renderPolyclinicDropdown(data);
                 },
                 error: function () {
-                    $polyDropdown.html('<div class="poly-dd-empty">Endpoint pencarian poliklinik belum tersedia.</div>').show();
+                    $polyDropdown.html(
+                        '<div class="poly-dd-empty">Endpoint PolyclinicQueues/searchPolyQueue belum tersedia.</div>'
+                    ).show();
                 }
             });
         }, 250);
@@ -1861,6 +1799,11 @@ $(document).ready(function () {
         }
     });
 
+    // ══════════════════════════════════════════════════════════════════════════
+    // AJAX DOKTER BERDASARKAN POLIKLINIK
+    // Data dokter diambil dari tabel doctors berdasarkan doctors.polyclinic_name.
+    // Endpoint yang dipakai: /doctors/search-by-polyclinic?poly_name=...
+    // ══════════════════════════════════════════════════════════════════════════
     var doctorTimer = null;
     var $doctorInput = $('#referral-doctor-search');
     var $doctorValue = $('#referral-doctor-value');
@@ -1874,7 +1817,11 @@ $(document).ready(function () {
         $doctorDropdown.empty();
 
         if (!data || !Array.isArray(data) || data.length === 0) {
-            $doctorDropdown.html('<div class="doctor-dd-empty"><i class="fa fa-user-md"></i> Dokter tidak ditemukan untuk poli ini</div>').show();
+            $doctorDropdown.html(
+                '<div class="doctor-dd-empty">' +
+                '<i class="fa fa-user-md"></i> Dokter tidak ditemukan untuk poli ini' +
+                '</div>'
+            ).show();
             return;
         }
 
@@ -1887,7 +1834,7 @@ $(document).ready(function () {
                 '<div class="doctor-dd-item" data-name="' + escHtml(doctorName) + '">' +
                     '<div class="doctor-dd-name">' + escHtml(doctorName) + '</div>' +
                     '<div style="font-size:10px;color:#777;margin-top:2px;">' +
-                        escHtml((specialist ? specialist : 'Dokter') + (polyName ? ' - ' + polyName : '')) +
+                        escHtml((specialist ? specialist : 'Dokter') + (polyName ? ' · ' + polyName : '')) +
                     '</div>' +
                 '</div>'
             );
@@ -1910,11 +1857,15 @@ $(document).ready(function () {
         var q = $.trim($doctorInput.val());
 
         if (!polyName) {
-            $doctorDropdown.html('<div class="doctor-dd-empty">Pilih poliklinik terlebih dahulu</div>').show();
+            $doctorDropdown.html(
+                '<div class="doctor-dd-empty">Pilih poliklinik terlebih dahulu</div>'
+            ).show();
             return;
         }
 
-        $doctorDropdown.html('<div class="doctor-dd-loading"><i class="fa fa-spinner fa-spin"></i> Mencari dokter...</div>').show();
+        $doctorDropdown.html(
+            '<div class="doctor-dd-loading"><i class="fa fa-spinner fa-spin"></i> Mencari dokter...</div>'
+        ).show();
 
         $.ajax({
             url: DOCTOR_BY_POLY_URL,
@@ -1929,7 +1880,9 @@ $(document).ready(function () {
                 renderDoctorDropdown(data);
             },
             error: function () {
-                $doctorDropdown.html('<div class="doctor-dd-empty">Endpoint pencarian dokter belum tersedia.</div>').show();
+                $doctorDropdown.html(
+                    '<div class="doctor-dd-empty">Endpoint Doctors/searchByPolyclinic belum tersedia.</div>'
+                ).show();
             }
         });
     }
@@ -1949,6 +1902,12 @@ $(document).ready(function () {
         }
     });
 
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // JADWAL KONTROL: BUAT ANTRIAN KONSUL OTOMATIS KE polyclinic_queues
+    // Saat tombol Jadwal Kontrol diklik, sistem membuat antrian baru sesuai poli yang dipilih.
+    // Nomor antrian dipakai dari urutan terakhir poli tersebut pada hari ini.
+    // ══════════════════════════════════════════════════════════════════════════
     $('#btn-jadwal-kontrol').on('click', function () {
         var $btn = $(this);
         var polyName = $.trim($('#referral-polyclinic-value').val() || $('#referral-polyclinic-search').val());
@@ -1969,7 +1928,9 @@ $(document).ready(function () {
             url: CREATE_REFERRAL_QUEUE_URL,
             method: 'POST',
             dataType: 'json',
-            headers: csrfToken ? { 'X-CSRF-Token': csrfToken } : {},
+            headers: csrfToken ? {
+                'X-CSRF-Token': csrfToken
+            } : {},
             data: {
                 poly_name: polyName,
                 patient_name: patientName,
@@ -1979,13 +1940,13 @@ $(document).ready(function () {
             success: function (res) {
                 if (res && res.success) {
                     $('#referral-queue-no').val(res.queue_number || 0);
-                    alert((res.message || 'Antrian berhasil dibuat.') + ' Kode: ' + (res.code || '-'));
+                    alert('Antrian berhasil dibuat: ' + (res.code || '-'));
                 } else {
                     alert((res && res.message) ? res.message : 'Gagal membuat antrian.');
                 }
             },
             error: function (xhr) {
-                var message = 'Gagal membuat antrian konsul.';
+                var message = 'Endpoint createReferralQueue belum tersedia atau gagal diproses.';
                 if (xhr.responseJSON && xhr.responseJSON.message) {
                     message = xhr.responseJSON.message;
                 }
@@ -1996,6 +1957,7 @@ $(document).ready(function () {
             }
         });
     });
+
 
     // ══════════════════════════════════════════════════════════════════════════
     // BMI OTOMATIS
@@ -2668,19 +2630,334 @@ $(document).ready(function () {
         }
     });
 
-    $('form').on('submit', function () {
-        var $button = $(this).find('button[type="submit"], input[type="submit"]').first();
-        if (!$button.length) {
+}); // end document.ready
+
+$('#btn-selesai-periksa').on('click', function () {
+    if (!confirm('Pemeriksaan selesai dan buat tagihan kasir?')) {
+        return false;
+    }
+
+    var url = $(this).data('url');
+    var csrf = $('input[name="_csrfToken"]').val();
+
+    var form = $('<form>', {
+        method: 'POST',
+        action: url
+    });
+
+    form.append($('<input>', {
+        type: 'hidden',
+        name: '_csrfToken',
+        value: csrf
+    }));
+
+    $('body').append(form);
+    form.submit();
+});
+
+var ICD10_SEARCH_URL = '<?= $this->Url->build(["action" => "searchIcd10"]) ?>';
+var ICD9_SEARCH_URL  = '<?= $this->Url->build(["action" => "searchIcd9"]) ?>';
+
+function htmlEscape(s) {
+    return String(s || '').replace(/[&<>"]/g, function(c) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];
+    });
+}
+
+function nextIcdIndex(type) {
+    return $('#' + type + '-body tr.' + type + '-row').length;
+}
+
+function addIcd10Row(kode, nama) {
+    $('#icd10-empty-row').remove();
+    var i = nextIcdIndex('icd10');
+    var checked = i === 0 ? 'checked' : '';
+    var row = '' +
+        '<tr class="icd10-row" data-idx="' + i + '">' +
+        '<input type="hidden" name="icd10_selected[' + i + ']" value="1">' +
+        '<td class="text-center" style="vertical-align:middle;">' +
+        '<input type="radio" name="icd10_utama" value="' + i + '" ' + checked + '>' +
+        '</td>' +
+        '<td><input type="text" name="icd10_code[' + i + ']" class="form-control input-sm" value="' + htmlEscape(kode) + '" readonly style="font-family:monospace;font-weight:700;"></td>' +
+        '<td><input type="text" name="icd10_nama[' + i + ']" class="form-control input-sm" value="' + htmlEscape(nama) + '" readonly></td>' +
+        '<td class="text-center" style="vertical-align:middle;"><button type="button" class="btn btn-xs btn-danger btn-remove-icd10">&times;</button></td>' +
+        '</tr>';
+    $('#icd10-body').append(row);
+}
+
+function addIcd9Row(kode, nama) {
+    $('#icd9-empty-row').remove();
+    var i = nextIcdIndex('icd9');
+    var checked = i === 0 ? 'checked' : '';
+    var row = '' +
+        '<tr class="icd9-row" data-idx="' + i + '">' +
+        '<input type="hidden" name="icd9_selected[' + i + ']" value="1">' +
+        '<input type="hidden" name="icd9_kategori[' + i + ']" value="tindakan">' +
+        '<td class="text-center" style="vertical-align:middle;">' +
+        '<input type="radio" name="icd9_utama" value="' + i + '" ' + checked + '>' +
+        '</td>' +
+        '<td><input type="text" name="icd9_code[' + i + ']" class="form-control input-sm" value="' + htmlEscape(kode) + '" readonly style="font-family:monospace;font-weight:700;"></td>' +
+        '<td><input type="text" name="icd9_nama[' + i + ']" class="form-control input-sm" value="' + htmlEscape(nama) + '" readonly></td>' +
+        '<td class="text-center" style="vertical-align:middle;"><button type="button" class="btn btn-xs btn-danger btn-remove-icd9">&times;</button></td>' +
+        '</tr>';
+    $('#icd9-body').append(row);
+}
+
+function renderIcdDropdown($drop, rows, type) {
+    if (!rows || !rows.length) {
+        $drop.html('<div style="padding:8px;color:#999;">Data tidak ditemukan</div>').show();
+        return;
+    }
+
+    var html = '';
+    rows.forEach(function(row) {
+        html += '<div class="icd-option" data-type="' + type + '" data-kode="' + htmlEscape(row.kode) + '" data-nama="' + htmlEscape(row.nama) + '" style="padding:7px 9px;cursor:pointer;border-bottom:1px solid #eee;">' +
+            '<strong>' + htmlEscape(row.kode) + '</strong> - ' + htmlEscape(row.nama) +
+            '</div>';
+    });
+    $drop.html(html).show();
+}
+
+$('#btn-add-icd10').on('click', function() {
+    $('#icd10-search-bar').toggle();
+    $('#icd10-search-input').val('').focus();
+    $('#icd10-dropdown').hide().empty();
+});
+
+$('#btn-close-icd10-search').on('click', function() {
+    $('#icd10-search-bar, #icd10-dropdown').hide();
+});
+
+$('#btn-add-icd9').on('click', function() {
+    $('#icd9-search-bar').toggle();
+    $('#icd9-search-input').val('').focus();
+    $('#icd9-dropdown').hide().empty();
+});
+
+$('#btn-close-icd9-search').on('click', function() {
+    $('#icd9-search-bar, #icd9-dropdown').hide();
+});
+
+var icd10Timer = null;
+$('#icd10-search-input').on('keyup', function() {
+    clearTimeout(icd10Timer);
+    var q = $.trim($(this).val());
+    if (q.length < 2) { $('#icd10-dropdown').hide().empty(); return; }
+    icd10Timer = setTimeout(function() {
+        $.getJSON(ICD10_SEARCH_URL, {q:q}, function(res) {
+            renderIcdDropdown($('#icd10-dropdown'), res.results || [], 'icd10');
+        });
+    }, 250);
+});
+
+var icd9Timer = null;
+$('#icd9-search-input').on('keyup', function() {
+    clearTimeout(icd9Timer);
+    var q = $.trim($(this).val());
+    if (q.length < 2) { $('#icd9-dropdown').hide().empty(); return; }
+    icd9Timer = setTimeout(function() {
+        $.getJSON(ICD9_SEARCH_URL, {q:q}, function(res) {
+            renderIcdDropdown($('#icd9-dropdown'), res.results || [], 'icd9');
+        });
+    }, 250);
+});
+
+$(document).on('click', '.icd-option', function() {
+    var type = $(this).data('type');
+    var kode = $(this).data('kode');
+    var nama = $(this).data('nama');
+    if (type === 'icd10') {
+        addIcd10Row(kode, nama);
+        $('#icd10-search-input').val('').focus();
+        $('#icd10-dropdown').hide().empty();
+    } else {
+        addIcd9Row(kode, nama);
+        $('#icd9-search-input').val('').focus();
+        $('#icd9-dropdown').hide().empty();
+    }
+});
+
+$(document).on('click', '.btn-remove-icd10', function() {
+    $(this).closest('tr').remove();
+});
+$(document).on('click', '.btn-remove-icd9', function() {
+    $(this).closest('tr').remove();
+});
+
+/* =========================================================
+   FINAL FIX ICD MASTER EMR
+   - EMR mengambil ICD-10 dari master_icd10 lewat searchIcd10()
+   - EMR mengambil ICD-9 dari master_icd9 lewat searchIcd9()
+   - Yang disimpan ke outpatient_visits.icd10_items / icd9_items
+   - Tidak mengambil dari Diagnosa Utama / Diagnosa Sekunder / Tindakan Utama
+   ========================================================= */
+(function ($) {
+    var ICD10_URL = <?= json_encode($this->Url->build(['action' => 'searchIcd10'])) ?>;
+    var ICD9_URL  = <?= json_encode($this->Url->build(['action' => 'searchIcd9'])) ?>;
+
+    function esc(v) {
+        return String(v || '').replace(/[&<>"']/g, function (c) {
+            return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c];
+        });
+    }
+
+    function getNextIndex(type) {
+        var max = -1;
+        $('#' + type + '-body tr.' + type + '-row').each(function () {
+            var n = parseInt($(this).attr('data-idx'), 10);
+            if (!isNaN(n) && n > max) max = n;
+        });
+        return max + 1;
+    }
+
+    function showEmptyRow(type) {
+        var isIcd10 = type === 'icd10';
+        var body = $('#' + type + '-body');
+        if (body.find('tr.' + type + '-row').length) return;
+        var icon = isIcd10 ? 'fa-diagnoses' : 'fa-clipboard-list';
+        var text = isIcd10 ? 'Belum ada diagnosa ICD-10.' : 'Belum ada tindakan ICD-9.';
+        var btn  = isIcd10 ? 'Tambah ICD-10' : 'Tambah ICD-9';
+        body.html(
+            '<tr id="' + type + '-empty-row">' +
+            '<td colspan="4" style="text-align:center;color:#aaa;padding:10px;font-size:11px;">' +
+            '<i class="fa ' + icon + '"></i> ' + text + ' Klik <strong>' + btn + '</strong> untuk menambahkan.' +
+            '</td></tr>'
+        );
+    }
+
+    function addIcdRow(type, item) {
+        var kode = $.trim(item.kode || item.code || '');
+        var nama = $.trim(item.nama || item.name || '');
+        if (!kode || !nama) return;
+
+        var duplicate = false;
+        $('#' + type + '-body tr.' + type + '-row').each(function () {
+            var existing = $.trim($(this).find('input[name^="' + type + '_code"]').val());
+            if (existing.toLowerCase() === kode.toLowerCase()) duplicate = true;
+        });
+        if (duplicate) {
+            alert('Kode ' + kode + ' sudah ada.');
             return;
         }
 
-        $button.prop('disabled', true);
-        if ($button.is('button')) {
-            $button.html('<i class="fa fa-spinner fa-spin"></i> Menyimpan...');
-        } else {
-            $button.val('Menyimpan...');
+        $('#' + type + '-empty-row').remove();
+        var idx = getNextIndex(type);
+        var isFirst = !$('#' + type + '-body tr.' + type + '-row').length;
+        var isIcd10 = type === 'icd10';
+        var nameNama = isIcd10 ? 'icd10_nama' : 'icd9_nama';
+        var kategori = isIcd10 ? '' : '<input type="hidden" name="icd9_kategori[' + idx + ']" value="tindakan">';
+        var removeClass = isIcd10 ? 'btn-remove-icd10' : 'btn-remove-icd9';
+
+        var html = '' +
+            '<tr class="' + type + '-row" data-idx="' + idx + '">' +
+            '<input type="hidden" name="' + type + '_selected[' + idx + ']" value="1">' +
+            kategori +
+            '<td class="text-center" style="vertical-align:middle;">' +
+                '<input type="radio" name="' + type + '_utama" value="' + idx + '" ' + (isFirst ? 'checked' : '') + '>' +
+            '</td>' +
+            '<td><input type="text" name="' + type + '_code[' + idx + ']" class="form-control input-sm" value="' + esc(kode) + '" readonly style="font-family:monospace;font-weight:700;"></td>' +
+            '<td><input type="text" name="' + nameNama + '[' + idx + ']" class="form-control input-sm" value="' + esc(nama) + '" readonly></td>' +
+            '<td class="text-center" style="vertical-align:middle;"><button type="button" class="btn btn-xs btn-danger ' + removeClass + '">&times;</button></td>' +
+            '</tr>';
+
+        $('#' + type + '-body').append(html);
+    }
+
+    function renderDropdown(type, rows, queryText) {
+        var drop = $('#' + type + '-dropdown');
+        if (!rows || !rows.length) {
+            drop.html('<div style="padding:10px;color:#999;text-align:center;">Data tidak ditemukan: <strong>' + esc(queryText) + '</strong></div>').show();
+            return;
+        }
+
+        var html = '';
+        $.each(rows, function (_, row) {
+            html += '<div class="icd-master-option" data-type="' + type + '" data-kode="' + esc(row.kode) + '" data-nama="' + esc(row.nama) + '" style="padding:7px 10px;cursor:pointer;border-bottom:1px solid #eee;">' +
+                '<span style="font-family:monospace;font-weight:700;background:#eef2ff;padding:1px 5px;border-radius:3px;margin-right:6px;">' + esc(row.kode) + '</span>' +
+                '<span>' + esc(row.nama) + '</span>' +
+                '</div>';
+        });
+        drop.html(html).show();
+    }
+
+    function searchMaster(type) {
+        var input = $('#' + type + '-search-input');
+        var q = $.trim(input.val());
+        if (q.length < 1) {
+            $('#' + type + '-dropdown').hide().empty();
+            return;
+        }
+        var url = type === 'icd10' ? ICD10_URL : ICD9_URL;
+        $.getJSON(url, {q: q})
+            .done(function (res) {
+                renderDropdown(type, res.results || [], q);
+            })
+            .fail(function () {
+                $('#' + type + '-dropdown').html('<div style="padding:10px;color:#dc3545;">Gagal mengambil data master. Cek action searchIcd10/searchIcd9.</div>').show();
+            });
+    }
+
+    var t10 = null, t9 = null;
+
+    // Matikan handler lama yang dobel, lalu pasang handler final.
+    $('#btn-add-icd10').off('click').on('click', function () {
+        $('#icd10-search-bar').show();
+        $('#icd10-search-input').val('').focus();
+        $('#icd10-dropdown').hide().empty();
+    });
+
+    $('#btn-close-icd10-search').off('click').on('click', function () {
+        $('#icd10-search-bar, #icd10-dropdown').hide();
+        $('#icd10-search-input').val('');
+    });
+
+    $('#btn-add-icd9').off('click').on('click', function () {
+        $('#icd9-search-bar').show();
+        $('#icd9-search-input').val('').focus();
+        $('#icd9-dropdown').hide().empty();
+    });
+
+    $('#btn-close-icd9-search').off('click').on('click', function () {
+        $('#icd9-search-bar, #icd9-dropdown').hide();
+        $('#icd9-search-input').val('');
+    });
+
+    $('#icd10-search-input').off('keyup input').on('keyup input', function () {
+        clearTimeout(t10);
+        t10 = setTimeout(function () { searchMaster('icd10'); }, 250);
+    });
+
+    $('#icd9-search-input').off('keyup input').on('keyup input', function () {
+        clearTimeout(t9);
+        t9 = setTimeout(function () { searchMaster('icd9'); }, 250);
+    });
+
+    $(document).off('mousedown', '.icd-master-option').on('mousedown', '.icd-master-option', function (e) {
+        e.preventDefault();
+        var type = $(this).data('type');
+        addIcdRow(type, {
+            kode: $(this).data('kode'),
+            nama: $(this).data('nama')
+        });
+        $('#' + type + '-search-input').val('').focus();
+        $('#' + type + '-dropdown').hide().empty();
+    });
+
+    $(document).off('click', '.btn-remove-icd10').on('click', '.btn-remove-icd10', function () {
+        $(this).closest('tr.icd10-row').remove();
+        showEmptyRow('icd10');
+        if (!$('#icd10-body input[name="icd10_utama"]:checked').length) {
+            $('#icd10-body tr.icd10-row:first input[name="icd10_utama"]').prop('checked', true);
         }
     });
 
-}); // end document.ready
+    $(document).off('click', '.btn-remove-icd9').on('click', '.btn-remove-icd9', function () {
+        $(this).closest('tr.icd9-row').remove();
+        showEmptyRow('icd9');
+        if (!$('#icd9-body input[name="icd9_utama"]:checked').length) {
+            $('#icd9-body tr.icd9-row:first input[name="icd9_utama"]').prop('checked', true);
+        }
+    });
+})(jQuery);
+
 </script>

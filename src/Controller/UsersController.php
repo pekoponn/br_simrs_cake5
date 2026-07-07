@@ -171,7 +171,47 @@ class UsersController extends AppController
             $dataUserId = array('is_create' => $isUser);
             $dataBranchId = (!empty($dataRow['branchId'])) ? array('branch_id' => implode(",", $dataRow['branchId'])) : array();
             //$dataPassword = (empty($dataRow['passwordNew'])) ? "" : array('password_new' => $user->_setPassword($dataRow['passwordNew']));
-            $dataRules = array('rules' => "dashboard=index:0;purchaseprices=getDataFromSupplier:0;users=logout:1,changePassword:1,status:0,login:1,home:0,index:0,add:0,edit:0,access:0,resetPassword:0,delete:0;medicalrecords=history:0;patients=index:0,add:0,edit:0,view:0,delete:0;outpatientvisits=index:0,view:0,add:0,edit:0,cppt:0,emr:0,selesai:0,panggil:0,batal:0,getSummary:0,liveData:0,delete:0;inpatiententries=index:0,view:0,add:0,edit:0,delete:0;orders=index:0,view:0,form:0,detail:0,cariPasien:0,cariObat:0,historyPasien:0,historyOrderDetail:0;mastertindakan=index:0,view:0,add:0,edit:0,toggleActive:0,search:0,searchDebug:0,delete:0;mastericd9=index:0,view:0,add:0,edit:0,import:0,toggleActive:0,search:0,delete:0;mastericd10=index:0,view:0,add:0,edit:0,import:0,toggleActive:0,search:0,delete:0;waste_prices=getAjaxData:0;customers=getLastNumber:0,getSearch:0,getAjaxType:0,getKabupaten:0,index:0,add:0,edit:0,editAdmin:0,preview:0,status:0,delete:0,xls:0;materials=getSelect:0,index:0,add:0,edit:0,preview:0,status:0,delete:0,xls:0;daerahkabupatens=getList:0;purchasepasses=index:0,add:0,edit:0,preview:0,printing:0,pdf:0,delete:0,xls:0,payment:0,stock:0,payment_edit:0,payment_cancel:0;suppliers=index:0,add:0,edit:0,preview:0,status:0,delete:0,xls:0;trucks=index:0,add:0,edit:0,delete:0;warehouses=index:0,add:0,edit:0,delete:0;branchs=index:0,add:0,edit:0,delete:0;settings=index:0,add:0,edit:0;pettycashes=index:0,add:0,edit:0,preview:0,printing:0,pdf:0,delete:0,status:0,approve:0,approve_ceo:0,edit_all:0,accountability:0,xls:0,payment:0");
+            $defaultRules = [
+                'dashboard=index:0',
+                'purchaseprices=getDataFromSupplier:0',
+                'users=logout:1,changePassword:1,status:0,login:1,home:0,index:0,add:0,edit:0,access:0,resetPassword:0,delete:0',
+                'medicalrecords=index:0,history:0,searchPatients:0,backfillNoRm:0',
+                'medicalrecorddiagnoses=index:0,view:0,add:0,edit:0,delete:0',
+                'medicalrecordinpatients=index:0,view:0,add:0,edit:0,delete:0',
+                'medicalrecordoutpatientigds=index:0,view:0,add:0,edit:0,delete:0',
+                'medicalresumes=index:0,view:0,add:0,edit:0,delete:0',
+                'patients=index:0,add:0,edit:0,view:0,delete:0',
+                'registrations=index:0,getSummary:0,view:0,add:0,edit:0,delete:0,searchPatients:0,getKabupatens:0,getKecamatans:0,getKelurahans:0,getBedClass:0,getAvailableBeds:0,getDoctorSchedules:0',
+                'patientadmissions=index:0',
+                'patienthistories=index:0,searchPatients:0,periksa:0,history:0',
+                'outpatientvisits=index:0,view:0,add:0,edit:0,cppt:0,emr:0,resumeMedis:0,selesai:0,panggil:0,batal:0,getSummary:0,liveData:0,searchIcd10:0,searchIcd9:0,selesaiPeriksa:0,hasilPemeriksaan:0,delete:0',
+                'outpatientcpptnotes=index:0,view:0,add:0,edit:0,delete:0',
+                'inpatiententries=index:0,view:0,add:0,edit:0,delete:0',
+                'orders=index:0,view:0,form:0,detail:0,cariPasien:0,cariObat:0,cariLaboratorium:0,cariRadiologi:0,cariPenunjang:0,cariNutritionCombine:0,cariJenisMcu:0,cariJenisOperasi:0,historyPasien:0,historyOrderDetail:0',
+                'ordermcus=index:0,view:0,add:0,edit:0,delete:0',
+                'ordersmcus=index:0,view:0,add:0,edit:0,delete:0',
+                'ordersupports=index:0,view:0,add:0,edit:0,delete:0',
+                'ordersurgeries=index:0,view:0,add:0,edit:0,delete:0',
+                'mastertindakan=index:0,view:0,add:0,edit:0,toggleActive:0,search:0,searchDebug:0,delete:0',
+                'mastericd9=index:0,view:0,add:0,edit:0,import:0,toggleActive:0,search:0,delete:0',
+                'mastericd10=index:0,view:0,add:0,edit:0,import:0,toggleActive:0,search:0,delete:0',
+                'mastermcutypes=index:0,view:0,add:0,edit:0,delete:0',
+                'masteroperationtypes=index:0,view:0,add:0,edit:0,delete:0',
+                'mastersupports=index:0,view:0,add:0,edit:0,delete:0',
+                'mastersurgeryoperators=index:0,view:0,add:0,edit:0,delete:0',
+                'waste_prices=getAjaxData:0',
+                'customers=getLastNumber:0,getSearch:0,getAjaxType:0,getKabupaten:0,index:0,add:0,edit:0,editAdmin:0,preview:0,status:0,delete:0,xls:0',
+                'materials=getSelect:0,index:0,add:0,edit:0,preview:0,status:0,delete:0,xls:0',
+                'daerahkabupatens=getList:0',
+                'purchasepasses=index:0,add:0,edit:0,preview:0,printing:0,pdf:0,delete:0,xls:0,payment:0,stock:0,payment_edit:0,payment_cancel:0',
+                'suppliers=index:0,add:0,edit:0,preview:0,status:0,delete:0,xls:0',
+                'trucks=index:0,add:0,edit:0,delete:0',
+                'warehouses=index:0,add:0,edit:0,delete:0',
+                'branchs=index:0,add:0,edit:0,delete:0',
+                'settings=index:0,add:0,edit:0',
+                'pettycashes=index:0,add:0,edit:0,preview:0,printing:0,pdf:0,delete:0,status:0,approve:0,approve_ceo:0,edit_all:0,accountability:0,xls:0,payment:0',
+            ];
+            $dataRules = ['rules' => implode(';', $defaultRules)];
 
             $dataPassword = (empty($dataRow['passwordNew'])) ? array() : array('password_new' => $hasher->hash($dataRow['passwordNew']));
             $auditLog = $this->Krs->auditLog($this->request->getParam('controller'), 'N', $isUser, "User add");

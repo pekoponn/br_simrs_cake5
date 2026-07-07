@@ -1,694 +1,368 @@
 <?php
-
 /**
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Patient $patient
+ * @var string|null $previewCode
  */
-
-$dataChild = $this->Html->link('Patient', ['action' => 'index'], ['full_base' => true]);
 ?>
 
-<?= $this->Krs->breadcrumb('Master', $dataChild, 'Buat') ?>
+<?= $this->Krs->breadcrumb('Pasien', 'Tambah') ?>
 
 <div class="panel panel-inverse">
 
     <div class="panel-heading">
-        <h4 class="panel-title">Perincian</h4>
-
-        <div class="panel-heading-btn">
-            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default" data-click="panel-expand">
-                <i class="fa fa-expand"></i>
-            </a>
-        </div>
+        <h4 class="panel-title">
+            <i class="fa fa-user-plus"></i> Tambah Pasien Baru
+        </h4>
     </div>
-
-    <?= $this->Form->create($patient, ['data-parsley-validate' => 'true']) ?>
 
     <div class="panel-body">
 
-        <!-- ROW 1 -->
-        <div class="form-group row m-b-15">
+        <?= $this->Form->create($patient) ?>
 
-            <label class="col-form-label col-md-1">Kode</label>
-
-            <div class="col-md-2">
-
-                <div class="input-group">
-
-                    <span class="input-group-addon">
-                        <input type="checkbox" id="auto-code" checked>
-                    </span>
-
+        <!-- ── SECTION 1: Data Utama ─────────────────────────── -->
+        <h5 style="color:#2c3e50; font-weight:700; margin-bottom:14px; padding-bottom:6px;
+                   border-bottom:2px solid #e9ecef;">
+            <i class="fa fa-id-card"></i> Data Utama
+        </h5>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Kode Pasien</label>
                     <?= $this->Form->control('code', [
+                        'label'    => false,
+                        'class'    => 'form-control',
+                        'value'    => $previewCode ?? ($patient->code ?? ''),
+                        'readonly' => true,
+                    ]) ?>
+                    <small class="text-muted">Kode pasien otomatis, tidak perlu diisi manual.</small>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="form-group">
+                    <label>Nama Lengkap <span class="text-danger">*</span></label>
+                    <?= $this->Form->control('full_name', [
+                        'label'       => false,
+                        'class'       => 'form-control',
+                        'placeholder' => 'Nama lengkap pasien',
+                    ]) ?>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Jenis Identitas</label>
+                    <?= $this->Form->control('identity_type', [
+                        'type'    => 'select',
+                        'label'   => false,
+                        'options' => ['KTP' => 'KTP', 'SIM' => 'SIM', 'Paspor' => 'Paspor',
+                                      'KIA' => 'KIA', 'BPJS' => 'BPJS'],
+                        'empty'   => '-- Pilih Jenis --',
+                        'class'   => 'form-control',
+                    ]) ?>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Nomor Identitas</label>
+                    <?= $this->Form->control('identity_number', [
+                        'label'       => false,
+                        'class'       => 'form-control',
+                        'placeholder' => 'Nomor KTP / SIM / Paspor',
+                    ]) ?>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Gender <span class="text-danger">*</span></label>
+                    <?= $this->Form->control('gender', [
+                        'type'    => 'select',
+                        'label'   => false,
+                        'options' => ['Male' => '♂ Laki-laki', 'Female' => '♀ Perempuan'],
+                        'empty'   => '-- Pilih Gender --',
+                        'class'   => 'form-control',
+                    ]) ?>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>Golongan Darah</label>
+                    <?= $this->Form->control('blood_type', [
+                        'type'    => 'select',
+                        'label'   => false,
+                        'options' => ['A' => 'A', 'B' => 'B', 'AB' => 'AB', 'O' => 'O'],
+                        'empty'   => '-- Pilih --',
+                        'class'   => 'form-control',
+                    ]) ?>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>Tanggal Lahir</label>
+                    <?= $this->Form->control('birth_date', [
+                        'type'  => 'date',
                         'label' => false,
                         'class' => 'form-control',
-                        'placeholder' => 'Kode Otomatis..',
-                        'disabled' => true,
-                        'required' => false,
-                        'data-parsley-excluded' => 'true',
-                        'data-parsley-required' => 'false',
-                        'id' => 'patient-code'
-                    ]); ?>
-
+                        'id'    => 'birth_date',
+                    ]) ?>
                 </div>
-
-                <small class="text-muted">
-                    Centang bila menggunakan kode otomatis.
-                </small>
-
             </div>
 
-            <label class="col-form-label col-md-1">No RM</label>
-
-            <div class="col-md-2">
-                <?= $this->Form->control('medical_record_no', [
-                    'label' => false,
-                    'class' => 'form-control',
-                    'placeholder' => 'Otomatis..',
-                    'disabled' => true,
-                    'required' => false,
-                    'data-parsley-excluded' => 'true',
-                    'data-parsley-required' => 'false'
-                ]); ?>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>No. Telepon</label>
+                    <?= $this->Form->control('phone_number', [
+                        'label'       => false,
+                        'class'       => 'form-control',
+                        'placeholder' => '08xxxxxxxxxx',
+                    ]) ?>
+                </div>
             </div>
 
-            <label class="col-form-label col-md-1">Nama</label>
-
-            <div class="col-md-5">
-                <?=
-                $this->Form->control('full_name', [
-                    'label' => false,
-                    'class' => 'form-control',
-                    'placeholder' => 'Nama Lengkap...',
-                    'required' => true
-                ]);
-                ?>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>Status Active</label>
+                    <?= $this->Form->control('is_active', [
+                        'type'    => 'select',
+                        'label'   => false,
+                        'options' => ['Y' => 'Active', 'N' => 'Non Active'],
+                        'class'   => 'form-control',
+                        'value'   => 'Y',
+                    ]) ?>
+                </div>
             </div>
 
         </div>
 
-        <!-- ROW 2 -->
-        <div class="form-group row m-b-15">
+        <hr>
 
-            <label class="col-form-label col-md-1">
-                Identitas
-            </label>
+        <!-- ── SECTION 2: Data Sosial ─────────────────────────── -->
+        <h5 style="color:#2c3e50; font-weight:700; margin-bottom:14px; padding-bottom:6px;
+                   border-bottom:2px solid #e9ecef;">
+            <i class="fa fa-users"></i> Data Sosial
+        </h5>
+        <div class="row">
 
-            <div class="col-md-2">
-                <?=
-                $this->Form->control('identity_type', [
-                    'label' => false,
-                    'class' => 'form-control select2Form',
-                    'options' => [
-                        'KTP' => 'KTP',
-                        'SIM' => 'SIM',
-                        'PASSPORT' => 'Passport'
-                    ],
-                    'empty' => '-- Pilih --'
-                ]);
-                ?>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>Agama</label>
+                    <?= $this->Form->control('religion', [
+                        'type'    => 'select',
+                        'label'   => false,
+                        'options' => [
+                            'Islam'     => 'Islam',
+                            'Kristen'   => 'Kristen',
+                            'Katolik'   => 'Katolik',
+                            'Hindu'     => 'Hindu',
+                            'Buddha'    => 'Buddha',
+                            'Konghucu'  => 'Konghucu',
+                            'Lainnya'   => 'Lainnya',
+                        ],
+                        'empty' => '-- Pilih --',
+                        'class' => 'form-control',
+                    ]) ?>
+                </div>
             </div>
 
             <div class="col-md-3">
-                <?=
-                $this->Form->control('identity_number', [
-                    'label' => false,
-                    'class' => 'form-control',
-                    'placeholder' => 'Nomor Identitas...'
-                ]);
-                ?>
+                <div class="form-group">
+                    <label>Pendidikan</label>
+                    <?= $this->Form->control('education', [
+                        'type'    => 'select',
+                        'label'   => false,
+                        'options' => [
+                            'SD'        => 'SD',
+                            'SMP'       => 'SMP',
+                            'SMA/SMK'   => 'SMA/SMK',
+                            'D3'        => 'D3',
+                            'S1'        => 'S1',
+                            'S2'        => 'S2',
+                            'S3'        => 'S3',
+                            'Lainnya'   => 'Lainnya',
+                        ],
+                        'empty' => '-- Pilih --',
+                        'class' => 'form-control',
+                    ]) ?>
+                </div>
             </div>
 
-            <label class="col-form-label col-md-1">
-                Gender
-            </label>
-
-            <div class="col-md-2">
-                <?=
-                $this->Form->control('gender', [
-                    'label' => false,
-                    'class' => 'form-control select2Form',
-                    'options' => [
-                        'Male' => 'Laki-laki',
-                        'Female' => 'Perempuan'
-                    ],
-                    'empty' => '-- Pilih --'
-                ]);
-                ?>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>Status Pernikahan</label>
+                    <?= $this->Form->control('marital_status', [
+                        'type'    => 'select',
+                        'label'   => false,
+                        'options' => [
+                            'Belum Menikah' => 'Belum Menikah',
+                            'Menikah'       => 'Menikah',
+                            'Cerai Hidup'   => 'Cerai Hidup',
+                            'Cerai Mati'    => 'Cerai Mati',
+                        ],
+                        'empty' => '-- Pilih --',
+                        'class' => 'form-control',
+                    ]) ?>
+                </div>
             </div>
 
-            <label class="col-form-label col-md-1">
-                Gol. Darah
-            </label>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>Pekerjaan</label>
+                    <?= $this->Form->control('occupation', [
+                        'label'       => false,
+                        'class'       => 'form-control',
+                        'placeholder' => 'Pekerjaan pasien',
+                    ]) ?>
+                </div>
+            </div>
 
-            <div class="col-md-2">
-                <?=
-                $this->Form->control('blood_type', [
-                    'label' => false,
-                    'class' => 'form-control select2Form',
-                    'options' => [
-                        'A' => 'A',
-                        'B' => 'B',
-                        'AB' => 'AB',
-                        'O' => 'O'
-                    ],
-                    'empty' => '-- Pilih --'
-                ]);
-                ?>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Kewarganegaraan</label>
+                    <?= $this->Form->control('nationality', [
+                        'label'       => false,
+                        'class'       => 'form-control',
+                        'placeholder' => 'WNI / WNA',
+                        'value'       => 'WNI',
+                    ]) ?>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Citizenship</label>
+                    <?= $this->Form->control('citizenship', [
+                        'label'       => false,
+                        'class'       => 'form-control',
+                        'placeholder' => 'Indonesia',
+                    ]) ?>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Suku</label>
+                    <?= $this->Form->control('ethnic_group', [
+                        'label'       => false,
+                        'class'       => 'form-control',
+                        'placeholder' => 'Jawa / Sunda / Batak / dll',
+                    ]) ?>
+                </div>
             </div>
 
         </div>
 
-        <!-- ROW 3 -->
-        <div class="form-group row m-b-15">
+        <hr>
 
-            <label class="col-form-label col-md-1">
-                Tanggal Lahir
-            </label>
-
-            <div class="col-md-3">
-                <?= $this->Form->control('birth_date', [
-                    'type' => 'text',
-                    'label' => false,
-                    'class' => 'form-control datepicker-autoclose',
-                    'id' => 'birth-date',
-                    'autocomplete' => 'off'
-                ]); ?>
+        <!-- ── SECTION 3: Data Keluarga ───────────────────────── -->
+        <h5 style="color:#2c3e50; font-weight:700; margin-bottom:14px; padding-bottom:6px;
+                   border-bottom:2px solid #e9ecef;">
+            <i class="fa fa-user-friends"></i> Data Keluarga
+        </h5>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Nama Ibu</label>
+                    <?= $this->Form->control('mother_name', [
+                        'label'       => false,
+                        'class'       => 'form-control',
+                        'placeholder' => 'Nama ibu kandung',
+                    ]) ?>
+                </div>
             </div>
-
-            <label class="col-form-label col-md-1">
-                Umur
-            </label>
-
-            <div class="col-md-2">
-                <?= $this->Form->control('age', [
-                    'label' => false,
-                    'class' => 'form-control',
-                    'id' => 'age',
-                    'readonly' => true
-                ]); ?>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Nama Ayah</label>
+                    <?= $this->Form->control('father_name', [
+                        'label'       => false,
+                        'class'       => 'form-control',
+                        'placeholder' => 'Nama ayah kandung',
+                    ]) ?>
+                </div>
             </div>
-
-            <label class="col-form-label col-md-1">
-                Telepon
-            </label>
-
-            <div class="col-md-3">
-                <?=
-                $this->Form->control('phone_number', [
-                    'label' => false,
-                    'class' => 'form-control',
-                    'placeholder' => 'Nomor Telepon...'
-                ]);
-                ?>
-            </div>
-
         </div>
 
-        <!-- ROW 4 -->
-        <div class="form-group row m-b-15">
+        <hr>
 
-            <label class="col-form-label col-md-1">
-                Agama
-            </label>
-
-            <div class="col-md-3">
-                <?=
-                $this->Form->control('religion', [
-                    'type' => 'select',
-                    'label' => false,
-                    'class' => 'form-control select2Form',
-                    'options' => [
-                        'Islam' => 'Islam',
-                        'Kristen' => 'Kristen',
-                        'Katolik' => 'Katolik',
-                        'Hindu' => 'Hindu',
-                        'Buddha' => 'Buddha',
-                        'Konghucu' => 'Konghucu',
-                        'Lainnya' => 'Lainnya',
-                    ],
-                    'empty' => '-- Pilih --'
-                ]);
-                ?>
+        <!-- ── SECTION 4: Alamat ──────────────────────────────── -->
+        <h5 style="color:#2c3e50; font-weight:700; margin-bottom:14px; padding-bottom:6px;
+                   border-bottom:2px solid #e9ecef;">
+            <i class="fa fa-map-marker-alt"></i> Alamat
+        </h5>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>Alamat Lengkap</label>
+                    <?= $this->Form->control('address', [
+                        'type'        => 'textarea',
+                        'label'       => false,
+                        'class'       => 'form-control',
+                        'rows'        => 2,
+                        'placeholder' => 'Jl. nama jalan, RT/RW, nomor rumah...',
+                    ]) ?>
+                </div>
             </div>
-
-            <label class="col-form-label col-md-1">
-                Ayah
-            </label>
-
             <div class="col-md-3">
-                <?=
-                $this->Form->control('father_name', [
-                    'label' => false,
-                    'class' => 'form-control',
-                    'placeholder' => 'Nama Ayah...'
-                ]);
-                ?>
+                <div class="form-group">
+                    <label>Kelurahan</label>
+                    <?= $this->Form->control('subdistrict', [
+                        'label'       => false,
+                        'class'       => 'form-control',
+                        'placeholder' => 'Nama kelurahan',
+                    ]) ?>
+                </div>
             </div>
-
-            <label class="col-form-label col-md-1">
-                Ibu
-            </label>
-
             <div class="col-md-3">
-                <?=
-                $this->Form->control('mother_name', [
-                    'label' => false,
-                    'class' => 'form-control',
-                    'placeholder' => 'Nama Ibu...'
-                ]);
-                ?>
+                <div class="form-group">
+                    <label>Kecamatan</label>
+                    <?= $this->Form->control('district', [
+                        'label'       => false,
+                        'class'       => 'form-control',
+                        'placeholder' => 'Nama kecamatan',
+                    ]) ?>
+                </div>
             </div>
-
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>Kota / Kabupaten</label>
+                    <?= $this->Form->control('city', [
+                        'label'       => false,
+                        'class'       => 'form-control',
+                        'placeholder' => 'Nama kota',
+                    ]) ?>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>Provinsi</label>
+                    <?= $this->Form->control('province', [
+                        'label'       => false,
+                        'class'       => 'form-control',
+                        'placeholder' => 'Nama provinsi',
+                    ]) ?>
+                </div>
+            </div>
         </div>
 
-        <!-- ROW 5 -->
-        <div class="form-group row m-b-15">
+        <hr>
 
-            <label class="col-form-label col-md-1">
-                Kewarganegaraan
-            </label>
-
-            <div class="col-md-3">
-                <?= $this->Form->control('citizenship', [
-                    'type' => 'select',
-                    'label' => false,
-                    'class' => 'form-control select2Form',
-                    'options' => [
-                        'WNI' => 'WNI',
-                        'WNA' => 'WNA'
-                    ],
-                    'empty' => '-- Pilih --',
-                    'value' => 'WNI'
-                ]); ?>
-            </div>
-
-            <label class="col-form-label col-md-1">
-                Negara
-            </label>
-
-            <div class="col-md-3">
-                <?= $this->Form->control('nationality', [
-                    'type' => 'select',
-                    'label' => false,
-                    'class' => 'form-control select2Form',
-                    'options' => [
-                        'Indonesia' => 'Indonesia',
-                        'Lainnya' => 'Lainnya'
-                    ],
-                    'empty' => '-- Pilih --',
-                    'value' => 'Indonesia'
-                ]); ?>
-            </div>
-
-            <label class="col-form-label col-md-1">
-                Status
-            </label>
-
-            <div class="col-md-3">
-                <?= $this->Form->control('marital_status', [
-                    'type' => 'select',
-                    'label' => false,
-                    'class' => 'form-control select2Form',
-                    'options' => [
-                        'Belum Menikah' => 'Belum Menikah',
-                        'Menikah' => 'Menikah',
-                        'Cerai Hidup' => 'Cerai Hidup',
-                        'Cerai Mati' => 'Cerai Mati'
-                    ],
-                    'empty' => '-- Pilih --'
-                ]); ?>
-            </div>
-
+        <div class="text-right">
+            <?= $this->Html->link(
+                '<i class="fa fa-arrow-left"></i> Kembali',
+                ['action' => 'index'],
+                ['class' => 'btn btn-default', 'escape' => false]
+            ) ?>
+            <?= $this->Form->button(
+                '<i class="fa fa-save"></i> Simpan',
+                ['class' => 'btn btn-success', 'escapeTitle' => false]
+            ) ?>
         </div>
 
-        <!-- ROW 6 -->
-        <div class="form-group row m-b-15">
-
-            <label class="col-form-label col-md-1">
-                Provinsi
-            </label>
-
-            <div class="col-md-3">
-                <select id="ui-prov" class="form-control select2Form">
-                    <option value="">-- Pilih Provinsi --</option>
-                    <?php foreach ($provinces as $prov): ?>
-                        <option value="<?= h($prov['id_prov']) ?>"><?= h($prov['nama']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-                <input type="hidden" name="id_prov" id="hidden-province">
-            </div>
-
-            <label class="col-form-label col-md-1">
-                Kota
-            </label>
-
-            <div class="col-md-3">
-                <select id="ui-kab" class="form-control select2Form" disabled>
-                    <option value="">-- Pilih Kabupaten/Kota --</option>
-                </select>
-                <input type="hidden" name="id_kab" id="hidden-city">
-            </div>
-
-            <label class="col-form-label col-md-1">
-                Kecamatan
-            </label>
-
-            <div class="col-md-3">
-                <select id="ui-kec" class="form-control select2Form" disabled>
-                    <option value="">-- Pilih Kecamatan --</option>
-                </select>
-                <input type="hidden" name="id_kec" id="hidden-district">
-            </div>
-
-        </div>
-        <!-- ROW 7 -->
-        <div class="form-group row m-b-15">
-
-            <label class="col-form-label col-md-1">
-                Kelurahan
-            </label>
-
-            <div class="col-md-3">
-                <select id="ui-kel" class="form-control select2Form" disabled>
-                    <option value="">-- Pilih Kelurahan --</option>
-                </select>
-                <input type="hidden" name="id_kel" id="hidden-subdistrict">
-            </div>
-
-            <label class="col-form-label col-md-1">
-                Pekerjaan
-            </label>
-
-            <div class="col-md-3">
-                <?= $this->Form->control('occupation', [
-                    'type' => 'select',
-                    'label' => false,
-                    'class' => 'form-control select2Form',
-                    'options' => [
-                        'BELUM/TIDAK BEKERJA' => 'BELUM/TIDAK BEKERJA',
-                        'PELAJAR/MAHASISWA' => 'PELAJAR/MAHASISWA',
-                        'PNS' => 'PNS',
-                        'TNI' => 'TNI',
-                        'POLRI' => 'POLRI',
-                        'PEGAWAI SWASTA' => 'PEGAWAI SWASTA',
-                        'WIRASWASTA' => 'WIRASWASTA',
-                        'PETANI' => 'PETANI',
-                        'NELAYAN' => 'NELAYAN',
-                        'BURUH' => 'BURUH',
-                        'IBU RUMAH TANGGA' => 'IBU RUMAH TANGGA',
-                        'PENSIUNAN' => 'PENSIUNAN',
-                        'PENDETA' => 'PENDETA',
-                        'USTADZ' => 'USTADZ',
-                        'DOKTER' => 'DOKTER',
-                        'PERAWAT' => 'PERAWAT',
-                        'BIDAN' => 'BIDAN',
-                        'APOTEKER' => 'APOTEKER',
-                        'GURU' => 'GURU',
-                        'DOSEN' => 'DOSEN',
-                        'LAINNYA' => 'LAINNYA'
-                    ],
-                    'empty' => '-- Pilih Pekerjaan --'
-                ]); ?>
-            </div>
-
-            <label class="col-form-label col-md-1">
-                Pendidikan
-            </label>
-
-            <div class="col-md-3">
-                <?= $this->Form->control('education', [
-                    'type' => 'select',
-                    'label' => false,
-                    'class' => 'form-control select2Form',
-                    'options' => [
-                        'SD' => 'SD',
-                        'SMP' => 'SMP',
-                        'SMA/SMK' => 'SMA/SMK',
-                        'D3' => 'D3',
-                        'S1' => 'S1',
-                        'S2' => 'S2',
-                        'S3' => 'S3',
-                        'Lainnya' => 'Lainnya'
-                    ],
-                    'empty' => '-- Pilih --'
-                ]); ?>
-            </div>
-
-        </div>
-
-        <!-- ROW 8 -->
-        <div class="form-group row m-b-15">
-
-            <label class="col-form-label col-md-1">
-                Suku
-            </label>
-
-            <div class="col-md-3">
-                <?= $this->Form->control('ethnic_group', [
-                    'type' => 'select',
-                    'label' => false,
-                    'class' => 'form-control select2Form',
-                    'options' => [
-                        'JAWA' => 'JAWA',
-                        'SUNDA' => 'SUNDA',
-                        'MADURA' => 'MADURA',
-                        'BATAK' => 'BATAK',
-                        'MINANGKABAU' => 'MINANGKABAU',
-                        'BETAWI' => 'BETAWI',
-                        'BUGIS' => 'BUGIS',
-                        'MAKASSAR' => 'MAKASSAR',
-                        'DAYAK' => 'DAYAK',
-                        'BANJAR' => 'BANJAR',
-                        'ACEH' => 'ACEH',
-                        'MELAYU' => 'MELAYU',
-                        'PAPUA' => 'PAPUA',
-                        'AMBON' => 'AMBON',
-                        'TIMOR' => 'TIMOR',
-                        'BALI' => 'BALI',
-                        'SASAK' => 'SASAK',
-                        'TIONGHOA' => 'TIONGHOA',
-                        'ARAB' => 'ARAB',
-                        'LAINNYA' => 'LAINNYA'
-                    ],
-                    'empty' => '-- Pilih Suku --'
-                ]); ?>
-            </div>
-
-        </div>
-
-        <!-- ROW 9 -->
-        <div class="form-group row m-b-15">
-
-            <label class="col-form-label col-md-1">
-                Alamat
-            </label>
-
-            <div class="col-md-11">
-                <?=
-                $this->Form->control('address', [
-                    'type' => 'textarea',
-                    'label' => false,
-                    'class' => 'form-control',
-                    'placeholder' => 'Alamat...',
-                    'rows' => 3
-                ]);
-                ?>
-            </div>
-
-        </div>
-
-        <!-- HIDDEN -->
-        <?php
-        echo $this->Form->hidden('is_create', ['value' => 1]);
-        echo $this->Form->hidden('is_update', ['value' => 0]);
-        echo $this->Form->hidden('is_delete', ['value' => 0]);
-        echo $this->Form->hidden('is_active', ['value' => 'Y']);
-        ?>
+        <?= $this->Form->end() ?>
 
     </div>
-
-    <?= $this->Krs->btnSave(); ?>
-
-    <?= $this->Form->end() ?>
-
 </div>
-
-<script type="text/javascript">
-    $(document).ready(function() {
-
-        $(".select2Form").select2();
-
-        $('#ui-prov').on('change', function() {
-            var idProv = $(this).val();
-            var selectedText = $(this).find('option:selected').text();
-
-            $('#hidden-province').val(idProv ? selectedText : '');
-
-            $('#ui-kab').html('<option value="">-- Pilih Kabupaten/Kota --</option>').prop('disabled', true);
-            $('#ui-kec').html('<option value="">-- Pilih Kecamatan --</option>').prop('disabled', true);
-            $('#ui-kel').html('<option value="">-- Pilih Kelurahan --</option>').prop('disabled', true);
-
-            $('#hidden-city').val('');
-            $('#hidden-district').val('');
-            $('#hidden-subdistrict').val('');
-
-            if (!idProv) return;
-
-            $.getJSON(
-                "<?= $this->Url->build(['controller' => 'Patients', 'action' => 'getKabupatens']) ?>", {
-                    id_prov: idProv
-                },
-                function(data) {
-                    data.forEach(function(item) {
-                        $('#ui-kab').append(
-                            '<option value="' + item.id_kab + '">' + item.nama + '</option>'
-                        );
-                    });
-
-                    $('#ui-kab').prop('disabled', false).trigger('change.select2');
-                }
-            );
-        });
-
-        $('#ui-kab').on('change', function() {
-            var idKab = $(this).val();
-            var selectedText = $(this).find('option:selected').text();
-
-            $('#hidden-city').val(idKab ? selectedText : '');
-
-            $('#ui-kec').html('<option value="">-- Pilih Kecamatan --</option>').prop('disabled', true);
-            $('#ui-kel').html('<option value="">-- Pilih Kelurahan --</option>').prop('disabled', true);
-
-            $('#hidden-district').val('');
-            $('#hidden-subdistrict').val('');
-
-            if (!idKab) return;
-
-            $.getJSON(
-                "<?= $this->Url->build(['controller' => 'Patients', 'action' => 'getKecamatans']) ?>", {
-                    id_kab: idKab
-                },
-                function(data) {
-                    data.forEach(function(item) {
-                        $('#ui-kec').append(
-                            '<option value="' + item.id_kec + '">' + item.nama + '</option>'
-                        );
-                    });
-
-                    $('#ui-kec').prop('disabled', false).trigger('change.select2');
-                }
-            );
-        });
-
-        $('#ui-kec').on('change', function() {
-            var idKec = $(this).val();
-            var selectedText = $(this).find('option:selected').text();
-
-            $('#hidden-district').val(idKec ? selectedText : '');
-
-            $('#ui-kel').html('<option value="">-- Pilih Kelurahan --</option>').prop('disabled', true);
-            $('#hidden-subdistrict').val('');
-
-            if (!idKec) return;
-
-            $.getJSON(
-                "<?= $this->Url->build(['controller' => 'Patients', 'action' => 'getKelurahans']) ?>", {
-                    id_kec: idKec
-                },
-                function(data) {
-                    data.forEach(function(item) {
-                        $('#ui-kel').append(
-                            '<option value="' + item.id_kel + '">' + item.nama + '</option>'
-                        );
-                    });
-
-                    $('#ui-kel').prop('disabled', false).trigger('change.select2');
-                }
-            );
-        });
-
-        $('#ui-kel').on('change', function() {
-            var idKel = $(this).val();
-            var selectedText = $(this).find('option:selected').text();
-
-            $('#hidden-subdistrict').val(idKel ? selectedText : '');
-        });
-
-        $('#auto-code').change(function() {
-
-            if ($(this).is(':checked')) {
-
-                $('#patient-code')
-                    .prop('disabled', true)
-                    .val('')
-                    .attr('placeholder', 'Kode Otomatis..')
-                    .removeAttr('required')
-                    .attr('data-parsley-excluded', 'true')
-                    .attr('data-parsley-required', 'false');
-
-            } else {
-
-                $('#patient-code')
-                    .prop('disabled', false)
-                    .attr('placeholder', 'Masukkan Kode Pasien')
-                    .removeAttr('required')
-                    .removeAttr('data-parsley-excluded')
-                    .attr('data-parsley-required', 'false');
-
-            }
-
-            if ($('#patient-code').parsley) {
-                $('#patient-code').parsley().reset();
-            }
-
-        });
-
-        $('#auto-code').trigger('change');
-
-        function calculateAge(birthDate) {
-
-            if (!birthDate) return '';
-
-            var today = new Date();
-            var birth = new Date(birthDate);
-
-            var years = today.getFullYear() - birth.getFullYear();
-            var months = today.getMonth() - birth.getMonth();
-            var days = today.getDate() - birth.getDate();
-
-            if (days < 0) {
-                months--;
-                days += new Date(today.getFullYear(), today.getMonth(), 0).getDate();
-            }
-
-            if (months < 0) {
-                years--;
-                months += 12;
-            }
-
-            return years + ' Tahun ' + months + ' Bulan ' + days + ' Hari';
-        }
-
-        $('#birth-date').on('change changeDate', function() {
-            $('#age').val(calculateAge($(this).val()));
-        });
-        $('.datepicker-autoclose').datepicker({
-            format: 'yyyy-mm-dd',
-            autoclose: true,
-            todayHighlight: true
-        });
-
-        var confirmTitle = "Apakah anda ingin menyimpan data tersebut ?";
-
-        var formAction = "<?= $this->Url->build(['controller' => 'Patients', 'action' => 'add'], ['fullBase' => true]); ?>";
-
-        handleFormConfirmSubmitValid(
-            'PatientAddForm',
-            'btn-add',
-            confirmTitle,
-            formAction
-        );
-
-    });
-</script>

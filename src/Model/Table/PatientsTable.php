@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
-use ArrayObject;
-use Cake\Event\EventInterface;
 use Cake\ORM\Query;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
@@ -14,6 +12,7 @@ use Cake\Validation\Validator;
 /**
  * Patients Model
  *
+ * @property \App\Model\Table\PatientPicsTable&\Cake\ORM\Association\HasMany $PatientPics
  * @property \App\Model\Table\RegistrationsTable&\Cake\ORM\Association\HasMany $Registrations
  *
  * @method \App\Model\Entity\Patient newEmptyEntity()
@@ -50,99 +49,43 @@ class PatientsTable extends Table
 
         $this->addBehavior('Timestamp');
 
+        $this->hasMany('PatientPics', [
+            'foreignKey' => 'patient_id',
+        ]);
         $this->hasMany('Registrations', [
             'foreignKey' => 'patient_id',
         ]);
-    }
-
-    public function beforeMarshal(EventInterface $event, ArrayObject $data, ArrayObject $options): void
-    {
-        foreach ($data as $field => $value) {
-            if (is_string($value)) {
-                $data[$field] = trim($value);
-            }
-        }
-
-        if (!empty($data['birth_date']) && is_string($data['birth_date']) && strpos($data['birth_date'], '/') !== false) {
-            $parts = explode('/', $data['birth_date']);
-            if (count($parts) === 3) {
-                $data['birth_date'] = $parts[2] . '-' . $parts[1] . '-' . $parts[0];
-            }
-        }
-
-        if (array_key_exists('birth_date', $data) && $data['birth_date'] === '') {
-            $data['birth_date'] = null;
-        }
     }
 
     public function generateCode()
     {
         $lastPatient = $this->find()
             ->select(['code'])
-            ->where(['code LIKE' => 'PAT-%'])
+            ->where(['code LIKE' => 'P%'])
             ->order(['id' => 'DESC'])
             ->first();
 
         if ($lastPatient && !empty($lastPatient->code)) {
-            $lastNumber = (int) str_replace('PAT-', '', $lastPatient->code);
+            $lastNumber = (int) str_replace('P', '', $lastPatient->code);
             $newNumber = $lastNumber + 1;
         } else {
             $newNumber = 1;
         }
 
-        return 'PAT-' . str_pad((string)$newNumber, 5, '0', STR_PAD_LEFT);
+        return 'P' . str_pad((string) $newNumber, 6, '0', STR_PAD_LEFT);
     }
 
-    public function generateMedicalRecordNo()
+    public function buildRules(\Cake\ORM\RulesChecker $rules): \Cake\ORM\RulesChecker
     {
-        $lastPatient = $this->find()
-            ->select(['medical_record_no'])
-            ->where(['medical_record_no LIKE' => 'RM%'])
-            ->order(['id' => 'DESC'])
-            ->first();
-
-        if ($lastPatient && !empty($lastPatient->medical_record_no)) {
-            $lastNumber = (int) str_replace('RM', '', $lastPatient->medical_record_no);
-            $newNumber = $lastNumber + 1;
-        } else {
-            $newNumber = 1;
-        }
-
-        return 'RM' . str_pad((string) $newNumber, 6, '0', STR_PAD_LEFT);
-    }
-
-    public function buildRules(RulesChecker $rules): RulesChecker
-    {
-        $rules->add($rules->isUnique(['code']), [
-            'errorField' => 'code',
-            'message' => 'Kode pasien sudah terdaftar.'
-        ]);
-
-        if ($this->getSchema()->hasColumn('medical_record_no')) {
-            $rules->add($rules->isUnique(['medical_record_no']), [
-                'errorField' => 'medical_record_no',
-                'message' => 'No rekam medis sudah terdaftar.'
-            ]);
-        }
-
-        $rules->add(function ($entity) {
-            if (empty($entity->identity_number)) {
-                return true;
-            }
-
-            $conditions = ['identity_number' => $entity->identity_number];
-            if (!empty($entity->id)) {
-                $conditions['id !='] = $entity->id;
-            }
-
-            return !$this->exists($conditions);
-        }, 'uniqueIdentityNumber', [
-            'errorField' => 'identity_number',
-            'message' => 'No identitas sudah terdaftar.',
-        ]);
-
+        $rules->add(
+            $rules->isUnique(
+                ['identity_number'],
+                'No identitas sudah terdaftar'
+            )
+        );
+    
         return $rules;
-    }
+    }   
 
     /**
      * Default validation rules.
@@ -161,13 +104,6 @@ class PatientsTable extends Table
             ->maxLength('code', 50)
             ->notEmptyString('code');
 
-        if ($this->getSchema()->hasColumn('medical_record_no')) {
-            $validator
-                ->scalar('medical_record_no')
-                ->maxLength('medical_record_no', 50)
-                ->allowEmptyString('medical_record_no');
-        }
-
         $validator
             ->scalar('full_name')
             ->maxLength('full_name', 255)
@@ -176,21 +112,21 @@ class PatientsTable extends Table
         $validator
             ->scalar('identity_type')
             ->maxLength('identity_type', 50)
-            ->allowEmptyString('identity_type');
+            ->notEmptyString('identity_type');
 
         $validator
             ->scalar('identity_number')
             ->maxLength('identity_number', 50)
-            ->allowEmptyString('identity_number');
+            ->notEmptyString('identity_number');
 
         $validator
             ->scalar('gender')
-            ->allowEmptyString('gender');
+            ->notEmptyString('gender');
 
         $validator
             ->scalar('blood_type')
             ->maxLength('blood_type', 5)
-            ->allowEmptyString('blood_type');
+            ->notEmptyString('blood_type');
 
         $validator
             ->date('birth_date')
@@ -203,72 +139,72 @@ class PatientsTable extends Table
         $validator
             ->scalar('mother_name')
             ->maxLength('mother_name', 255)
-            ->allowEmptyString('mother_name');
+            ->notEmptyString('mother_name');
 
         $validator
             ->scalar('father_name')
             ->maxLength('father_name', 255)
-            ->allowEmptyString('father_name');
+            ->notEmptyString('father_name');
 
         $validator
             ->scalar('phone_number')
             ->maxLength('phone_number', 20)
-            ->allowEmptyString('phone_number');
+            ->notEmptyString('phone_number');
 
         $validator
             ->scalar('nationality')
             ->maxLength('nationality', 100)
-            ->allowEmptyString('nationality');
+            ->notEmptyString('nationality');
 
         $validator
             ->scalar('citizenship')
             ->maxLength('citizenship', 100)
-            ->allowEmptyString('citizenship');
+            ->notEmptyString('citizenship');
 
         $validator
             ->scalar('province')
             ->maxLength('province', 100)
-            ->allowEmptyString('province');
+            ->notEmptyString('province');
 
         $validator
             ->scalar('city')
             ->maxLength('city', 100)
-            ->allowEmptyString('city');
+            ->notEmptyString('city');
 
         $validator
             ->scalar('district')
             ->maxLength('district', 100)
-            ->allowEmptyString('district');
+            ->notEmptyString('district');
 
         $validator
             ->scalar('subdistrict')
             ->maxLength('subdistrict', 100)
-            ->allowEmptyString('subdistrict');
+            ->notEmptyString('subdistrict');
 
         $validator
             ->scalar('occupation')
             ->maxLength('occupation', 100)
-            ->allowEmptyString('occupation');
+            ->notEmptyString('occupation');
 
         $validator
             ->scalar('religion')
             ->maxLength('religion', 50)
-            ->allowEmptyString('religion');
+            ->notEmptyString('religion');
 
         $validator
             ->scalar('education')
             ->maxLength('education', 100)
-            ->allowEmptyString('education');
+            ->notEmptyString('education');
 
         $validator
             ->scalar('ethnic_group')
             ->maxLength('ethnic_group', 100)
-            ->allowEmptyString('ethnic_group');
+            ->notEmptyString('ethnic_group');
 
         $validator
             ->scalar('marital_status')
             ->maxLength('marital_status', 50)
-            ->allowEmptyString('marital_status');
+            ->notEmptyString('marital_status');
 
         $validator
             ->integer('is_create')

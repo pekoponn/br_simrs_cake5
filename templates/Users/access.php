@@ -12,6 +12,30 @@ $dataChild = $this->Html->link('User', ['action' => 'index'], ['full_base' => tr
 // Branch
 
 if (!empty($rules)) {
+    $ruleChecked = function (string $controller, string $action) use ($rules): string {
+        return (($rules[$controller][$action] ?? 0) == 1) ? 'checked' : '';
+    };
+
+    $ruleCheckbox = function (string $controller, string $action, string $label) use ($ruleChecked): string {
+        return '<div class="form-check form-check-inline">'
+            . $this->Form->checkbox("Rules.{$controller}.{$action}", [
+                'value' => '1',
+                'hiddenField' => true,
+                'checked' => $ruleChecked($controller, $action),
+                'class' => 'form-check-input',
+            ])
+            . '<label class="form-check-label">' . h($label) . '</label>'
+            . '</div>';
+    };
+
+    $ruleRow = function (string $title, string $controller, array $actions) use ($ruleCheckbox): string {
+        $checkboxes = '';
+        foreach ($actions as $action => $label) {
+            $checkboxes .= $ruleCheckbox($controller, $action, $label);
+        }
+
+        return '<tr><td>' . h($title) . '</td><td><div class="col-md-12">' . $checkboxes . '</div></td></tr>';
+    };
 
     // Branch
     $branch = $rules['branches'];
@@ -974,6 +998,7 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
     $roomsEdit = ($room['edit'] == 1) ? 'checked' : '';
     $roomsView = ($room['view'] == 1) ? 'checked' : '';
     $roomsDelete = ($room['delete'] == 1) ? 'checked' : '';
+    $roomsMonitoring = ($room['monitoring'] == 1) ? 'checked' : '';
 
     //polyclinic
     $polyclinic = $rules['polyclinics'];
@@ -1814,6 +1839,12 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
                                         ?>
                                         <label class="form-check-label">Detail</label>
                                     </div>
+                                    <?= $ruleCheckbox('orders', 'cariLaboratorium', 'Cari Lab') ?>
+                                    <?= $ruleCheckbox('orders', 'cariRadiologi', 'Cari Radiologi') ?>
+                                    <?= $ruleCheckbox('orders', 'cariPenunjang', 'Cari Penunjang') ?>
+                                    <?= $ruleCheckbox('orders', 'cariNutritionCombine', 'Cari Gizi') ?>
+                                    <?= $ruleCheckbox('orders', 'cariJenisMcu', 'Cari MCU') ?>
+                                    <?= $ruleCheckbox('orders', 'cariJenisOperasi', 'Cari Operasi') ?>
                                     <div class="form-check form-check-inline">
                                         <?php
                                         echo $this->Form->checkbox('Rules.orders.historyOrderDetail', ['value' => '1', 'hiddenField' => true, 'checked' => $orderHistoryDetail, 'class' => 'form-check-input']);
@@ -1823,6 +1854,35 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
                                 </div>
                             </td>
                         </tr>
+
+                        <?= $ruleRow('Order MCU', 'ordermcus', [
+                            'index' => 'Daftar',
+                            'view' => 'Tampilkan',
+                            'add' => 'Tambah',
+                            'edit' => 'Ubah',
+                            'delete' => 'Hapus',
+                        ]) ?>
+                        <?= $ruleRow('Orders MCU', 'ordersmcus', [
+                            'index' => 'Daftar',
+                            'view' => 'Tampilkan',
+                            'add' => 'Tambah',
+                            'edit' => 'Ubah',
+                            'delete' => 'Hapus',
+                        ]) ?>
+                        <?= $ruleRow('Order Penunjang', 'ordersupports', [
+                            'index' => 'Daftar',
+                            'view' => 'Tampilkan',
+                            'add' => 'Tambah',
+                            'edit' => 'Ubah',
+                            'delete' => 'Hapus',
+                        ]) ?>
+                        <?= $ruleRow('Order Operasi', 'ordersurgeries', [
+                            'index' => 'Daftar',
+                            'view' => 'Tampilkan',
+                            'add' => 'Tambah',
+                            'edit' => 'Ubah',
+                            'delete' => 'Hapus',
+                        ]) ?>
 
                         <tr>
                             <td>Order PO (keSupplier)</td>
@@ -3542,20 +3602,51 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
                                         ?>
                                         <label class="form-check-label">Hapus</label>
                                     </div>
-                                    <div class="form-check form-check-inline">
-                                        <?php
-                                        echo $this->Form->checkbox('Rules.medicalrecords.history', [
-                                            'value' => '1',
-                                            'hiddenField' => true,
-                                            'checked' => $medicalrecordsHistory,
-                                            'class' => 'form-check-input'
-                                        ]);
-                                        ?>
-                                        <label class="form-check-label">Riwayat Pasien</label>
-                                    </div>
+                                    <?= $ruleCheckbox('registrations', 'getSummary', 'Ringkasan') ?>
+                                    <?= $ruleCheckbox('patientadmissions', 'index', 'Admission') ?>
                                 </div>
                             </td>
                         </tr>
+                        <?= $ruleRow('Riwayat Pasien', 'patienthistories', [
+                            'index' => 'Daftar',
+                            'searchPatients' => 'Cari Pasien',
+                            'periksa' => 'Periksa',
+                            'history' => 'Riwayat',
+                        ]) ?>
+                        <?= $ruleRow('Rekam Medis', 'medicalrecords', [
+                            'index' => 'Daftar',
+                            'history' => 'Riwayat',
+                            'searchPatients' => 'Cari Pasien',
+                            'backfillNoRm' => 'Backfill No RM',
+                        ]) ?>
+                        <?= $ruleRow('Diagnosa Rekam Medis', 'medicalrecorddiagnoses', [
+                            'index' => 'Daftar',
+                            'view' => 'Tampilkan',
+                            'add' => 'Tambah',
+                            'edit' => 'Ubah',
+                            'delete' => 'Hapus',
+                        ]) ?>
+                        <?= $ruleRow('RM Rawat Inap', 'medicalrecordinpatients', [
+                            'index' => 'Daftar',
+                            'view' => 'Tampilkan',
+                            'add' => 'Tambah',
+                            'edit' => 'Ubah',
+                            'delete' => 'Hapus',
+                        ]) ?>
+                        <?= $ruleRow('RM Rawat Jalan/IGD', 'medicalrecordoutpatientigds', [
+                            'index' => 'Daftar',
+                            'view' => 'Tampilkan',
+                            'add' => 'Tambah',
+                            'edit' => 'Ubah',
+                            'delete' => 'Hapus',
+                        ]) ?>
+                        <?= $ruleRow('Resume Medis', 'medicalresumes', [
+                            'index' => 'Daftar',
+                            'view' => 'Tampilkan',
+                            'add' => 'Tambah',
+                            'edit' => 'Ubah',
+                            'delete' => 'Hapus',
+                        ]) ?>
                         <tr>
                             <td>Rawat Jalan</td>
                             <td>
@@ -3584,6 +3675,7 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
                                         <?php echo $this->Form->checkbox('Rules.outpatientvisits.emr', ['value' => '1', 'hiddenField' => true, 'checked' => $outpatientvisitsEmr, 'class' => 'form-check-input']); ?>
                                         <label class="form-check-label">EMR</label>
                                     </div>
+                                    <?= $ruleCheckbox('outpatientvisits', 'resumeMedis', 'Resume Medis') ?>
                                     <div class="form-check form-check-inline">
                                         <?php echo $this->Form->checkbox('Rules.outpatientvisits.selesai', ['value' => '1', 'hiddenField' => true, 'checked' => $outpatientvisitsSelesai, 'class' => 'form-check-input']); ?>
                                         <label class="form-check-label">Selesai</label>
@@ -3600,6 +3692,10 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
                                         <?php echo $this->Form->checkbox('Rules.outpatientvisits.getSummary', ['value' => '1', 'hiddenField' => true, 'checked' => $outpatientvisitsGetSummary, 'class' => 'form-check-input']); ?>
                                         <label class="form-check-label">Ringkasan</label>
                                     </div>
+                                    <?= $ruleCheckbox('outpatientvisits', 'searchIcd10', 'Cari ICD-10') ?>
+                                    <?= $ruleCheckbox('outpatientvisits', 'searchIcd9', 'Cari ICD-9') ?>
+                                    <?= $ruleCheckbox('outpatientvisits', 'selesaiPeriksa', 'Selesai Periksa') ?>
+                                    <?= $ruleCheckbox('outpatientvisits', 'hasilPemeriksaan', 'Hasil Pemeriksaan') ?>
                                     <div class="form-check form-check-inline">
                                         <?php echo $this->Form->checkbox('Rules.outpatientvisits.delete', ['value' => '1', 'hiddenField' => true, 'checked' => $outpatientvisitsDelete, 'class' => 'form-check-input']); ?>
                                         <label class="form-check-label">Hapus</label>
@@ -3607,6 +3703,13 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
                                 </div>
                             </td>
                         </tr>
+                        <?= $ruleRow('Catatan CPPT', 'outpatientcpptnotes', [
+                            'index' => 'Daftar',
+                            'view' => 'Tampilkan',
+                            'add' => 'Tambah',
+                            'edit' => 'Ubah',
+                            'delete' => 'Hapus',
+                        ]) ?>
                         <tr>
                             <td>Rawat Inap</td>
                             <td>
@@ -4245,6 +4348,19 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
                                     </div>
                                     <div class="form-check form-check-inline">
                                         <?php
+                                        echo $this->Form->checkbox('Rules.rooms.delete', ['value' => '1', 'hiddenField' => true, 'checked' => $roomsDelete, 'class' => 'form-check-input']);
+                                        ?>
+                                        <label class="form-check-label">Hapus</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php
+                                        echo $this->Form->checkbox('Rules.rooms.monitoring', ['value' => '1', 'hiddenField' => true, 'checked' => $roomsMonitoring, 'class' => 'form-check-input']);
+                                        ?>
+                                        <label class="form-check-label">Monitoring</label>
+                                    </div>
+
+                                    <!-- <div class="form-check form-check-inline">
+                                        <?php
                                         echo $this->Form->checkbox('Rules.rooms.preview', ['value' => '1', 'hiddenField' => true, 'checked' => $roomsPreview, 'class' => 'form-check-input']);
                                         ?>
                                         <label class="form-check-label">Tampilkan</label>
@@ -4260,7 +4376,7 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
                                         echo $this->Form->checkbox('Rules.rooms.dataExportImportXls', ['value' => '1', 'hiddenField' => true, 'checked' => $roomsDataExportImportXls, 'class' => 'form-check-input']);
                                         ?>
                                         <label class="form-check-label">Download (Xls-Import-Example)</label>
-                                    </div>
+                                    </div> -->
                                 </div>
                             </td>
                         </tr>
@@ -4715,7 +4831,7 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
                             <td>
                                 <div class="col-md-12">
                                     <div class="form-check form-check-inline">
-                                        <?php echo $this->Form->checkbox('Rules.masterpenjamins.index', ['value' => '1', 'hiddenField' => true, 'checked' => $masterpenjaminsIndex, 'class' => 'form-check-input']); ?>
+                                        <?php echo $this->Form->checkbox('Rules.masterpenjamins.index', ['value' => '1', 'hiddenField' => true, 'checked' => $masterpenjaminsIndex, 'class' =>'form-check-input']); ?>
                                         <label class="form-check-label">Daftar</label>
                                     </div>
                                     <div class="form-check form-check-inline">
@@ -4905,6 +5021,34 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
                                 </div>
                             </td>
                         </tr>
+                        <?= $ruleRow('Master Jenis MCU', 'mastermcutypes', [
+                            'index' => 'Daftar',
+                            'view' => 'Tampilkan',
+                            'add' => 'Tambah',
+                            'edit' => 'Ubah',
+                            'delete' => 'Hapus',
+                        ]) ?>
+                        <?= $ruleRow('Master Jenis Operasi', 'masteroperationtypes', [
+                            'index' => 'Daftar',
+                            'view' => 'Tampilkan',
+                            'add' => 'Tambah',
+                            'edit' => 'Ubah',
+                            'delete' => 'Hapus',
+                        ]) ?>
+                        <?= $ruleRow('Master Penunjang', 'mastersupports', [
+                            'index' => 'Daftar',
+                            'view' => 'Tampilkan',
+                            'add' => 'Tambah',
+                            'edit' => 'Ubah',
+                            'delete' => 'Hapus',
+                        ]) ?>
+                        <?= $ruleRow('Master Operator Bedah', 'mastersurgeryoperators', [
+                            'index' => 'Daftar',
+                            'view' => 'Tampilkan',
+                            'add' => 'Tambah',
+                            'edit' => 'Ubah',
+                            'delete' => 'Hapus',
+                        ]) ?>
                         <tr>
                             <td>nutritionmenus</td>
                             <td>

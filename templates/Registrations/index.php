@@ -1,27 +1,56 @@
 <?php
-
 /**
  * @var \App\View\AppView $this
- * @var iterable<\App\Model\Entity\Registration> $registrations
+ * @var \App\Model\Entity\Registration[]|\Cake\Collection\CollectionInterface $registrations
  */
 
-$pages = (empty($this->request->getQuery('page')))
-    ? ''
-    : $this->request->getQuery('page');
-$canViewPatientHistory = !empty($checkUrl['medicalrecords']['history']);
+$svcMap = [
+    'rawat_jalan' => ['label' => 'Rawat Jalan', 'color' => '#0d6efd', 'bg' => '#e7f1ff'],
+    'igd'         => ['label' => 'IGD',         'color' => '#dc3545', 'bg' => '#fde8ea'],
+    'rawat_inap'  => ['label' => 'Rawat Inap',  'color' => '#198754', 'bg' => '#e6f4ea'],
+];
+
+$payMap = [
+    'UMUM'     => ['color' => '#856404', 'bg' => '#fff3cd'],
+    'ASURANSI' => ['color' => '#0f5132', 'bg' => '#d1e7dd'],
+];
+
+$statusMap = [
+    // Nilai status yang dipakai di form
+    'aktif'   => ['label' => 'Aktif',   'badge' => 'success', 'icon' => 'fa-circle-dot',   'row' => ''],
+    'selesai' => ['label' => 'Selesai', 'badge' => 'default', 'icon' => 'fa-check-circle', 'row' => 'opacity:0.65;'],
+    'batal'   => ['label' => 'Batal',   'badge' => 'danger',  'icon' => 'fa-times-circle', 'row' => 'opacity:0.5;'],
+    // Fallback untuk data lama yang belum punya status
+    ''        => ['label' => 'Aktif',   'badge' => 'success', 'icon' => 'fa-circle-dot',   'row' => ''],
+    'y'       => ['label' => 'Aktif',   'badge' => 'success', 'icon' => 'fa-circle-dot',   'row' => ''],
+    'n'       => ['label' => 'Non Aktif','badge'=> 'default', 'icon' => 'fa-circle',        'row' => 'opacity:0.65;'],
+];
+
+// URL untuk AJAX summary — dipakai di JS
+$summaryUrl = $this->Url->build(['action' => 'getSummary']);
 ?>
 
-<?= $this->Krs->breadcrumb('Registrasi', 'Registrasi Pasien', 'Tampilkan') ?>
+<?= $this->Krs->breadcrumb('Registrations', 'Daftar Registrasi Pasien') ?>
 
 <div class="panel panel-inverse">
 
+    <!-- PANEL HEADER -->
     <div class="panel-heading">
         <h4 class="panel-title">
-            Daftar Registrasi Pasien
+            <i class="fa fa-clipboard-list" style="margin-right:6px;"></i>
+            Registrasi Pasien
+            <span style="display:inline-flex; align-items:center; gap:5px;
+                         font-size:12px; font-weight:400; color:#28a745;
+                         background:#e9f7ef; border-radius:20px;
+                         padding:2px 10px; margin-left:10px; vertical-align:middle;">
+                <span id="live-dot" style="width:8px; height:8px; background:#28a745; border-radius:50%;
+                             display:inline-block; animation:pulse 1.5s infinite;"></span>
+                Live
+            </span>
         </h4>
-
         <div class="panel-heading-btn">
-            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default" data-click="panel-expand">
+            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default"
+               data-click="panel-expand">
                 <i class="fa fa-expand"></i>
             </a>
         </div>
@@ -29,333 +58,406 @@ $canViewPatientHistory = !empty($checkUrl['medicalrecords']['history']);
 
     <div class="panel-body">
 
-        <div class="alert alert-primary">
-            Halaman <strong>Registrasi Pasien</strong>,
-            digunakan untuk menampilkan data registrasi pasien.
+        <!-- TOOLBAR -->
+        <div class="table-toolbar" style="margin-bottom:16px;">
+            <div class="row align-items-end">
+
+                <div class="col-md-7" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+
+                    <?= $this->Html->link(
+                        '<i class="fa fa-plus"></i> Registrasi Baru',
+                        ['action' => 'add'],
+                        ['class' => 'btn btn-primary btn-sm', 'escape' => false]
+                    ) ?>
+
+                    <!-- Filter Status — submit form saat klik -->
+                    <div class="btn-group btn-group-sm">
+                        <?php
+                        $filterTabs = [
+                            ''        => ['label' => 'Semua',    'class' => 'btn-default'],
+                            'aktif'   => ['label' => 'Aktif',    'class' => 'btn-success'],
+                            'selesai' => ['label' => 'Selesai',  'class' => 'btn-info'],
+                            'batal'   => ['label' => 'Batal',    'class' => 'btn-danger'],
+                        ];
+                        $currentStatus = $this->request->getQuery('status', '');
+                        foreach ($filterTabs as $val => $opt):
+                            $active = ($currentStatus === $val) ? 'active' : '';
+                        ?>
+                            <a href="<?= $this->Url->build(['action' => 'index', '?' => [
+                                'status'         => $val,
+                                'q'              => $this->request->getQuery('q'),
+                                'date'           => $this->request->getQuery('date'),
+                                'service_type'   => $this->request->getQuery('service_type'),
+                                'payment_method' => $this->request->getQuery('payment_method'),
+                            ]]) ?>" class="btn <?= $opt['class'] ?> <?= $active ?>">
+                                <?= $opt['label'] ?>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <!-- Filter Pelayanan -->
+                    <div class="btn-group btn-group-sm">
+                        <?php
+                        $svcTabs = [
+                            ''            => ['label' => 'Semua Layanan', 'class' => 'btn-default'],
+                            'rawat_jalan' => ['label' => 'Rawat Jalan',   'class' => 'btn-primary'],
+                            'igd'         => ['label' => 'IGD',           'class' => 'btn-danger'],
+                            'rawat_inap'  => ['label' => 'Rawat Inap',    'class' => 'btn-success'],
+                        ];
+                        $currentSvc = $this->request->getQuery('service_type', '');
+                        foreach ($svcTabs as $val => $opt):
+                            $active = ($currentSvc === $val) ? 'active' : '';
+                        ?>
+                            <a href="<?= $this->Url->build(['action' => 'index', '?' => [
+                                'service_type'   => $val,
+                                'q'              => $this->request->getQuery('q'),
+                                'date'           => $this->request->getQuery('date'),
+                                'status'         => $this->request->getQuery('status'),
+                                'payment_method' => $this->request->getQuery('payment_method'),
+                            ]]) ?>" class="btn <?= $opt['class'] ?> <?= $active ?>">
+                                <?= $opt['label'] ?>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+
+                </div>
+
+                <!-- SEARCH FORM — submit ke server -->
+                <div class="col-md-5">
+                    <?= $this->Form->create(null, ['type' => 'get', 'id' => 'search-form']) ?>
+
+                    <div class="input-group pull-right" style="width:100%; max-width:340px;">
+                        <input type="text" id="search-q" name="q" class="form-control"
+                               placeholder="Cari no registrasi / nama pasien..."
+                               value="<?= h($this->request->getQuery('q')) ?>"
+                               autocomplete="off">
+                        <!-- Pertahankan filter aktif saat search -->
+                        <input type="hidden" name="status"          value="<?= h($this->request->getQuery('status')) ?>">
+                        <input type="hidden" name="service_type"    value="<?= h($this->request->getQuery('service_type')) ?>">
+                        <input type="hidden" name="payment_method"  value="<?= h($this->request->getQuery('payment_method')) ?>">
+                        <input type="hidden" name="date"            value="<?= h($this->request->getQuery('date')) ?>">
+                        <span class="input-group-btn">
+                            <button type="submit" class="btn btn-warning" id="btn-search">
+                                <i class="fa fa-search"></i>
+                            </button>
+                            <a href="<?= $this->Url->build(['action' => 'index']) ?>"
+                               class="btn btn-default" title="Reset filter">
+                                <i class="fa fa-rotate-left"></i>
+                            </a>
+                        </span>
+                    </div>
+
+                    <div style="margin-top:6px; display:flex; gap:8px; align-items:center; justify-content:flex-end;">
+                    <input type="date"
+                        name="date_from"
+                        class="form-control form-control-sm"
+                        style="width:145px;"
+                        value="<?= h($this->request->getQuery('date_from', date('Y-m-d'))) ?>">
+
+                    <span style="padding:0 5px;">-</span>
+
+                    <input type="date"
+                        name="date_to"
+                        class="form-control form-control-sm"
+                        style="width:145px;"
+                        value="<?= h($this->request->getQuery('date_to', date('Y-m-d'))) ?>">
+                        <select name="payment_method" class="form-control form-control-sm"
+                                style="width:130px;" onchange="this.form.submit()">
+                            <option value="">Cara Bayar</option>
+                            <option value="UMUM"
+                                <?= $this->request->getQuery('payment_method') === 'UMUM' ? 'selected' : '' ?>>
+                                UMUM
+                            </option>
+                            <option value="ASURANSI"
+                                <?= $this->request->getQuery('payment_method') === 'ASURANSI' ? 'selected' : '' ?>>
+                                ASURANSI
+                            </option>
+                        </select>
+                    </div>
+
+                    <?= $this->Form->end() ?>
+                </div>
+
+            </div>
         </div>
 
-        <div class="portlet-body form">
-
-            <div class="table-toolbar">
-                <div class="btn-group">
-                    <div class="portlet-body">
-
-                        <?= $this->Html->link(
-                            '<i class="fa fa-plus"></i>',
-                            ['action' => 'add', $pages],
-                            [
-                                'class' => 'btn btn-inverse',
-                                'data-toggle' => 'tooltip',
-                                'data-placement' => 'top',
-                                'data-original-title' => 'Add',
-                                'escape' => false,
-                                'fullBase' => true
-                            ]
-                        ) ?>
-
+        <!-- SUMMARY CARDS — diisi via AJAX polling -->
+        <div class="row" style="margin-bottom:20px;">
+            <?php
+            $cards = [
+                ['key' => 'aktif',       'label' => 'Aktif',       'icon' => 'fa-circle-dot',    'color' => '#28a745', 'bg' => '#e9f7ef'],
+                ['key' => 'rawat_jalan', 'label' => 'Rawat Jalan', 'icon' => 'fa-person-walking', 'color' => '#0d6efd', 'bg' => '#e7f1ff'],
+                ['key' => 'igd',         'label' => 'IGD',         'icon' => 'fa-truck-medical',  'color' => '#dc3545', 'bg' => '#fde8ea'],
+                ['key' => 'rawat_inap',  'label' => 'Rawat Inap',  'icon' => 'fa-bed-pulse',      'color' => '#198754', 'bg' => '#e6f4ea'],
+            ];
+            foreach ($cards as $card):
+            ?>
+            <div class="col-xs-6 col-md-3" style="margin-bottom:10px;">
+                <div style="background:<?= $card['bg'] ?>; border-radius:14px;
+                            padding:14px 18px; display:flex; align-items:center;
+                            gap:14px; border-left:4px solid <?= $card['color'] ?>;
+                            box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+                    <i class="fa-solid <?= $card['icon'] ?>"
+                       style="font-size:26px; color:<?= $card['color'] ?>;"></i>
+                    <div>
+                        <div id="cnt-<?= $card['key'] ?>"
+                             style="font-size:26px; font-weight:700;
+                                    color:<?= $card['color'] ?>; line-height:1;">
+                            <i class="fa fa-spinner fa-spin" style="font-size:16px;"></i>
+                        </div>
+                        <div style="font-size:12px; color:#6c757d;"><?= $card['label'] ?></div>
                     </div>
                 </div>
             </div>
+            <?php endforeach; ?>
+        </div>
 
-            <br>
+        <!-- TABLE -->
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered table-hover" style="font-size:13px;">
+                <thead>
+                    <tr class="text-center" style="background:#2c3e50; color:#fff;">
+                        <th width="40">No</th>
+                        <th width="140"><?= $this->Paginator->sort('registration_no', 'No Registrasi') ?></th>
+                        <th width="100"><?= $this->Paginator->sort('registration_date', 'Tgl Masuk') ?></th>
+                        <th>Pasien</th>
+                        <th width="100"><?= $this->Paginator->sort('service_type', 'Pelayanan') ?></th>
+                        <th width="120">Poli / Unit</th>
+                        <th width="150">Dokter</th>
+                        <th width="90"><?= $this->Paginator->sort('payment_method', 'Cara Bayar') ?></th>
+                        <th width="100">Penjamin</th>
+                        <th width="90"><?= $this->Paginator->sort('status', 'Status') ?></th>
+                        <th width="230">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="reg-tbody">
+                    <?php if (empty($registrations) || iterator_count($registrations) === 0): ?>
+                    <tr>
+                        <td colspan="11" class="text-center" style="padding:36px; color:#6c757d;">
+                            <i class="fa fa-inbox fa-3x" style="display:block; margin-bottom:10px;"></i>
+                            Tidak ada data registrasi ditemukan.
+                        </td>
+                    </tr>
+                    <?php else: ?>
+                    <?php $no = $this->Paginator->counter('{{start}}');
+                    foreach ($registrations as $registration): ?>
+                    <?php
+                        $rawStatus = strtolower($registration->status ?? '');
+                        $st  = $statusMap[$rawStatus]
+                            ?? ['label' => h($registration->status ?? '-'), 'badge' => 'default', 'icon' => 'fa-circle', 'row' => ''];
+                        $svc = $svcMap[$registration->service_type]
+                            ?? ['label' => h($registration->service_type), 'color' => '#6c757d', 'bg' => '#f0f0f0'];
+                        $pay = $payMap[$registration->payment_method]
+                            ?? ['color' => '#6c757d', 'bg' => '#f0f0f0'];
+                    ?>
+                    <tr data-status="<?= h($rawStatus) ?>"
+                        data-svc="<?= h($registration->service_type) ?>"
+                        style="<?= $st['row'] ?>">
 
-            <?= $this->Form->create(null, ['type' => 'get']) ?>
+                        <td class="text-center" style="color:#6c757d;"><?= $no++ ?></td>
 
-            <div class="panel-footer bg-aqua text-white p-t-10">
+                        <td class="text-center">
+                            <strong style="font-size:13px; color:#1a56db; letter-spacing:0.5px;">
+                                <?= h($registration->registration_no) ?>
+                            </strong>
+                        </td>
 
-                <div class="row row-space-10">
+                        <td class="text-center" style="white-space:nowrap; color:#6c757d; font-size:12px;">
+                            <i class="fa fa-calendar" style="margin-right:3px;"></i>
+                            <?= $registration->registration_date
+                                ? date('d-m-Y', strtotime($registration->registration_date))
+                                : '—' ?>
+                        </td>
 
-                    <div class="col-md-4 m-b-10">
-                        <?= $this->Form->text('q', [
-                            'class' => 'form-control',
-                            'placeholder' => 'Cari No Registrasi / Nama Pasien...',
-                            'value' => $this->request->getQuery('q')
-                        ]) ?>
-                    </div>
+                        <td>
+                            <?php if ($registration->has('patient') && $registration->patient): ?>
+                                <i class="fa fa-user" style="color:#6c757d; margin-right:4px;"></i>
+                                <strong><?= h($registration->patient->full_name ?? '-') ?></strong>
+                                <br>
+                                <small style="color:#6c757d; font-size:11px;">
+                                    <?= h($registration->patient->code ?? '') ?>
+                                </small>
+                            <?php else: ?>
+                                <span style="color:#bbb;">—</span>
+                            <?php endif; ?>
+                        </td>
 
-                    <div class="col-md-2 m-b-10">
-                        <?= $this->Form->text('date', [
-                            'type' => 'date',
-                            'class' => 'form-control',
-                            'value' => $this->request->getQuery('date')
-                        ]) ?>
-                    </div>
+                        <td class="text-center">
+                            <span class="label-badge"
+                                  style="color:<?= $svc['color'] ?>; background:<?= $svc['bg'] ?>;">
+                                <?= $svc['label'] ?>
+                            </span>
+                        </td>
 
-                    <div class="col-md-2 m-b-10">
-                        <?= $this->Form->select('service_type', [
-                            'rawat_jalan' => 'Rawat Jalan',
-                            'igd' => 'IGD',
-                            'rawat_inap' => 'Rawat Inap',
-                        ], [
-                            'empty' => '-- Semua Pelayanan --',
-                            'class' => 'form-control',
-                            'value' => $this->request->getQuery('service_type')
-                        ]) ?>
-                    </div>
+                        <td style="font-size:12px;"><?= h($registration->polyclinic_name ?? '—') ?></td>
 
-                    <div class="col-md-2 m-b-10">
-                        <?= $this->Form->select('payment_method', [
-                            'UMUM' => 'UMUM',
-                            'ASURANSI' => 'ASURANSI',
-                        ], [
-                            'empty' => '-- Semua Bayar --',
-                            'class' => 'form-control',
-                            'value' => $this->request->getQuery('payment_method')
-                        ]) ?>
-                    </div>
+                        <td style="font-size:12px;">
+                            <?php if ($registration->has('doctor') && $registration->doctor): ?>
+                                <i class="fa fa-user-doctor" style="color:#6c757d; margin-right:3px;"></i>
+                                <?= h($registration->doctor->doctor_name ?? '—') ?>
+                            <?php else: ?>
+                                <span style="color:#bbb;">—</span>
+                            <?php endif; ?>
+                        </td>
 
-                    <div class="col-md-1">
-                        <?= $this->Krs->btnSeach(); ?>
-                    </div>
+                        <td class="text-center">
+                            <span class="label-badge"
+                                  style="color:<?= $pay['color'] ?>; background:<?= $pay['bg'] ?>;">
+                                <?= h($registration->payment_method ?? '—') ?>
+                            </span>
+                        </td>
 
-                </div>
+                        <td style="font-size:12px; color:#495057;">
+                            <?= h($registration->insurance_type ?? '—') ?>
+                        </td>
 
+                        <td class="text-center">
+                            <span class="label label-<?= $st['badge'] ?>"
+                                  style="font-size:11px; padding:4px 9px;">
+                                <i class="fa-solid <?= $st['icon'] ?>"></i>
+                                <?= $st['label'] ?>
+                            </span>
+                        </td>
+
+                        <td class="text-center">
+                            <div style="display:flex; gap:4px; justify-content:center; flex-wrap:wrap;">
+
+                                <?= $this->Html->link('<i class="fa fa-eye"></i>',
+                                    ['action' => 'view', $registration->id],
+                                    ['escape' => false, 'class' => 'btn btn-info btn-xs',
+                                     'title' => 'Lihat Detail', 'data-toggle' => 'tooltip']) ?>
+
+                                <?= $this->Html->link('<i class="fa fa-edit"></i>',
+                                    ['action' => 'edit', $registration->id],
+                                    ['escape' => false, 'class' => 'btn btn-warning btn-xs',
+                                     'title' => 'Edit', 'data-toggle' => 'tooltip']) ?>
+
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endforeach; endif; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- PAGINATION -->
+        <div class="row" style="margin-top:14px;">
+            <div class="col-md-6">
+                <p style="color:#6c757d; font-size:13px; margin:0;">
+                    <?= $this->Paginator->counter(
+                        'Menampilkan {{current}} dari {{count}} data (Halaman {{page}} / {{pages}})'
+                    ) ?>
+                </p>
             </div>
-
-            <?= $this->Form->end() ?>
-
-            <div class="table-responsive">
-
-                <table class="table table-striped table-hover table-td-valign-middle">
-
-                    <thead class="thead-dark text-center">
-                        <tr>
-                            <th width="50">No</th>
-                            <th width="130">
-                                <?= $this->Paginator->sort('registration_no', 'No Registrasi') ?>
-                            </th>
-                            <th width="120">Antrian</th>
-                            <th width="110">
-                                <?= $this->Paginator->sort('registration_date', 'Tgl Masuk') ?>
-                            </th>
-                            <th>Pasien</th>
-                            <th width="120">
-                                <?= $this->Paginator->sort('service_type', 'Pelayanan') ?>
-                            </th>
-                            <th width="130">Poli / Unit</th>
-                            <th width="180">Dokter</th>
-                            <th width="110">
-                                <?= $this->Paginator->sort('payment_method', 'Cara Bayar') ?>
-                            </th>
-                            <th width="130">Penjamin</th>
-                            <th width="90">
-                                <?= $this->Paginator->sort('status', 'Status') ?>
-                            </th>
-                            <th width="220" class="actions">&nbsp;</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-
-                        <?php if (count($registrations) > 0) : ?>
-
-                            <?php
-                            $no = 1;
-
-                            foreach ($registrations as $rowData) :
-
-                                $serviceType = strtolower($rowData->service_type ?? '');
-
-                                if ($serviceType == 'rawat_jalan') {
-                                    $serviceLabel = 'Rawat Jalan';
-                                } elseif ($serviceType == 'igd') {
-                                    $serviceLabel = 'IGD';
-                                } elseif ($serviceType == 'rawat_inap') {
-                                    $serviceLabel = 'Rawat Inap';
-                                } else {
-                                    $serviceLabel = $rowData->service_type ?? '-';
-                                }
-
-                                $status = strtolower($rowData->status ?? '');
-
-                                if ($status == 'aktif') {
-                                    $statusBtn = '<span class="btn btn-lime btn-icon btn-circle btn-sm"><i class="fa fa-check"></i></span>';
-                                    $classCondition = '';
-                                } elseif ($status == 'batal') {
-                                    $statusBtn = '<span class="btn btn-danger btn-icon btn-circle btn-sm"><i class="fa fa-times"></i></span>';
-                                    $classCondition = 'class="table-warning"';
-                                } elseif ($status == 'selesai') {
-                                    $statusBtn = '<span class="btn btn-secondary btn-icon btn-circle btn-sm"><i class="fa fa-check"></i></span>';
-                                    $classCondition = '';
-                                } else {
-                                    $statusBtn = '<span class="btn btn-default btn-icon btn-circle btn-sm"><i class="fa fa-minus"></i></span>';
-                                    $classCondition = '';
-                                }
-
-                                $linkView = [
-                                    'action' => 'view',
-                                    $rowData->id
-                                ];
-
-                                $linkEdit = [
-                                    'action' => 'edit',
-                                    $rowData->id
-                                ];
-
-                                $linkDelete = [
-                                    'action' => 'delete',
-                                    $rowData->id
-                                ];
-
-                                $linkHistory = [
-                                    'controller' => 'MedicalRecords',
-                                    'action' => 'history',
-                                    $rowData->patient_id
-                                ];
-                            ?>
-
-                                <tr <?= $classCondition ?>>
-
-                                    <td align="center">
-                                        <?= $no++ ?>
-                                    </td>
-
-                                    <td align="center">
-                                        <b>
-                                            <?= h($rowData->registration_no ?? '-') ?>
-                                        </b>
-                                    </td>
-
-                                    <td align="center">
-                                        <?php if (!empty($rowData->polyclinic_queue_id)): ?>
-                                            <span class="label label-success">Dari Antrian</span>
-                                            <br>
-                                            <small>
-                                                <?= h($rowData->polyclinic_queue->code ?? '-') ?>
-                                                <?php if (!empty($rowData->queue_number)): ?>
-                                                    / No <?= h($rowData->queue_number) ?>
-                                                <?php endif; ?>
-                                            </small>
-                                        <?php else: ?>
-                                            <span class="label label-default">Langsung</span>
-                                        <?php endif; ?>
-                                    </td>
-
-                                    <td align="center">
-                                        <?php
-                                        if (!empty($rowData->registration_date)) {
-                                            echo date('d-m-Y', strtotime($rowData->registration_date));
-                                        } else {
-                                            echo '-';
-                                        }
-                                        ?>
-                                    </td>
-
-                                    <td>
-                                        <b>
-                                            <?= h($rowData->patient->full_name ?? $rowData->patient->name ?? '-') ?>
-                                        </b>
-                                        <br>
-                                        <small>
-                                            No RM: <?= h($rowData->patient->medical_record_no ?? $rowData->patient->code ?? '') ?>
-                                            <?php if (!empty($rowData->patient->code)): ?>
-                                                / Kode: <?= h($rowData->patient->code) ?>
-                                            <?php endif; ?>
-                                        </small>
-                                    </td>
-
-                                    <td align="center">
-                                        <span class="label label-info">
-                                            <?= h($serviceLabel) ?>
-                                        </span>
-                                    </td>
-
-                                    <td>
-                                        <?= h(
-                                            $rowData->polyclinic->polyclinic_name
-                                                ?? $rowData->polyclinic->polyclinicname
-                                                ?? $rowData->polyclinic_name
-                                                ?? '-'
-                                        ) ?>
-                                    </td>
-
-                                    <td>
-                                        <?= h(
-                                            $rowData->doctor->doctor_name
-                                                ?? $rowData->doctor->name
-                                                ?? '-'
-                                        ) ?>
-                                    </td>
-
-                                    <td align="center">
-                                        <span class="label label-warning">
-                                            <?= h($rowData->payment_method ?? '-') ?>
-                                        </span>
-                                    </td>
-
-                                    <td>
-                                        <?= h(
-                                            $rowData->insurance->name
-                                                ?? $rowData->insurance_type
-                                                ?? '-'
-                                        ) ?>
-                                    </td>
-
-                                    <td align="center">
-                                        <?= $statusBtn ?>
-                                    </td>
-
-                                    <td class="actions text-center" style="white-space: nowrap;">
-
-                                        <!-- <?= $this->Html->link(
-                                            '<i class="fa fa-eye"></i>',
-                                            $linkView,
-                                            [
-                                                'class' => 'btn btn-info btn-icon btn-circle btn-sm',
-                                                'escape' => false,
-                                                'data-toggle' => 'tooltip',
-                                                'data-placement' => 'top',
-                                                'data-original-title' => 'View'
-                                            ]
-                                        ) ?> -->
-
-                                        <?= $this->Krs->btn(
-                                            'edit',
-                                            $linkEdit
-                                        ) ?>
-
-                                        <?php if ($canViewPatientHistory): ?>
-                                            <?= $this->Html->link(
-                                                '<i class="fa fa-history"></i>',
-                                                $linkHistory,
-                                                [
-                                                    'class' => 'btn btn-primary btn-sm m-r-5 p-l-15 p-r-15',
-                                                    'escape' => false,
-                                                    'data-toggle' => 'tooltip',
-                                                    'data-placement' => 'top',
-                                                    'data-original-title' => 'Riwayat Pasien'
-                                                ]
-                                            ) ?>
-                                        <?php endif; ?>
-
-                                        <?= $this->Krs->btn(
-                                            'delete',
-                                            $linkDelete,
-                                            $rowData->registration_no
-                                        ) ?>
-
-                                    </td>
-
-                                </tr>
-
-                            <?php endforeach; ?>
-
-                        <?php else : ?>
-
-                            <?= $this->Krs->dataNull(); ?>
-
-                        <?php endif; ?>
-
-                    </tbody>
-
-                </table>
-
+            <div class="col-md-6 text-right">
+                <ul class="pagination pagination-sm m-t-0 m-b-0 pull-right">
+                    <?= $this->Paginator->first('<<') ?>
+                    <?= $this->Paginator->prev('<') ?>
+                    <?= $this->Paginator->numbers() ?>
+                    <?= $this->Paginator->next('>') ?>
+                    <?= $this->Paginator->last('>>') ?>
+                </ul>
             </div>
-
-            <?= $this->Krs->paginators() ?>
-
         </div>
 
     </div>
-
 </div>
+
+<!-- TOAST notifikasi data baru -->
+<div id="toast-notif"
+     style="display:none; position:fixed; bottom:30px; right:30px; z-index:9999;
+            background:#2c3e50; color:#fff; padding:14px 22px; border-radius:12px;
+            font-size:14px; box-shadow:0 4px 20px rgba(0,0,0,0.3); cursor:pointer;"
+     onclick="location.reload()">
+    <i class="fa fa-clipboard-list" style="margin-right:8px;"></i>
+    <span id="toast-msg">Ada data baru — klik untuk refresh</span>
+</div>
+
+<style>
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.label { padding:4px 9px; border-radius:6px; font-size:12px; font-weight:600; display:inline-block; }
+.label-success { background:#d1e7dd; color:#0f5132; }
+.label-danger  { background:#f8d7da; color:#842029; }
+.label-info    { background:#cff4fc; color:#055160; }
+.label-default { background:#e9ecef; color:#495057; }
+.label-badge   { display:inline-block; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+.btn-xs        { padding:3px 8px; font-size:12px; line-height:1.5; border-radius:4px; }
+</style>
+
+<script>
+// ── URL summary endpoint ──────────────────────────────────────────────────────
+var SUMMARY_URL = '<?= $summaryUrl ?>';
+
+// ── Jumlah registrasi saat halaman pertama kali dimuat (untuk deteksi data baru)
+var initialTotal = <?= iterator_count($registrations) ?>;
+var lastKnownTotal = null;
+
+// ── Fetch summary dari server dan update kartu ────────────────────────────────
+function fetchSummary() {
+    $.getJSON(SUMMARY_URL, function (data) {
+
+        // Update kartu angka
+        $.each(['aktif', 'rawat_jalan', 'igd', 'rawat_inap'], function (i, key) {
+            var el  = $('#cnt-' + key);
+            var val = data[key] !== undefined ? data[key] : 0;
+
+            // Animasi highlight jika angka berubah
+            if (el.text() !== String(val) && !el.find('.fa-spinner').length) {
+                el.css('transition', 'color 0.3s');
+                el.css('color', '#ffc107');
+                setTimeout(function () { el.css('color', ''); }, 600);
+            }
+
+            el.text(val);
+        });
+
+        // Deteksi data baru → tampilkan toast
+        if (lastKnownTotal !== null && data.total > lastKnownTotal) {
+            showToast('Ada ' + (data.total - lastKnownTotal) + ' registrasi baru — klik untuk refresh');
+        }
+        lastKnownTotal = data.total;
+
+    }).fail(function () {
+        // Jika gagal, matikan animasi pulse agar user tahu koneksi bermasalah
+        $('#live-dot').css('animation', 'none').css('background', '#dc3545');
+    });
+}
+
+// ── Toast helper ──────────────────────────────────────────────────────────────
+function showToast(msg) {
+    $('#toast-msg').text(msg);
+    $('#toast-notif').fadeIn(300);
+    setTimeout(function () { $('#toast-notif').fadeOut(400); }, 6000);
+}
+
+// ── Search live dengan debounce — submit form ke server ───────────────────────
+var searchTimer;
+$('#search-q').on('input', function () {
+    clearTimeout(searchTimer);
+    var q = $(this).val().trim();
+
+    // Tampilkan spinner kecil di tombol saat menunggu
+    $('#btn-search').html('<i class="fa fa-spinner fa-spin"></i>');
+
+    searchTimer = setTimeout(function () {
+        $('#search-form').submit();
+    }, 500); // tunggu 500ms setelah user berhenti mengetik
+});
+
+// Restore icon tombol saat form di-submit normal
+$('#search-form').on('submit', function () {
+    $('#btn-search').html('<i class="fa fa-search"></i>');
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+$(document).ready(function () {
+
+    $('[data-toggle="tooltip"]').tooltip();
+
+    // Langsung fetch summary pertama kali
+    fetchSummary();
+
+    // Polling setiap 15 detik
+    setInterval(fetchSummary, 15000);
+});
+</script>

@@ -924,3 +924,283 @@ ADD COLUMN referral_origin VARCHAR(255) NULL AFTER name;
 
 ALTER TABLE master_patient_referrers
 ADD COLUMN doctor_sender VARCHAR(255) NULL AFTER referral_origin;
+
+CREATE TABLE IF NOT EXISTS `outpatient_cppt_notes` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `outpatient_visit_id` int unsigned NOT NULL,
+  `registration_id` int unsigned DEFAULT NULL,
+  `patient_id` int unsigned DEFAULT NULL,
+  `doctor_id` int unsigned DEFAULT NULL,
+  `noted_at` datetime DEFAULT NULL,
+  `health_worker_name` varchar(100) DEFAULT NULL,
+  `doctor_name` varchar(100) DEFAULT NULL,
+  `nurse_name` varchar(100) DEFAULT NULL,
+  `assessment_text` text,
+  `instruction` text,
+  `created_by` varchar(50) DEFAULT NULL,
+  `created` datetime DEFAULT NULL,
+  `modified` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_outpatient_visit_id` (`outpatient_visit_id`),
+  KEY `idx_registration_id` (`registration_id`),
+  KEY `idx_patient_id` (`patient_id`),
+  KEY `idx_doctor_id` (`doctor_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE medical_resumes (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    outpatient_visit_id INT UNSIGNED NOT NULL,
+    registration_id INT UNSIGNED NULL,
+    patient_id INT UNSIGNED NULL,
+
+    doctor1_id INT UNSIGNED NULL,
+    doctor2_name VARCHAR(150) NULL,
+    doctor3_name VARCHAR(150) NULL,
+    doctor4_name VARCHAR(150) NULL,
+
+    consultant1_name VARCHAR(150) NULL,
+    consultant2_name VARCHAR(150) NULL,
+
+    summary_history TEXT NULL,
+    inpatient_indication TEXT NULL,
+    physical_exam TEXT NULL,
+    supporting_exam TEXT NULL,
+    therapy_during_treatment TEXT NULL,
+    consultation_result TEXT NULL,
+    admission_diagnosis TEXT NULL,
+
+    lab_unfinished TEXT NULL,
+    diet TEXT NULL,
+    education_instruction TEXT NULL,
+    primary_diagnosis TEXT NULL,
+    secondary_diagnosis TEXT NULL,
+    medical_action TEXT NULL,
+
+    condition_on_discharge VARCHAR(100) NULL,
+    prognosis VARCHAR(100) NULL,
+    follow_up_treatment VARCHAR(100) NULL,
+    control_date DATE NULL,
+    control_note TEXT NULL,
+    control_plan TEXT NULL,
+    return_reason TEXT NULL,
+
+    print_classic TINYINT(1) NOT NULL DEFAULT 0,
+    send_digital_claim TINYINT(1) NOT NULL DEFAULT 0,
+
+    created DATETIME NULL,
+    modified DATETIME NULL,
+
+    INDEX idx_outpatient_visit_id (outpatient_visit_id),
+    INDEX idx_registration_id (registration_id),
+    INDEX idx_patient_id (patient_id)
+);
+
+ALTER TABLE outpatient_visits
+    ADD COLUMN icd10_items TEXT NULL AFTER diagnosis_desc,
+    ADD COLUMN icd9_items TEXT NULL AFTER icd10_items;
+
+CREATE TABLE master_supports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(30) NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    category VARCHAR(100) NULL,
+    tariff DECIMAL(12,2) NOT NULL DEFAULT 0,
+    unit VARCHAR(50) NULL,
+    description TEXT NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created DATETIME NULL,
+    modified DATETIME NULL
+);
+
+CREATE TABLE order_supports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    registration_id INT NULL,
+    patient_id INT NULL,
+    doctor_id INT NULL,
+    support_code VARCHAR(30) NULL,
+    support_name VARCHAR(150) NOT NULL,
+    tariff DECIMAL(12,2) NOT NULL DEFAULT 0,
+    qty INT NOT NULL DEFAULT 1,
+    total DECIMAL(12,2) NOT NULL DEFAULT 0,
+    unit VARCHAR(50) NULL,
+    approval_note VARCHAR(255) NULL,
+    notes TEXT NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'draft',
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    is_delete TINYINT(1) NOT NULL DEFAULT 0,
+    created DATETIME NULL,
+    modified DATETIME NULL,
+    INDEX idx_order_id (order_id),
+    INDEX idx_patient_id (patient_id),
+    INDEX idx_registration_id (registration_id)
+);
+
+CREATE TABLE order_surgeries (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    registration_id INT NULL,
+    patient_id INT NULL,
+    doctor_id INT NULL,
+
+    surgery_date DATE NULL,
+    surgery_time TIME NULL,
+    operator_name VARCHAR(150) NULL,
+    surgery_code VARCHAR(30) NULL,
+    surgery_name VARCHAR(150) NULL,
+    tariff DECIMAL(12,2) NOT NULL DEFAULT 0,
+    unit VARCHAR(50) NULL,
+    approval_note VARCHAR(255) NULL,
+    notes TEXT NULL,
+
+    approved_queue_no VARCHAR(30) NULL,
+    approved_date DATE NULL,
+    approved_time TIME NULL,
+    operating_room VARCHAR(100) NULL,
+    approved_operator VARCHAR(150) NULL,
+    approved_surgery_name VARCHAR(150) NULL,
+    anesthesia_type VARCHAR(100) NULL,
+    approved_by VARCHAR(100) NULL,
+
+    status VARCHAR(30) NOT NULL DEFAULT 'draft',
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    is_delete TINYINT(1) NOT NULL DEFAULT 0,
+    created DATETIME NULL,
+    modified DATETIME NULL,
+
+    INDEX idx_order_id (order_id),
+    INDEX idx_patient_id (patient_id),
+    INDEX idx_registration_id (registration_id)
+);
+
+CREATE TABLE master_surgery_operators (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(30) NOT NULL,
+    doctor_id INT NULL,
+    name VARCHAR(150) NOT NULL,
+    specialist VARCHAR(100) NULL,
+    phone VARCHAR(30) NULL,
+    notes TEXT NULL,
+    is_active TINYINT(1) DEFAULT 1,
+    created DATETIME NULL,
+    modified DATETIME NULL
+);
+
+CREATE TABLE master_operation_types (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(30) NOT NULL,
+    name VARCHAR(200) NOT NULL,
+    category VARCHAR(100) NULL,
+    tariff DECIMAL(12,2) DEFAULT 0,
+    unit VARCHAR(50) NULL,
+    description TEXT NULL,
+    is_active TINYINT(1) DEFAULT 1,
+    created DATETIME NULL,
+    modified DATETIME NULL
+);
+
+ALTER TABLE order_surgeries
+ADD operator_id INT NULL AFTER surgery_time,
+ADD operation_type_id INT NULL AFTER operator_name;
+
+ALTER TABLE master_operation_types
+ADD jasa_rs DECIMAL(12,2) NOT NULL DEFAULT 0 AFTER tariff,
+ADD jasa_dr DECIMAL(12,2) NOT NULL DEFAULT 0 AFTER jasa_rs,
+ADD jasa_paramedis DECIMAL(12,2) NOT NULL DEFAULT 0 AFTER jasa_dr;
+
+CREATE TABLE order_mcus (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    registration_id INT NULL,
+    patient_id INT NULL,
+    doctor_id INT NULL,
+
+    mcu_date DATE NULL,
+    mcu_time TIME NULL,
+    mcu_type VARCHAR(150) NULL,
+    notes TEXT NULL,
+
+    status VARCHAR(30) NOT NULL DEFAULT 'draft',
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    is_delete TINYINT(1) NOT NULL DEFAULT 0,
+    created DATETIME NULL,
+    modified DATETIME NULL,
+
+    INDEX idx_order_id (order_id),
+    INDEX idx_registration_id (registration_id),
+    INDEX idx_patient_id (patient_id)
+);
+
+-- BACKUP dulu
+CREATE TABLE medical_records_backup AS SELECT * FROM medical_records;
+CREATE TABLE medical_record_documents_backup AS SELECT * FROM medical_record_documents;
+CREATE TABLE medical_record_examinations_backup AS SELECT * FROM medical_record_examinations;
+CREATE TABLE medical_record_prescriptions_backup AS SELECT * FROM medical_record_prescriptions;
+CREATE TABLE medical_record_laboratories_backup AS SELECT * FROM medical_record_laboratories;
+CREATE TABLE medical_record_radiologies_backup AS SELECT * FROM medical_record_radiologies;
+CREATE TABLE medical_record_integrations_backup AS SELECT * FROM medical_record_integrations;
+CREATE TABLE medical_record_icares_backup AS SELECT * FROM medical_record_icares;
+
+
+-- RENAME TABLE RIWAYAT PASIEN
+RENAME TABLE medical_records TO patient_histories;
+
+RENAME TABLE medical_record_documents TO patient_history_documents;
+RENAME TABLE medical_record_examinations TO patient_history_examinations;
+RENAME TABLE medical_record_prescriptions TO patient_history_prescriptions;
+RENAME TABLE medical_record_laboratories TO patient_history_laboratories;
+RENAME TABLE medical_record_radiologies TO patient_history_radiologies;
+RENAME TABLE medical_record_integrations TO patient_history_integrations;
+RENAME TABLE medical_record_icares TO patient_history_icares;
+
+
+-- RENAME FIELD FOREIGN KEY DETAIL
+ALTER TABLE patient_history_documents
+CHANGE medical_record_id patient_history_id INT NOT NULL;
+
+ALTER TABLE patient_history_examinations
+CHANGE medical_record_id patient_history_id INT NOT NULL;
+
+ALTER TABLE patient_history_prescriptions
+CHANGE medical_record_id patient_history_id INT NOT NULL;
+
+ALTER TABLE patient_history_laboratories
+CHANGE medical_record_id patient_history_id INT NOT NULL;
+
+ALTER TABLE patient_history_radiologies
+CHANGE medical_record_id patient_history_id INT NOT NULL;
+
+ALTER TABLE patient_history_integrations
+CHANGE medical_record_id patient_history_id INT NOT NULL;
+
+ALTER TABLE patient_history_icares
+CHANGE medical_record_id patient_history_id INT NOT NULL;
+
+RENAME TABLE medical_records_backup TO medical_records;
+
+RENAME TABLE medical_record_documents_backup TO medical_record_documents;
+
+RENAME TABLE medical_record_examinations_backup TO medical_record_examinations;
+
+RENAME TABLE medical_record_prescriptions_backup TO medical_record_prescriptions;
+
+RENAME TABLE medical_record_laboratories_backup TO medical_record_laboratories;
+
+RENAME TABLE medical_record_radiologies_backup TO medical_record_radiologies;
+
+RENAME TABLE medical_record_integrations_backup TO medical_record_integrations;
+
+RENAME TABLE medical_record_icares_backup TO medical_record_icares;
+
+ALTER TABLE medical_records
+ADD COLUMN patient_id INT NULL AFTER registration_id,
+ADD COLUMN outpatient_visit_id INT NULL AFTER patient_id,
+ADD COLUMN doctor_id INT NULL AFTER outpatient_visit_id,
+ADD COLUMN medical_record_no VARCHAR(50) NULL AFTER doctor_id,
+ADD COLUMN service_type VARCHAR(50) NULL AFTER medical_record_no,
+ADD COLUMN allergy TEXT NULL AFTER service_type;
+
+ALTER TABLE registrations
+ADD doctor_schedule_id INT NULL AFTER doctor_id,
+ADD skdp_no VARCHAR(50) NULL AFTER sep_no;

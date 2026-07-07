@@ -50,7 +50,7 @@ $r = $order->registration ?? null;
 
                 <div class="col-md-2">
                     <small style="color:#888;">No RM</small><br>
-                    <strong><?= h($p->code ?? $p->no_rm ?? '-') ?></strong>
+                    <strong><?= h($p->code ?? $p->medical_record_no ?? '-') ?></strong>
                 </div>
 
                 <div class="col-md-2">

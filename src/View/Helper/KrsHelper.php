@@ -1212,4 +1212,76 @@ class KrsHelper extends Helper
 
 		return $this->save($visit);
 	}
+
+	public function outpatientRooms($value = null)
+	{
+		$data = [
+			'Ruang Poli Umum 01' => 'Ruang Poli Umum 01',
+			'Ruang Poli Gigi 01' => 'Ruang Poli Gigi 01',
+			'Ruang Poli Anak 01' => 'Ruang Poli Anak 01',
+			'Ruang Poli Kandungan 01' => 'Ruang Poli Kandungan 01',
+			'Ruang Poli Penyakit Dalam 01' => 'Ruang Poli Penyakit Dalam 01',
+			'Ruang Poli Mata 01' => 'Ruang Poli Mata 01',
+			'Ruang Poli THT 01' => 'Ruang Poli THT 01',
+			'Ruang Poli Bedah 01' => 'Ruang Poli Bedah 01',
+			'Ruang Poli Saraf 01' => 'Ruang Poli Saraf 01',
+			'Ruang Poli Kulit 01' => 'Ruang Poli Kulit 01',
+			'Ruang Poli Jantung 01' => 'Ruang Poli Jantung 01',
+			'Ruang IGD 01' => 'Ruang IGD 01',
+			'Ruang IGD 02' => 'Ruang IGD 02',
+			'Ruang Triage IGD' => 'Ruang Triage IGD',
+		];
+
+		return $value !== null ? ($data[$value] ?? $value) : $data;
+	}
+
+	public function surgeryOperatorSpecialists(): array
+	{
+		return [
+			'Sp.B' => 'Sp.B - Bedah Umum',
+			'Sp.OG' => 'Sp.OG - Kandungan',
+			'Sp.M' => 'Sp.M - Mata',
+			'Sp.OT' => 'Sp.OT - Ortopedi',
+			'Sp.U' => 'Sp.U - Urologi',
+			'Sp.BS' => 'Sp.BS - Bedah Saraf',
+			'Sp.BTKV' => 'Sp.BTKV - Bedah Toraks Kardiovaskular',
+			'Sp.BP-RE' => 'Sp.BP-RE - Bedah Plastik',
+			'Lainnya' => 'Lainnya',
+		];
+	}
+
+	public function operationTypeCategories(): array
+	{
+		return [
+			'Bedah Umum' => 'Bedah Umum',
+			'Bedah Mata' => 'Bedah Mata',
+			'Bedah Kandungan' => 'Bedah Kandungan',
+			'Bedah Ortopedi' => 'Bedah Ortopedi',
+			'Bedah Urologi' => 'Bedah Urologi',
+			'Bedah Saraf' => 'Bedah Saraf',
+			'Bedah Plastik' => 'Bedah Plastik',
+			'Bedah THT' => 'Bedah THT',
+			'Lainnya' => 'Lainnya',
+		];
+	}
+
+	public function nutritionDietOptions(): array
+	{
+		return [
+			'Diet Energi Tinggi Protein Tinggi' => 'Diet Energi Tinggi Protein Tinggi',
+			'Diet Rendah Garam' => 'Diet Rendah Garam',
+			'Diet Diabetes Mellitus' => 'Diet Diabetes Mellitus',
+			'Diet Lambung' => 'Diet Lambung',
+			'Diet Tinggi Serat' => 'Diet Tinggi Serat',
+			'Diet Rendah Serat' => 'Diet Rendah Serat',
+			'Diet Sindrom Nefrotik' => 'Diet Sindrom Nefrotik',
+			'Diet Rendah Lemak' => 'Diet Rendah Lemak',
+			'Diet Purin Rendah' => 'Diet Purin Rendah',
+			'Diet Protein Rendah' => 'Diet Protein Rendah',
+			'Diet Rendah Kalori' => 'Diet Rendah Kalori',
+			'Diet Hiperemesis' => 'Diet Hiperemesis',
+			'Diet Pre eklamsi' => 'Diet Pre eklamsi',
+			'Diet Dislipidemia' => 'Diet Dislipidemia',
+		];
+	}
 }

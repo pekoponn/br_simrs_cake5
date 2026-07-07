@@ -1,434 +1,533 @@
 <?php
+
 /**
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Registration $registration
  */
 
 $patient = $registration->patient ?? null;
+
+// Penanggung jawab bisa singular (hasOne) atau plural (hasMany), jadi dicek dua-duanya
+// supaya konsisten dengan pola yang sudah dipakai di add.php & edit.php.
+$pr = $registration->person_responsible ?? null;
+if (empty($pr) && !empty($registration->person_responsibles)) {
+    $pr = is_array($registration->person_responsibles)
+        ? ($registration->person_responsibles[0] ?? null)
+        : $registration->person_responsibles;
+}
+
 $doctor = $registration->doctor ?? null;
 $room = $registration->room ?? null;
 $bed = $registration->bed ?? null;
-$personResponsible = $registration->person_responsible ?? null;
-$queue = $registration->polyclinic_queue ?? null;
+
+/**
+ * Helper kecil untuk menampilkan satu field readonly ala form (label + kotak abu-abu).
+ * $value sudah otomatis di-escape, jangan pernah kirim HTML mentah ke sini.
+ */
+function regField($label, $value, $colClass = 'col-md-4')
+{
+    $display = ($value !== null && $value !== '')
+        ? h($value)
+        : '<span class="view-empty">-</span>';
+
+    echo '<div class="' . $colClass . '">'
+        . '<label>' . h($label) . '</label>'
+        . '<div class="view-field">' . $display . '</div>'
+        . '</div>';
+}
+
+/**
+ * Sama seperti regField tapi untuk konten yang memang sudah berupa HTML aman (mis. badge).
+ */
+function regFieldRaw($label, $html, $colClass = 'col-md-4')
+{
+    echo '<div class="' . $colClass . '">'
+        . '<label>' . h($label) . '</label>'
+        . '<div class="view-field">' . ($html !== '' ? $html : '<span class="view-empty">-</span>') . '</div>'
+        . '</div>';
+}
+
+function formatDateView($date, $withTime = false)
+{
+    if (empty($date)) {
+        return '';
+    }
+    if (is_object($date) && method_exists($date, 'format')) {
+        return $date->format($withTime ? 'd-m-Y H:i' : 'd-m-Y');
+    }
+    $ts = strtotime((string)$date);
+    return $ts ? date($withTime ? 'd-m-Y H:i' : 'd-m-Y', $ts) : (string)$date;
+}
+
+function formatTimeView($time)
+{
+    if (empty($time)) {
+        return '';
+    }
+    if (is_object($time) && method_exists($time, 'format')) {
+        return $time->format('H:i');
+    }
+    return substr((string)$time, 0, 5);
+}
+
+function genderLabel($gender)
+{
+    if ($gender === 'Male') {
+        return 'Laki-laki';
+    }
+    if ($gender === 'Female') {
+        return 'Perempuan';
+    }
+    return $gender;
+}
 
 $serviceLabels = [
     'rawat_jalan' => 'Rawat Jalan',
     'igd' => 'IGD',
     'rawat_inap' => 'Rawat Inap',
 ];
-$serviceLabel = $serviceLabels[$registration->service_type] ?? ($registration->service_type ?: '-');
-$statusLabel = $registration->status ?: 'aktif';
-$statusClass = $statusLabel === 'aktif' ? 'label-success' : 'label-default';
+$serviceClass = [
+    'rawat_jalan' => 'badge-blue',
+    'igd' => 'badge-red',
+    'rawat_inap' => 'badge-purple',
+];
 
-$registrationDate = !empty($registration->registration_date)
-    ? h($registration->registration_date)
-    : '-';
-$admissionTime = !empty($registration->admission_time)
-    ? h($registration->admission_time)
-    : '-';
+$paymentLabels = [
+    'PERORANGAN' => 'PERORANGAN',
+    'ASURANSI' => 'ASURANSI',
+    'PERUSAHAAN_AFILIASI' => 'PERUSAHAAN AFILIASI',
+    'KARYAWAN' => 'KARYAWAN',
+];
 
-$display = function ($value): string {
-    if ($value === null || $value === '') {
-        return '-';
-    }
-
-    return h((string)$value);
-};
-$canViewPatientHistory = !empty($checkUrl['medicalrecords']['history']);
+$statusLower = strtolower((string)($registration->status ?? ''));
+$isAktif = $statusLower === 'aktif' || $statusLower === '';
 ?>
 
-<?= $this->Krs->breadcrumb('Registration', 'Detail') ?>
-
 <style>
-    .registration-view-hero {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-        padding: 18px 20px;
-        border: 1px solid #e2e7ef;
-        border-radius: 8px;
+    body {
+        background: #eef2f7;
+    }
+
+    .registrations-wrapper {
+        width: 100%;
+        max-width: none;
+        margin: 0 auto;
+    }
+
+    .registrations.view.content {
+        background: transparent;
+        margin-left: 0;
+        padding: 0;
+    }
+
+    .form-card {
         background: #fff;
-        margin-bottom: 18px;
-    }
-
-    .registration-title h3 {
-        margin: 0 0 8px;
-        font-size: 22px;
-        font-weight: 700;
-        color: #2d353c;
-    }
-
-    .registration-title .meta {
-        color: #6c757d;
-        font-size: 13px;
-    }
-
-    .registration-no-box {
-        min-width: 190px;
-        padding: 13px 16px;
-        border: 1px solid #cfe7ff;
-        border-radius: 8px;
-        background: #eef7ff;
-        text-align: center;
-    }
-
-    .registration-no-box .caption {
-        display: block;
-        margin-bottom: 6px;
-        color: #6c757d;
-        font-size: 12px;
-        font-weight: 700;
-        text-transform: uppercase;
-    }
-
-    .registration-no-box .number {
-        display: block;
-        color: #2f80ed;
-        font-size: 18px;
-        font-weight: 700;
-    }
-
-    .section-box {
-        border: 1px solid #e2e7ef;
-        border-radius: 8px;
-        background: #fff;
-        margin-bottom: 18px;
+        border: 1px solid #dfe6ee;
+        border-radius: 10px;
+        margin-bottom: 22px;
         overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        transition: 0.2s;
     }
 
-    .section-box-header {
-        padding: 12px 15px;
+    .form-card:hover {
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+    }
+
+    .form-card-header {
+        padding: 14px 18px;
         border-bottom: 1px solid #edf1f5;
+        font-size: 16px;
+        font-weight: 600;
         background: #fafbfd;
-        font-size: 15px;
-        font-weight: 700;
-        color: #2d353c;
+        color: #2f3542;
     }
 
-    .section-box-header i {
-        margin-right: 7px;
+    .form-card-header i {
+        margin-right: 8px;
         color: #5c6bc0;
     }
 
-    .section-box-body {
-        padding: 15px;
+    .form-card-body {
+        padding: 20px;
     }
 
-    .detail-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px;
+    .form-card-body .row > div {
+        margin-bottom: 14px;
     }
 
-    .detail-grid.one-col {
-        grid-template-columns: 1fr;
-    }
-
-    .detail-item {
-        padding: 12px 13px;
-        border: 1px solid #e8edf3;
-        border-radius: 8px;
-        background: #fbfcfe;
-    }
-
-    .detail-item .label-text {
-        margin-bottom: 5px;
-        color: #6c757d;
+    .form-card-body label {
+        font-weight: 600;
         font-size: 12px;
-        font-weight: 700;
-        text-transform: uppercase;
+        margin-bottom: 5px;
+        color: #57606f;
+        display: block;
     }
 
-    .detail-item .value {
-        color: #2d353c;
-        font-size: 14px;
-        min-height: 20px;
+    .view-field {
+        min-height: 38px;
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid #e4e9f0;
+        background: #f7f9fc;
+        font-size: 13px;
+        color: #2f3542;
         word-break: break-word;
     }
 
-    .person-empty {
-        padding: 13px;
-        border: 1px solid #ece3ce;
-        border-radius: 8px;
-        background: #fff9eb;
-        color: #7a5b16;
+    .view-empty {
+        color: #adb5bd;
+        font-style: italic;
     }
 
-    @media (max-width: 767px) {
-        .registration-view-hero {
-            align-items: stretch;
-            flex-direction: column;
-        }
+    .side-nav {
+        display: none;
+    }
 
-        .registration-no-box {
-            min-width: 0;
-        }
+    fieldset legend {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 6px;
+        color: #2f3542;
+    }
 
-        .detail-grid {
-            grid-template-columns: 1fr;
-        }
+    .registration-header-card {
+        background: #fff;
+        border: 1px solid #dfe6ee;
+        border-radius: 10px;
+        padding: 18px 22px;
+        margin-bottom: 22px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 14px;
+    }
+
+    .registration-header-card h3 {
+        margin: 0 0 6px 0;
+        font-size: 20px;
+        font-weight: 700;
+        color: #1e3a5f;
+    }
+
+    .registration-header-card .reg-meta {
+        font-size: 12px;
+        color: #7b8794;
+    }
+
+    .header-actions .btn {
+        border-radius: 6px;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        margin-left: 8px;
+    }
+
+    .badge-pill {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .3px;
+    }
+
+    .badge-green {
+        background: #eafaf0;
+        color: #198754;
+        border: 1px solid #b7e4c7;
+    }
+
+    .badge-gray {
+        background: #f1f3f5;
+        color: #6c757d;
+        border: 1px solid #dee2e6;
+    }
+
+    .badge-blue {
+        background: #eef6ff;
+        color: #1e3a5f;
+        border: 1px solid #bfdbfe;
+    }
+
+    .badge-red {
+        background: #fdeeee;
+        color: #c0392b;
+        border: 1px solid #f5c2c0;
+    }
+
+    .badge-purple {
+        background: #f3eefc;
+        color: #6f42c1;
+        border: 1px solid #d9c8f5;
+    }
+
+    .badge-orange {
+        background: #fff7ed;
+        color: #d97706;
+        border: 1px solid #fed7aa;
+    }
+
+    .empty-card-note {
+        padding: 20px;
+        text-align: center;
+        color: #adb5bd;
+        font-size: 13px;
     }
 </style>
 
-<div class="panel panel-inverse">
-    <div class="panel-heading">
-        <h4 class="panel-title">
-            <i class="fa fa-file-text-o"></i> Detail Registrasi
-        </h4>
+<div class="registrations-wrapper">
+    <div class="registrations view content">
 
-        <div class="panel-heading-btn">
-            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default" data-click="panel-expand">
-                <i class="fa fa-expand"></i>
-            </a>
-        </div>
-    </div>
-
-    <div class="panel-body">
-        <div class="registration-view-hero">
-            <div class="registration-title">
-                <h3><?= $display($patient->full_name ?? null) ?></h3>
-                <div class="meta">
-                    No RM: <?= $display($patient->medical_record_no ?? $patient->code ?? null) ?>
-                    <?php if (!empty($patient->code)): ?>
-                        - Kode Pasien: <?= h($patient->code) ?>
+        <div class="registration-header-card">
+            <div>
+                <h3><?= h($registration->registration_no ?: ('Registrasi #' . $registration->id)) ?></h3>
+                <div class="reg-meta">
+                    Dibuat <?= h(formatDateView($registration->created, true) ?: '-') ?>
+                    <?php if (!empty($registration->modified)): ?>
+                        &middot; Diubah terakhir <?= h(formatDateView($registration->modified, true)) ?>
                     <?php endif; ?>
-                    -
-                    <?= h($serviceLabel) ?> -
-                    <span class="label <?= $statusClass ?>"><?= h($statusLabel) ?></span>
+                </div>
+                <div style="margin-top:8px;">
+                    <span class="badge-pill <?= $isAktif ? 'badge-green' : 'badge-gray' ?>">
+                        <?= h($isAktif ? 'AKTIF' : strtoupper((string)$registration->status)) ?>
+                    </span>
+                    <span class="badge-pill <?= $serviceClass[$registration->service_type ?? ''] ?? 'badge-gray' ?>">
+                        <?= h($serviceLabels[$registration->service_type ?? ''] ?? ($registration->service_type ?? '-')) ?>
+                    </span>
+                    <?php if (!empty($registration->payment_method)): ?>
+                        <span class="badge-pill badge-orange">
+                            <?= h($paymentLabels[$registration->payment_method] ?? $registration->payment_method) ?>
+                        </span>
+                    <?php endif; ?>
                 </div>
             </div>
 
-            <div class="registration-no-box">
-                <span class="caption">No Registrasi</span>
-                <span class="number"><?= $display($registration->registration_no) ?></span>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-8">
-                <div class="section-box">
-                    <div class="section-box-header">
-                        <i class="fa fa-user"></i> Data Pasien
-                    </div>
-                    <div class="section-box-body">
-                        <div class="detail-grid">
-                            <div class="detail-item">
-                                <div class="label-text">No Rekam Medis</div>
-                                <div class="value"><?= $display($patient->medical_record_no ?? $patient->code ?? null) ?></div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="label-text">Kode Pasien</div>
-                                <div class="value"><?= $display($patient->code ?? null) ?></div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="label-text">Nama Pasien</div>
-                                <div class="value"><?= $display($patient->full_name ?? null) ?></div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="label-text">Identitas</div>
-                                <div class="value">
-                                    <?= $display($patient->identity_type ?? null) ?>
-                                    <?= !empty($patient->identity_number) ? ' - ' . h($patient->identity_number) : '' ?>
-                                </div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="label-text">Jenis Kelamin</div>
-                                <div class="value"><?= $display($patient->gender ?? null) ?></div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="label-text">Tanggal Lahir</div>
-                                <div class="value"><?= $display($patient->birth_date ?? null) ?></div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="label-text">No Telepon</div>
-                                <div class="value"><?= $display($patient->phone_number ?? null) ?></div>
-                            </div>
-                            <div class="detail-item" style="grid-column:1 / -1;">
-                                <div class="label-text">Alamat</div>
-                                <div class="value"><?= $display($patient->address ?? null) ?></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="section-box">
-                    <div class="section-box-header">
-                        <i class="fa fa-stethoscope"></i> Pelayanan
-                    </div>
-                    <div class="section-box-body">
-                        <div class="detail-grid">
-                            <div class="detail-item">
-                                <div class="label-text">Tanggal Masuk</div>
-                                <div class="value"><?= $registrationDate ?></div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="label-text">Jam Masuk</div>
-                                <div class="value"><?= $admissionTime ?></div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="label-text">Jenis Pelayanan</div>
-                                <div class="value"><?= h($serviceLabel) ?></div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="label-text">Poli / Unit</div>
-                                <div class="value"><?= $display($registration->polyclinic_name) ?></div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="label-text">Dokter</div>
-                                <div class="value"><?= $display($doctor->doctor_name ?? null) ?></div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="label-text">Status</div>
-                                <div class="value"><span class="label <?= $statusClass ?>"><?= h($statusLabel) ?></span></div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="label-text">Ruangan</div>
-                                <div class="value"><?= $display($room->room_name ?? null) ?></div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="label-text">Bed / Kamar</div>
-                                <div class="value">
-                                    <?= $display($bed->name ?? null) ?>
-                                    <?= !empty($bed->bed_no) ? ' (' . h($bed->bed_no) . ')' : '' ?>
-                                </div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="label-text">Kelas</div>
-                                <div class="value"><?= $display($registration->class_name) ?></div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="label-text">Proses / Cara Masuk</div>
-                                <div class="value">
-                                    <?= $display($registration->entry_process) ?>
-                                    <?= !empty($registration->entry_method) ? ' - ' . h($registration->entry_method) : '' ?>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="section-box">
-                    <div class="section-box-header">
-                        <i class="fa fa-ticket"></i> Sumber Antrian
-                    </div>
-                    <div class="section-box-body">
-                        <div class="detail-grid one-col">
-                            <div class="detail-item">
-                                <div class="label-text">Kode Antrian</div>
-                                <div class="value"><?= $display($queue->code ?? null) ?></div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="label-text">Nomor Antrian</div>
-                                <div class="value"><?= $display($registration->queue_number) ?></div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="label-text">Sumber</div>
-                                <div class="value"><?= !empty($queue) ? $display($queue->source) : 'Registrasi langsung' ?></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="section-box">
-                    <div class="section-box-header">
-                        <i class="fa fa-credit-card"></i> Pembayaran
-                    </div>
-                    <div class="section-box-body">
-                        <div class="detail-grid one-col">
-                            <div class="detail-item">
-                                <div class="label-text">Jenis Pasien</div>
-                                <div class="value"><?= $display($registration->payment_method) ?></div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="label-text">Penjamin</div>
-                                <div class="value"><?= $display($registration->insurance_type) ?></div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="label-text">No Kartu</div>
-                                <div class="value"><?= $display($registration->insurance_card_no) ?></div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="label-text">SEP / Rujukan</div>
-                                <div class="value">
-                                    <?= $display($registration->sep_no) ?>
-                                    <?= !empty($registration->refferal_no) ? ' - ' . h($registration->refferal_no) : '' ?>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="section-box">
-                    <div class="section-box-header">
-                        <i class="fa fa-users"></i> Penanggung Jawab
-                    </div>
-                    <div class="section-box-body">
-                        <?php if (!empty($personResponsible)): ?>
-                            <div class="detail-grid one-col">
-                                <div class="detail-item">
-                                    <div class="label-text">Nama</div>
-                                    <div class="value"><?= $display($personResponsible->name) ?></div>
-                                </div>
-                                <div class="detail-item">
-                                    <div class="label-text">Hubungan</div>
-                                    <div class="value"><?= $display($personResponsible->relation) ?></div>
-                                </div>
-                                <div class="detail-item">
-                                    <div class="label-text">Identitas</div>
-                                    <div class="value">
-                                        <?= $display($personResponsible->identity_type) ?>
-                                        <?= !empty($personResponsible->identity_no) ? ' - ' . h($personResponsible->identity_no) : '' ?>
-                                    </div>
-                                </div>
-                                <div class="detail-item">
-                                    <div class="label-text">Umur / Pekerjaan</div>
-                                    <div class="value">
-                                        <?= $display($personResponsible->age) ?>
-                                        <?= !empty($personResponsible->job) ? ' - ' . h($personResponsible->job) : '' ?>
-                                    </div>
-                                </div>
-                                <div class="detail-item">
-                                    <div class="label-text">Telepon</div>
-                                    <div class="value"><?= $display($personResponsible->phone) ?></div>
-                                </div>
-                                <div class="detail-item">
-                                    <div class="label-text">Alamat</div>
-                                    <div class="value"><?= $display($personResponsible->address) ?></div>
-                                </div>
-                            </div>
-                        <?php else: ?>
-                            <div class="person-empty">Data penanggung jawab belum diisi.</div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <hr>
-
-        <div class="text-right">
-            <?= $this->Html->link(
-                '<i class="fa fa-arrow-left"></i> Kembali',
-                ['action' => 'index'],
-                ['class' => 'btn btn-default', 'escape' => false]
-            ) ?>
-
-            <?php if ($canViewPatientHistory): ?>
+            <div class="header-actions">
                 <?= $this->Html->link(
-                    '<i class="fa fa-history"></i> Riwayat Pasien',
-                    ['controller' => 'MedicalRecords', 'action' => 'history', $registration->patient_id],
-                    ['class' => 'btn btn-info', 'escape' => false]
+                    '<i class="fa fa-arrow-left"></i> Kembali',
+                    ['action' => 'index'],
+                    ['class' => 'btn btn-default', 'escape' => false]
                 ) ?>
-            <?php endif; ?>
-
-            <?= $this->Html->link(
-                '<i class="fa fa-pencil"></i> Edit',
-                ['action' => 'edit', $registration->id],
-                ['class' => 'btn btn-warning', 'escape' => false]
-            ) ?>
+                <?= $this->Html->link(
+                    '<i class="fa fa-pencil"></i> Edit',
+                    ['action' => 'edit', $registration->id],
+                    ['class' => 'btn btn-primary', 'escape' => false]
+                ) ?>
+                <?= $this->Form->postLink(
+                    '<i class="fa fa-trash"></i> Hapus',
+                    ['action' => 'delete', $registration->id],
+                    [
+                        'confirm' => __('Yakin ingin menghapus registrasi {0}?', $registration->registration_no ?: $registration->id),
+                        'class' => 'btn btn-danger',
+                        'escape' => false,
+                    ]
+                ) ?>
+            </div>
         </div>
+
+        <fieldset>
+            <div class="row">
+                <div class="col-md-6">
+
+                    <!-- Data Pasien -->
+                    <div class="form-card">
+                        <div class="form-card-header">
+                            <i class="fa fa-user"></i> Data Pasien
+                        </div>
+                        <div class="form-card-body">
+                            <?php if ($patient): ?>
+                                <div class="row">
+                                    <?php regField('Kode Pasien', $patient->code ?? '', 'col-md-4') ?>
+                                    <?php regField('Identitas', $patient->identity_type ?? '', 'col-md-3') ?>
+                                    <?php regField('No Identitas', $patient->identity_number ?? '', 'col-md-5') ?>
+
+                                    <?php regField('Gelar', $registration->patient_title ?? ($patient->title ?? ''), 'col-md-2') ?>
+                                    <?php regField('Nama Pasien', $patient->full_name ?? '', 'col-md-6') ?>
+                                    <?php regField('Jenis Kelamin', genderLabel($patient->gender ?? ''), 'col-md-4') ?>
+
+                                    <?php regField('Gol Darah', $patient->blood_type ?? '', 'col-md-3') ?>
+                                    <?php regField('Tanggal Lahir', formatDateView($patient->birth_date ?? null), 'col-md-4') ?>
+                                    <?php regField('No Telepon', $patient->phone_number ?? '', 'col-md-5') ?>
+
+                                    <?php regField('Alamat', $patient->address ?? '', 'col-md-12') ?>
+
+                                    <?php regField('Nama Ayah', $patient->father_name ?? '', 'col-md-6') ?>
+                                    <?php regField('Nama Ibu', $patient->mother_name ?? '', 'col-md-6') ?>
+
+                                    <?php regField('Kewarganegaraan', $patient->citizenship ?? '', 'col-md-4') ?>
+                                    <?php regField('Negara', $patient->nationality ?? '', 'col-md-4') ?>
+                                    <?php regField('Pekerjaan', $patient->occupation ?? '', 'col-md-4') ?>
+
+                                    <?php regField('Provinsi', $patient->province ?? '', 'col-md-3') ?>
+                                    <?php regField('Kabupaten/Kota', $patient->city ?? '', 'col-md-3') ?>
+                                    <?php regField('Kecamatan', $patient->district ?? '', 'col-md-3') ?>
+                                    <?php regField('Kelurahan', $patient->subdistrict ?? '', 'col-md-3') ?>
+
+                                    <?php regField('Agama', $patient->religion ?? '', 'col-md-3') ?>
+                                    <?php regField('Pendidikan', $patient->education ?? '', 'col-md-3') ?>
+                                    <?php regField('Suku Bangsa', $patient->ethnic_group ?? '', 'col-md-3') ?>
+                                    <?php regField('Status Nikah', $patient->marital_status ?? '', 'col-md-3') ?>
+                                </div>
+                            <?php else: ?>
+                                <div class="empty-card-note">Data pasien tidak ditemukan.</div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- Penanggung Jawab -->
+                    <div class="form-card">
+                        <div class="form-card-header">
+                            <i class="fa fa-users"></i> Penanggung Jawab Pasien
+                        </div>
+                        <div class="form-card-body">
+                            <?php if ($pr): ?>
+                                <div class="row">
+                                    <?php regField('Nama', $pr->name ?? '', 'col-md-6') ?>
+                                    <?php regField('Identitas', $pr->identity_type ?? '', 'col-md-3') ?>
+                                    <?php regField('No Identitas', $pr->identity_no ?? '', 'col-md-3') ?>
+
+                                    <?php regField('Hubungan', $pr->relation ?? '', 'col-md-4') ?>
+                                    <?php regField('Umur', $pr->age ?? '', 'col-md-2') ?>
+                                    <?php regField('Pekerjaan', $pr->job ?? '', 'col-md-6') ?>
+
+                                    <?php regField('Alamat', $pr->address ?? '', 'col-md-8') ?>
+                                    <?php regField('Telepon', $pr->phone ?? '', 'col-md-4') ?>
+                                </div>
+                            <?php else: ?>
+                                <div class="empty-card-note">Belum ada data penanggung jawab.</div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <!-- Tujuan Berobat -->
+                    <div class="form-card">
+                        <div class="form-card-header">
+                            <i class="fa fa-hospital-o"></i> Tujuan Berobat
+                        </div>
+                        <div class="form-card-body">
+                            <div class="row">
+                                <?php regField('No Registrasi', $registration->registration_no ?? '', 'col-md-4') ?>
+                                <?php regField('Tanggal Masuk', formatDateView($registration->registration_date ?? null), 'col-md-4') ?>
+                                <?php regField('Jam Masuk', formatTimeView($registration->admission_time ?? null), 'col-md-4') ?>
+
+                                <?php regFieldRaw(
+                                    'Pelayanan',
+                                    '<span class="badge-pill ' . ($serviceClass[$registration->service_type ?? ''] ?? 'badge-gray') . '">'
+                                        . h($serviceLabels[$registration->service_type ?? ''] ?? ($registration->service_type ?? '-'))
+                                        . '</span>',
+                                    'col-md-12'
+                                ) ?>
+
+                                <?php if (($registration->service_type ?? '') !== 'rawat_inap'): ?>
+                                    <?php regField('Poli / Unit', $registration->polyclinic_name ?? '', 'col-md-4') ?>
+                                    <?php regField('Ruang', $registration->room_name ?? '', 'col-md-4') ?>
+                                    <?php regField('Nomor Antri', $registration->queue_no ?? ($registration->queue_number ?? ''), 'col-md-4') ?>
+                                <?php else: ?>
+                                    <?php regField('Ruangan', $room->room_name ?? '', 'col-md-4') ?>
+                                    <?php regField('Bed / Kamar', $bed ? trim(($bed->name ?? '') . (!empty($bed->bed_no) ? ' (' . $bed->bed_no . ')' : '')) : '', 'col-md-4') ?>
+                                    <?php regField('Kelas', $registration->class_name ?? '', 'col-md-4') ?>
+                                <?php endif; ?>
+
+                                <?php regField('Dokter', $doctor->doctor_name ?? '', 'col-md-6') ?>
+                                <?php regField('Proses Masuk', $registration->entry_process ?? '', 'col-md-3') ?>
+                                <?php regField('Cara Masuk', $registration->entry_method ?? '', 'col-md-3') ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cara Bayar -->
+                    <div class="form-card">
+                        <div class="form-card-header">
+                            <i class="fa fa-credit-card"></i> Cara Bayar
+                        </div>
+                        <div class="form-card-body">
+                            <div class="row">
+                                <?php regFieldRaw(
+                                    'Jenis Pasien',
+                                    !empty($registration->payment_method)
+                                        ? '<span class="badge-pill badge-orange">' . h($paymentLabels[$registration->payment_method] ?? $registration->payment_method) . '</span>'
+                                        : '',
+                                    'col-md-4'
+                                ) ?>
+
+                                <?php if (($registration->payment_method ?? '') === 'PERORANGAN'): ?>
+                                    <?php regField('SKDP/No Kontrol', $registration->skdp_no ?? '', 'col-md-4') ?>
+                                    <?php regField('Jenis Referensi', $registration->reference_type ?? '', 'col-md-4') ?>
+                                <?php elseif (!empty($registration->payment_method)): ?>
+                                    <?php regField('Penjamin', $registration->insurance_type ?? '', 'col-md-4') ?>
+                                    <?php regField('Kategori Asuransi', $registration->insurance_category ?? '', 'col-md-4') ?>
+                                    <?php regField('Nomor Kartu', $registration->insurance_card_no ?? '', 'col-md-4') ?>
+                                    <?php regField('No Rujukan/Kontrol', $registration->refferal_no ?? '', 'col-md-4') ?>
+                                    <?php regField('NIK/Bagian', $registration->bpjs_nik ?? '', 'col-md-4') ?>
+                                    <?php regField('Nama Peserta', $registration->bpjs_name ?? '', 'col-md-4') ?>
+                                    <?php regField('Golongan', $registration->bpjs_group ?? '', 'col-md-4') ?>
+                                    <?php regField('Kelas', $registration->bpjs_class ?? '', 'col-md-4') ?>
+                                    <?php regField('Jenis', $registration->bpjs_type ?? '', 'col-md-4') ?>
+                                    <?php regField('Provider', $registration->provider ?? '', 'col-md-4') ?>
+                                <?php endif; ?>
+
+                                <?php regField('Perawatan', $registration->treatment_type ?? 'BIASA', 'col-md-4') ?>
+                                <?php if (($registration->treatment_type ?? '') === 'PAKET'): ?>
+                                    <?php regField('Paket', $registration->package_name ?? '', 'col-md-8') ?>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Perujuk Pasien -->
+                    <?php if (!empty($registration->referral_type) && $registration->referral_type !== 'None'): ?>
+                        <div class="form-card">
+                            <div class="form-card-header">
+                                <i class="fa fa-clipboard"></i> Perujuk Pasien
+                            </div>
+                            <div class="form-card-body">
+                                <div class="row">
+                                    <?php regField('Rujukan', $registration->referral_type ?? '', 'col-md-4') ?>
+                                    <?php regField('Asal Rujuk', $registration->referral_origin ?? '', 'col-md-8') ?>
+                                    <?php regField('Dokter Pengirim', $registration->referral_doctor ?? '', 'col-md-6') ?>
+                                    <?php regField('Nama Perujuk', $registration->referral_name ?? '', 'col-md-6') ?>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Info Sistem -->
+                    <div class="form-card">
+                        <div class="form-card-header">
+                            <i class="fa fa-info-circle"></i> Info Sistem
+                        </div>
+                        <div class="form-card-body">
+                            <div class="row">
+                                <?php regField('ID', $registration->id ?? '', 'col-md-3') ?>
+                                <?php regField('Dibuat', formatDateView($registration->created, true), 'col-md-4') ?>
+                                <?php regField('Diubah', formatDateView($registration->modified, true), 'col-md-4') ?>
+                                <?php regFieldRaw(
+                                    'Status Aktif',
+                                    '<span class="badge-pill ' . (($registration->is_active ?? '') === 'Y' ? 'badge-green' : 'badge-gray') . '">'
+                                        . h(($registration->is_active ?? '') === 'Y' ? 'AKTIF' : 'NONAKTIF')
+                                        . '</span>',
+                                    'col-md-1'
+                                ) ?>
+
+                                <?php if (!empty($registration->delete_log)): ?>
+                                    <?php regField('Delete Log', $registration->delete_log, 'col-md-12') ?>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </fieldset>
+
     </div>
 </div>
