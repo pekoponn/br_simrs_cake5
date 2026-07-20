@@ -15,8 +15,8 @@ use Cake\Validation\Validator;
  * @property \App\Model\Table\RegistrationsTable&\Cake\ORM\Association\BelongsTo $Registrations
  * @property \App\Model\Table\PatientsTable&\Cake\ORM\Association\BelongsTo $Patients
  * @property \App\Model\Table\DoctorsTable&\Cake\ORM\Association\BelongsTo $Doctors
- * @property \App\Model\Table\OperatorsTable&\Cake\ORM\Association\BelongsTo $Operators
- * @property \App\Model\Table\OperationTypesTable&\Cake\ORM\Association\BelongsTo $OperationTypes
+ * @property \App\Model\Table\MasterSurgeryOperatorsTable&\Cake\ORM\Association\BelongsTo $MasterSurgeryOperators
+ * @property \App\Model\Table\MasterOperationTypesTable&\Cake\ORM\Association\BelongsTo $MasterOperationTypes
  *
  * @method \App\Model\Entity\OrderSurgery newEmptyEntity()
  * @method \App\Model\Entity\OrderSurgery newEntity(array $data, array $options = [])
@@ -65,10 +65,10 @@ class OrderSurgeriesTable extends Table
         $this->belongsTo('Doctors', [
             'foreignKey' => 'doctor_id',
         ]);
-        $this->belongsTo('Operators', [
+        $this->belongsTo('MasterSurgeryOperators', [
             'foreignKey' => 'operator_id',
         ]);
-        $this->belongsTo('OperationTypes', [
+        $this->belongsTo('MasterOperationTypes', [
             'foreignKey' => 'operation_type_id',
         ]);
     }
@@ -193,8 +193,8 @@ class OrderSurgeriesTable extends Table
         $rules->add($rules->existsIn(['registration_id'], 'Registrations'), ['errorField' => 'registration_id']);
         $rules->add($rules->existsIn(['patient_id'], 'Patients'), ['errorField' => 'patient_id']);
         $rules->add($rules->existsIn(['doctor_id'], 'Doctors'), ['errorField' => 'doctor_id']);
-        $rules->add($rules->existsIn(['operator_id'], 'Operators'), ['errorField' => 'operator_id']);
-        $rules->add($rules->existsIn(['operation_type_id'], 'OperationTypes'), ['errorField' => 'operation_type_id']);
+        $rules->add($rules->existsIn(['operator_id'], 'MasterSurgeryOperators'), ['errorField' => 'operator_id']);
+        $rules->add($rules->existsIn(['operation_type_id'], 'MasterOperationTypes'), ['errorField' => 'operation_type_id']);
 
         return $rules;
     }

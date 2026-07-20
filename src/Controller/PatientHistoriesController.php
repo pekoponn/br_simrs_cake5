@@ -22,6 +22,7 @@ class PatientHistoriesController extends AppController
         $this->loadModel('Patients');
         $this->loadModel('Registrations');
         $this->loadModel('OutpatientVisits');
+        $this->loadModel('OutpatientVisitEmr');
 
         // q dipakai ketika pasien sudah dipilih dari modal.
         // patient_search dipakai untuk isi pencarian di modal cari pasien.
@@ -138,13 +139,48 @@ class PatientHistoriesController extends AppController
                             ->first();
                     }
 
-                    if ($outpatientVisit) {
-                        $registration->set('outpatient_visit', $outpatientVisit);
-                    }
+                    $emrRowsAll = [];
+                if ($outpatientVisit) {
+                    $registration->set('outpatient_visit', $outpatientVisit);
 
+                    if ($hasTable('outpatient_visit_emr')) {
+                        $emrRowsAll = $this->OutpatientVisitEmr->find()
+                            ->where(['OutpatientVisitEmr.outpatient_visit_id' => (int)$outpatientVisit->id])
+                            ->order(['OutpatientVisitEmr.id' => 'ASC'])
+                            ->all()
+                            ->toArray();
+
+                        if (!empty($emrRowsAll)) {
+                            $registration->set('outpatient_visit_emr', end($emrRowsAll));
+                            $registration->set('outpatient_visit_emr_all', $emrRowsAll);
+                        }
+                    }
+                }
+
+                    $cpptRows = [];
+                    if ($outpatientVisit && $hasTable('outpatient_cppt_notes')) {
+                        $this->loadModel('OutpatientCpptNotes');
+                        $cpptRows = $this->OutpatientCpptNotes->find()
+                            ->where(['OutpatientCpptNotes.outpatient_visit_id' => (int)$outpatientVisit->id])
+                            ->order(['OutpatientCpptNotes.noted_at' => 'ASC', 'OutpatientCpptNotes.id' => 'ASC'])
+                            ->all()
+                            ->toArray();
+                    }
+                    
                     $PatientHistory = $this->readPatientHistoryRow($connection, $hasTable, $registration->id);
                     if ($PatientHistory) {
                         $registration->set('medical_record', $PatientHistory);
+                    }
+
+                    if (!empty($outpatientVisit) && !empty($registration->outpatient_visit_emr)) {
+                        $visitEmrUserId = is_object($registration->outpatient_visit_emr)
+                            ? ($registration->outpatient_visit_emr->created_by_user_id ?? null)
+                            : ($registration->outpatient_visit_emr['created_by_user_id'] ?? null);
+
+                        $creatorName = $this->resolveUserName($connection, $hasTable, $visitEmrUserId);
+                        if ($creatorName) {
+                            $registration->set('history_created_by', $creatorName);
+                        }
                     }
 
                     $detailData[$registration->id] = [];
@@ -156,118 +192,325 @@ class PatientHistoriesController extends AppController
                             $PatientHistory['id'] ?? $PatientHistory->id ?? null
                         );
                     }
+                    $detailData[$registration->id]['emr_all'] = $emrRowsAll; 
+                    $detailData[$registration->id]['cppt'] = $cpptRows;
                 }
             } else {
                 $notFound = true;
             }
         }
 
-        $this->set(compact('q', 'patientSearch', 'patientResults', 'patient', 'registrations', 'detailData', 'notFound'));
-    }
+        $historyGroups = [];
+        foreach ($registrations as $registration) {
+            $details = $detailData[$registration->id] ?? [];
 
+            $PatientHistory = $registration->medical_record ?? null;
+            $historyId = null;
+            $storedHistoryNo = null;
+            if (is_array($PatientHistory)) {
+                $historyId = $PatientHistory['id'] ?? null;
+                $storedHistoryNo = $PatientHistory['history_no'] ?? null;
+            } elseif (is_object($PatientHistory)) {
+                $historyId = $PatientHistory->id ?? null;
+                $storedHistoryNo = $PatientHistory->history_no ?? null;
+            }
 
-    public function searchPatients()
-    {
-        $this->request->allowMethod(['get']);
-        $this->loadModel('Patients');
+            $regDate = $registration->registration_date
+                ?? $registration->visit_date
+                ?? $registration->created
+                ?? null;
 
-        $term = trim((string)$this->request->getQuery('term', ''));
-        $limit = (int)$this->request->getQuery('limit', 50);
-        if ($limit <= 0 || $limit > 100) {
-            $limit = 50;
+            $dateForCode = (is_object($regDate) && method_exists($regDate, 'format'))
+                ? $regDate->format('ymd')
+                : ($regDate ? date('ymd', strtotime((string)$regDate)) : date('ymd'));
+
+            // NO REGISTRASI ASLI (mis. "RJ2026-0000005" untuk Rawat Jalan,
+            // beda prefix untuk IGD/Rawat Inap sesuai jenis pelayanan).
+            // Ini HARUS sama persis dengan yang tampil di menu Daftar Registrasi
+            // Pasien, jadi jangan generate kode sendiri kalau nomor aslinya ada.
+            $realRegistrationNo = $registration->registration_no
+                ?? $registration->registration_number
+                ?? $registration->no_registrasi
+                ?? $registration->code
+                ?? null;
+
+            $regCode = $realRegistrationNo
+                ?: ($storedHistoryNo
+                    ? str_replace('RWT', 'REG', $storedHistoryNo)
+                    : ('REG' . $dateForCode . sprintf('%04d', (int)($historyId ?? $registration->id))));
+
+            // Setiap JENIS data (tab) yang punya isi -> jadi satu (atau beberapa)
+            // entri RWT tersendiri, diberi label jenisnya. Tab yang belum pernah
+            // diisi untuk registrasi ini TIDAK memunculkan entri sama sekali.
+            $typeConfig = [
+                'soap'         => ['label' => 'soap', 'keys' => ['examinations', 'emr_all'], 'date_fields' => ['created', 'noted_at', 'date'], 'collapse' => true],
+                'resep'        => ['label' => 'resep', 'keys' => ['prescriptions'], 'date_fields' => ['tgl_resep', 'tanggal_resep', 'prescription_date', 'date', 'created'], 'collapse' => true],
+                'penunjang'    => ['label' => 'penunjang medis', 'keys' => ['penunjang'], 'date_fields' => ['tanggal', 'date', 'created'], 'collapse' => false],
+                'laboratorium' => ['label' => 'laboratorium', 'keys' => ['laboratories'], 'date_fields' => ['tanggal', 'date', 'created'], 'collapse' => false],
+                'radiologi'    => ['label' => 'radiologi', 'keys' => ['radiologies'], 'date_fields' => ['tanggal', 'date', 'created'], 'collapse' => false],
+                'bedah'        => ['label' => 'tindakan bedah', 'keys' => ['surgeries'], 'date_fields' => ['created', 'tanggal', 'date'], 'collapse' => false],
+                'integrasi'    => ['label' => 'form integrasi', 'keys' => ['cppt'], 'date_fields' => ['noted_at', 'created'], 'collapse' => false],
+                'icare'        => ['label' => 'icare', 'keys' => ['icares'], 'date_fields' => ['date', 'created'], 'collapse' => false],
+            ];
+
+            $entries = [];
+            foreach ($typeConfig as $type => $cfg) {
+                $rows = [];
+                foreach ($cfg['keys'] as $key) {
+                    $rows = array_merge($rows, $details[$key] ?? []);
+                }
+
+                if ($type === 'resep') {
+                    foreach ($details['emr_all'] ?? [] as $emrRow) {
+                        $emrValues = (is_object($emrRow) && method_exists($emrRow, 'toArray'))
+                            ? $emrRow->toArray()
+                            : (array)$emrRow;
+
+                        if (!empty($emrValues['prescription_notes'])) {
+                            $rows[] = $emrRow;
+                        }
+                    }
+                }
+
+                if (empty($rows)) {
+                    continue;
+                }
+
+                $typeEntries = $this->buildTypeEntries($rows, $cfg['date_fields']);
+
+                if (!empty($cfg['collapse']) && !empty($typeEntries)) {
+                    usort($typeEntries, function ($a, $b) {
+                        $ta = $a['ts'] ? (is_numeric($a['ts']) ? (int)$a['ts'] : strtotime((string)$a['ts'])) : 0;
+                        $tb = $b['ts'] ? (is_numeric($b['ts']) ? (int)$b['ts'] : strtotime((string)$b['ts'])) : 0;
+                        return $ta <=> $tb;
+                    });
+
+                    $firstEntry = $typeEntries[0];
+                    $lastEntry  = end($typeEntries);
+
+                    $codeDate = $firstEntry['ts']
+                        ? date('ymd', is_numeric($firstEntry['ts']) ? (int)$firstEntry['ts'] : strtotime((string)$firstEntry['ts']))
+                        : $dateForCode;
+
+                    $entries[] = [
+                        'id' => $registration->id,
+                        'type' => $type,
+                        'type_label' => $cfg['label'],
+                        'history_no' => 'RWT' . $codeDate . sprintf('%04d', (int)($firstEntry['id'] ?? $registration->id)),
+                        'date' => $lastEntry['ts'],
+                        'time' => $lastEntry['ts'],
+                    ];
+
+                    continue;
+                }
+
+                foreach ($typeEntries as $row) {
+                    $ts = $row['ts'];
+                    $sourceId = $row['id'] ?? $registration->id;
+
+                    $codeDate = $ts
+                        ? date('ymd', is_numeric($ts) ? (int)$ts : strtotime((string)$ts))
+                        : $dateForCode;
+
+                    $entries[] = [
+                        'id' => $registration->id,
+                        'type' => $type,
+                        'type_label' => $cfg['label'],
+                        'history_no' => 'RWT' . $codeDate . sprintf('%04d', (int)$sourceId),
+                        'date' => $ts,
+                        'time' => $ts,
+                    ];
+                }
+            }
+
+            if (empty($entries) && $storedHistoryNo) {
+                $entries[] = [
+                    'id' => $registration->id,
+                    'type' => 'soap',
+                    'type_label' => 'soap',
+                    'history_no' => $storedHistoryNo,
+                    'date' => $regDate,
+                    'time' => $registration->admission_time ?? $registration->visit_time ?? null,
+                ];
+            }
+
+            // Urutkan dari aktivitas paling lama ke paling baru dalam satu REG.
+            usort($entries, function ($a, $b) {
+                $ta = $a['date'] ? (is_numeric($a['date']) ? (int)$a['date'] : strtotime((string)$a['date'])) : 0;
+                $tb = $b['date'] ? (is_numeric($b['date']) ? (int)$b['date'] : strtotime((string)$b['date'])) : 0;
+                return $ta <=> $tb;
+            });
+
+            $historyGroups[] = [
+                'reg_id' => $registration->id,
+                'reg_code' => $regCode,
+                'entries' => $entries,
+            ];
         }
 
-        $patients = [];
-        if ($term !== '') {
-            $query = $this->Patients->find()
-                ->select([
-                    'id',
-                    'code',
-                    'full_name',
-                    'birth_date',
-                    'gender',
-                    'address',
-                    'phone_number',
-                    'identity_type',
-                    'identity_number',
-                    'blood_type',
-                    'city',
-                    'province',
-                    'subdistrict',
-                    'district',
-                    'mother_name',
-                    'father_name',
-                    'is_active',
-                ])
-                ->where([
-                    'OR' => [
-                        ['Patients.is_delete !=' => 1],
-                        ['Patients.is_delete IS' => null],
-                    ],
-                ])
-                ->where([
-                    'OR' => [
-                        'Patients.code LIKE' => '%' . $term . '%',
-                        'Patients.full_name LIKE' => '%' . $term . '%',
-                        'Patients.identity_number LIKE' => '%' . $term . '%',
-                        'Patients.phone_number LIKE' => '%' . $term . '%',
-                        'Patients.address LIKE' => '%' . $term . '%',
-                        'Patients.mother_name LIKE' => '%' . $term . '%',
-                        'Patients.father_name LIKE' => '%' . $term . '%',
-                        'Patients.city LIKE' => '%' . $term . '%',
-                        'Patients.province LIKE' => '%' . $term . '%',
-                        'Patients.subdistrict LIKE' => '%' . $term . '%',
-                        'Patients.district LIKE' => '%' . $term . '%',
-                    ],
-                ])
-                ->order([
-                    'Patients.full_name' => 'ASC',
-                    'Patients.id' => 'DESC',
-                ])
-                ->limit($limit);
+                $this->set(compact(
+                    'q',
+                    'patientSearch',
+                    'patientResults',
+                    'patient',
+                    'registrations',
+                    'detailData',
+                    'notFound',
+                    'historyGroups'
+                ));
+            }
 
-            foreach ($query as $row) {
-                $birthDate = '';
-                if (!empty($row->birth_date) && is_object($row->birth_date) && method_exists($row->birth_date, 'format')) {
-                    $birthDate = $row->birth_date->format('d-m-Y');
-                } elseif (!empty($row->birth_date)) {
-                    $birthDate = date('d-m-Y', strtotime((string)$row->birth_date));
-                }
+private function buildTypeEntries(array $rows, array $dateFields): array
+{
+    $out = [];
+    foreach ($rows as $row) {
+        if (is_object($row) && method_exists($row, 'toArray')) {
+            $values = $row->toArray();
+        } else {
+            $values = is_array($row) ? $row : (array)$row;
+        }
 
-                $gender = strtolower((string)($row->gender ?? ''));
-                if (in_array($gender, ['male', 'm', 'l', 'laki-laki', 'pria'], true)) {
-                    $genderText = 'P';
-                } elseif (in_array($gender, ['female', 'f', 'p', 'perempuan', 'wanita'], true)) {
-                    $genderText = 'W';
-                } else {
-                    $genderText = $row->gender ? strtoupper(substr((string)$row->gender, 0, 1)) : '';
-                }
-
-                $patients[] = [
-                    'id' => $row->id,
-                    'code' => (string)($row->code ?? ''),
-                    'full_name' => (string)($row->full_name ?? ''),
-                    'birth_date' => $birthDate,
-                    'gender' => $genderText,
-                    'address' => (string)($row->address ?? ''),
-                    'phone_number' => (string)($row->phone_number ?? ''),
-                    'identity_number' => (string)($row->identity_number ?? ''),
-                    'card_no' => '',
-                ];
+        $id = $values['id'] ?? null;
+        $ts = null;
+        foreach ($dateFields as $field) {
+            if (!empty($values[$field])) {
+                $ts = $values[$field];
+                break;
             }
         }
 
-        $payload = [
-            'success' => true,
-            'term' => $term,
-            'data' => $patients,
-        ];
-
-        $this->autoRender = false;
-        return $this->response
-            ->withType('application/json')
-            ->withStringBody(json_encode($payload, JSON_UNESCAPED_UNICODE));
+        $out[] = ['id' => $id, 'ts' => $ts];
     }
+    return $out;
+}
+
+private function resolveUserName($connection, callable $hasTable, $userId): ?string
+{
+    if (empty($userId) || !$hasTable('users')) {
+        return null;
+    }
+
+    static $cache = [];
+    if (array_key_exists((int)$userId, $cache)) {
+        return $cache[(int)$userId];
+    }
+
+    $schema = $connection->getSchemaCollection()->describe('users');
+    $nameColumn = null;
+    foreach (['full_name', 'name', 'username'] as $candidate) {
+        if ($schema->hasColumn($candidate)) {
+            $nameColumn = $candidate;
+            break;
+        }
+    }
+
+    if (!$nameColumn) {
+        $cache[(int)$userId] = null;
+        return null;
+    }
+
+    $sql = 'SELECT ' . $connection->quoteIdentifier($nameColumn) . ' AS name'
+        . ' FROM ' . $connection->quoteIdentifier('users')
+        . ' WHERE ' . $connection->quoteIdentifier('id') . ' = :id'
+        . ' LIMIT 1';
+
+    $row = $connection->execute($sql, ['id' => (int)$userId])->fetch('assoc');
+    $cache[(int)$userId] = $row['name'] ?? null;
+
+    return $cache[(int)$userId];
+}
+
+    public function searchPatients()
+{
+    $this->request->allowMethod(['get']);
+    $this->loadModel('Patients');
+
+    $term = trim((string)$this->request->getQuery('term', ''));
+    $limit = (int)$this->request->getQuery('limit', 50);
+    if ($limit <= 0 || $limit > 100) {
+        $limit = 50;
+    }
+
+    $query = $this->Patients->find()
+        ->select([
+            'id', 'code', 'full_name', 'birth_date', 'gender', 'address',
+            'phone_number', 'identity_type', 'identity_number', 'blood_type',
+            'city', 'province', 'subdistrict', 'district',
+            'mother_name', 'father_name', 'is_active',
+        ])
+        ->where([
+            'OR' => [
+                ['Patients.is_delete !=' => 1],
+                ['Patients.is_delete IS' => null],
+            ],
+        ]);
+
+    // Hanya filter kalau term diisi. Kalau kosong, tampilkan daftar default.
+    if ($term !== '') {
+        $query->where([
+            'OR' => [
+                'Patients.code LIKE' => '%' . $term . '%',
+                'Patients.full_name LIKE' => '%' . $term . '%',
+                'Patients.identity_number LIKE' => '%' . $term . '%',
+                'Patients.phone_number LIKE' => '%' . $term . '%',
+                'Patients.address LIKE' => '%' . $term . '%',
+                'Patients.mother_name LIKE' => '%' . $term . '%',
+                'Patients.father_name LIKE' => '%' . $term . '%',
+                'Patients.city LIKE' => '%' . $term . '%',
+                'Patients.province LIKE' => '%' . $term . '%',
+                'Patients.subdistrict LIKE' => '%' . $term . '%',
+                'Patients.district LIKE' => '%' . $term . '%',
+            ],
+        ]);
+    }
+
+    $query->order([
+        'Patients.full_name' => 'ASC',
+        'Patients.id' => 'DESC',
+    ])->limit($limit);
+
+    $patients = [];
+    foreach ($query as $row) {
+        $birthDate = '';
+        if (!empty($row->birth_date) && is_object($row->birth_date) && method_exists($row->birth_date, 'format')) {
+            $birthDate = $row->birth_date->format('d-m-Y');
+        } elseif (!empty($row->birth_date)) {
+            $birthDate = date('d-m-Y', strtotime((string)$row->birth_date));
+        }
+
+        $gender = strtolower((string)($row->gender ?? ''));
+        if (in_array($gender, ['male', 'm', 'l', 'laki-laki', 'pria'], true)) {
+            $genderText = 'P';
+        } elseif (in_array($gender, ['female', 'f', 'p', 'perempuan', 'wanita'], true)) {
+            $genderText = 'W';
+        } else {
+            $genderText = $row->gender ? strtoupper(substr((string)$row->gender, 0, 1)) : '';
+        }
+
+        $patients[] = [
+            'id' => $row->id,
+            'code' => (string)($row->code ?? ''),
+            'full_name' => (string)($row->full_name ?? ''),
+            'birth_date' => $birthDate,
+            'gender' => $genderText,
+            'address' => (string)($row->address ?? ''),
+            'phone_number' => (string)($row->phone_number ?? ''),
+            'identity_number' => (string)($row->identity_number ?? ''),
+            'card_no' => '',
+        ];
+    }
+
+    $payload = [
+        'success' => true,
+        'term' => $term,
+        'data' => $patients,
+    ];
+
+    $this->autoRender = false;
+    return $this->response
+        ->withType('application/json')
+        ->withStringBody(json_encode($payload, JSON_UNESCAPED_UNICODE));
+}
 
     public function periksa($outpatientVisitId = null)
     {
@@ -283,14 +526,27 @@ class PatientHistoriesController extends AppController
         $savedDetail = false;
         $this->detailSaveError = null;
 
-        if ($this->request->is(['patch', 'post', 'put']) && !$this->hasRequiredEmrFields($this->request->getData())) {
-            $PatientHistory = $this->findOrCreatePatientHistory((int)$visit->registration_id);
+        $isSubmit = $this->request->is(['patch', 'post', 'put']);
+
+        // GET (baru buka halaman periksa) ATAU POST dengan data belum valid:
+        // JANGAN bikin baris patient_histories baru. Cuma tampilkan yang sudah
+        // ada (kalau memang sudah pernah disimpan sebelumnya). Ini supaya
+        // riwayat pasien tidak muncul duluan sebelum EMR benar-benar disimpan.
+        if (!$isSubmit || !$this->hasRequiredEmrFields($this->request->getData())) {
+            $PatientHistory = $this->findPatientHistory((int)$visit->registration_id);
             $details = $PatientHistory ? $this->readPatientHistoryDetails((int)$PatientHistory->id) : [];
-            $this->Flash->error(__('Keluhan awal dan diagnosa wajib diisi sebelum EMR disimpan.'));
+
+            if ($isSubmit) {
+                $this->Flash->error(__('Keluhan awal dan diagnosa wajib diisi sebelum EMR disimpan.'));
+            }
+
             $this->set(compact('visit', 'PatientHistory', 'details'));
             return;
         }
 
+        // Dari sini hanya jalan kalau POST/PATCH/PUT dan data sudah valid.
+        // Baris patient_histories baru DIBUAT DI SINI, di dalam transaction yang
+        // sama dengan penyimpanan detail EMR-nya.
         try {
             $success = $connection->transactional(function () use ($visit, &$PatientHistory, &$savedDetail) {
                 $PatientHistory = $this->findOrCreatePatientHistory((int)$visit->registration_id);
@@ -305,15 +561,13 @@ class PatientHistoriesController extends AppController
                     return false;
                 }
 
-                if ($this->request->is(['patch', 'post', 'put'])) {
-                    $savedDetail = $this->savePatientHistoryDetails(
-                        (int)$PatientHistory->id,
-                        $this->request->getData()
-                    );
+                $savedDetail = $this->savePatientHistoryDetails(
+                    (int)$PatientHistory->id,
+                    $this->request->getData()
+                );
 
-                    if (!$savedDetail) {
-                        return false;
-                    }
+                if (!$savedDetail) {
+                    return false;
                 }
 
                 return true;
@@ -341,22 +595,22 @@ class PatientHistoriesController extends AppController
             return $this->redirect(['action' => 'periksa', $outpatientVisitId]);
         }
 
-        if ($savedDetail) {
-            $this->Flash->success(__('Data pemeriksaan berhasil disimpan.'));
-            return $this->redirect(['action' => 'periksa', $outpatientVisitId]);
-        }
-
-        $details = $this->readPatientHistoryDetails((int)$PatientHistory->id);
-        $this->set(compact('visit', 'PatientHistory', 'details'));
+        $this->Flash->success(__('Data pemeriksaan berhasil disimpan.'));
+        return $this->redirect(['action' => 'periksa', $outpatientVisitId]);
     }
 
-    private function findOrCreatePatientHistory(int $registrationId)
+    /**
+     * Cari riwayat (patient_histories) yang SUDAH ADA untuk registrasi ini.
+     * TIDAK membuat baris baru — dipakai untuk GET / data belum valid, supaya
+     * riwayat tidak muncul di tab Riwayat Pasien sebelum EMR benar-benar disimpan.
+     */
+    private function findPatientHistory(int $registrationId)
     {
         if (empty($registrationId)) {
             return null;
         }
 
-        $PatientHistory = $this->PatientHistorys->find()
+        return $this->PatientHistorys->find()
             ->where([
                 'PatientHistorys.registration_id' => $registrationId,
                 'OR' => [
@@ -366,15 +620,30 @@ class PatientHistoriesController extends AppController
             ])
             ->order(['PatientHistorys.id' => 'DESC'])
             ->first();
+    }
+
+    private function findOrCreatePatientHistory(int $registrationId)
+    {
+        if (empty($registrationId)) {
+            return null;
+        }
+
+        $PatientHistory = $this->findPatientHistory($registrationId);
 
         if ($PatientHistory) {
             return $PatientHistory;
         }
 
+        // Generate kode riwayat (RWT...) sekali saat baris pertama kali dibuat,
+        // lalu disimpan permanen di kolom patient_histories.history_no.
+        $historyNo = $this->generateHistoryNo($registrationId);
+
         $PatientHistory = $this->PatientHistorys->newEmptyEntity();
         $PatientHistory = $this->PatientHistorys->patchEntity($PatientHistory, [
             'registration_id' => $registrationId,
+            'user_id' => $this->getCurrentUserId(),
             'status' => 'Draft',
+            'history_no' => $historyNo,
             'is_create' => 1,
             'is_update' => 0,
             'is_delete' => 0,
@@ -383,6 +652,16 @@ class PatientHistoriesController extends AppController
         ]);
 
         return $this->PatientHistorys->save($PatientHistory);
+    }
+
+    /**
+     * Generate kode riwayat (RWT...) berbasis tanggal hari ini + id registrasi asli.
+     * Dipanggil SEKALI saja saat baris patient_histories pertama kali dibuat, lalu disimpan permanen
+     * di kolom patient_histories.history_no (tidak dihitung ulang setiap request).
+     */
+    private function generateHistoryNo(int $registrationId): string
+    {
+        return 'RWT' . date('ymd') . sprintf('%04d', $registrationId);
     }
 
     private function hasRequiredEmrFields(array $data): bool
@@ -400,32 +679,28 @@ class PatientHistoriesController extends AppController
         $examinationNote = $this->buildExaminationNote($data);
 
         if ($examinationNote !== '') {
-            $saved = $saved && $this->saveDetailRow('medical_record_examinations', [
-                'patient_history_id' => $PatientHistoryId,
+            $saved = $saved && $this->saveDetailRow('medical_record_examinations', $PatientHistoryId, [
                 'status' => $status,
                 'note' => $examinationNote,
             ]);
         }
 
         if (!empty($data['prescription_notes'])) {
-            $saved = $saved && $this->saveDetailRow('medical_record_prescriptions', [
-                'patient_history_id' => $PatientHistoryId,
+            $saved = $saved && $this->saveDetailRow('medical_record_prescriptions', $PatientHistoryId, [
                 'status' => $status,
                 'note' => trim((string)$data['prescription_notes']),
             ]);
         }
 
         if (!empty($data['laboratory_note'])) {
-            $saved = $saved && $this->saveDetailRow('medical_record_laboratories', [
-                'patient_history_id' => $PatientHistoryId,
+            $saved = $saved && $this->saveDetailRow('medical_record_laboratories', $PatientHistoryId, [
                 'status' => $status,
                 'note' => trim((string)$data['laboratory_note']),
             ]);
         }
 
         if (!empty($data['radiology_note'])) {
-            $saved = $saved && $this->saveDetailRow('medical_record_radiologies', [
-                'patient_history_id' => $PatientHistoryId,
+            $saved = $saved && $this->saveDetailRow('medical_record_radiologies', $PatientHistoryId, [
                 'status' => $status,
                 'note' => trim((string)$data['radiology_note']),
             ]);
@@ -436,8 +711,7 @@ class PatientHistoriesController extends AppController
             || !empty($data['referral_note']);
 
         if ($hasReferral) {
-            $saved = $saved && $this->saveDetailRow('medical_record_referrals', [
-                'patient_history_id' => $PatientHistoryId,
+            $saved = $saved && $this->saveDetailRow('medical_record_referrals', $PatientHistoryId, [
                 'status' => $status,
                 'referral_no' => $data['referral_no'] ?? null,
                 'referral_type' => $data['referral_type'] ?? null,
@@ -526,7 +800,21 @@ class PatientHistoriesController extends AppController
         return implode("\n", $lines);
     }
 
-    private function saveDetailRow(string $table, array $data): bool
+    /**
+     * Beberapa tabel detail EMR memakai nama kolom FK yang berbeda-beda
+     * (medical_record_id, patient_history_id, dst). Cek yang benar-benar ada di skema.
+     */
+    private function resolveForeignKeyColumn($schema): ?string
+    {
+        foreach (['medical_record_id', 'patient_history_id'] as $candidate) {
+            if ($schema->hasColumn($candidate)) {
+                return $candidate;
+            }
+        }
+        return null;
+    }
+
+    private function saveDetailRow(string $table, int $PatientHistoryId, array $data): bool
     {
         $connection = ConnectionManager::get('default');
         $tables = array_map('strtolower', $connection->getSchemaCollection()->listTables());
@@ -536,9 +824,13 @@ class PatientHistoriesController extends AppController
         }
 
         $schema = $connection->getSchemaCollection()->describe($table);
-        if (!$schema->hasColumn('patient_history_id')) {
-            return $this->failDetailSave($table, 'column_missing', ['patient_history_id']);
+        $foreignKey = $this->resolveForeignKeyColumn($schema);
+
+        if (!$foreignKey) {
+            return $this->failDetailSave($table, 'column_missing', ['medical_record_id']);
         }
+
+        $data[$foreignKey] = $PatientHistoryId;
 
         $data += [
             'is_create' => 1,
@@ -568,7 +860,7 @@ class PatientHistoriesController extends AppController
             return $this->failDetailSave($table, 'empty_payload');
         }
 
-        if ($this->isRecentDuplicateDetail($connection, $table, $data, $schema)) {
+        if ($this->isRecentDuplicateDetail($connection, $table, $foreignKey, $data, $schema)) {
             return true;
         }
 
@@ -591,9 +883,9 @@ class PatientHistoriesController extends AppController
         return false;
     }
 
-    private function isRecentDuplicateDetail($connection, string $table, array $data, $schema): bool
+    private function isRecentDuplicateDetail($connection, string $table, string $foreignKey, array $data, $schema): bool
     {
-        if (empty($data['patient_history_id']) || !$schema->hasColumn('created')) {
+        if (empty($data[$foreignKey]) || !$schema->hasColumn('created')) {
             return false;
         }
 
@@ -613,7 +905,7 @@ class PatientHistoriesController extends AppController
             : '';
 
         $sql = 'SELECT id FROM `' . $table . '`
-            WHERE `patient_history_id` = :patient_history_id
+            WHERE `' . $foreignKey . '` = :foreign_value
                 AND `' . $compareColumn . '` = :compare_value
                 ' . $deleteCondition . '
                 AND `created` >= DATE_SUB(NOW(), INTERVAL 30 SECOND)
@@ -621,7 +913,7 @@ class PatientHistoriesController extends AppController
             LIMIT 1';
 
         return (bool)$connection->execute($sql, [
-            'patient_history_id' => (int)$data['patient_history_id'],
+            'foreign_value' => (int)$data[$foreignKey],
             'compare_value' => (string)$data[$compareColumn],
         ])->fetch('assoc');
     }
@@ -650,18 +942,20 @@ class PatientHistoriesController extends AppController
             }
 
             $schema = $connection->getSchemaCollection()->describe($table);
-            if (!$schema->hasColumn('patient_history_id')) {
+            $foreignKey = $this->resolveForeignKeyColumn($schema);
+
+            if (!$foreignKey) {
                 $details[$key] = [];
                 continue;
             }
 
             $orderSql = $schema->hasColumn('id') ? ' ORDER BY ' . $connection->quoteIdentifier('id') . ' DESC' : '';
             $sql = 'SELECT * FROM ' . $connection->quoteIdentifier($table)
-                . ' WHERE ' . $connection->quoteIdentifier('patient_history_id') . ' = :patient_history_id'
+                . ' WHERE ' . $connection->quoteIdentifier($foreignKey) . ' = :foreign_value'
                 . $orderSql
                 . ' LIMIT 50';
 
-            $details[$key] = $connection->execute($sql, ['patient_history_id' => $PatientHistoryId])->fetchAll('assoc');
+            $details[$key] = $connection->execute($sql, ['foreign_value' => $PatientHistoryId])->fetchAll('assoc');
         }
 
         return $details;
@@ -761,10 +1055,9 @@ class PatientHistoriesController extends AppController
         }
 
         $schema = $connection->getSchemaCollection()->describe($table);
-        if ($PatientHistoryId && $schema->hasColumn('patient_history_id')) {
-            $foreignKey = 'patient_history_id';
-            $foreignValue = (int)$PatientHistoryId;
-        } else {
+        $foreignKey = $this->resolveForeignKeyColumn($schema);
+
+        if (!$PatientHistoryId || !$foreignKey) {
             return [];
         }
 
@@ -774,6 +1067,8 @@ class PatientHistoriesController extends AppController
             . $orderSql
             . ' LIMIT 50';
 
-        return $connection->execute($sql, ['foreign_value' => $foreignValue])->fetchAll('assoc');
+        return $connection->execute($sql, ['foreign_value' => (int)$PatientHistoryId])->fetchAll('assoc');
     }
+
+    
 }

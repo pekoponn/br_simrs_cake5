@@ -1,7 +1,9 @@
 <?php
 /**
+/**
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\OutpatientVisit $visit
+ * @var \App\Model\Entity\OutpatientVisitEmr $emr
  */
 $p = $visit->patient;
 $d = $visit->doctor;
@@ -43,15 +45,16 @@ $orderRegistrationNo = $visit->registration_no
             <i class="fa fa-notes-medical"></i> EMR — Electronic Medical Record
         </h4>
         <div style="display:flex; gap:6px;">
+            
             <?= $this->Html->link(
                 '<i class="fa fa-clipboard-list"></i> Lihat CPPT',
-                ['action' => 'cppt', $visit->id],
+                ['controller' => 'OutpatientVisits', 'action' => 'cppt', $visit->id],
                 ['escape' => false, 'class' => 'btn btn-warning btn-sm',
-                 'data-toggle' => 'tooltip', 'title' => 'Catatan Perkembangan Pasien']
+                'data-toggle' => 'tooltip', 'title' => 'Catatan Perkembangan Pasien']
             ) ?>
             <?= $this->Html->link(
                 '<i class="fa fa-arrow-left"></i> Kembali',
-                ['action' => 'index'],
+                ['controller' => 'OutpatientVisits', 'action' => 'index'],
                 ['escape' => false, 'class' => 'btn btn-default btn-sm']
             ) ?>
         </div>
@@ -139,13 +142,13 @@ $orderRegistrationNo = $visit->registration_no
     </div>
 </div>
 
-    <?php if (!empty($visit->allergy)): ?>
+    <?php if (!empty($emr->allergy)): ?>
         <div class="alert alert-danger" style="padding:7px 12px; font-size:12px; margin-bottom:10px;">
-            <strong><i class="fa fa-exclamation-triangle"></i> ALERGI:</strong> <?= h($visit->allergy) ?>
+            <strong><i class="fa fa-exclamation-triangle"></i> ALERGI:</strong> <?= h($emr->allergy) ?>
         </div>
     <?php endif; ?>
 
-    <?= $this->Form->create($visit, ['url' => ['action' => 'emr', $visit->id]]) ?>
+    <?= $this->Form->create($emr, ['url' => ['action' => 'emr', $visit->id]]) ?>
 
     <!-- ── LAYOUT 2 KOLOM ── -->
     <div class="row">
@@ -265,7 +268,7 @@ $orderRegistrationNo = $visit->registration_no
                                 <td colspan="<?= $isDone ? 1 : 2 ?>">
                                     <input type="number" name="total_fee" id="total-fee"
                                            class="form-control input-sm"
-                                           value="<?= h((int)($visit->total_fee ?? 0)) ?>"
+                                           value="<?= h((int)($emr->total_fee ?? 0)) ?>"
                                            step="1" min="0"
                                            style="text-align:right; font-weight:600;"
                                            <?= $isDone ? 'readonly' : '' ?>>
@@ -379,31 +382,95 @@ $orderRegistrationNo = $visit->registration_no
                             <div class="row" style="display:flex; align-items:stretch;">
                                 <!-- Tombol surat di kiri -->
                                 <div class="col-xs-4">
-                                    <button type="button" class="btn btn-xs btn-default btn-block m-b-5"
-                                            style="text-align:left; font-size:11px;">
-                                        <i class="fa fa-file-medical" style="color:#1e3a5f;"></i>
-                                        Surat Keterangan Sakit
-                                    </button>
-                                    <button type="button" class="btn btn-xs btn-default btn-block m-b-5"
-                                            style="text-align:left; font-size:11px;">
+                                        <button type="button" class="btn btn-xs btn-default btn-block m-b-5 btn-surat-sakit"
+                                                style="text-align:left; font-size:11px;"
+                                                data-noreg="<?= h($visit->registration_no ?? '-') ?>"
+                                                data-rekmed="<?= h($p->code ?? '-') ?>"
+                                                data-nama="<?= h($p->full_name ?? '-') ?>"
+                                                data-alamat="<?= h($p->address ?? '-') ?>"
+                                                data-jk="<?= ($p->gender ?? '') === 'Male' ? 'PRIA' : 'WANITA' ?>"
+                                                data-goldar="<?= h($p->blood_type ?? '-') ?>"
+                                                data-bb="<?= h($emr->weight ?? '') ?>"
+                                                data-tb="<?= h($emr->height ?? '') ?>"
+                                                data-td="<?= h($emr->blood_pressure ?? '') ?>"
+                                                data-suhu="<?= h($emr->temperature ?? '') ?>"
+                                                data-diagnosa="<?= h($emr->diagnosis_primary ?? '') ?>"
+                                                data-dokter="<?= h($d->doctor_name ?? '-') ?>"
+                                                data-tglperiksa="<?= is_object($visit->visit_date) ? $visit->visit_date->format('d-m-Y') : h($visit->visit_date ?? '-') ?>"
+                                                <?php
+                                                // hitung umur "X Th Y Bl Z Hr" seperti di foto
+                                                $umurLengkap = '-';
+                                                if (!empty($p->birth_date)) {
+                                                    $bd = is_object($p->birth_date) ? $p->birth_date->format('Y-m-d') : $p->birth_date;
+                                                    $diff = (new DateTime())->diff(new DateTime($bd));
+                                                    $umurLengkap = $diff->y . ' Th ' . $diff->m . ' Bl ' . $diff->d . ' Hr';
+                                                }
+                                                ?>
+                                                data-umur="<?= h($umurLengkap) ?>">
+                                            <i class="fa fa-file-medical" style="color:#1e3a5f;"></i>
+                                            Surat Keterangan Sakit
+                                        </button>
+                                        <button type="button" class="btn btn-xs btn-default btn-block m-b-5 btn-surat-konsultasi"
+                                            style="text-align:left; font-size:11px;"
+                                            data-noreg="<?= h($visit->registration_no ?? '-') ?>"
+                                            data-rekmed="<?= h($p->code ?? '-') ?>"
+                                            data-nama="<?= h($p->full_name ?? '-') ?>"
+                                            data-alamat="<?= h($p->address ?? '-') ?>"
+                                            data-dokter="<?= h($d->doctor_name ?? '-') ?>"
+                                            data-tglperiksa="<?= is_object($visit->visit_date) ? $visit->visit_date->format('d-m-Y') : h($visit->visit_date ?? '-') ?>"
+                                            data-umur="<?= h($umurLengkap) ?>">
                                         <i class="fa fa-file-medical" style="color:#1e3a5f;"></i>
                                         Surat Konsultasi Pasien
                                     </button>
-                                    <button type="button" class="btn btn-xs btn-default btn-block m-b-5"
-                                            style="text-align:left; font-size:11px;">
+                                    <button type="button" class="btn btn-xs btn-default btn-block m-b-5 btn-surat-jawaban-konsultasi"
+                                            style="text-align:left; font-size:11px;"
+                                            data-noreg="<?= h($visit->registration_no ?? '-') ?>"
+                                            data-rekmed="<?= h($p->code ?? '-') ?>"
+                                            data-nama="<?= h($p->full_name ?? '-') ?>"
+                                            data-alamat="<?= h($p->address ?? '-') ?>"
+                                            data-dokter="<?= h($d->doctor_name ?? '-') ?>"
+                                            data-tglperiksa="<?= is_object($visit->visit_date) ? $visit->visit_date->format('d-m-Y') : h($visit->visit_date ?? '-') ?>"
+                                            data-umur="<?= h($umurLengkap) ?>">
                                         <i class="fa fa-file-medical" style="color:#1e3a5f;"></i>
                                         Jawaban Konsultasi Pasien
                                     </button>
-                                    <button type="button" class="btn btn-xs btn-default btn-block m-b-5"
-                                            style="text-align:left; font-size:11px;">
+                                    <button type="button" class="btn btn-xs btn-default btn-block m-b-5 btn-surat-sehat"
+                                            style="text-align:left; font-size:11px;"
+                                            data-noreg="<?= h($visit->registration_no ?? '-') ?>"
+                                            data-rekmed="<?= h($p->code ?? '-') ?>"
+                                            data-nama="<?= h($p->full_name ?? '-') ?>"
+                                            data-alamat="<?= h($p->address ?? '-') ?>"
+                                            data-jk="<?= ($p->gender ?? '') === 'Male' ? 'PRIA' : 'WANITA' ?>"
+                                            data-goldar="<?= h($p->blood_type ?? '-') ?>"
+                                            data-bb="<?= h($emr->weight ?? '') ?>"
+                                            data-tb="<?= h($emr->height ?? '') ?>"
+                                            data-td="<?= h($emr->blood_pressure ?? '') ?>"
+                                            data-suhu="<?= h($emr->temperature ?? '') ?>"
+                                            data-dokter="<?= h($d->doctor_name ?? '-') ?>"
+                                            data-tglperiksa="<?= is_object($visit->visit_date) ? $visit->visit_date->format('d-m-Y') : h($visit->visit_date ?? '-') ?>"
+                                            data-umur="<?= h($umurLengkap) ?>">
                                         <i class="fa fa-file-medical" style="color:#1e3a5f;"></i>
                                         Surat Keterangan Sehat
                                     </button>
-                                    <button type="button" class="btn btn-xs btn-default btn-block m-b-5"
-                                            style="text-align:left; font-size:11px;">
-                                        <i class="fa fa-file-medical" style="color:#1e3a5f;"></i>
-                                        Protokol Terapi
-                                    </button>
+                                        <button type="button" class="btn btn-xs btn-default btn-block m-b-5 btn-protokol-terapi"
+                                                style="text-align:left; font-size:11px;"
+                                                data-noreg="<?= h($visit->registration_no ?? '-') ?>"
+                                                data-rekmed="<?= h($p->code ?? '-') ?>"
+                                                data-nama="<?= h($p->full_name ?? '-') ?>"
+                                                data-alamat="<?= h($p->address ?? '-') ?>"
+                                                data-jk="<?= ($p->gender ?? '') === 'Male' ? 'PRIA' : 'WANITA' ?>"
+                                                data-bb="<?= h($emr->weight ?? '') ?>"
+                                                data-tb="<?= h($emr->height ?? '') ?>"
+                                                data-td="<?= h($emr->blood_pressure ?? '') ?>"
+                                                data-suhu="<?= h($emr->temperature ?? '') ?>"
+                                                data-diagnosa="<?= h($emr->diagnosis_primary ?? '') ?>"
+                                                data-obat="<?= h($emr->prescription_notes ?? '') ?>"
+                                                data-dokter="<?= h($d->doctor_name ?? '-') ?>"
+                                                data-tglperiksa="<?= is_object($visit->visit_date) ? $visit->visit_date->format('d-m-Y') : h($visit->visit_date ?? '-') ?>"
+                                                data-umur="<?= h($umurLengkap) ?>">
+                                            <i class="fa fa-file-medical" style="color:#1e3a5f;"></i>
+                                            Protokol Terapi
+                                        </button>
                                     <button type="button" class="btn btn-xs btn-default btn-block m-b-5"
                                             style="text-align:left; font-size:11px;">
                                         <i class="fa fa-file-medical" style="color:#1e3a5f;"></i>
@@ -415,7 +482,7 @@ $orderRegistrationNo = $visit->registration_no
                                             <i class="fa fa-exclamation-triangle"></i> ALERGI
                                         </label>
                                         <input type="text" name="allergy" class="form-control input-sm"
-                                               value="<?= h($visit->allergy ?? '') ?>"
+                                               value="<?= h($emr->allergy ?? '') ?>"
                                                placeholder="Tidak ada / nama obat / bahan makanan..."
                                                <?= $isDone ? 'readonly' : '' ?>>
                                     </div>
@@ -576,6 +643,7 @@ $orderRegistrationNo = $visit->registration_no
             <div style="margin-top:10px;">
 
                 <button type="button"
+                        id="btn-konsul-langsung"
                         class="btn btn-primary btn-sm">
                     Konsulkan Langsung
                 </button>
@@ -780,14 +848,14 @@ $orderRegistrationNo = $visit->registration_no
                         <div class="col-xs-6">
                             <label style="font-size:11px; color:#555;">Diagnosa Utama</label>
                             <input type="text" name="diagnosis_primary" class="form-control input-sm"
-                                   value="<?= h($visit->diagnosis_primary ?? '') ?>"
+                                   value="<?= h($emr->diagnosis_primary ?? '') ?>"
                                    placeholder="Diagnosa utama..."
                                    <?= $isDone ? 'readonly' : '' ?>>
                         </div>
                         <div class="col-xs-6">
                             <label style="font-size:11px; color:#555;">Tindakan Utama</label>
                             <input type="text" name="action_notes" class="form-control input-sm"
-                                   value="<?= h($visit->action_notes ?? '') ?>"
+                                   value="<?= h($emr->action_notes ?? '') ?>"
                                    placeholder="Tindakan utama..."
                                    <?= $isDone ? 'readonly' : '' ?>>
                         </div>
@@ -796,7 +864,7 @@ $orderRegistrationNo = $visit->registration_no
                         <div class="col-xs-12">
                             <label style="font-size:11px; color:#555;">Diagnosa Sekunder</label>
                             <input type="text" name="diagnosis_secondary" class="form-control input-sm"
-                                   value="<?= h($visit->diagnosis_secondary ?? '') ?>"
+                                   value="<?= h($emr->diagnosis_secondary ?? '') ?>"
                                    placeholder="Diagnosa sekunder (pisahkan koma)..."
                                    <?= $isDone ? 'readonly' : '' ?>>
                         </div>
@@ -861,10 +929,10 @@ $orderRegistrationNo = $visit->registration_no
                             <tbody id="icd10-body">
                                 <?php
                                 $icd10Items = [];
-                                if (!empty($visit->icd10_items)) {
-                                    $icd10Items = is_string($visit->icd10_items)
-                                        ? json_decode($visit->icd10_items, true) ?? []
-                                        : (array)$visit->icd10_items;
+                                if (!empty($emr->icd10_items)) {
+                                    $icd10Items = is_string($emr->icd10_items)
+                                        ? json_decode($emr->icd10_items, true) ?? []
+                                        : (array)$emr->icd10_items;
                                 }
                                 ?>
                                 <?php foreach ($icd10Items as $idx => $item): ?>
@@ -979,10 +1047,10 @@ $orderRegistrationNo = $visit->registration_no
                             <tbody id="icd9-body">
                                 <?php
                                 $icd9Items = [];
-                                if (!empty($visit->icd9_items)) {
-                                    $icd9Items = is_string($visit->icd9_items)
-                                        ? json_decode($visit->icd9_items, true) ?? []
-                                        : (array)$visit->icd9_items;
+                                if (!empty($emr->icd9_items)) {
+                                    $icd9Items = is_string($emr->icd9_items)
+                                        ? json_decode($emr->icd9_items, true) ?? []
+                                        : (array)$emr->icd9_items;
                                 }
                                 ?>
                                 <?php foreach ($icd9Items as $idx => $item): ?>
@@ -1052,68 +1120,7 @@ $orderRegistrationNo = $visit->registration_no
                 </div>
             </div>
 
-            <!-- Toolbar aksi bawah surat -->
-            <div class="panel panel-default" style="margin-top:10px;">
-    <div class="panel-body" style="padding:10px;background:#fafafa;">
-
-        <div class="row">
-
-            <div class="col-md-2 col-xs-6" style="margin-bottom:5px;">
-                <button type="button" class="btn btn-default btn-sm btn-block">
-                    <i class="fa fa-id-card"></i> ICARE-JKN
-                </button>
-            </div>
-
-            <div class="col-md-2 col-xs-6" style="margin-bottom:5px;">
-                <button type="button" class="btn btn-info btn-sm btn-block">
-                    <i class="fa fa-book-medical"></i> REKAM MEDIS
-                </button>
-            </div>
-
-            <div class="col-md-2 col-xs-6" style="margin-bottom:5px;">
-                <button type="button"
-                        class="btn btn-success btn-sm btn-block btn-hasil-pemeriksaan-emr"
-                        data-noreg="<?= h($visit->registration_no ?? '-') ?>"
-                        data-rekmed="<?= h($p->code ?? '-') ?>"
-                        data-nama="<?= h($p->full_name ?? '-') ?>"
-                        data-dokter="<?= h($d->doctor_name ?? '-') ?>"
-                        data-tanggal="<?= !empty($visit->visit_date) && is_object($visit->visit_date) ? $visit->visit_date->format('d-m-Y') : h($visit->visit_date ?? '-') ?>"
-                        data-hasil="<?= h(trim((string)($visit->illness_history ?? $visit->doctor_notes ?? $visit->diagnosis_primary ?? '')) ?: '-') ?>">
-                    <i class="fa fa-stethoscope"></i> HASIL PEMERIKSAAN
-                </button>
-            </div>
-
-            <div class="col-md-2 col-xs-6" style="margin-bottom:5px;">
-            <button type="button"
-                    id="btn-selesai-periksa"
-                    class="btn btn-danger btn-sm btn-block"
-                    data-url="<?= $this->Url->build([
-                        'controller' => 'OutpatientVisits',
-                        'action' => 'selesaiPeriksa',
-                        $visit->id
-                    ]) ?>">
-                <i class="fa fa-check-circle"></i> SELESAI PERIKSA
-            </button>
-            </div>
-
-            <div class="col-md-2 col-xs-6" style="margin-bottom:5px;">
-                <button type="submit" class="btn btn-primary btn-sm btn-block">
-                    <i class="fa fa-save"></i> SIMPAN
-                </button>
-            </div>
-
-            <div class="col-md-2 col-xs-6" style="margin-bottom:5px;">
-                <button type="button"
-                        onclick="window.print();"
-                        class="btn btn-default btn-sm btn-block">
-                    <i class="fa fa-print"></i> CETAK
-                </button>
-            </div>
-
-        </div>
-
-    </div>
-</div>
+           
 
 
         </div><!-- /col kiri -->
@@ -1135,7 +1142,7 @@ $orderRegistrationNo = $visit->registration_no
                                 <label>Nadi</label>
                                 <div class="input-group input-group-sm">
                                     <input type="number" name="pulse" class="form-control"
-                                           value="<?= h($visit->pulse ?? '') ?>"
+                                           value="<?= h($emr->pulse ?? '') ?>"
                                            min="1" max="300" <?= $isDone ? 'readonly' : '' ?>>
                                     <span class="input-group-addon">/Menit</span>
                                 </div>
@@ -1144,7 +1151,7 @@ $orderRegistrationNo = $visit->registration_no
                                 <label>Pernapasan</label>
                                 <div class="input-group input-group-sm">
                                     <input type="number" name="respiratory_rate" class="form-control"
-                                           value="<?= h($visit->respiratory_rate ?? '') ?>"
+                                           value="<?= h($emr->respiratory_rate ?? '') ?>"
                                            min="1" max="60" <?= $isDone ? 'readonly' : '' ?>>
                                     <span class="input-group-addon">/Menit</span>
                                 </div>
@@ -1153,7 +1160,7 @@ $orderRegistrationNo = $visit->registration_no
                                 <label>Tekanan Darah</label>
                                 <div class="input-group input-group-sm">
                                     <input type="text" name="blood_pressure" class="form-control"
-                                           value="<?= h($visit->blood_pressure ?? '') ?>"
+                                           value="<?= h($emr->blood_pressure ?? '') ?>"
                                            placeholder="120/80" <?= $isDone ? 'readonly' : '' ?>>
                                     <span class="input-group-addon">mmHg</span>
                                 </div>
@@ -1162,7 +1169,7 @@ $orderRegistrationNo = $visit->registration_no
                                 <label>Suhu Badan</label>
                                 <div class="input-group input-group-sm">
                                     <input type="number" name="temperature" class="form-control"
-                                           value="<?= h($visit->temperature ?? '') ?>"
+                                           value="<?= h($emr->temperature ?? '') ?>"
                                            step="0.1" min="30" max="45"
                                            <?= $isDone ? 'readonly' : '' ?>>
                                     <span class="input-group-addon">°C</span>
@@ -1172,7 +1179,7 @@ $orderRegistrationNo = $visit->registration_no
                                 <label>Sp O2</label>
                                 <div class="input-group input-group-sm">
                                     <input type="number" name="oxygen_saturation" class="form-control"
-                                           value="<?= h($visit->oxygen_saturation ?? '') ?>"
+                                           value="<?= h($emr->oxygen_saturation ?? '') ?>"
                                            min="1" max="100" <?= $isDone ? 'readonly' : '' ?>>
                                     <span class="input-group-addon">%</span>
                                 </div>
@@ -1181,7 +1188,7 @@ $orderRegistrationNo = $visit->registration_no
                                 <label>Skala Nyeri</label>
                                 <div class="input-group input-group-sm">
                                     <input type="number" name="pain_scale" class="form-control"
-                                           value="<?= h($visit->pain_scale ?? '') ?>"
+                                           value="<?= h($emr->pain_scale ?? '') ?>"
                                            min="0" max="10" <?= $isDone ? 'readonly' : '' ?>>
                                     <span class="input-group-addon">0-10</span>
                                 </div>
@@ -1196,7 +1203,7 @@ $orderRegistrationNo = $visit->registration_no
                                     <label>Berat Badan</label>
                                     <div class="input-group input-group-sm">
                                         <input type="number" name="weight" id="weight" class="form-control"
-                                               value="<?= h($visit->weight ?? '') ?>"
+                                               value="<?= h($emr->weight ?? '') ?>"
                                                step="0.1" min="0.1" max="500"
                                                <?= $isDone ? 'readonly' : '' ?>>
                                         <span class="input-group-addon">Kg</span>
@@ -1206,7 +1213,7 @@ $orderRegistrationNo = $visit->registration_no
                                     <label>Tinggi Badan</label>
                                     <div class="input-group input-group-sm">
                                         <input type="number" name="height" id="height" class="form-control"
-                                               value="<?= h($visit->height ?? '') ?>"
+                                               value="<?= h($emr->height ?? '') ?>"
                                                step="0.1" min="1" max="250"
                                                <?= $isDone ? 'readonly' : '' ?>>
                                         <span class="input-group-addon">CM</span>
@@ -1216,14 +1223,14 @@ $orderRegistrationNo = $visit->registration_no
                                     <label>BMI</label>
                                     <input type="text" name="bmi" id="bmi-display" class="form-control input-sm"
                                            readonly
-                                           value="<?= !empty($visit->bmi) ? number_format($visit->bmi, 2) : '' ?>"
+                                           value="<?= !empty($emr->bmi) ? number_format($emr->bmi, 2) : '' ?>"
                                            style="background:#fff; font-weight:700; color:#1e3a5f;">
                                 </div>
                                 <div class="vital-row">
                                     <label>BMI Result</label>
                                     <input type="text" name="bmi_category" id="bmi-result" class="form-control input-sm"
                                            readonly
-                                           value="<?= h($visit->bmi_category ?? '') ?>"
+                                           value="<?= h($emr->bmi_category ?? '') ?>"
                                            style="background:#fff;">
                                 </div>
                             </div>
@@ -1241,7 +1248,7 @@ $orderRegistrationNo = $visit->registration_no
                     <textarea name="chief_complaint" class="form-control" rows="3"
                               style="font-size:12px; resize:none;"
                               placeholder="Keluhan utama yang disampaikan pasien..."
-                              <?= $isDone ? 'readonly' : '' ?>><?= h($visit->chief_complaint ?? '') ?></textarea>
+                              <?= $isDone ? 'readonly' : '' ?>><?= h($emr->chief_complaint ?? '') ?></textarea>
                 </div>
             </div>
 
@@ -1254,7 +1261,7 @@ $orderRegistrationNo = $visit->registration_no
                     <textarea name="illness_history" class="form-control" rows="3"
                               style="font-size:12px; resize:none;"
                               placeholder="Hasil pemeriksaan fisik, riwayat penyakit..."
-                              <?= $isDone ? 'readonly' : '' ?>><?= h($visit->illness_history ?? '') ?></textarea>
+                              <?= $isDone ? 'readonly' : '' ?>><?= h($emr->illness_history ?? '') ?></textarea>
                 </div>
             </div>
 
@@ -1267,7 +1274,7 @@ $orderRegistrationNo = $visit->registration_no
                     <textarea name="admission_diagnosis" class="form-control input-sm" rows="3"
                               style="font-size:12px; resize:none;"
                               placeholder="Diagnosa awal saat pasien masuk..."
-                              <?= $isDone ? 'readonly' : '' ?>><?= h($visit->admission_diagnosis ?? '') ?></textarea>
+                              <?= $isDone ? 'readonly' : '' ?>><?= h($emr->admission_diagnosis ?? '') ?></textarea>
                 </div>
             </div>
 
@@ -1280,7 +1287,7 @@ $orderRegistrationNo = $visit->registration_no
                     <textarea name="prescription_notes" class="form-control" rows="3"
                               style="font-size:12px; resize:none;"
                               placeholder="Nama obat, dosis, aturan pakai..."
-                              <?= $isDone ? 'readonly' : '' ?>><?= h($visit->prescription_notes ?? '') ?></textarea>
+                              <?= $isDone ? 'readonly' : '' ?>><?= h($emr->prescription_notes ?? '') ?></textarea>
                 </div>
             </div>
 
@@ -1293,14 +1300,75 @@ $orderRegistrationNo = $visit->registration_no
                     <textarea name="doctor_notes" class="form-control" rows="2"
                               style="font-size:12px; resize:none;"
                               placeholder="Saran, anjuran, edukasi pasien..."
-                              <?= $isDone ? 'readonly' : '' ?>><?= h($visit->doctor_notes ?? '') ?></textarea>
+                              <?= $isDone ? 'readonly' : '' ?>><?= h($emr->doctor_notes ?? '') ?></textarea>
                 </div>
             </div>
 
 
 
-        </div><!-- /col kanan -->
+       </div><!-- /col kanan -->
     </div><!-- /row -->
+
+    <!-- Toolbar aksi bawah — full width, footer -->
+    <div class="panel panel-default" style="margin-top:10px;">
+        <div class="panel-body" style="padding:10px; background:#fafafa;">
+            <div class="row">
+
+                <div class="col-md-2 col-xs-6" style="margin-bottom:5px;">
+                    <button type="button" class="btn btn-default btn-sm btn-block">
+                        <i class="fa fa-id-card"></i> ICARE-JKN
+                    </button>
+                </div>
+
+                <div class="col-md-2 col-xs-6" style="margin-bottom:5px;">
+                    <button type="button" class="btn btn-info btn-sm btn-block">
+                        <i class="fa fa-book-medical"></i> REKAM MEDIS
+                    </button>
+                </div>
+
+                <div class="col-md-2 col-xs-6" style="margin-bottom:5px;">
+                    <button type="button"
+                            class="btn btn-success btn-sm btn-block btn-hasil-pemeriksaan-emr"
+                            data-noreg="<?= h($visit->registration_no ?? '-') ?>"
+                            data-rekmed="<?= h($p->code ?? '-') ?>"
+                            data-nama="<?= h($p->full_name ?? '-') ?>"
+                            data-dokter="<?= h($d->doctor_name ?? '-') ?>"
+                            data-tanggal="<?= !empty($visit->visit_date) && is_object($visit->visit_date) ? $visit->visit_date->format('d-m-Y') : h($visit->visit_date ?? '-') ?>"
+                            data-hasil="<?= h(trim((string)($emr->illness_history ?? $emr->doctor_notes ?? $visit->diagnosis_primary ?? '')) ?: '-') ?>">
+                        <i class="fa fa-stethoscope"></i> HASIL PEMERIKSAAN
+                    </button>
+                </div>
+
+                <div class="col-md-2 col-xs-6" style="margin-bottom:5px;">
+                    <button type="button"
+                            id="btn-selesai-periksa"
+                            class="btn btn-danger btn-sm btn-block"
+                            data-url="<?= $this->Url->build([
+                                'controller' => 'OutpatientVisits',
+                                'action' => 'selesaiPeriksa',
+                                $visit->id
+                            ]) ?>">
+                        <i class="fa fa-check-circle"></i> SELESAI PERIKSA
+                    </button>
+                </div>
+
+                <div class="col-md-2 col-xs-6" style="margin-bottom:5px;">
+                    <button type="submit" class="btn btn-primary btn-sm btn-block">
+                        <i class="fa fa-save"></i> SIMPAN
+                    </button>
+                </div>
+
+                <div class="col-md-2 col-xs-6" style="margin-bottom:5px;">
+                    <button type="button"
+                            onclick="window.print();"
+                            class="btn btn-default btn-sm btn-block">
+                        <i class="fa fa-print"></i> CETAK
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
 
     <?= $this->Form->end() ?>
 
@@ -1392,9 +1460,415 @@ $orderRegistrationNo = $visit->registration_no
     </div>
 </div>
 
-<!-- ══════════════════════════════════════════════
-     AUTOCOMPLETE DROPDOWN TINDAKAN (fixed to body)
-     ══════════════════════════════════════════════ -->
+
+<div class="modal fade" id="modal-surat-sakit" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" style="width:640px; max-width:95%;" role="document">
+        <div class="modal-content hasil-window">
+            <div class="hasil-title">
+                <span><i class="fa fa-file-medical"></i> Surat Keterangan Sakit</span>
+                <button type="button" class="hasil-close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="hasil-body" style="max-height:75vh; overflow-y:auto;">
+                <div class="row hasil-row">
+                    <label class="col-xs-3">No Surat</label>
+                    <div class="col-xs-9"><input type="text" id="sks-noSurat" class="form-control input-sm" value="AUTO" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">No Rekam Medis</label>
+                    <div class="col-xs-9"><input type="text" id="sks-rekmed" class="form-control input-sm" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Nama Pasien</label>
+                    <div class="col-xs-9"><input type="text" id="sks-nama" class="form-control input-sm" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Alamat</label>
+                    <div class="col-xs-9"><textarea id="sks-alamat" class="form-control input-sm" rows="2" readonly></textarea></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Umur</label>
+                    <div class="col-xs-4"><input type="text" id="sks-umur" class="form-control input-sm" readonly></div>
+                    <label class="col-xs-2">Jenis Kelamin</label>
+                    <div class="col-xs-3"><input type="text" id="sks-jk" class="form-control input-sm" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Berat Badan (Kg)</label>
+                    <div class="col-xs-3"><input type="number" id="sks-bb" class="form-control input-sm"></div>
+                    <label class="col-xs-3">Tinggi Badan (Cm)</label>
+                    <div class="col-xs-3"><input type="number" id="sks-tb" class="form-control input-sm"></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Buta Warna</label>
+                    <div class="col-xs-3"><input type="text" id="sks-butawarna" class="form-control input-sm" placeholder="-"></div>
+                    <label class="col-xs-3">Golongan Darah</label>
+                    <div class="col-xs-3"><input type="text" id="sks-goldar" class="form-control input-sm" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Tensi Darah</label>
+                    <div class="col-xs-3"><input type="text" id="sks-td" class="form-control input-sm"></div>
+                    <label class="col-xs-3">Suhu Badan (°C)</label>
+                    <div class="col-xs-3"><input type="number" step="0.1" id="sks-suhu" class="form-control input-sm"></div>
+                </div>
+                <div class="row hasil-row" style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap; margin-left:2px;">
+                    <label style="flex:0 0 auto; margin:0; white-space:nowrap;">Ijin (Hari)</label>
+                    <input type="number" id="sks-lama" class="form-control input-sm"
+                           min="0" value="0" style="width:60px; flex:0 0 auto;">
+ 
+                    <label style="flex:0 0 auto; margin:0 0 0 30px; white-space:nowrap;">Dari</label>
+                    <input type="date" id="sks-dari" class="form-control input-sm"
+                           style="width:150px; flex:0 0 auto;">
+ 
+                    <label style="flex:0 0 auto; margin:0 0 0 6px; white-space:nowrap;">S/d</label>
+                    <input type="date" id="sks-sampai" class="form-control input-sm"
+                           style="width:150px; flex:0 0 auto;">
+                </div>
+
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Diagnosa Sakit</label>
+                    <div class="col-xs-9"><textarea id="sks-diagnosa" class="form-control" rows="3"></textarea></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Dokter Pemeriksa</label>
+                    <div class="col-xs-6"><input type="text" id="sks-dokter" class="form-control input-sm" readonly></div>
+                    <label class="col-xs-1">Tgl</label>
+                    <div class="col-xs-2"><input type="text" id="sks-tglperiksa" class="form-control input-sm" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <div class="col-xs-12">
+                        <label><input type="checkbox" id="sks-normal" checked> Normal</label>
+                    </div>
+                </div>
+                <div class="row" style="margin-top:10px;">
+                    <div class="col-xs-12 text-right">
+                        <button type="button" class="btn btn-primary btn-sm" id="btn-simpan-sks">
+                            <i class="fa fa-save"></i> Simpan
+                        </button>
+                        <button type="button" class="btn btn-default btn-sm" id="btn-cetak-sks" disabled>
+                            <i class="fa fa-print"></i> Cetak
+                        </button>
+                        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-surat-konsultasi" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" style="width:640px; max-width:95%;" role="document">
+        <div class="modal-content hasil-window">
+            <div class="hasil-title">
+                <span><i class="fa fa-file-medical"></i> Surat Konsultasi Dokter</span>
+                <button type="button" class="hasil-close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="hasil-body" style="max-height:75vh; overflow-y:auto;">
+                <div class="row hasil-row">
+                    <label class="col-xs-3">No Surat</label>
+                    <div class="col-xs-9"><input type="text" id="ksl-noSurat" class="form-control input-sm" value="AUTO" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">No Rekam Medis</label>
+                    <div class="col-xs-9"><input type="text" id="ksl-rekmed" class="form-control input-sm" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Nama</label>
+                    <div class="col-xs-9"><input type="text" id="ksl-nama" class="form-control input-sm" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Alamat</label>
+                    <div class="col-xs-9"><textarea id="ksl-alamat" class="form-control input-sm" rows="2" readonly></textarea></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Umur</label>
+                    <div class="col-xs-9"><input type="text" id="ksl-umur" class="form-control input-sm" readonly></div>
+                </div>
+               <div class="row hasil-row" style="position:relative;">
+                    <label class="col-xs-3">Diagnosa ICD X</label>
+                    <div class="col-xs-9">
+                        <textarea id="ksl-diagnosa" class="form-control input-sm" rows="3"
+                                  placeholder="Otomatis dari ICD-10 EMR" readonly
+                                  style="resize:none; font-family:monospace; font-size:12px;"></textarea>
+                    </div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Catatan</label>
+                    <div class="col-xs-9"><textarea id="ksl-catatan" class="form-control" rows="4"
+                                                      placeholder="Catatan konsultasi..."></textarea></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Dokter</label>
+                    <div class="col-xs-6"><input type="text" id="ksl-dokter" class="form-control input-sm" readonly></div>
+                    <label class="col-xs-1">Tgl</label>
+                    <div class="col-xs-2"><input type="text" id="ksl-tglperiksa" class="form-control input-sm" readonly></div>
+                </div>
+                <div class="row" style="margin-top:10px;">
+                    <div class="col-xs-12 text-right">
+                        <button type="button" class="btn btn-primary btn-sm" id="btn-simpan-ksl">
+                            <i class="fa fa-save"></i> Simpan
+                        </button>
+                        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<div class="modal fade" id="modal-surat-jawaban-konsultasi" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" style="width:640px; max-width:95%;" role="document">
+        <div class="modal-content hasil-window">
+            <div class="hasil-title">
+                <span><i class="fa fa-file-medical"></i> Surat Jawaban Konsultasi Dokter</span>
+                <button type="button" class="hasil-close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="hasil-body" style="max-height:75vh; overflow-y:auto;">
+                <div class="row hasil-row">
+                    <label class="col-xs-3">No Surat</label>
+                    <div class="col-xs-9"><input type="text" id="jkl-noSurat" class="form-control input-sm" value="AUTO" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">No Rekam Medis</label>
+                    <div class="col-xs-9"><input type="text" id="jkl-rekmed" class="form-control input-sm" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Nama</label>
+                    <div class="col-xs-9"><input type="text" id="jkl-nama" class="form-control input-sm" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Alamat</label>
+                    <div class="col-xs-9"><textarea id="jkl-alamat" class="form-control input-sm" rows="2" readonly></textarea></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Umur</label>
+                    <div class="col-xs-9"><input type="text" id="jkl-umur" class="form-control input-sm" readonly></div>
+                </div>
+               <div class="row hasil-row" style="position:relative;">
+                    <label class="col-xs-3">Diagnosa ICD X</label>
+                    <div class="col-xs-9">
+                        <textarea id="jkl-diagnosa" class="form-control input-sm" rows="3"
+                                placeholder="Otomatis dari ICD-10 EMR" readonly
+                                style="resize:none; font-family:monospace; font-size:12px;"></textarea>
+                    </div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Saran</label>
+                    <div class="col-xs-9"><textarea id="jkl-saran" class="form-control" rows="4"
+                                                      placeholder="Saran untuk dokter perujuk..."></textarea></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Dokter</label>
+                    <div class="col-xs-6"><input type="text" id="jkl-dokter" class="form-control input-sm" readonly></div>
+                    <label class="col-xs-1">Tgl</label>
+                    <div class="col-xs-2"><input type="text" id="jkl-tglperiksa" class="form-control input-sm" readonly></div>
+                </div>
+                <div class="row" style="margin-top:10px;">
+                    <div class="col-xs-12 text-right">
+                        <button type="button" class="btn btn-primary btn-sm" id="btn-simpan-jkl">
+                            <i class="fa fa-save"></i> Simpan
+                        </button>
+                        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-surat-sehat" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" style="width:640px; max-width:95%;" role="document">
+        <div class="modal-content hasil-window">
+            <div class="hasil-title">
+                <span><i class="fa fa-file-medical"></i> Surat Keterangan Dokter</span>
+                <button type="button" class="hasil-close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="hasil-body" style="max-height:75vh; overflow-y:auto;">
+                <div class="row hasil-row">
+                    <label class="col-xs-3">No Surat</label>
+                    <div class="col-xs-9"><input type="text" id="skh-noSurat" class="form-control input-sm" value="AUTO" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">No Rekam Medis</label>
+                    <div class="col-xs-9"><input type="text" id="skh-rekmed" class="form-control input-sm" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Nama Pasien</label>
+                    <div class="col-xs-9"><input type="text" id="skh-nama" class="form-control input-sm" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Alamat</label>
+                    <div class="col-xs-9"><textarea id="skh-alamat" class="form-control input-sm" rows="2" readonly></textarea></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Umur</label>
+                    <div class="col-xs-4"><input type="text" id="skh-umur" class="form-control input-sm" readonly></div>
+                    <label class="col-xs-2">Jenis Kelamin</label>
+                    <div class="col-xs-3"><input type="text" id="skh-jk" class="form-control input-sm" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Berat Badan (Kg)</label>
+                    <div class="col-xs-3"><input type="number" id="skh-bb" class="form-control input-sm"></div>
+                    <label class="col-xs-3">Buta Warna</label>
+                    <div class="col-xs-3"><input type="text" id="skh-butawarna" class="form-control input-sm" placeholder="-"></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Tinggi Badan (Cm)</label>
+                    <div class="col-xs-3"><input type="number" id="skh-tb" class="form-control input-sm"></div>
+                    <label class="col-xs-3">Golongan Darah</label>
+                    <div class="col-xs-3"><input type="text" id="skh-goldar" class="form-control input-sm" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Tensi Darah</label>
+                    <div class="col-xs-3"><input type="text" id="skh-td" class="form-control input-sm" placeholder="120/80"></div>
+                    <label class="col-xs-3">Suhu Badan (°C)</label>
+                    <div class="col-xs-3"><input type="number" step="0.1" id="skh-suhu" class="form-control input-sm"></div>
+                </div>
+
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Hasil Periksa</label>
+                    <div class="col-xs-9 hasil-radio">
+                        <label><input type="radio" name="skh_hasil" id="skh-hasil-sehat" value="sehat" checked> SEHAT</label>
+                        <label><input type="radio" name="skh_hasil" id="skh-hasil-tidak-sehat" value="tidak_sehat"> TIDAK SEHAT</label>
+                    </div>
+                </div>
+                <div class="row hasil-row">
+                    <div class="col-xs-12">
+                        <textarea id="skh-hasil-detail" class="form-control" rows="3"
+                                  placeholder="Catatan hasil pemeriksaan..."></textarea>
+                    </div>
+                </div>
+
+                <div class="row hasil-row">
+                    <label class="col-xs-12" style="margin-bottom:4px;">
+                        Surat keterangan dokter ini diberikan untuk menerangkan bahwa:
+                    </label>
+                    <div class="col-xs-12">
+                        <textarea id="skh-keterangan" class="form-control" rows="3"
+                                  placeholder="Keterangan tambahan..."></textarea>
+                    </div>
+                </div>
+
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Dokter Pemeriksa</label>
+                    <div class="col-xs-6"><input type="text" id="skh-dokter" class="form-control input-sm" readonly></div>
+                    <label class="col-xs-1">Tgl</label>
+                    <div class="col-xs-2"><input type="text" id="skh-tglperiksa" class="form-control input-sm" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <div class="col-xs-12">
+                        <label><input type="checkbox" id="skh-normal" checked> Normal</label>
+                    </div>
+                </div>
+                <div class="row" style="margin-top:10px;">
+                    <div class="col-xs-12 text-right">
+                        <button type="button" class="btn btn-primary btn-sm" id="btn-simpan-skh">
+                            <i class="fa fa-save"></i> Simpan
+                        </button>
+                        <button type="button" class="btn btn-default btn-sm" id="btn-cetak-skh" disabled>
+                            <i class="fa fa-print"></i> Cetak
+                        </button>
+                        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-protokol-terapi" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" style="width:640px; max-width:95%;" role="document">
+        <div class="modal-content hasil-window">
+            <div class="hasil-title">
+                <span><i class="fa fa-file-medical"></i> Protokol Terapi</span>
+                <button type="button" class="hasil-close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="hasil-body" style="max-height:75vh; overflow-y:auto;">
+                <div class="row hasil-row">
+                    <label class="col-xs-3">No Surat</label>
+                    <div class="col-xs-9"><input type="text" id="spt-noSurat" class="form-control input-sm" value="AUTO" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">No Rekam Medis</label>
+                    <div class="col-xs-9"><input type="text" id="spt-rekmed" class="form-control input-sm" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Nama Pasien</label>
+                    <div class="col-xs-9"><input type="text" id="spt-nama" class="form-control input-sm" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Alamat</label>
+                    <div class="col-xs-9"><textarea id="spt-alamat" class="form-control input-sm" rows="2" readonly></textarea></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Umur</label>
+                    <div class="col-xs-4"><input type="text" id="spt-umur" class="form-control input-sm" readonly></div>
+                    <label class="col-xs-2">Jenis Kelamin</label>
+                    <div class="col-xs-3"><input type="text" id="spt-jk" class="form-control input-sm" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Berat Badan (Kg)</label>
+                    <div class="col-xs-3"><input type="number" id="spt-bb" class="form-control input-sm"></div>
+                    <label class="col-xs-3">Tinggi Badan (Cm)</label>
+                    <div class="col-xs-3"><input type="number" id="spt-tb" class="form-control input-sm"></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Tensi Darah</label>
+                    <div class="col-xs-3"><input type="text" id="spt-td" class="form-control input-sm" placeholder="120/80"></div>
+                    <label class="col-xs-3">Suhu Badan (°C)</label>
+                    <div class="col-xs-3"><input type="number" step="0.1" id="spt-suhu" class="form-control input-sm"></div>
+                </div>
+
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Diagnosa Sakit</label>
+                    <div class="col-xs-9"><textarea id="spt-diagnosa" class="form-control" rows="2"></textarea></div>
+                </div>
+
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Obat dan Dosis</label>
+                    <div class="col-xs-9"><textarea id="spt-obat" class="form-control" rows="3"
+                                                      placeholder="Nama obat, dosis, aturan pakai..."></textarea></div>
+                </div>
+
+                <div class="row hasil-row" style="display:flex; align-items:center; gap:8px; margin-left:2px;">
+                    <label style="flex:0 0 auto; margin:0;">Selama</label>
+                    <input type="number" id="spt-lama" class="form-control input-sm"
+                           min="0" value="0" style="width:80px; flex:0 0 auto; margin-left:105px;">
+                    <span style="flex:0 0 auto;">Hari</span>
+                </div>
+
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Alasan Pemberian</label>
+                    <div class="col-xs-9"><textarea id="spt-alasan" class="form-control" rows="3"
+                                                      placeholder="Alasan pemberian terapi..."></textarea></div>
+                </div>
+
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Dokter Pemeriksa</label>
+                    <div class="col-xs-6"><input type="text" id="spt-dokter" class="form-control input-sm" readonly></div>
+                    <label class="col-xs-1">Tgl</label>
+                    <div class="col-xs-2"><input type="text" id="spt-tglperiksa" class="form-control input-sm" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <div class="col-xs-12">
+                        <label><input type="checkbox" id="spt-normal" checked> Normal</label>
+                    </div>
+                </div>
+                <div class="row" style="margin-top:10px;">
+                    <div class="col-xs-12 text-right">
+                        <button type="button" class="btn btn-primary btn-sm" id="btn-simpan-spt">
+                            <i class="fa fa-save"></i> Simpan
+                        </button>
+                        <button type="button" class="btn btn-default btn-sm" id="btn-cetak-spt" disabled>
+                            <i class="fa fa-print"></i> Cetak
+                        </button>
+                        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="tindakan-dropdown" style="
     display:none;
     position:fixed;
@@ -1624,6 +2098,505 @@ input.action-unit-price-display:focus {
 <script>
 $(document).ready(function () {
 
+var SIMPAN_SKS_URL = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'simpanSuratSakit',
+    $visit->id,
+])) ?>;
+var CETAK_SKS_URL_BASE = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'cetakSuratSakit',
+])) ?>;
+var GET_SKS_URL = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'getSuratSakit',
+    $visit->id,
+])) ?>;
+
+$(document).on('click', '.btn-surat-sakit', function () {
+    var $b = $(this);
+
+    // Isi dulu dari data pasien/EMR (nilai default)
+    $('#sks-rekmed').val($b.data('rekmed'));
+    $('#sks-nama').val($b.data('nama'));
+    $('#sks-alamat').val($b.data('alamat'));
+    $('#sks-umur').val($b.data('umur'));
+    $('#sks-jk').val($b.data('jk'));
+    $('#sks-bb').val($b.data('bb'));
+    $('#sks-tb').val($b.data('tb'));
+    $('#sks-td').val($b.data('td'));
+    $('#sks-suhu').val($b.data('suhu'));
+    $('#sks-goldar').val($b.data('goldar'));
+    $('#sks-diagnosa').val($b.data('diagnosa'));
+    $('#sks-dokter').val($b.data('dokter'));
+    $('#sks-tglperiksa').val($b.data('tglperiksa'));
+    $('#sks-dari').val(new Date().toISOString().slice(0, 10));
+    $('#sks-sampai').val(new Date().toISOString().slice(0, 10));
+    $('#sks-lama').val(1);
+    $('#sks-butawarna').val('');  
+    $('#sks-normal').prop('checked', true);
+    $('#sks-noSurat').val('AUTO');
+    currentSksLetterId = null;
+    $('#btn-cetak-sks').prop('disabled', true);
+
+    // Timpa dengan data yang sudah pernah disimpan sebelumnya (kalau ada)
+    $.ajax({
+        url: GET_SKS_URL,
+        method: 'GET',
+        dataType: 'json',
+        success: function (res) {
+            if (res && res.success && res.data) {
+                var d = res.data;
+                currentSksLetterId = d.letter_id;
+                $('#sks-noSurat').val(d.letter_no || 'AUTO');
+                if (d.weight !== null)         $('#sks-bb').val(d.weight);
+                if (d.height !== null)         $('#sks-tb').val(d.height);
+                if (d.blood_pressure !== null) $('#sks-td').val(d.blood_pressure);
+                if (d.temperature !== null)    $('#sks-suhu').val(d.temperature);
+                if (d.color_blind !== null)    $('#sks-butawarna').val(d.color_blind);
+                if (d.blood_type !== null)     $('#sks-goldar').val(d.blood_type);
+                if (d.leave_days !== null)     $('#sks-lama').val(d.leave_days);
+                if (d.leave_from)              $('#sks-dari').val(d.leave_from);
+                if (d.leave_to)                $('#sks-sampai').val(d.leave_to);
+                if (d.diagnosis !== null && d.diagnosis !== '') $('#sks-diagnosa').val(d.diagnosis);
+                $('#sks-normal').prop('checked', !!d.is_normal);
+                $('#btn-cetak-sks').prop('disabled', false);
+            }
+        }
+    });
+
+    $('#modal-surat-sakit').modal('show');
+});
+
+function hitungLamaSakit() {
+    var d1 = new Date($('#sks-dari').val());
+    var d2 = new Date($('#sks-sampai').val());
+    if (!isNaN(d1) && !isNaN(d2) && d2 >= d1) {
+        var days = Math.round((d2 - d1) / 86400000) + 1;
+        $('#sks-lama').val(days);
+    }
+}
+$('#sks-dari, #sks-sampai').on('change', hitungLamaSakit);
+
+$('#btn-simpan-sks').on('click', function () {
+    var csrf = $('input[name="_csrfToken"]').val();
+    var payload = {
+        _csrfToken: csrf,
+        weight: $('#sks-bb').val(),
+        height: $('#sks-tb').val(),
+        blood_pressure: $('#sks-td').val(),
+        temperature: $('#sks-suhu').val(),
+        color_blind: $('#sks-butawarna').val(),
+        blood_type: $('#sks-goldar').val(),
+        leave_days: $('#sks-lama').val(),
+        leave_from: $('#sks-dari').val(),
+        leave_to: $('#sks-sampai').val(),
+        diagnosis: $('#sks-diagnosa').val(),
+        is_normal: $('#sks-normal').is(':checked') ? 1 : 0,
+        examined_at: new Date().toISOString().slice(0, 10),
+    };
+
+    $.ajax({
+        url: SIMPAN_SKS_URL,
+        method: 'POST',
+        data: payload,
+        dataType: 'json',
+        success: function (res) {
+            if (res.success) {
+                $('#sks-noSurat').val(res.letter_no);
+                currentSksLetterId = res.letter_id;
+                $('#btn-cetak-sks').prop('disabled', false);
+                alert('Surat berhasil disimpan: ' + res.letter_no);
+            } else {
+                alert(res.message || 'Gagal menyimpan surat.');
+            }
+        },
+        error: function () {
+            alert('Gagal menghubungi server.');
+        }
+    });
+});
+
+$('#btn-cetak-sks').on('click', function () {
+    if (!currentSksLetterId) return;
+    window.open(CETAK_SKS_URL_BASE + '/' + currentSksLetterId, '_blank');
+});
+
+
+
+var GET_KSL_URL = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'getSuratKonsultasi',
+    $visit->id,
+])) ?>;
+var SIMPAN_KSL_URL = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'simpanSuratKonsultasi',
+    $visit->id,
+])) ?>;
+var KSL_ICD_SEARCH_URL = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientVisits',
+    'action'     => 'searchIcd10',
+])) ?>;
+
+function getIcd10SemuaText() {
+    var lines = [];
+    $('#icd10-body tr.icd10-row').each(function () {
+        var $row  = $(this);
+        var kode  = $.trim($row.find('input[name^="icd10_code"]').val());
+        var nama  = $.trim($row.find('input[name^="icd10_nama"]').val());
+        if (!kode && !nama) return; // skip baris kosong
+
+        var isUtama = $row.find('input[name="icd10_utama"]').is(':checked');
+        var line = (kode ? kode + ' - ' : '') + nama;
+        if (isUtama) line += ' (Utama)';
+        lines.push(line);
+    });
+    return lines.join('\n');
+}
+
+$(document).on('click', '.btn-surat-konsultasi', function () {
+    var $b = $(this);
+
+    $('#ksl-rekmed').val($b.data('rekmed'));
+    $('#ksl-nama').val($b.data('nama'));
+    $('#ksl-alamat').val($b.data('alamat'));
+    $('#ksl-umur').val($b.data('umur'));
+    $('#ksl-dokter').val($b.data('dokter'));
+    $('#ksl-tglperiksa').val($b.data('tglperiksa'));
+    $('#ksl-diagnosa').val(getIcd10SemuaText());
+    $('#ksl-catatan').val('');
+    $('#ksl-noSurat').val('AUTO');
+
+    $.ajax({
+        url: GET_KSL_URL,
+        method: 'GET',
+        dataType: 'json',
+        success: function (res) {
+            if (res && res.success && res.data) {
+                var d = res.data;
+                $('#ksl-noSurat').val(d.letter_no || 'AUTO');
+                if (d.notes !== null) $('#ksl-catatan').val(d.notes);
+                // Diagnosa sengaja tidak ditimpa dari data tersimpan —
+                // selalu ikut ICD-10 EMR terbaru saat modal dibuka.
+            }
+        }
+    });
+
+    $('#modal-surat-konsultasi').modal('show');
+});
+
+$('#btn-simpan-ksl').on('click', function () {
+    var csrf = $('input[name="_csrfToken"]').val();
+
+    $.ajax({
+        url: SIMPAN_KSL_URL,
+        method: 'POST',
+        data: {
+            _csrfToken: csrf,
+            diagnosis: $('#ksl-diagnosa').val(),
+            notes: $('#ksl-catatan').val(),
+        },
+        dataType: 'json',
+        success: function (res) {
+            if (res.success) {
+                $('#ksl-noSurat').val(res.letter_no);
+                alert('Surat konsultasi berhasil disimpan: ' + res.letter_no);
+            } else {
+                alert(res.message || 'Gagal menyimpan surat konsultasi.');
+            }
+        },
+        error: function () {
+            alert('Gagal menghubungi server.');
+        }
+    });
+});
+
+var GET_JKL_URL = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'getSuratJawabanKonsultasi',
+    $visit->id,
+])) ?>;
+var SIMPAN_JKL_URL = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'simpanSuratJawabanKonsultasi',
+    $visit->id,
+])) ?>;
+
+$(document).on('click', '.btn-surat-jawaban-konsultasi', function () {
+    var $b = $(this);
+
+    $('#jkl-rekmed').val($b.data('rekmed'));
+    $('#jkl-nama').val($b.data('nama'));
+    $('#jkl-alamat').val($b.data('alamat'));
+    $('#jkl-umur').val($b.data('umur'));
+    $('#jkl-dokter').val($b.data('dokter'));
+    $('#jkl-tglperiksa').val($b.data('tglperiksa'));
+    $('#jkl-diagnosa').val(getIcd10SemuaText());
+    $('#jkl-saran').val('');
+    $('#jkl-noSurat').val('AUTO');
+
+    $.ajax({
+        url: GET_JKL_URL,
+        method: 'GET',
+        dataType: 'json',
+        success: function (res) {
+            if (res && res.success && res.data) {
+                var d = res.data;
+                $('#jkl-noSurat').val(d.letter_no || 'AUTO');
+                if (d.saran !== null) $('#jkl-saran').val(d.saran);
+                // Diagnosa sengaja tidak ditimpa — selalu ikut ICD-10 EMR terbaru
+            }
+        }
+    });
+
+    $('#modal-surat-jawaban-konsultasi').modal('show');
+});
+
+$('#btn-simpan-jkl').on('click', function () {
+    var csrf = $('input[name="_csrfToken"]').val();
+    $.ajax({
+        url: SIMPAN_JKL_URL,
+        method: 'POST',
+        data: {
+            _csrfToken: csrf,
+            diagnosis: $('#jkl-diagnosa').val(),
+            saran: $('#jkl-saran').val(),
+        },
+        dataType: 'json',
+        success: function (res) {
+            if (res.success) {
+                $('#jkl-noSurat').val(res.letter_no);
+                alert('Surat jawaban konsultasi berhasil disimpan: ' + res.letter_no);
+            } else {
+                alert(res.message || 'Gagal menyimpan surat.');
+            }
+        },
+        error: function () {
+            alert('Gagal menghubungi server.');
+        }
+    });
+});
+
+var GET_SKH_URL = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'getSuratSehat',
+    $visit->id,
+])) ?>;
+var SIMPAN_SKH_URL = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'simpanSuratSehat',
+    $visit->id,
+])) ?>;
+var CETAK_SKH_URL_BASE = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'cetakSuratSehat',
+])) ?>;
+
+var currentSkhLetterId = null;
+
+$(document).on('click', '.btn-surat-sehat', function () {
+    var $b = $(this);
+
+    $('#skh-rekmed').val($b.data('rekmed'));
+    $('#skh-nama').val($b.data('nama'));
+    $('#skh-alamat').val($b.data('alamat'));
+    $('#skh-umur').val($b.data('umur'));
+    $('#skh-jk').val($b.data('jk'));
+    $('#skh-bb').val($b.data('bb'));
+    $('#skh-tb').val($b.data('tb'));
+    $('#skh-td').val($b.data('td'));
+    $('#skh-suhu').val($b.data('suhu'));
+    $('#skh-goldar').val($b.data('goldar'));
+    $('#skh-dokter').val($b.data('dokter'));
+    $('#skh-tglperiksa').val($b.data('tglperiksa'));
+    $('#skh-butawarna').val('');
+    $('#skh-hasil-detail').val('');
+    $('#skh-keterangan').val('');
+    $('#skh-hasil-sehat').prop('checked', true);
+    $('#skh-normal').prop('checked', true);
+    $('#skh-noSurat').val('AUTO');
+    currentSkhLetterId = null;
+    $('#btn-cetak-skh').prop('disabled', true);
+
+    $.ajax({
+        url: GET_SKH_URL,
+        method: 'GET',
+        dataType: 'json',
+        success: function (res) {
+            if (res && res.success && res.data) {
+                var d = res.data;
+                currentSkhLetterId = d.letter_id;
+                $('#skh-noSurat').val(d.letter_no || 'AUTO');
+                if (d.weight !== null)         $('#skh-bb').val(d.weight);
+                if (d.height !== null)         $('#skh-tb').val(d.height);
+                if (d.blood_pressure !== null) $('#skh-td').val(d.blood_pressure);
+                if (d.temperature !== null)    $('#skh-suhu').val(d.temperature);
+                if (d.color_blind !== null)    $('#skh-butawarna').val(d.color_blind);
+                if (d.blood_type !== null)     $('#skh-goldar').val(d.blood_type);
+                if (d.result !== null)         $('#skh-hasil-sehat, #skh-hasil-tidak-sehat').filter('[value="' + d.result + '"]').prop('checked', true);
+                if (d.result_notes !== null)   $('#skh-hasil-detail').val(d.result_notes);
+                if (d.notes !== null)          $('#skh-keterangan').val(d.notes);
+                $('#skh-normal').prop('checked', !!d.is_normal);
+                $('#btn-cetak-skh').prop('disabled', false);
+            }
+        }
+    });
+
+    $('#modal-surat-sehat').modal('show');
+});
+
+$('#btn-simpan-skh').on('click', function () {
+    var csrf = $('input[name="_csrfToken"]').val();
+    var payload = {
+        _csrfToken: csrf,
+        weight: $('#skh-bb').val(),
+        height: $('#skh-tb').val(),
+        blood_pressure: $('#skh-td').val(),
+        temperature: $('#skh-suhu').val(),
+        color_blind: $('#skh-butawarna').val(),
+        blood_type: $('#skh-goldar').val(),
+        result: $('input[name="skh_hasil"]:checked').val(),
+        result_notes: $('#skh-hasil-detail').val(),
+        notes: $('#skh-keterangan').val(),
+        is_normal: $('#skh-normal').is(':checked') ? 1 : 0,
+        examined_at: new Date().toISOString().slice(0, 10),
+    };
+
+    $.ajax({
+        url: SIMPAN_SKH_URL,
+        method: 'POST',
+        data: payload,
+        dataType: 'json',
+        success: function (res) {
+            if (res.success) {
+                $('#skh-noSurat').val(res.letter_no);
+                currentSkhLetterId = res.letter_id;
+                $('#btn-cetak-skh').prop('disabled', false);
+                alert('Surat berhasil disimpan: ' + res.letter_no);
+            } else {
+                alert(res.message || 'Gagal menyimpan surat.');
+            }
+        },
+        error: function () {
+            alert('Gagal menghubungi server.');
+        }
+    });
+});
+
+$('#btn-cetak-skh').on('click', function () {
+    if (!currentSkhLetterId) return;
+    window.open(CETAK_SKH_URL_BASE + '/' + currentSkhLetterId, '_blank');
+});
+
+var GET_SPT_URL = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'getProtokolTerapi',
+    $visit->id,
+])) ?>;
+var SIMPAN_SPT_URL = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'simpanProtokolTerapi',
+    $visit->id,
+])) ?>;
+var CETAK_SPT_URL_BASE = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'cetakProtokolTerapi',
+])) ?>;
+
+var currentSptLetterId = null;
+
+$(document).on('click', '.btn-protokol-terapi', function () {
+    var $b = $(this);
+
+    $('#spt-rekmed').val($b.data('rekmed'));
+    $('#spt-nama').val($b.data('nama'));
+    $('#spt-alamat').val($b.data('alamat'));
+    $('#spt-umur').val($b.data('umur'));
+    $('#spt-jk').val($b.data('jk'));
+    $('#spt-bb').val($b.data('bb'));
+    $('#spt-tb').val($b.data('tb'));
+    $('#spt-td').val($b.data('td'));
+    $('#spt-suhu').val($b.data('suhu'));
+    $('#spt-diagnosa').val($b.data('diagnosa'));
+    $('#spt-obat').val($b.data('obat'));
+    $('#spt-dokter').val($b.data('dokter'));
+    $('#spt-tglperiksa').val($b.data('tglperiksa'));
+    $('#spt-lama').val(0);
+    $('#spt-alasan').val('');
+    $('#spt-normal').prop('checked', true);
+    $('#spt-noSurat').val('AUTO');
+    currentSptLetterId = null;
+    $('#btn-cetak-spt').prop('disabled', true);
+
+    $.ajax({
+        url: GET_SPT_URL,
+        method: 'GET',
+        dataType: 'json',
+        success: function (res) {
+            if (res && res.success && res.data) {
+                var d = res.data;
+                currentSptLetterId = d.letter_id;
+                $('#spt-noSurat').val(d.letter_no || 'AUTO');
+                if (d.weight !== null)         $('#spt-bb').val(d.weight);
+                if (d.height !== null)         $('#spt-tb').val(d.height);
+                if (d.blood_pressure !== null) $('#spt-td').val(d.blood_pressure);
+                if (d.temperature !== null)    $('#spt-suhu').val(d.temperature);
+                if (d.diagnosis !== null && d.diagnosis !== '') $('#spt-diagnosa').val(d.diagnosis);
+                if (d.drug_dosage !== null)    $('#spt-obat').val(d.drug_dosage);
+                if (d.therapy_days !== null)   $('#spt-lama').val(d.therapy_days);
+                if (d.therapy_reason !== null) $('#spt-alasan').val(d.therapy_reason);
+                $('#spt-normal').prop('checked', !!d.is_normal);
+                $('#btn-cetak-spt').prop('disabled', false);
+            }
+        }
+    });
+
+    $('#modal-protokol-terapi').modal('show');
+});
+
+$('#btn-simpan-spt').on('click', function () {
+    var csrf = $('input[name="_csrfToken"]').val();
+    var payload = {
+        _csrfToken: csrf,
+        weight: $('#spt-bb').val(),
+        height: $('#spt-tb').val(),
+        blood_pressure: $('#spt-td').val(),
+        temperature: $('#spt-suhu').val(),
+        diagnosis: $('#spt-diagnosa').val(),
+        drug_dosage: $('#spt-obat').val(),
+        therapy_days: $('#spt-lama').val(),
+        therapy_reason: $('#spt-alasan').val(),
+        is_normal: $('#spt-normal').is(':checked') ? 1 : 0,
+        examined_at: new Date().toISOString().slice(0, 10),
+    };
+
+    $.ajax({
+        url: SIMPAN_SPT_URL,
+        method: 'POST',
+        data: payload,
+        dataType: 'json',
+        success: function (res) {
+            if (res.success) {
+                $('#spt-noSurat').val(res.letter_no);
+                currentSptLetterId = res.letter_id;
+                $('#btn-cetak-spt').prop('disabled', false);
+                alert('Protokol terapi berhasil disimpan: ' + res.letter_no);
+            } else {
+                alert(res.message || 'Gagal menyimpan protokol terapi.');
+            }
+        },
+        error: function () {
+            alert('Gagal menghubungi server.');
+        }
+    });
+});
+
+$('#btn-cetak-spt').on('click', function () {
+    if (!currentSptLetterId) return;
+    window.open(CETAK_SPT_URL_BASE + '/' + currentSptLetterId, '_blank');
+});
+
     // ══════════════════════════════════════════════════════════════════════════
     // KONFIGURASI URL
     // ══════════════════════════════════════════════════════════════════════════
@@ -1652,6 +2625,7 @@ $(document).ready(function () {
         'action'     => 'searchPolyQueue',
     ])) ?>;
 
+    var CURRENT_POLY_NAME = <?= json_encode($visit->polyclinic_name ?? '') ?>;
 
     var CREATE_REFERRAL_QUEUE_URL = <?= json_encode($this->Url->build([
         'controller' => 'PolyclinicQueues',
@@ -1687,15 +2661,6 @@ $(document).ready(function () {
         $('#modal-hasil-pemeriksaan-emr').modal('show');
     });
 
-
-    // ══════════════════════════════════════════════════════════════════════════
-    // AJAX POLIKLINIK KONSUL/RUJUK
-    // Tidak memakai select biasa agar daftar poli tidak turun terlalu panjang.
-    // Data diambil dari tabel polyclinic_queues.
-    // Saat poli dipilih, nomor antrian otomatis diisi dari urutan queue_number poli tersebut.
-    // Endpoint yang dipakai: /polyclinic-queues/search-poly-queue?q=...
-    // Response disarankan: [{poly_name, next_queue_number}]
-    // ══════════════════════════════════════════════════════════════════════════
     var polyclinicTimer = null;
     var $polyInput = $('#referral-polyclinic-search');
     var $polyValue = $('#referral-polyclinic-value');
@@ -1708,6 +2673,14 @@ $(document).ready(function () {
 
     function renderPolyclinicDropdown(data) {
         $polyDropdown.empty();
+
+        // Buang poliklinik yang sama dengan poli pasien saat ini
+        if (data && Array.isArray(data) && CURRENT_POLY_NAME) {
+            data = data.filter(function (item) {
+                var nama = item.poly_name || item.name || item.nama || item.polyclinic_name || '';
+                return $.trim(nama).toLowerCase() !== $.trim(CURRENT_POLY_NAME).toLowerCase();
+            });
+        }
 
         if (!data || !Array.isArray(data) || data.length === 0) {
             $polyDropdown.html(
@@ -1739,7 +2712,6 @@ $(document).ready(function () {
                 $polyValue.val(nama);
                 $polyQueue.val(nextQueue || 0);
 
-                // Kalau poli diganti, dokter harus dipilih ulang sesuai poli tersebut
                 $('#referral-doctor-search').val('');
                 $('#referral-doctor-value').val('');
                 $('#doctor-dropdown').hide().empty();
@@ -1753,6 +2725,28 @@ $(document).ready(function () {
         $polyDropdown.show();
     }
 
+    function searchPolyclinic(q) {
+        $polyDropdown.html(
+            '<div class="poly-dd-loading"><i class="fa fa-spinner fa-spin"></i> Mencari poliklinik...</div>'
+        ).show();
+
+        $.ajax({
+            url: POLYCLINIC_SEARCH_URL,
+            method: 'GET',
+            data: { q: q, exclude_poly: CURRENT_POLY_NAME },
+            dataType: 'json',
+            timeout: 5000,
+            success: function (data) {
+                renderPolyclinicDropdown(data);
+            },
+            error: function () {
+                $polyDropdown.html(
+                    '<div class="poly-dd-empty">Endpoint PolyclinicQueues/searchPolyQueue belum tersedia.</div>'
+                ).show();
+            }
+        });
+    }
+
     $polyInput.on('input', function () {
         var q = $.trim($(this).val());
         $polyValue.val(q);
@@ -1761,32 +2755,15 @@ $(document).ready(function () {
         $('#referral-doctor-value').val('');
         clearTimeout(polyclinicTimer);
 
-        if (q.length < 1) {
-            closePolyclinicDropdown();
-            return;
-        }
-
-        $polyDropdown.html(
-            '<div class="poly-dd-loading"><i class="fa fa-spinner fa-spin"></i> Mencari poliklinik...</div>'
-        ).show();
-
         polyclinicTimer = setTimeout(function () {
-            $.ajax({
-                url: POLYCLINIC_SEARCH_URL,
-                method: 'GET',
-                data: { q: q },
-                dataType: 'json',
-                timeout: 5000,
-                success: function (data) {
-                    renderPolyclinicDropdown(data);
-                },
-                error: function () {
-                    $polyDropdown.html(
-                        '<div class="poly-dd-empty">Endpoint PolyclinicQueues/searchPolyQueue belum tersedia.</div>'
-                    ).show();
-                }
-            });
+            searchPolyclinic(q);
         }, 250);
+    });
+
+    $polyInput.on('focus click', function () {
+        if (!$polyDropdown.is(':visible')) {
+            searchPolyclinic($.trim($(this).val()));
+        }
     });
 
     $polyInput.on('blur', function () {
@@ -1902,62 +2879,92 @@ $(document).ready(function () {
         }
     });
 
+    var POLYCLINIC_QUEUES_INDEX_URL = <?= json_encode($this->Url->build([
+        'controller' => 'PolyclinicQueues',
+        'action'     => 'index',
+    ])) ?>;
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // JADWAL KONTROL: BUAT ANTRIAN KONSUL OTOMATIS KE polyclinic_queues
-    // Saat tombol Jadwal Kontrol diklik, sistem membuat antrian baru sesuai poli yang dipilih.
-    // Nomor antrian dipakai dari urutan terakhir poli tersebut pada hari ini.
-    // ══════════════════════════════════════════════════════════════════════════
-    $('#btn-jadwal-kontrol').on('click', function () {
+    var SELESAI_PERIKSA_URL = <?= json_encode($this->Url->build([
+        'controller' => 'OutpatientVisits',
+        'action'     => 'selesaiPeriksa',
+        $visit->id,
+    ])) ?>;
+
+    $('#btn-konsul-langsung').on('click', function () {
         var $btn = $(this);
         var polyName = $.trim($('#referral-polyclinic-value').val() || $('#referral-polyclinic-search').val());
+        var doctorName = $.trim($('#referral-doctor-value').val() || $('#referral-doctor-search').val());
         var patientName = <?= json_encode($p->full_name ?? '') ?>;
         var phoneNumber = <?= json_encode($p->phone_number ?? '') ?>;
         var visitDate = $('input[name="referral_date"]').val() || <?= json_encode(date('Y-m-d')) ?>;
         var csrfToken = $('input[name="_csrfToken"]').val() || $('meta[name="csrfToken"]').attr('content') || '';
 
         if (!polyName) {
-            alert('Pilih poliklinik dulu.');
+            alert('Pilih poliklinik tujuan dulu.');
             $('#referral-polyclinic-search').focus();
             return;
         }
 
-        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Membuat...');
+        if (!doctorName) {
+            alert('Pilih dokter tujuan dulu.');
+            $('#referral-doctor-search').focus();
+            return;
+        }
 
+        if (!confirm('Konsulkan pasien langsung ke ' + polyName + ' (' + doctorName + ')? Kunjungan di poli saat ini akan otomatis ditandai selesai.')) {
+            return;
+        }
+
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Memproses...');
+
+        // Langkah 1: buat antrian konsul di poli tujuan
         $.ajax({
             url: CREATE_REFERRAL_QUEUE_URL,
             method: 'POST',
             dataType: 'json',
-            headers: csrfToken ? {
-                'X-CSRF-Token': csrfToken
-            } : {},
+            headers: csrfToken ? { 'X-CSRF-Token': csrfToken } : {},
             data: {
                 poly_name: polyName,
+                doctor_name: doctorName,
                 patient_name: patientName,
                 phone_number: phoneNumber,
                 visit_date: visitDate
             },
             success: function (res) {
-                if (res && res.success) {
-                    $('#referral-queue-no').val(res.queue_number || 0);
-                    alert('Antrian berhasil dibuat: ' + (res.code || '-'));
-                } else {
-                    alert((res && res.message) ? res.message : 'Gagal membuat antrian.');
+                if (!res || !res.success) {
+                    alert((res && res.message) ? res.message : 'Gagal membuat antrian konsul.');
+                    $btn.prop('disabled', false).html('Konsulkan Langsung');
+                    return;
                 }
+
+                var queueCode = res.code || '-';
+
+                // Langkah 2: tandai kunjungan poli saat ini sebagai selesai
+                $.ajax({
+                    url: SELESAI_PERIKSA_URL,
+                    method: 'POST',
+                    dataType: 'json',
+                    headers: csrfToken ? { 'X-CSRF-Token': csrfToken } : {},
+                    data: { _csrfToken: csrfToken },
+                    complete: function () {
+                        // Baik berhasil maupun tidak, tetap arahkan ke daftar antrian
+                        // supaya pengguna tidak terjebak; jika gagal, EMR masih bisa
+                        // diselesaikan manual lewat tombol SELESAI PERIKSA.
+                        alert('Antrian konsul berhasil dibuat: ' + queueCode + '. Kunjungan poli saat ini ditandai selesai.');
+                        window.location.href = POLYCLINIC_QUEUES_INDEX_URL;
+                    }
+                });
             },
             error: function (xhr) {
-                var message = 'Endpoint createReferralQueue belum tersedia atau gagal diproses.';
+                var message = 'Gagal menghubungi server.';
                 if (xhr.responseJSON && xhr.responseJSON.message) {
                     message = xhr.responseJSON.message;
                 }
                 alert(message);
-            },
-            complete: function () {
-                $btn.prop('disabled', false).html('Jadwal Kontrol');
+                $btn.prop('disabled', false).html('Konsulkan Langsung');
             }
         });
     });
-
 
     // ══════════════════════════════════════════════════════════════════════════
     // BMI OTOMATIS
@@ -2302,18 +3309,20 @@ $(document).ready(function () {
     }
 
     function positionDropdown($input) {
-        var offset = $input.offset();
-        var height = $input.outerHeight();
-        var winH   = $(window).height();
-        var winW   = $(window).width();
-        var ddW    = Math.max($input.outerWidth(), 320);
-        var top    = offset.top + height + 2;
-        var left   = offset.left;
-        if (top + 260 > winH + $(window).scrollTop())
-            top = offset.top - Math.min($dropdown.outerHeight() || 200, 260) - 4;
-        if (left + ddW > winW - 10) left = winW - ddW - 10;
-        $dropdown.css({ top: top, left: left, width: ddW });
-    }
+    var offset     = $input.offset();
+    var height     = $input.outerHeight();
+    var scrollTop  = $(window).scrollTop();
+    var scrollLeft = $(window).scrollLeft();
+    var winH       = $(window).height();
+    var winW       = $(window).width();
+    var ddW        = Math.max($input.outerWidth(), 320);
+    var top        = offset.top - scrollTop + height + 2;
+    var left       = offset.left - scrollLeft;
+    if (top + 260 > winH)
+        top = offset.top - scrollTop - Math.min($dropdown.outerHeight() || 200, 260) - 4;
+    if (left + ddW > winW - 10) left = winW - ddW - 10;
+    $dropdown.css({ top: top, left: left, width: ddW });
+}
 
     function fillActionRow($input, item) {
         var $row     = $input.closest('tr.action-row');
@@ -2357,9 +3366,9 @@ $(document).ready(function () {
     // ══════════════════════════════════════════════════════════════════════════
     // AUTOCOMPLETE ICD-10
     // ══════════════════════════════════════════════════════════════════════════
-    var icd10Index = <?= !empty($visit->icd10_items)
-        ? count((array)(is_string($visit->icd10_items ?? null)
-            ? json_decode($visit->icd10_items, true) : []))
+    var icd10Index = <?= !empty($emr->icd10_items)
+        ? count((array)(is_string($emr->icd10_items ?? null)
+            ? json_decode($emr->icd10_items, true) : []))
         : 0 ?>;
     var icd10Timer = null;
     var $icd10DD   = $('#icd10-dropdown');
@@ -2484,9 +3493,9 @@ $(document).ready(function () {
     // ══════════════════════════════════════════════════════════════════════════
     // AUTOCOMPLETE ICD-9 CM
     // ══════════════════════════════════════════════════════════════════════════
-    var icd9Index = <?= !empty($visit->icd9_items)
-        ? count((array)(is_string($visit->icd9_items ?? null)
-            ? json_decode($visit->icd9_items, true) : []))
+    var icd9Index = <?= !empty($emr->icd9_items)
+        ? count((array)(is_string($emr->icd9_items ?? null)
+            ? json_decode($emr->icd9_items, true) : []))
         : 0 ?>;
     var icd9Timer = null;
     var $icd9DD   = $('#icd9-dropdown');
@@ -2792,8 +3801,14 @@ $(document).on('click', '.btn-remove-icd9', function() {
    - Tidak mengambil dari Diagnosa Utama / Diagnosa Sekunder / Tindakan Utama
    ========================================================= */
 (function ($) {
-    var ICD10_URL = <?= json_encode($this->Url->build(['action' => 'searchIcd10'])) ?>;
-    var ICD9_URL  = <?= json_encode($this->Url->build(['action' => 'searchIcd9'])) ?>;
+    var ICD10_URL = <?= json_encode($this->Url->build([
+        'controller' => 'MasterIcd10',
+        'action'     => 'search',
+    ])) ?>;
+    var ICD9_URL  = <?= json_encode($this->Url->build([
+        'controller' => 'MasterIcd9',
+        'action'     => 'search',
+    ])) ?>;
 
     function esc(v) {
         return String(v || '').replace(/[&<>"']/g, function (c) {
@@ -2890,10 +3905,12 @@ $(document).on('click', '.btn-remove-icd9', function() {
         var url = type === 'icd10' ? ICD10_URL : ICD9_URL;
         $.getJSON(url, {q: q})
             .done(function (res) {
-                renderDropdown(type, res.results || [], q);
+                // Tangani baik respons array langsung maupun {results: [...]}
+                var rows = Array.isArray(res) ? res : (res && res.results ? res.results : []);
+                renderDropdown(type, rows, q);
             })
             .fail(function () {
-                $('#' + type + '-dropdown').html('<div style="padding:10px;color:#dc3545;">Gagal mengambil data master. Cek action searchIcd10/searchIcd9.</div>').show();
+                $('#' + type + '-dropdown').html('<div style="padding:10px;color:#dc3545;">Gagal mengambil data master ICD ' + (type === 'icd10' ? '10' : '9') + '.</div>').show();
             });
     }
 

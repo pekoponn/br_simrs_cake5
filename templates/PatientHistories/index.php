@@ -135,53 +135,62 @@ $renderEmpty = function ($text = 'Data belum tersedia') {
     echo '<div class="history-empty">' . h($text) . '</div>';
 };
 
-$renderSoap = function (array $rows) use ($findFirstValue, $formatIcdItems, $renderEmpty) {
-    if (empty($rows)) {
-        $renderEmpty();
-        return;
-    }
-
+$renderSoap = function (array $rows) use ($findFirstValue, $formatIcdItems) {
     $items = [
         'Keluhan Awal' => ['chief_complaint', 'keluhan_awal', 'complaint', 'keluhan', 'subjective'],
         'Pemeriksaan' => ['objective', 'pemeriksaan', 'examination', 'illness_history', 'physical_examination', 'note'],
         'Diagnosa' => ['assessment', 'diagnosis_primary', 'diagnosis_secondary', 'diagnosa', 'diagnosis'],
         'Saran / Anjuran' => ['plan', 'doctor_notes', 'saran', 'anjuran', 'therapy', 'terapi'],
         'Diagnosa / ICD10' => ['icd10_items', 'icd10', 'icd10_code', 'diagnosis_code'],
-        'Tindakan / ICD-9 CM' => ['icd9_items', 'icd9', 'icd9_code', 'action_notes'],
+        'Skala Nyeri' => ['pain_scale', 'skala_nyeri', 'nyeri', 'pain_score'],
     ];
     $vitals = [
-        'TD' => ['blood_pressure', 'tekanan_darah'],
-        'Nadi' => ['pulse', 'nadi'],
-        'RR' => ['respiratory_rate', 'pernapasan'],
-        'Suhu' => ['temperature', 'suhu'],
-        'SpO2' => ['oxygen_saturation', 'spo2'],
+        'NADI' => ['pulse', 'nadi'],
+        'T/D' => ['blood_pressure', 'tekanan_darah'],
+        'SUHU' => ['temperature', 'suhu'],
+        'PERNAFAS' => ['respiratory_rate', 'pernapasan', 'pernafasan'],
         'BB' => ['weight', 'berat_badan'],
-        'TB' => ['height', 'tinggi_badan'],
+        'BMI' => ['bmi'],
+        'BMI RESULT' => ['bmi_result', 'bmi_category', 'bmi_status'],
     ];
 
-    echo '<div class="soap-box">';
-    echo '<div class="soap-title">Tanda Vital</div><div class="soap-body">';
-    $hasVital = false;
+    echo '<div class="soap-layout">';
+
+    echo '<div class="soap-left">';
+    echo '<table class="table table-bordered table-condensed vital-table"><tbody>';
     foreach ($vitals as $label => $aliases) {
         $value = $findFirstValue($rows, $aliases);
-        if ($value !== null && $value !== '') {
-            $hasVital = true;
-            echo '<span class="vital-chip">' . h($label) . ': ' . h((string)$value) . '</span>';
-        }
+        echo '<tr><th>' . h($label) . '</th><td>' . (($value === null || $value === '') ? '-' : h((string)$value)) . '</td></tr>';
     }
-    if (!$hasVital) {
-        echo '<span class="text-muted">Data belum tersedia</span>';
-    }
+    echo '</tbody></table>';
+    echo '<div class="vital-actions">';
+    echo '<button type="button" class="btn btn-default btn-sm vital-action-btn">Askep</button>';
+    echo '<button type="button" class="btn btn-default btn-sm vital-action-btn">Resume</button>';
+    echo '</div>';
     echo '</div>';
 
+    echo '<div class="soap-right">';
     foreach ($items as $title => $aliases) {
         $value = $findFirstValue($rows, $aliases);
+
+        if (is_string($value)) {
+            $trimmed = trim($value);
+            if ($trimmed !== '' && ($trimmed[0] === '[' || $trimmed[0] === '{')) {
+                $decoded = json_decode($trimmed, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $value = $decoded;
+                }
+            }
+        }
+
         if (is_array($value)) {
             $value = $formatIcdItems($value);
         }
         echo '<div class="soap-title">' . h($title) . '</div>';
-        echo '<div class="soap-body">' . (($value === null || $value === '') ? '<span class="text-muted">Data belum tersedia</span>' : nl2br(h((string)$value))) . '</div>';
+        echo '<div class="soap-body">' . (($value === null || $value === '') ? '' : nl2br(h((string)$value))) . '</div>';
     }
+    echo '</div>';
+
     echo '</div>';
 };
 
@@ -219,7 +228,331 @@ $renderGenericTable = function (array $rows, array $columns) use ($rowValues, $r
     echo '</tbody></table></div>';
 };
 
+$renderResepTable = function (array $rows) use ($rowValues, $renderEmpty, $display, $displayTime) {
+    if (empty($rows)) {
+        $renderEmpty('Belum ada riwayat resep');
+        return;
+    }
+
+    echo '<div class="history-table-scroll"><table class="table resep-table"><thead><tr>';
+    echo '<th class="col-tanggal">Tgl Resep</th>';
+    echo '<th class="col-jam">Jam</th>';
+    echo '<th>Detail Obat</th>';
+    echo '</tr></thead><tbody>';
+
+    foreach ($rows as $row) {
+        $v = $rowValues($row);
+
+        $tgl   = $v['tgl_resep'] ?? $v['tanggal_resep'] ?? $v['prescription_date'] ?? $v['date'] ?? $v['created'] ?? null;
+        $jam   = $v['jam'] ?? $v['prescription_time'] ?? $v['time'] ?? $tgl;
+        $items = $v['items'] ?? null;
+
+        echo '<tr>';
+        echo '<td class="col-tanggal">' . $display($tgl) . '</td>';
+        echo '<td class="col-jam">' . $displayTime($jam) . '</td>';
+        echo '<td>';
+
+        if (is_array($items) && !empty($items)) {
+            foreach ($items as $item) {
+                $name = is_array($item) ? ($item['name'] ?? '') : (string)$item;
+                $qty  = is_array($item) ? ($item['qty'] ?? '') : '';
+                echo '<div class="resep-obat-line">';
+                echo '<span class="resep-obat-name">' . h($name) . '</span>';
+                echo '<span class="resep-obat-qty">' . h((string)$qty) . '</span>';
+                echo '</div>';
+            }
+        } else {
+            $detail = $v['detail_obat'] ?? $v['drug_detail'] ?? $v['medicine_detail'] ?? $v['obat'] ?? $v['note'] ?? $v['notes'] ?? '-';
+            echo nl2br(h((string)$detail));
+        }
+
+        echo '</td>';
+        echo '</tr>';
+    }
+
+    echo '</tbody></table></div>';
+};
+
+$renderPenunjangMedis = function (array $rows) use ($rowValues) {
+    echo '<div class="penunjang-layout">';
+
+    echo '<div class="penunjang-left">';
+    echo '<table class="table table-bordered table-condensed penunjang-list-table"><thead><tr>';
+    echo '<th>No Pemeriksaan</th><th width="80">Tanggal</th><th width="60">Jam</th>';
+    echo '</tr></thead><tbody>';
+    if (empty($rows)) {
+        echo '<tr><td colspan="3" class="penunjang-empty-row">Belum ada data</td></tr>';
+    } else {
+        foreach ($rows as $row) {
+            $v = $rowValues($row);
+            echo '<tr class="penunjang-list-row">';
+            echo '<td>' . h((string)($v['no_pemeriksaan'] ?? $v['number'] ?? $v['code'] ?? '-')) . '</td>';
+            echo '<td>' . h((string)($v['tanggal'] ?? $v['date'] ?? '-')) . '</td>';
+            echo '<td>' . h((string)($v['jam'] ?? $v['time'] ?? '-')) . '</td>';
+            echo '</tr>';
+        }
+    }
+    echo '</tbody></table>';
+    echo '</div>';
+
+    echo '<div class="penunjang-right">';
+    echo '<table class="table table-bordered table-condensed penunjang-detail-table"><thead><tr>';
+    echo '<th>Pemeriksaan</th><th>Hasil</th><th width="110">Tgl Expertise</th><th width="110">Jam Expertise</th>';
+    echo '</tr></thead><tbody>';
+    echo '<tr><td colspan="4" class="penunjang-empty-row">Data belum tersedia</td></tr>';
+    echo '</tbody></table>';
+    echo '</div>';
+
+    echo '</div>';
+};
+
+$renderLaboratorium = function (array $listRows, array $detailRows) use ($rowValues, $display, $displayTime) {
+    echo '<div class="lab-layout">';
+
+    echo '<div class="lab-left">';
+    echo '<table class="table table-bordered table-condensed lab-list-table"><thead><tr>';
+    echo '<th>No Pemeriksaan</th><th width="80">Tanggal</th><th width="60">Jam</th>';
+    echo '</tr></thead><tbody>';
+    if (empty($listRows)) {
+        echo '<tr><td colspan="3" class="lab-empty-row">Belum ada data</td></tr>';
+    } else {
+        foreach ($listRows as $i => $row) {
+            $v = $rowValues($row);
+            $active = $i === 0 ? ' active' : '';
+            echo '<tr class="lab-list-row' . $active . '">';
+            echo '<td>' . h((string)($v['no_pemeriksaan'] ?? $v['number'] ?? $v['code'] ?? '-')) . '</td>';
+            echo '<td>' . $display($v['tanggal'] ?? $v['date'] ?? null) . '</td>';
+            echo '<td>' . $displayTime($v['jam'] ?? $v['time'] ?? null) . '</td>';
+            echo '</tr>';
+        }
+    }
+    echo '</tbody></table>';
+    echo '</div>';
+
+    echo '<div class="lab-right">';
+    echo '<table class="table table-bordered table-condensed lab-detail-table"><thead><tr>';
+    echo '<th>Pemeriksaan</th><th width="100">Hasil</th><th width="80">Satuan</th><th width="100">Nilai Rujukan</th><th width="90">Keterangan</th>';
+    echo '</tr></thead><tbody>';
+
+    if (empty($detailRows)) {
+        echo '<tr><td colspan="5" class="lab-empty-row">Data belum tersedia</td></tr>';
+    } else {
+        foreach ($detailRows as $row) {
+            $v = $rowValues($row);
+            $isCategory = !empty($v['is_category']);
+            $keterangan = strtolower((string)($v['keterangan'] ?? $v['remark'] ?? ''));
+            $ketClass = $keterangan === 'high' ? 'lab-flag-high' : ($keterangan === 'low' ? 'lab-flag-low' : '');
+
+            echo '<tr class="' . ($isCategory ? 'lab-category-row' : 'lab-sub-row') . '">';
+            echo '<td>' . h((string)($v['pemeriksaan'] ?? $v['nama'] ?? '-')) . '</td>';
+            echo '<td>' . h((string)($v['hasil'] ?? $v['result'] ?? '')) . '</td>';
+            echo '<td>' . h((string)($v['satuan'] ?? $v['unit'] ?? '')) . '</td>';
+            echo '<td>' . h((string)($v['nilai_rujukan'] ?? $v['reference_range'] ?? '')) . '</td>';
+            echo '<td class="' . $ketClass . '">' . h((string)($v['keterangan'] ?? $v['remark'] ?? '')) . '</td>';
+            echo '</tr>';
+        }
+    }
+
+    echo '</tbody></table>';
+    echo '</div>';
+
+    echo '</div>';
+};
+$renderRadiologi = function (array $listRows, array $detailRows) use ($rowValues, $display, $displayTime) {
+    echo '<div class="radio-layout">';
+
+    echo '<div class="radio-left">';
+    echo '<table class="table table-bordered table-condensed radio-list-table"><thead><tr>';
+    echo '<th>No Pemeriksaan</th><th width="80">Tanggal</th><th width="60">Jam</th>';
+    echo '</tr></thead><tbody>';
+    if (empty($listRows)) {
+        echo '<tr><td colspan="3" class="radio-empty-row">Belum ada data</td></tr>';
+    } else {
+        foreach ($listRows as $i => $row) {
+            $v = $rowValues($row);
+            $active = $i === 0 ? ' active' : '';
+            echo '<tr class="radio-list-row' . $active . '">';
+            echo '<td>' . h((string)($v['no_pemeriksaan'] ?? $v['number'] ?? $v['code'] ?? '-')) . '</td>';
+            echo '<td>' . $display($v['tanggal'] ?? $v['date'] ?? null) . '</td>';
+            echo '<td>' . $displayTime($v['jam'] ?? $v['time'] ?? null) . '</td>';
+            echo '</tr>';
+        }
+    }
+    echo '</tbody></table>';
+    echo '</div>';
+
+    echo '<div class="radio-right">';
+    echo '<table class="table table-bordered table-condensed radio-detail-table"><thead><tr>';
+    echo '<th width="160">Pemeriksaan</th><th>Hasil</th><th width="100">Tgl Expertise</th><th width="90">Jam Expertise</th>';
+    echo '</tr></thead><tbody>';
+
+    if (empty($detailRows)) {
+        echo '<tr><td colspan="4" class="radio-empty-row">Data belum tersedia</td></tr>';
+    } else {
+        foreach ($detailRows as $row) {
+            $v = $rowValues($row);
+            $hasil = $v['hasil'] ?? $v['result'] ?? '';
+            $kesimpulan = $v['kesimpulan'] ?? $v['impression'] ?? '';
+            $hasilText = trim($hasil . ($kesimpulan !== '' ? "\n\nKesimpulan : " . $kesimpulan : ''));
+
+            echo '<tr>';
+            echo '<td>' . h((string)($v['pemeriksaan'] ?? $v['nama'] ?? '-')) . '</td>';
+            echo '<td class="radio-hasil-cell">' . nl2br(h((string)$hasilText)) . '</td>';
+            echo '<td>' . $display($v['tgl_expertise'] ?? $v['expertise_date'] ?? null) . '</td>';
+            echo '<td>' . $displayTime($v['jam_expertise'] ?? $v['expertise_time'] ?? null) . '</td>';
+            echo '</tr>';
+        }
+    }
+
+    echo '</tbody></table>';
+    echo '</div>';
+
+    echo '</div>';
+};
+
+$renderFormIntegrasi = function (array $rows) use ($rowValues) {
+    if (empty($rows)) {
+        echo '<div class="history-empty">Belum ada catatan CPPT</div>';
+        return;
+    }
+
+    echo '<div class="integrasi-table-wrap"><table class="table table-bordered integrasi-table"><thead><tr>';
+    echo '<th style="width:40px;">No</th>';
+    echo '<th style="width:80px;">Tanggal</th>';
+    echo '<th style="width:70px;">Jam</th>';
+    echo '<th style="width:150px;">Tenaga Kesehatan</th>';
+    echo '<th style="width:160px;">Dokter</th>';
+    echo '<th>Asesmen Pasien (SOAP_SBAR)</th>';
+    echo '<th style="width:260px;">Instruksi</th>';
+    echo '</tr></thead><tbody>';
+
+    $no = 1;
+    foreach ($rows as $row) {
+        $v = $rowValues($row);
+
+        $dt = $v['noted_at'] ?? $v['created'] ?? null;
+        $dtObj = null;
+        if (is_object($dt) && method_exists($dt, 'format')) {
+            $dtObj = $dt;
+        } elseif (!empty($dt)) {
+            try {
+                $dtObj = new \DateTime((string)$dt);
+            } catch (\Throwable $e) {
+                $dtObj = null;
+            }
+        }
+
+        $tenaga  = trim((string)($v['health_worker_name'] ?? ''));
+        $dokter  = trim((string)($v['doctor_name'] ?? ''));
+        $asesmen = trim((string)($v['assessment_text'] ?? ''));
+        $instruksi = trim((string)($v['instruction'] ?? ''));
+
+        echo '<tr>';
+        echo '<td class="text-center">' . str_pad((string)$no++, 3, '0', STR_PAD_LEFT) . '</td>';
+        echo '<td class="text-center">' . ($dtObj ? h($dtObj->format('d-m-y')) : '-') . '</td>';
+        echo '<td class="text-center">' . ($dtObj ? h($dtObj->format('H:i:s')) : '-') . '</td>';
+        echo '<td>' . ($tenaga !== '' ? h($tenaga) : '&nbsp;') . '</td>';
+        echo '<td>' . ($dokter !== '' ? h($dokter) : '&nbsp;') . '</td>';
+        echo '<td class="integrasi-scroll-td"><div class="integrasi-cell-scroll">' . ($asesmen !== '' ? nl2br(h($asesmen)) : '&nbsp;') . '</div></td>';
+        echo '<td class="integrasi-scroll-td"><div class="integrasi-cell-scroll">' . ($instruksi !== '' ? nl2br(h($instruksi)) : '&nbsp;') . '</div></td>';
+        echo '</tr>';
+    }
+
+    echo '</tbody></table></div>';
+};
+
+$renderBedah = function (array $rows) use ($rowValues) {
+    $columns = [
+        'No Operasi' => ['no_operasi', 'surgery_no', 'number', 'code'],
+        'Tindakan Operasi' => ['tindakan_operasi', 'tindakan', 'action', 'procedure_name', 'name'],
+        'Operator' => ['operator', 'doctor_name', 'dokter'],
+        'Anastesi' => ['anastesi', 'anestesi', 'anesthesia'],
+        'Jenis Pembiusan' => ['jenis_pembiusan', 'anesthesia_type', 'jenis_anestesi'],
+        'Diagnosa' => ['diagnosa', 'diagnosis'],
+        'Header1' => ['header1', 'catatan', 'note', 'notes'],
+    ];
+
+    echo '<div class="bedah-layout">';
+
+    echo '<div class="bedah-table-wrap"><table class="table table-bordered table-condensed bedah-table"><thead><tr>';
+    foreach ($columns as $title => $aliases) {
+        echo '<th>' . h($title) . '</th>';
+    }
+    echo '</tr></thead><tbody>';
+
+    if (empty($rows)) {
+        for ($i = 0; $i < 8; $i++) {
+            echo '<tr>';
+            foreach ($columns as $title => $aliases) {
+                echo '<td>&nbsp;</td>';
+            }
+            echo '</tr>';
+        }
+    } else {
+        foreach ($rows as $row) {
+            $v = $rowValues($row);
+            echo '<tr>';
+            foreach ($columns as $title => $aliases) {
+                $value = null;
+                foreach ($aliases as $alias) {
+                    if (isset($v[$alias]) && $v[$alias] !== null && $v[$alias] !== '') {
+                        $value = $v[$alias];
+                        break;
+                    }
+                }
+                echo '<td>' . (($value === null || $value === '') ? '&nbsp;' : nl2br(h((string)$value))) . '</td>';
+            }
+            echo '</tr>';
+        }
+    }
+    echo '</tbody></table></div>';
+
+    echo '<div class="bedah-bottom">';
+    echo '<div class="bedah-detail-box"></div>';
+    echo '<div class="bedah-actions">';
+    echo '<button type="button" class="btn btn-default bedah-action-btn">Pra Operasi</button>';
+    echo '<button type="button" class="btn btn-default bedah-action-btn">Anestasi</button>';
+    echo '</div>';
+    echo '</div>';
+
+    echo '</div>';
+};
+
 $patientCode = $patient ? ($patient->code ?? null) : null;
+$historyGroups = $historyGroups ?? [];
+$rwtCodeByRegistration = [];
+$rwtCodeByType = [];
+foreach ($historyGroups as $group) {
+    $firstEntry = $group['entries'][0] ?? null;
+    $rwtCodeByRegistration[$group['reg_id']] = $firstEntry['history_no'] ?? $group['reg_code'];
+    foreach ($group['entries'] as $entry) {
+        $rwtCodeByType[$group['reg_id']][$entry['type']] = $entry['history_no'];
+    }
+}
+
+// Baris riwayat yang di-highlight AKTIF secara default adalah entri bertipe
+// 'soap' pada grup REG paling atas (paling baru) — karena tab yang tampil
+// pertama kali memang SOAP. Kalau grup REG paling baru itu tidak punya entri
+// soap sama sekali, fallback ke entri pertamanya saja supaya tetap ada 1
+// baris yang aktif.
+$defaultActiveEntryKey = null;
+foreach ($historyGroups as $group) {
+    if (empty($group['entries'])) {
+        continue;
+    }
+    $fallbackEntry = null;
+    foreach ($group['entries'] as $entry) {
+        if ($fallbackEntry === null) {
+            $fallbackEntry = $entry;
+        }
+        if ($entry['type'] === 'soap') {
+            $defaultActiveEntryKey = $group['reg_id'] . '|' . $entry['type'] . '|' . $entry['history_no'];
+            break 2;
+        }
+    }
+    $defaultActiveEntryKey = $group['reg_id'] . '|' . $fallbackEntry['type'] . '|' . $fallbackEntry['history_no'];
+    break;
+}
 ?>
 
 <?= $this->Krs->breadcrumb('Medical Record', 'Riwayat Pasien') ?>
@@ -236,13 +569,20 @@ $patientCode = $patient ? ($patient->code ?? null) : null;
 .mr-search-item:hover,.mr-search-item.active{background:#dbeafe;}
 .mr-search-item strong{color:#1e3a5f;display:block;}
 .mr-search-item small{color:#666;display:block;line-height:1.35;}
-.mr-layout{display:grid;grid-template-columns:310px minmax(0,1fr);gap:10px;}
+.mr-layout{display:grid;grid-template-columns:310px minmax(0,1fr);gap:10px;align-items:start;}
+.mr-left{display:flex;flex-direction:column;}
+.mr-history-panel{display:flex;flex-direction:column;flex:1;min-height:0;}
+.mr-history-panel .mr-panel-body{flex:1;min-height:0;}
+.mr-history-scroll{max-height:560px;overflow-y:auto;}
 .mr-history-table{font-size:11px;margin:0;background:#fff;}
+.mr-history-table thead th{position:sticky;top:0;z-index:2;}
 .mr-history-table th{background:#e9ecef;color:#1e3a5f;font-weight:700;border:1px solid #ddd!important;padding:6px!important;}
 .mr-history-table td{border:1px solid #ddd!important;padding:6px!important;vertical-align:middle!important;}
 .mr-history-row{cursor:pointer;}
 .mr-history-row.active td{background:#1e3a5f!important;color:#fff!important;}
 .mr-history-row.active strong{color:#fff!important;}
+.mr-history-type{font-weight:400;color:#7a869a;font-size:10px;}
+.mr-history-row.active .mr-history-type{color:#dbe6f7;}
 .mr-head .panel-heading{padding:8px 12px;background:#1e3a5f;color:#fff;font-size:12px;font-weight:700;}
 .mr-head .panel-body{padding:10px 12px;background:#f8f9fa;}
 .mr-head label{font-size:11px;margin-bottom:3px;color:#333;font-weight:700;}
@@ -264,11 +604,88 @@ $patientCode = $patient ? ($patient->code ?? null) : null;
 .soap-title:first-child{border-top:0;}
 .soap-body{min-height:42px;padding:8px;line-height:1.45;}
 .vital-chip{display:inline-block;background:#edf4ff;border:1px solid #b8c8e6;border-radius:2px;padding:4px 7px;margin:2px 4px 2px 0;font-weight:700;}
+.soap-layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:10px;align-items:start;}
+.soap-left{border:1px solid #ddd;background:#fff;padding:8px;}
+.vital-table{margin:0 0 8px 0;font-size:11px;}
+.vital-table th{background:#dbeafe;color:#1e3a5f;font-weight:700;width:45%;border:1px solid #ddd!important;padding:5px 6px!important;text-align:left;}
+.vital-table td{border:1px solid #ddd!important;padding:5px 6px!important;}
+.vital-actions{display:flex;gap:6px;}
+.vital-action-btn{flex:1;border:1px solid #9eaac0;background:#e9eef7;color:#1e3a5f;font-weight:700;}
+.vital-action-btn:hover{background:#dbeafe;}
+.soap-right{border:1px solid #ddd;background:#fff;}
+.soap-right .soap-title:first-child{border-top:0;}
+@media(max-width:900px){.soap-layout{grid-template-columns:1fr;}}
 .history-empty{padding:25px 14px;border:1px dashed #ccc;background:#fafafa;color:#777;text-align:center;font-weight:700;}
 .history-detail-table{width:100%;margin:0;background:#fff;font-size:11px;}
 .history-detail-table th{background:#dbeafe;color:#1e3a5f;text-align:center;font-weight:700;border:1px solid #ddd!important;padding:6px!important;}
 .history-detail-table td{border:1px solid #ddd!important;padding:6px!important;}
 .history-table-scroll{overflow:auto;max-height:430px;}
+.resep-table{width:100%;border-collapse:collapse;font-size:12px;background:#fff;}
+.resep-table thead th{background:#dbeafe;color:#1e3a5f;font-weight:700;border:1px solid #b8c8e6!important;padding:6px!important;text-align:center;position:sticky;top:0;z-index:2;}
+.resep-table tbody td{border:1px solid #ddd!important;padding:6px 8px!important;vertical-align:top!important;}
+.resep-table tbody tr:nth-child(even) td{background:#fafbfd;}
+.resep-table tbody tr:hover td{background:#eef4ff;}
+.resep-table .col-noresep{width:120px;}
+.resep-table .col-tanggal{width:85px;text-align:center;}
+.resep-table .col-jam{width:70px;text-align:center;}
+.resep-table .col-dokter{width:140px;}
+.resep-obat-line{display:flex;justify-content:space-between;gap:10px;padding:1px 0;line-height:1.4;}
+.resep-obat-name{flex:1;}
+.resep-obat-qty{white-space:nowrap;font-weight:700;color:#333;}
+.penunjang-layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:10px;align-items:start;}
+.penunjang-left,.penunjang-right{border:1px solid #ddd;background:#fff;}
+.penunjang-list-table,.penunjang-detail-table{width:100%;margin:0;font-size:11px;}
+.penunjang-list-table thead th,.penunjang-detail-table thead th{background:#dbeafe;color:#1e3a5f;font-weight:700;border:1px solid #b8c8e6!important;padding:6px!important;text-align:center;}
+.penunjang-list-table tbody td,.penunjang-detail-table tbody td{border:1px solid #ddd!important;padding:6px!important;vertical-align:top!important;}
+.penunjang-list-row{cursor:pointer;}
+.penunjang-list-row:hover td{background:#eef4ff;}
+.penunjang-empty-row{text-align:center;color:#999;padding:20px!important;font-style:italic;}
+@media(max-width:900px){.penunjang-layout{grid-template-columns:1fr;}}
+.lab-layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:10px;align-items:start;}
+.lab-left,.lab-right{border:1px solid #ddd;background:#fff;}
+.lab-list-table,.lab-detail-table{width:100%;margin:0;font-size:11px;}
+.lab-list-table thead th,.lab-detail-table thead th{background:#dbeafe;color:#1e3a5f;font-weight:700;border:1px solid #b8c8e6!important;padding:6px!important;text-align:center;}
+.lab-list-table tbody td,.lab-detail-table tbody td{border:1px solid #ddd!important;padding:6px!important;vertical-align:top!important;}
+.lab-list-row{cursor:pointer;}
+.lab-list-row:hover td{background:#eef4ff;}
+.lab-list-row.active td{background:#1e3a5f!important;color:#fff!important;}
+.lab-empty-row{text-align:center;color:#999;padding:20px!important;font-style:italic;}
+.lab-category-row td{background:#f1f4f9!important;font-weight:700;color:#1e3a5f;}
+.lab-sub-row td:first-child{padding-left:18px!important;}
+.lab-flag-high{color:#b02a2a;font-weight:700;}
+.lab-flag-low{color:#1a6fb0;font-weight:700;}
+@media(max-width:900px){.lab-layout{grid-template-columns:1fr;}}
+.radio-layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:10px;align-items:start;}
+.radio-left,.radio-right{border:1px solid #ddd;background:#fff;}
+.radio-list-table,.radio-detail-table{width:100%;margin:0;font-size:11px;}
+.radio-list-table thead th,.radio-detail-table thead th{background:#dbeafe;color:#1e3a5f;font-weight:700;border:1px solid #b8c8e6!important;padding:6px!important;text-align:center;}
+.radio-list-table tbody td,.radio-detail-table tbody td{border:1px solid #ddd!important;padding:6px!important;vertical-align:top!important;}
+.radio-list-row{cursor:pointer;}
+.radio-list-row:hover td{background:#eef4ff;}
+.radio-list-row.active td{background:#1e3a5f!important;color:#fff!important;}
+.radio-empty-row{text-align:center;color:#999;padding:20px!important;font-style:italic;}
+.radio-hasil-cell{white-space:pre-wrap;line-height:1.5;max-height:180px;overflow-y:auto;}
+@media(max-width:900px){.radio-layout{grid-template-columns:1fr;}}
+.bedah-layout{display:flex;flex-direction:column;gap:10px;}
+.bedah-table-wrap{border:1px solid #ddd;background:#fff;overflow:auto;max-height:360px;}
+.bedah-table{width:100%;margin:0;font-size:11px;}
+.bedah-table thead th{background:#dbeafe;color:#1e3a5f;font-weight:700;border:1px solid #b8c8e6!important;padding:6px!important;text-align:center;position:sticky;top:0;z-index:2;}
+.bedah-table tbody td{border:1px solid #ddd!important;padding:6px!important;height:26px;vertical-align:top!important;}
+.bedah-bottom{display:flex;gap:10px;align-items:flex-start;}
+.bedah-detail-box{flex:1;min-height:110px;border:1px solid #ddd;background:#f8f9fa;}
+.bedah-actions{display:flex;gap:8px;padding-top:4px;}
+.bedah-action-btn{border:1px solid #9eaac0;background:#e9eef7;color:#1e3a5f;font-weight:700;min-width:120px;}
+.bedah-action-btn:hover{background:#dbeafe;}
+@media(max-width:900px){.bedah-bottom{flex-direction:column;}}
+.integrasi-table-wrap{border:1px solid #ddd;background:#fff;overflow:auto;max-height:430px;}
+.integrasi-table{width:100%;margin:0;table-layout:fixed;font-size:11px;}
+.integrasi-table thead th{position:sticky;top:0;z-index:2;background:#dbeafe;color:#1e3a5f;font-weight:700;border:1px solid #b8c8e6!important;padding:6px!important;text-align:center;}
+.integrasi-table tbody td{border:1px solid #ddd!important;padding:4px!important;vertical-align:top!important;height:92px;max-height:92px;overflow:hidden;}
+.integrasi-scroll-td{padding:0!important;}
+.integrasi-cell-scroll{display:block;height:92px;max-height:92px;padding:6px 8px;overflow-y:auto;overflow-x:hidden;white-space:pre-wrap;word-break:break-word;line-height:1.35;text-align:left;}
+.integrasi-cell-scroll::-webkit-scrollbar{width:8px;}
+.integrasi-cell-scroll::-webkit-scrollbar-thumb{background:#9aa0a6;border-radius:6px;}
+.integrasi-cell-scroll::-webkit-scrollbar-track{background:#eef2f6;}
 .patient-modal .modal-dialog{width:1120px;max-width:96%;}
 .patient-modal .modal-content{border:2px solid #1e3a5f;border-radius:0;background:#d7e2f6;}
 .patient-modal .modal-header{padding:6px 10px;background:#1e3a5f;color:#fff;border-bottom:1px solid #10283f;}
@@ -311,9 +728,10 @@ $patientCode = $patient ? ($patient->code ?? null) : null;
                 </div>
             </div>
 
-            <div class="mr-panel">
+            <div class="mr-panel mr-history-panel">
                 <div class="mr-panel-heading"><i class="fa fa-history"></i> History Pemeriksaan Pasien</div>
                 <div class="mr-panel-body" style="padding:0;background:#fff;">
+                    <div class="mr-history-scroll">
                     <table class="table table-condensed table-hover mr-history-table">
                         <thead>
                             <tr>
@@ -323,25 +741,42 @@ $patientCode = $patient ? ($patient->code ?? null) : null;
                             </tr>
                         </thead>
                         <tbody>
-                            <?php if (empty($registrations)): ?>
+                            <?php if (empty($historyGroups)): ?>
                                 <tr>
                                     <td colspan="3" style="text-align:center;color:#aaa;padding:16px;font-size:11px;">
                                         <i class="fa fa-inbox"></i><br>Belum ada history pemeriksaan
                                     </td>
                                 </tr>
                             <?php else: ?>
-                                <?php $first = true; ?>
-                                <?php foreach ($registrations as $registration): ?>
-                                    <tr class="mr-history-row <?= $first ? 'active' : '' ?>" data-history-id="<?= h($registration->id) ?>">
-                                        <td><strong><?= h($getNoPemeriksaan($registration)) ?></strong></td>
-                                        <td><?= $display($getRegDate($registration)) ?></td>
-                                        <td><?= $displayTime($getRegTime($registration)) ?></td>
+                                <?php foreach ($historyGroups as $group): ?>
+                                    <tr>
+                                        <td colspan="3" style="background:#eef2f7;font-weight:700;color:#1e3a5f;padding:6px 8px;">
+                                            <?= h($group['reg_code']) ?>
+                                        </td>
                                     </tr>
-                                    <?php $first = false; ?>
+                                    <?php if (empty($group['entries'])): ?>
+                                        <tr>
+                                            <td colspan="3" style="text-align:center;color:#bbb;padding:8px;font-size:10px;font-style:italic;">
+                                                Belum ada isian pada registrasi ini
+                                            </td>
+                                        </tr>
+                                    <?php endif; ?>
+                                    <?php foreach ($group['entries'] as $entry): ?>
+                                        <?php
+                                        $entryKey = $group['reg_id'] . '|' . $entry['type'] . '|' . $entry['history_no'];
+                                        $isActive = ($entryKey === $defaultActiveEntryKey);
+                                        ?>
+                                        <tr class="mr-history-row <?= $isActive ? 'active' : '' ?>" data-history-id="<?= h($entry['id']) ?>" data-tab="<?= h($entry['type']) ?>">
+                                            <td style="padding-left:18px;"><strong><?= h($entry['history_no']) ?></strong><br><span class="mr-history-type">(<?= h($entry['type_label']) ?>)</span></td>
+                                            <td><?= $display($entry['date']) ?></td>
+                                            <td><?= $displayTime($entry['time']) ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
                                 <?php endforeach; ?>
                             <?php endif; ?>
                         </tbody>
                     </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -424,78 +859,69 @@ $patientCode = $patient ? ($patient->code ?? null) : null;
                                     <?php $firstPanel = true; ?>
                                     <?php foreach ($registrations as $registration): ?>
                                         <?php
-                                        $details = $detailData[$registration->id] ?? [];
+                                         $details = $detailData[$registration->id] ?? [];
+                                        $visitEmr = $registration->outpatient_visit_emr ?? null;
                                         $PatientHistory = $registration->medical_record ?? null;
                                         $soapRows = [];
+                                        if (!empty($visitEmr)) {
+                                            $soapRows[] = $visitEmr;
+                                        }
                                         if (!empty($PatientHistory)) {
                                             $soapRows[] = $PatientHistory;
                                         }
                                         $soapRows = array_merge($soapRows, $details['examinations'] ?? []);
+                                        $emrPrescriptionRows = [];
+                                        if (!empty($visitEmr) && !empty($visitEmr->prescription_notes ?? null)) {
+                                            $emrLines = preg_split('/\r\n|\r|\n/', (string)$visitEmr->prescription_notes);
+                                            $emrItems = [];
+                                            foreach ($emrLines as $emrLine) {
+                                                $emrLine = trim($emrLine);
+                                                if ($emrLine !== '') {
+                                                    $emrItems[] = ['name' => $emrLine, 'qty' => ''];
+                                                }
+                                            }
+                                            if (!empty($emrItems)) {
+                                                $emrPrescriptionRows[] = [
+                                                    'no_resep' => $rwtCodeByRegistration[$registration->id] ?? $getNoPemeriksaan($registration),
+                                                    'tgl_resep' => $getRegDate($registration),
+                                                    'jam' => $getRegTime($registration),
+                                                    'dokter' => $getDoctor($registration),
+                                                    'items' => $emrItems,
+                                                ];
+                                            }
+                                        }
                                         ?>
                                         <div class="detail-panel <?= $firstPanel ? 'active' : '' ?>" data-panel-history-id="<?= h($registration->id) ?>">
                                             <div class="detail-heading">
-                                                <div>
-                                                    <strong><?= h($getNoPemeriksaan($registration)) ?></strong><br>
-                                                    <small><?= $display($getRegDate($registration)) ?> <?= $displayTime($getRegTime($registration)) ?> | <?= h($getPoli($registration)) ?> | <?= h($getDoctor($registration)) ?></small>
-                                                </div>
-                                                <div><small>Status: <?= $display($registration->status ?? '-') ?></small></div>
+                                            <div>
+                                                <strong><?= h($rwtCodeByType[$registration->id][$tabName] ?? ($rwtCodeByRegistration[$registration->id] ?? $getNoPemeriksaan($registration))) ?></strong><br>
+                                                <small><?= $display($getRegDate($registration)) ?> <?= $displayTime($getRegTime($registration)) ?> | <?= h($getPoli($registration)) ?> | <?= h($getDoctor($registration)) ?></small>
                                             </div>
+                                            <div>
+                                                <small>Status: <?= $display($registration->status ?? '-') ?></small><br>
+                                                <small>Dibuat oleh: <?= h($registration->history_created_by ?? '-') ?></small>
+                                            </div>
+                                        </div>
 
                                             <?php if ($tabName === 'soap'): ?>
                                                 <?php $renderSoap($soapRows); ?>
-                                            <?php elseif ($tabName === 'resep'): ?>
-                                                <?php $renderGenericTable($details['prescriptions'] ?? [], [
-                                                    'No Resep' => ['no_resep', 'prescription_no', 'recipe_no', 'number', 'code'],
-                                                    'Tanggal' => ['tgl_resep', 'tanggal_resep', 'prescription_date', 'date', 'created'],
-                                                    'Jam' => ['jam', 'prescription_time', 'time'],
-                                                    'Dokter' => ['dokter', 'doctor', 'doctor_name', 'nama_dokter'],
-                                                    'Detail Obat' => ['detail_obat', 'drug_detail', 'medicine_detail', 'obat', 'items', 'note', 'notes'],
-                                                ]); ?>
+                                       <?php elseif ($tabName === 'resep'): ?>
+                                                <?php
+                                                $resepRows = !empty($details['prescriptions'])
+                                                    ? $details['prescriptions']
+                                                    : (!empty($emrPrescriptionRows) ? $emrPrescriptionRows : []);
+                                                $renderResepTable($resepRows);
+                                                ?>
                                             <?php elseif ($tabName === 'penunjang'): ?>
-                                                <div class="soap-title">Laboratorium</div>
-                                                <?php $renderGenericTable($details['laboratories'] ?? [], [
-                                                    'Pemeriksaan' => ['pemeriksaan', 'jenis_pemeriksaan', 'examination', 'test_name', 'item_name'],
-                                                    'Hasil' => ['hasil', 'result', 'result_value', 'nilai', 'note', 'notes'],
-                                                    'Satuan' => ['satuan', 'unit'],
-                                                    'Nilai Rujukan' => ['nilai_rujukan', 'nilai_normal', 'reference_range', 'normal_value'],
-                                                    'Keterangan' => ['keterangan', 'remark', 'status'],
-                                                ]); ?>
-                                                <br>
-                                                <div class="soap-title">Radiologi</div>
-                                                <?php $renderGenericTable($details['radiologies'] ?? [], [
-                                                    'Pemeriksaan' => ['pemeriksaan', 'jenis_pemeriksaan', 'examination', 'study_name', 'item_name'],
-                                                    'Hasil / Kesan' => ['hasil', 'result', 'kesan', 'impression', 'note', 'notes'],
-                                                    'Keterangan' => ['keterangan', 'remark', 'status'],
-                                                ]); ?>
+                                                <?php $renderPenunjangMedis($details['penunjang'] ?? []); ?>
                                             <?php elseif ($tabName === 'laboratorium'): ?>
-                                                <?php $renderGenericTable($details['laboratories'] ?? [], [
-                                                    'Pemeriksaan' => ['pemeriksaan', 'jenis_pemeriksaan', 'examination', 'test_name', 'item_name', 'parameter'],
-                                                    'Hasil' => ['hasil', 'result', 'result_value', 'nilai', 'note', 'notes'],
-                                                    'Satuan' => ['satuan', 'unit'],
-                                                    'Nilai Rujukan' => ['nilai_rujukan', 'nilai_normal', 'reference_range', 'normal_value'],
-                                                    'Keterangan' => ['keterangan', 'remark', 'status'],
-                                                ]); ?>
+                                                <?php $renderLaboratorium($details['lab_orders'] ?? [], $details['laboratories'] ?? []); ?>
                                             <?php elseif ($tabName === 'radiologi'): ?>
-                                                <?php $renderGenericTable($details['radiologies'] ?? [], [
-                                                    'Pemeriksaan' => ['pemeriksaan', 'jenis_pemeriksaan', 'examination', 'study_name', 'item_name'],
-                                                    'Hasil / Kesan' => ['hasil', 'result', 'kesan', 'impression', 'note', 'notes'],
-                                                    'Keterangan' => ['keterangan', 'remark', 'status'],
-                                                ]); ?>
+                                                <?php $renderRadiologi($details['radio_orders'] ?? [], $details['radiologies'] ?? []); ?>
                                             <?php elseif ($tabName === 'bedah'): ?>
-                                                <?php $renderGenericTable($details['surgeries'] ?? [], [
-                                                    'Tanggal' => ['date', 'surgery_date', 'created'],
-                                                    'Tindakan' => ['tindakan', 'action', 'procedure_name', 'name'],
-                                                    'Dokter' => ['dokter', 'doctor_name', 'doctor'],
-                                                    'Keterangan' => ['note', 'notes', 'remark', 'description'],
-                                                ]); ?>
+                                                <?php $renderBedah($details['surgeries'] ?? []); ?>
                                             <?php elseif ($tabName === 'integrasi'): ?>
-                                                <?php $renderGenericTable($details['integrations'] ?? [], [
-                                                    'Tanggal' => ['noted_at', 'date', 'created'],
-                                                    'Tenaga Kesehatan' => ['health_worker_name', 'officer_name', 'petugas'],
-                                                    'Dokter' => ['doctor_name', 'dokter'],
-                                                    'SOAP SBAR' => ['soap_sbar', 'note', 'notes'],
-                                                    'Instruksi' => ['instruction', 'instruksi'],
-                                                ]); ?>
+                                                <?php $renderFormIntegrasi($details['cppt'] ?? []); ?>
                                             <?php elseif ($tabName === 'icare'): ?>
                                                 <?php $renderGenericTable($details['icares'] ?? [], [
                                                     'Tanggal' => ['date', 'created'],
@@ -517,240 +943,161 @@ $patientCode = $patient ? ($patient->code ?? null) : null;
     </div>
 </div>
 
-
 <div class="modal fade patient-modal" id="modalCariPasien" tabindex="-1" role="dialog" aria-labelledby="modalCariPasienLabel">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="modalCariPasienLabel"><i class="fa fa-search"></i> Cari pasien</h4>
-            </div>
-            <div class="modal-body">
-                <div class="patient-modal-filter">
-                    <label>Cari Pasien</label>
-                    <input type="text" id="patient-search-modal-input" class="form-control input-sm" value="<?= h($patientSearch) ?>" placeholder="Ketik kode pasien / nama / NIK / telepon / alamat">
-                </div>
-                <div class="patient-modal-table-wrap">
-                    <table class="patient-modal-table">
-                        <thead>
-                            <tr>
-                                <th width="105">No Pasien</th>
-                                <th width="220">Nama Pasien</th>
-                                <th width="90">Tgl Lahir</th>
-                                <th width="55">J.Kel</th>
-                                <th width="260">Alamat</th>
-                                <th width="125">Phone</th>
-                                <th width="150">No Identitas</th>
-                                <th width="120">No. Kartu</th>
-                                <th width="70">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="patient-result-body">
-                            <?php if ($patientSearch === ''): ?>
-                                <tr><td colspan="9" class="text-center text-muted">Ketik kata kunci pasien, hasil langsung muncul di bawah.</td></tr>
-                            <?php elseif (empty($patientResults)): ?>
-                                <tr><td colspan="9" class="text-center text-muted">Data pasien tidak ditemukan.</td></tr>
-                            <?php else: ?>
-                                <?php foreach ($patientResults as $rowPatient): ?>
-                                    <?php
-                                    $rowCode = $rowPatient->code ?? '';
-                                    $rowGender = $genderText($rowPatient->gender ?? null);
-                                    $rowCard = $rowPatient->card_no
-                                        ?? $rowPatient->no_kartu
-                                        ?? $rowPatient->insurance_card_no
-                                        ?? $rowPatient->bpjs_card_no
-                                        ?? $rowPatient->bpjs_number
-                                        ?? null;
-                                    $selectUrl = $this->Url->build(['action' => 'index', '?' => ['q' => $rowCode]]);
-                                    ?>
-                                    <tr class="patient-select-row" data-url="<?= h($selectUrl) ?>">
-                                        <td><a class="patient-pilih-link" href="<?= h($selectUrl) ?>"><strong><?= $display($rowCode) ?></strong></a></td>
-                                        <td><a class="patient-pilih-link" href="<?= h($selectUrl) ?>"><?= $display($rowPatient->full_name ?? null) ?></a></td>
-                                        <td><a class="patient-pilih-link" href="<?= h($selectUrl) ?>"><?= $display($rowPatient->birth_date ?? null) ?></a></td>
-                                        <td><a class="patient-pilih-link" href="<?= h($selectUrl) ?>"><?= h(substr($rowGender, 0, 1)) ?></a></td>
-                                        <td><a class="patient-pilih-link" href="<?= h($selectUrl) ?>"><?= $display($rowPatient->address ?? null) ?></a></td>
-                                        <td><a class="patient-pilih-link" href="<?= h($selectUrl) ?>"><?= $display($rowPatient->phone_number ?? null) ?></a></td>
-                                        <td><a class="patient-pilih-link" href="<?= h($selectUrl) ?>"><?= $display($rowPatient->identity_number ?? null) ?></a></td>
-                                        <td><a class="patient-pilih-link" href="<?= h($selectUrl) ?>"><?= $display($rowCard) ?></a></td>
-                                        <td class="text-center"><a href="<?= h($selectUrl) ?>" class="btn btn-primary btn-xs"><i class="fa fa-check"></i> Pilih</a></td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary btn-sm" id="btn-modal-ok"><i class="fa fa-check"></i> Ok</button>
-                <button type="button" class="btn btn-danger btn-sm" data-dismiss="modal"><i class="fa fa-times"></i> Cancel</button>
-            </div>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color:#fff;opacity:1;">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title" id="modalCariPasienLabel"><i class="fa fa-search"></i> Cari Pasien</h4>
+      </div>
+      <div class="modal-body">
+        <div class="patient-modal-filter">
+          <label>Kata Kunci</label>
+          <input type="text" id="patientModalSearchInput" class="form-control input-sm"
+                 placeholder="Kode / Nama / NIK / Telepon / Alamat" autocomplete="off">
         </div>
+        <div class="patient-modal-table-wrap">
+          <table class="table table-condensed patient-modal-table">
+            <thead>
+            <tr>
+                <th width="60">Pilih</th>
+                <th>Kode</th><th>Nama</th><th>Tgl Lahir</th><th>JK</th>
+                <th>No Identitas</th><th>Telepon</th><th>Alamat</th>
+            </tr>
+            </thead>
+            <tbody id="patientModalResultsBody">
+              <tr><td colspan="7" style="text-align:center;color:#888;">Ketik kata kunci untuk mencari pasien</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button>
+      </div>
     </div>
+  </div>
 </div>
 
 <script>
-(function () {
-    var activeHistoryId = document.querySelector('.mr-history-row.active') ? document.querySelector('.mr-history-row.active').getAttribute('data-history-id') : null;
+$(function () {
+    var $modal = $('#modalCariPasien');
+    var $input = $('#patientModalSearchInput');
+    var $body = $('#patientModalResultsBody');
+    var searchTimer = null;
 
-    function showHistory(historyId) {
-        activeHistoryId = historyId;
-        document.querySelectorAll('.mr-history-row').forEach(function (row) {
-            row.classList.toggle('active', row.getAttribute('data-history-id') === historyId);
-        });
-        document.querySelectorAll('.detail-panel').forEach(function (panel) {
-            panel.classList.toggle('active', panel.getAttribute('data-panel-history-id') === historyId);
-        });
-    }
+    function esc(v) { return $('<div>').text(v == null ? '' : v).html(); }
 
-    document.querySelectorAll('.mr-history-row').forEach(function (row) {
-        row.addEventListener('click', function () {
-            showHistory(row.getAttribute('data-history-id'));
-        });
-    });
-
-    function escapeHtml(text) {
-        return String(text || '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
-
-    function bindPatientRows() {
-        document.querySelectorAll('.patient-select-row').forEach(function (row) {
-            row.addEventListener('click', function () {
-                document.querySelectorAll('.patient-select-row').forEach(function (otherRow) {
-                    otherRow.classList.remove('selected-row');
-                });
-                row.classList.add('selected-row');
-                selectedPatientUrl = row.getAttribute('data-url');
-            });
-            row.addEventListener('dblclick', function () {
-                var url = row.getAttribute('data-url');
-                if (url) { window.location.href = url; }
-            });
-        });
-    }
-
-    var selectedPatientUrl = null;
-    bindPatientRows();
-
-    document.querySelectorAll('.btn-open-patient-modal').forEach(function (button) {
-        button.addEventListener('click', function () {
-            if (window.jQuery && jQuery.fn.modal) {
-                jQuery('#modalCariPasien').modal('show');
-                setTimeout(function () {
-                    var input = document.getElementById('patient-search-modal-input');
-                    if (input) { input.focus(); input.select(); }
-                }, 300);
-            }
-        });
-    });
-
-    var okButton = document.getElementById('btn-modal-ok');
-    if (okButton) {
-        okButton.addEventListener('click', function () {
-            if (selectedPatientUrl) {
-                window.location.href = selectedPatientUrl;
-            } else {
-                var firstRow = document.querySelector('.patient-select-row');
-                if (firstRow && firstRow.getAttribute('data-url')) {
-                    window.location.href = firstRow.getAttribute('data-url');
-                }
-            }
-        });
-    }
-
-    function renderPatientRows(rows, term) {
-        var tbody = document.getElementById('patient-result-body');
-        if (!tbody) { return; }
-
-        if (!term) {
-            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Ketik kata kunci pasien, hasil langsung muncul di bawah.</td></tr>';
+    function renderRows(rows) {
+        if (!rows || !rows.length) {
+            $body.html('<tr><td colspan="8" style="text-align:center;color:#888;">Tidak ada pasien ditemukan</td></tr>');
             return;
         }
-
-        if (!rows || rows.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Data pasien tidak ditemukan.</td></tr>';
-            return;
-        }
-
         var html = '';
-        rows.forEach(function (patient) {
-            var code = patient.code || '';
-            var url = '<?= $this->Url->build(['action' => 'index']) ?>?q=' + encodeURIComponent(code);
-            html += '<tr class="patient-select-row" data-url="' + escapeHtml(url) + '">';
-            html += '<td><a class="patient-pilih-link" href="' + escapeHtml(url) + '"><strong>' + escapeHtml(code || '-') + '</strong></a></td>';
-            html += '<td><a class="patient-pilih-link" href="' + escapeHtml(url) + '">' + escapeHtml(patient.full_name || '-') + '</a></td>';
-            html += '<td><a class="patient-pilih-link" href="' + escapeHtml(url) + '">' + escapeHtml(patient.birth_date || '-') + '</a></td>';
-            html += '<td><a class="patient-pilih-link" href="' + escapeHtml(url) + '">' + escapeHtml(patient.gender || '-') + '</a></td>';
-            html += '<td><a class="patient-pilih-link" href="' + escapeHtml(url) + '">' + escapeHtml(patient.address || '-') + '</a></td>';
-            html += '<td><a class="patient-pilih-link" href="' + escapeHtml(url) + '">' + escapeHtml(patient.phone_number || '-') + '</a></td>';
-            html += '<td><a class="patient-pilih-link" href="' + escapeHtml(url) + '">' + escapeHtml(patient.identity_number || '-') + '</a></td>';
-            html += '<td><a class="patient-pilih-link" href="' + escapeHtml(url) + '">' + escapeHtml(patient.card_no || '-') + '</a></td>';
-            html += '<td class="text-center"><a href="' + escapeHtml(url) + '" class="btn btn-primary btn-xs"><i class="fa fa-check"></i> Pilih</a></td>';
-            html += '</tr>';
+        rows.forEach(function (p) {
+            html += '<tr class="patient-modal-row">'
+                + '<td style="text-align:center;">'
+                    + '<button type="button" class="btn btn-primary btn-xs btn-pilih-pasien" '
+                    + 'data-code="' + esc(p.code) + '">Pilih</button>'
+                + '</td>'
+                + '<td>' + esc(p.code) + '</td>'
+                + '<td>' + esc(p.full_name) + '</td>'
+                + '<td>' + esc(p.birth_date) + '</td>'
+                + '<td>' + esc(p.gender) + '</td>'
+                + '<td>' + esc(p.identity_number) + '</td>'
+                + '<td>' + esc(p.phone_number) + '</td>'
+                + '<td>' + esc(p.address) + '</td>'
+                + '</tr>';
         });
-
-        tbody.innerHTML = html;
-        bindPatientRows();
+        $body.html(html);
     }
 
-    var patientSearchTimer = null;
-    var patientSearchRequest = null;
+    function doSearch(term) {
+        $body.html('<tr><td colspan="8" style="text-align:center;color:#888;">Memuat data...</td></tr>');
+        $.ajax({
+            url: '<?= $this->Url->build(['action' => 'searchPatients']) ?>',
+            data: { term: term },
+            dataType: 'json'
+        }).done(function (resp) {
+            renderRows(resp && resp.data ? resp.data : []);
+        }).fail(function () {
+            $body.html('<tr><td colspan="8" style="text-align:center;color:#c00;">Gagal memuat data</td></tr>');
+        });
+    }
 
-    function liveSearchPatients() {
-        var input = document.getElementById('patient-search-modal-input');
-        if (!input) { return; }
+    // Klik tombol "Pilih" -> reload halaman dengan patient terpilih
+    $body.on('click', '.btn-pilih-pasien', function () {
+        var code = $(this).data('code');
+        window.location.href = '?q=' + encodeURIComponent(code);
+    });
 
-        var term = input.value.trim();
-        if (term === '') {
-            renderPatientRows([], '');
+    $input.on('keyup', function () {
+        var term = $input.val().trim();
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(function () { doSearch(term); }, 350);
+    });
+
+    // Saat modal dibuka: langsung load semua data (tanpa keyword)
+    $modal.on('shown.bs.modal', function () {
+        $input.val('').focus();
+        doSearch('');
+    });
+
+    // Aktifkan tab secara manual: pindahkan class "active" di <li> menu atas
+    // DAN di .tab-pane yang sesuai. Tidak mengandalkan .tab('show') bawaan
+    // Bootstrap supaya highlight menu atas selalu ikut pindah.
+    function activateTab(tab) {
+        var $link = $('#medical-record-tabs a[data-tab="' + tab + '"]');
+        if (!$link.length) {
             return;
         }
 
-        var tbody = document.getElementById('patient-result-body');
-        if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted"><i class="fa fa-spinner fa-spin"></i> Mencari pasien...</td></tr>';
-        }
+        $('#medical-record-tabs li').removeClass('active');
+        $link.closest('li').addClass('active');
 
-        if (patientSearchRequest && patientSearchRequest.abort) {
-            patientSearchRequest.abort();
-        }
-
-        var url = '<?= $this->Url->build(['action' => 'searchPatients']) ?>?term=' + encodeURIComponent(term) + '&limit=50';
-
-        if (window.jQuery) {
-            patientSearchRequest = jQuery.ajax({
-                url: url,
-                method: 'GET',
-                dataType: 'json',
-                success: function (response) {
-                    renderPatientRows(response && response.data ? response.data : [], term);
-                },
-                error: function (xhr, status) {
-                    if (status !== 'abort') { renderPatientRows([], term); }
-                }
-            });
-        } else {
-            fetch(url)
-                .then(function (response) { return response.json(); })
-                .then(function (response) { renderPatientRows(response && response.data ? response.data : [], term); })
-                .catch(function () { renderPatientRows([], term); });
-        }
+        $('.tab-pane').removeClass('active');
+        $($link.attr('href')).addClass('active');
     }
 
-    var modalInput = document.getElementById('patient-search-modal-input');
-    if (modalInput) {
-        modalInput.addEventListener('input', function () {
-            clearTimeout(patientSearchTimer);
-            patientSearchTimer = setTimeout(liveSearchPatients, 250);
-        });
-        modalInput.addEventListener('keyup', function () {
-            clearTimeout(patientSearchTimer);
-            patientSearchTimer = setTimeout(liveSearchPatients, 250);
-        });
-    }
-})();
+    // Klik salah satu baris di History Pemeriksaan Pasien (kiri):
+    // - highlight baris itu jadi aktif
+    // - tampilkan panel detail registrasi yang sesuai
+    // - pindah ke TAB yang sesuai dengan jenis data baris itu (soap/resep/dst)
+    $('.mr-history-row').on('click', function () {
+        var $row = $(this);
+        var regId = $row.data('history-id');
+        var tab = $row.data('tab');
+
+        $('.mr-history-row').removeClass('active');
+        $row.addClass('active');
+
+        $('.detail-panel').removeClass('active');
+        $('.detail-panel[data-panel-history-id="' + regId + '"]').addClass('active');
+
+        if (tab) {
+            activateTab(tab);
+        }
+    });
+
+    // Klik tab langsung dari menu atas -> aktifkan tab + sinkronkan
+    // highlight baris kiri supaya ikut pindah ke baris yang sesuai.
+    $('#medical-record-tabs a[data-toggle="tab"]').on('click', function (e) {
+        e.preventDefault();
+
+        var tab = $(this).data('tab');
+        activateTab(tab);
+
+        var $activePane = $($(this).attr('href'));
+        var currentRegId = $activePane.find('.detail-panel.active').data('panel-history-id');
+
+        if (currentRegId !== undefined) {
+            var $targetRow = $('.mr-history-row[data-history-id="' + currentRegId + '"][data-tab="' + tab + '"]');
+            if ($targetRow.length) {
+                $('.mr-history-row').removeClass('active');
+                $targetRow.addClass('active');
+            }
+        }
+    });
+});
 </script>

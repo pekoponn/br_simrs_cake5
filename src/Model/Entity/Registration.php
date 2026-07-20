@@ -17,6 +17,7 @@ use Cake\ORM\Entity;
  * @property string $service_type
  * @property string $doctor_id
  * @property string $polyclinic_name
+ * @property string|null $room_name
  * @property int $room_id
  * @property int $bed_id
  * @property string $class_name
@@ -75,6 +76,7 @@ class Registration extends Entity
         'polyclinic_queue_id' => true,
         'queue_number' => true,
         'polyclinic_name' => true,
+        'room_name' => true,
         'room_id' => true,
         'bed_id' => true,
         'class_name' => true,

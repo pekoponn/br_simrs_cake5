@@ -121,13 +121,13 @@ function fmtOv($val, $fmt = 'd-m-Y H:i') {
                 <div class="row" style="text-align:center;">
                     <?php
                     $vitals = [
-                        'Tekanan Darah' => ($visit->blood_pressure ?? '-') . ' mmHg',
-                        'Nadi'          => ($visit->pulse ?? '-') . ' bpm',
-                        'Suhu'          => ($visit->temperature ?? '-') . ' °C',
-                        'Pernapasan'    => ($visit->respiratory_rate ?? '-') . ' /mnt',
-                        'SpO2'          => ($visit->oxygen_saturation ?? '-') . ' %',
-                        'BB / TB'       => ($visit->weight ?? '-') . ' kg / ' . ($visit->height ?? '-') . ' cm',
-                        'Skala Nyeri'   => ($visit->pain_scale !== null ? $visit->pain_scale . '/10' : '-'),
+                        'Tekanan Darah' => ($emr->blood_pressure ?? '-') . ' mmHg',
+                        'Nadi'          => ($emr->pulse ?? '-') . ' bpm',
+                        'Suhu'          => ($emr->temperature ?? '-') . ' °C',
+                        'Pernapasan'    => ($emr->respiratory_rate ?? '-') . ' /mnt',
+                        'SpO2'          => ($emr->oxygen_saturation ?? '-') . ' %',
+                        'BB / TB'       => ($emr->weight ?? '-') . ' kg / ' . ($emr->height ?? '-') . ' cm',
+                        'Skala Nyeri'   => ($emr->pain_scale !== null ? $emr->pain_scale . '/10' : '-'),
                     ];
                     foreach ($vitals as $lbl => $val): ?>
                         <div class="col-md-3 col-xs-6" style="margin-bottom:8px;">
@@ -150,9 +150,9 @@ function fmtOv($val, $fmt = 'd-m-Y H:i') {
                     </div>
                     <div class="panel-body">
                         <label>Keluhan Utama</label>
-                        <p><?= nl2br(h($visit->chief_complaint ?? '-')) ?></p>
+                        <p><?= nl2br(h($emr->chief_complaint ?? '-')) ?></p>
                         <label>Riwayat Penyakit</label>
-                        <p><?= nl2br(h($visit->illness_history ?? '-')) ?></p>
+                        <p><?= nl2br(h($emr->illness_history ?? '-')) ?></p>
                         <?php if (!empty($visit->allergy)): ?>
                             <div class="alert alert-danger" style="padding:6px 10px; font-size:12px;">
                                 <strong>⚠ Alergi:</strong> <?= h($visit->allergy) ?>
@@ -232,7 +232,7 @@ function fmtOv($val, $fmt = 'd-m-Y H:i') {
                 <div class="panel panel-default">
                     <div class="panel-heading"><strong><i class="fa fa-sticky-note"></i> Catatan Dokter</strong></div>
                     <div class="panel-body">
-                        <p><?= nl2br(h($visit->doctor_notes ?? '-')) ?></p>
+                        <p><?= nl2br(h($emr->doctor_notes ?? '-')) ?></p>
                     </div>
                 </div>
             </div>
@@ -240,7 +240,7 @@ function fmtOv($val, $fmt = 'd-m-Y H:i') {
                 <div class="panel panel-default">
                     <div class="panel-heading"><strong><i class="fa fa-prescription"></i> Resep</strong></div>
                     <div class="panel-body">
-                        <p style="white-space:pre-wrap;"><?= nl2br(h($visit->prescription_notes ?? '-')) ?></p>
+                        <p style="white-space:pre-wrap;"><?= nl2br(h($emr->prescription_notes ?? '-')) ?></p>
                     </div>
                 </div>
             </div>

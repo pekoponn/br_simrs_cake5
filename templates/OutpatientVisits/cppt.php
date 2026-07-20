@@ -19,12 +19,10 @@ function cpptText($value) {
 }
 ?>
 
-<?= $this->Krs->breadcrumb('Outpatient Visits', 'CPPT — Catatan Perkembangan Pasien') ?>
-
-<div class="outpatient-visits cppt content">
+<div class="outpatient-visits cppt cppt-page">
 
     <!-- Header sama nuansa EMR -->
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <div class="cppt-page-toolbar" style="display:flex; justify-content:space-between; align-items:center;">
         <h4 style="margin:0; font-weight:700; color:#1e3a5f;">
             <i class="fa fa-clipboard-list"></i> CPPT — Catatan Perkembangan Pasien Terintegrasi
         </h4>
@@ -134,7 +132,7 @@ function cpptText($value) {
             <div class="row cppt-middle-row">
                 <div class="col-md-6">
                     <label class="cppt-section-title">Asesmen Pasien (SOAP &amp; SBAR)</label>
-                    <textarea name="assessment_text" id="cppt-assessment-text" class="form-control cppt-big-text cppt-entry-field" rows="8" placeholder="S :&#10;O :&#10;A :&#10;P :" <?= $isDone ? 'readonly' : '' ?>><?= h($visit->doctor_notes ?? '') ?></textarea>
+                    <textarea name="assessment_text" id="cppt-assessment-text" class="form-control cppt-big-text cppt-entry-field" rows="8" placeholder="S :&#10;O :&#10;A :&#10;P :" <?= $isDone ? 'readonly' : '' ?>><?= h($emr->doctor_notes ?? '') ?></textarea>
                 </div>
                 <div class="col-md-6">
                     <div class="cppt-instruksi-head">
@@ -142,7 +140,7 @@ function cpptText($value) {
                         <button type="button" class="btn btn-xs btn-primary">konsulkan</button>
                         <label class="cppt-check"><input type="checkbox" name="fasting_instruction" id="cppt-fasting-instruction" value="1" <?= $isDone ? 'disabled' : '' ?>> Instruksikan Puasa</label>
                     </div>
-                    <textarea name="instruction" id="cppt-instruction" class="form-control cppt-big-text cppt-entry-field" rows="8" placeholder="Instruksi dokter / terapi / obat..." <?= $isDone ? 'readonly' : '' ?>><?= h($visit->prescription_notes ?? '') ?></textarea>
+                    <textarea name="instruction" id="cppt-instruction" class="form-control cppt-big-text cppt-entry-field" rows="8" placeholder="Instruksi dokter / terapi / obat..." <?= $isDone ? 'readonly' : '' ?>><?= h($emr->prescription_notes ?? '') ?></textarea>
                 </div>
             </div>
 
@@ -231,6 +229,17 @@ function cpptText($value) {
 </div>
 
 <style>
+.outpatient-visits.cppt.cppt-page {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+}
+
+.outpatient-visits.cppt.cppt-page > .cppt-page-toolbar {
+    margin-bottom: 12px;
+}
+
 /* =========================================================
    CPPT - BASE PANEL
    ========================================================= */

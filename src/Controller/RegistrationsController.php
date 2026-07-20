@@ -14,53 +14,21 @@ class RegistrationsController extends AppController
     $filterStatus = $this->request->getQuery('status');
     $filterSvc    = $this->request->getQuery('service_type');
     $filterPay    = $this->request->getQuery('payment_method');
-    $filterDate   = $this->request->getQuery('date');
+    $filterDateFrom = $this->request->getQuery('date_from');
+$filterDateTo   = $this->request->getQuery('date_to');
 
-    $conditions = [];
+if (empty($filterDateFrom) && empty($filterDateTo)) {
+    // Default: tampilkan hari ini saja
+    $filterDateFrom = date('Y-m-d');
+    $filterDateTo   = date('Y-m-d');
+} elseif (empty($filterDateFrom)) {
+    $filterDateFrom = $filterDateTo;
+} elseif (empty($filterDateTo)) {
+    $filterDateTo = $filterDateFrom;
+}
 
-    if (!empty($q)) {
-        $conditions['OR'] = [
-            'Registrations.registration_no LIKE' => '%' . $q . '%',
-            'Patients.full_name LIKE' => '%' . $q . '%',
-        ];
-    }
-
-    if (!empty($filterStatus)) {
-
-        if ($filterStatus === 'aktif') {
-
-            $conditions[] = [
-                'OR' => [
-                    'Registrations.status' => 'aktif',
-                    'Registrations.status' => '',
-                    'Registrations.status IS' => null,
-                ]
-            ];
-
-        } else {
-
-            $conditions['Registrations.status'] = $filterStatus;
-
-        }
-    }
-
-    if (!empty($filterSvc)) {
-        $conditions['Registrations.service_type'] = $filterSvc;
-    }
-
-    if (!empty($filterPay)) {
-        $conditions['Registrations.payment_method'] = $filterPay;
-    }
-
-    if (!empty($filterDate)) {
-
-        $conditions['DATE(Registrations.registration_date)'] = $filterDate;
-
-    } else {
-
-        $conditions['DATE(Registrations.registration_date)'] = date('Y-m-d');
-
-    }
+$conditions['DATE(Registrations.registration_date) >='] = $filterDateFrom;
+$conditions['DATE(Registrations.registration_date) <='] = $filterDateTo;
 
     $this->paginate = [
         'contain' => [
@@ -82,32 +50,47 @@ class RegistrationsController extends AppController
 }
 
     public function getSummary()
-    {
-        $this->request->allowMethod(['get']);
-        $this->autoRender = false;
+{
+    $this->request->allowMethod(['get']);
+    $this->autoRender = false;
 
-        $base = $this->Registrations->find();
+    $filterDateFrom = $this->request->getQuery('date_from');
+    $filterDateTo   = $this->request->getQuery('date_to');
 
-        $aktifQuery = (clone $base)->where([
-            'OR' => [
-                ['Registrations.status' => 'aktif'],
-                ['Registrations.status' => ''],
-                ['Registrations.status IS' => null],
-            ]
-        ]);
-
-        $summary = [
-            'aktif' => $aktifQuery->count(),
-            'rawat_jalan' => (clone $base)->where(['service_type' => 'rawat_jalan'])->count(),
-            'igd' => (clone $base)->where(['service_type' => 'igd'])->count(),
-            'rawat_inap' => (clone $base)->where(['service_type' => 'rawat_inap'])->count(),
-            'total' => (clone $base)->count(),
-        ];
-
-        return $this->response
-            ->withType('application/json')
-            ->withStringBody(json_encode($summary));
+    if (empty($filterDateFrom) && empty($filterDateTo)) {
+        $filterDateFrom = date('Y-m-d');
+        $filterDateTo   = date('Y-m-d');
+    } elseif (empty($filterDateFrom)) {
+        $filterDateFrom = $filterDateTo;
+    } elseif (empty($filterDateTo)) {
+        $filterDateTo = $filterDateFrom;
     }
+
+    $base = $this->Registrations->find()->where([
+        'DATE(Registrations.registration_date) >=' => $filterDateFrom,
+        'DATE(Registrations.registration_date) <=' => $filterDateTo,
+    ]);
+
+    $aktifQuery = (clone $base)->where([
+        'OR' => [
+            ['Registrations.status' => 'aktif'],
+            ['Registrations.status' => ''],
+            ['Registrations.status IS' => null],
+        ]
+    ]);
+
+    $summary = [
+        'aktif' => $aktifQuery->count(),
+        'rawat_jalan' => (clone $base)->where(['service_type' => 'rawat_jalan'])->count(),
+        'igd' => (clone $base)->where(['service_type' => 'igd'])->count(),
+        'rawat_inap' => (clone $base)->where(['service_type' => 'rawat_inap'])->count(),
+        'total' => (clone $base)->count(),
+    ];
+
+    return $this->response
+        ->withType('application/json')
+        ->withStringBody(json_encode($summary));
+}
 
     public function view($id = null)
     {
@@ -214,29 +197,13 @@ class RegistrationsController extends AppController
         $fromQueue = true;
     }
 
-    $today = date('Ymd');
-    $prefix = 'REG-' . $today . '-';
-
-    $lastReg = $this->Registrations->find()
-        ->where(['registration_no LIKE' => $prefix . '%'])
-        ->order(['id' => 'DESC'])
-        ->first();
-
-    $lastSeq = $lastReg
-        ? (int)substr($lastReg->registration_no, strlen($prefix))
-        : 0;
-
-    $registrationNo = $prefix . str_pad((string)($lastSeq + 1), 4, '0', STR_PAD_LEFT);
+$registrationNo = $this->_generateRegistrationNo('rawat_jalan');
 
     if ($this->request->is('post')) {
         $data = $this->request->getData();
 
-        // Pastikan nomor registrasi tetap ikut tersimpan walaupun field readonly/form error.
-        if (empty($data['registration_no'])) {
-            $data['registration_no'] = $registrationNo;
-        }
         if (empty($data['registration_date'])) {
-            $data['registration_date'] = date('Y-m-d');
+    $data['registration_date'] = date('Y-m-d');
         } else {
             $tmpRegDate = strtotime((string)$data['registration_date']);
             if ($tmpRegDate) {
@@ -246,6 +213,11 @@ class RegistrationsController extends AppController
         if (empty($data['service_type'])) {
             $data['service_type'] = 'rawat_jalan';
         }
+
+        // Nomor registrasi SELALU dihitung ulang di server sesuai jenis pelayanan
+        // yang dipilih, supaya kodenya (RJ/IGD/RI) pasti benar walau field
+        // registration_no di form telat ter-update oleh JS.
+        $data['registration_no'] = $this->_generateRegistrationNo($data['service_type']);
 
         // Normalisasi Cara Bayar sesuai permintaan client:
         // hanya 4 jenis pasien: PERORANGAN, ASURANSI, PERUSAHAAN_AFILIASI, KARYAWAN.
@@ -1213,6 +1185,30 @@ class RegistrationsController extends AppController
         ));
     }
 
+    protected function _generateRegistrationNo(string $serviceType): string
+{
+    $prefixMap = [
+        'rawat_jalan' => 'RJ',
+        'igd'         => 'IGD',
+        'rawat_inap'  => 'RI',
+    ];
+
+    $code = $prefixMap[$serviceType] ?? 'REG';
+    $year = date('Y');
+    $fullPrefix = $code . $year . '-';
+
+    $last = $this->Registrations->find()
+        ->where(['registration_no LIKE' => $fullPrefix . '%'])
+        ->order(['id' => 'DESC'])
+        ->first();
+
+    $lastSeq = $last
+        ? (int)substr((string)$last->registration_no, strlen($fullPrefix))
+        : 0;
+
+    return $fullPrefix . str_pad((string)($lastSeq + 1), 7, '0', STR_PAD_LEFT);
+}
+
    protected function _createMedicalRecordForRegistration($registration): void
 {
     $this->loadModel('MedicalRecords');
@@ -1988,6 +1984,23 @@ class RegistrationsController extends AppController
             ->withType('application/json')
             ->withStringBody(json_encode($beds));
     }
+
+    public function previewRegistrationNo()
+{
+    $this->request->allowMethod(['get']);
+    $this->autoRender = false;
+
+    $serviceType = (string)$this->request->getQuery('service_type');
+    if (!in_array($serviceType, ['rawat_jalan', 'igd', 'rawat_inap'], true)) {
+        $serviceType = 'rawat_jalan';
+    }
+
+    $registrationNo = $this->_generateRegistrationNo($serviceType);
+
+    return $this->response
+        ->withType('application/json')
+        ->withStringBody(json_encode(['registration_no' => $registrationNo]));
+}
 
     public function getDoctorSchedules()
     {

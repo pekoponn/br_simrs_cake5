@@ -42,6 +42,58 @@ $isReferralQueue = function ($queue): bool {
 
     return in_array($source, ['rujukan', 'emr rujuk', 'emr_rujuk', 'emr rujukan'], true);
 };
+
+$getQueueSession = function ($queue): string {
+    $queueSession = strtolower(trim((string)($queue->queue_session ?? '')));
+    $queueCode = strtoupper(trim((string)($queue->code ?? '')));
+
+    if ($queueSession === 'afternoon' || strpos($queueCode, 'B-') === 0) {
+        return 'afternoon';
+    }
+
+    return 'morning';
+};
+
+$getQueueVisitDate = function ($queue): string {
+    foreach (['visit_date', 'created'] as $dateField) {
+        if (empty($queue->{$dateField})) {
+            continue;
+        }
+
+        if (is_object($queue->{$dateField}) && method_exists($queue->{$dateField}, 'format')) {
+            return $queue->{$dateField}->format('Y-m-d');
+        }
+
+        $timestamp = strtotime((string)$queue->{$dateField});
+
+        if ($timestamp) {
+            return date('Y-m-d', $timestamp);
+        }
+    }
+
+    return date('Y-m-d');
+};
+
+$currentQueueSession = date('H:i') > '14:00' ? 'afternoon' : 'morning';
+$today = date('Y-m-d');
+
+$canRegisterQueue = function ($queue) use ($currentQueueSession, $getQueueSession, $getQueueVisitDate, $today): bool {
+    return $getQueueVisitDate($queue) === $today
+        && $getQueueSession($queue) === $currentQueueSession;
+};
+
+$morningQueues = [];
+$afternoonQueues = [];
+$allQueues = is_array($polyclinicQueues) ? $polyclinicQueues : $polyclinicQueues->toArray();
+
+foreach ($allQueues as $queue) {
+    if ($getQueueSession($queue) === 'afternoon') {
+        $afternoonQueues[] = $queue;
+        continue;
+    }
+
+    $morningQueues[] = $queue;
+}
 ?>
 
 <?= $this->Krs->breadcrumb('Polyclinic Queue', 'Data Antrian') ?>
@@ -87,6 +139,31 @@ $isReferralQueue = function ($queue): bool {
     .queue-table {
         margin-bottom: 0;
         background: #fff;
+    }
+
+    .queue-section {
+        margin-top: 18px;
+    }
+
+    .queue-section-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+        background: #f1f3f5;
+        border: 1px solid #e5e9ef;
+        border-bottom: 0;
+    }
+
+    .queue-section-heading h5 {
+        margin: 0;
+        color: #172033;
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+    .queue-section-heading .badge {
+        font-size: 12px;
     }
 
     .queue-table thead th {
@@ -292,366 +369,33 @@ $isReferralQueue = function ($queue): bool {
                 </div>
             <?= $this->Form->end() ?>
 
-            <div class="table-responsive">
-                <table class="table table-striped table-hover table-td-valign-middle queue-table">
-                    <thead class="thead-dark text-center">
-                        <tr>
-                            <th width="90">Kode</th>
-                            <th width="110">Source</th>
-                            <th>Pasien</th>
-                            <th width="170">Poliklinik</th>
-                            <th width="105">No Antrian</th>
-                            <th width="145">No HP</th>
-                            <th width="135">Status</th>
-                            <th width="250" class="actions">&nbsp;</th>
-                        </tr>
-                    </thead>
+            <?= $this->element('polyclinic_queue_index_table', [
+                'title' => 'Antrian Pagi',
+                'queues' => $morningQueues,
+                'emptyMessage' => 'Data antrian pagi tidak ditemukan',
+                'buildWhatsAppLink' => $buildWhatsAppLink,
+                'isMobileJknQueue' => $isMobileJknQueue,
+                'isReferralQueue' => $isReferralQueue,
+                'canRegisterQueue' => $canRegisterQueue,
+            ]) ?>
 
-                    <tbody>
-                        <?php if (count($polyclinicQueues) > 0): ?>
-                            <?php foreach ($polyclinicQueues as $queue): ?>
-                                <?php
-                                $isMobileJkn = $isMobileJknQueue($queue);
+            <?= $this->element('polyclinic_queue_index_table', [
+                'title' => 'Antrian Sore',
+                'queues' => $afternoonQueues,
+                'emptyMessage' => 'Data antrian sore tidak ditemukan',
+                'buildWhatsAppLink' => $buildWhatsAppLink,
+                'isMobileJknQueue' => $isMobileJknQueue,
+                'isReferralQueue' => $isReferralQueue,
+                'canRegisterQueue' => $canRegisterQueue,
+            ]) ?>
 
-                                $isReferral = $isReferralQueue($queue);
-
-                                if (in_array(strtolower(trim((string)$queue->source)), ['wa', 'whatsapp'], true)) {
-                                    $sourceBadge = '<span class="label label-success">WhatsApp</span>';
-                                } elseif ($isMobileJkn) {
-                                    $sourceBadge = '<span class="label label-mobile-jkn">Mobile JKN</span>';
-                                } elseif ($isReferral) {
-                                    $sourceBadge = '<span class="label label-info">Rujukan</span>';
-                                } else {
-                                    $sourceBadge = '<span class="label label-primary">Manual</span>';
-                                }
-
-                                $registration = $queue->registration ?? null;
-                                $isWhatsAppQueue = in_array(strtolower((string)$queue->source), ['wa', 'whatsapp'], true);
-                                $whatsAppLink = $isWhatsAppQueue ? $buildWhatsAppLink($queue) : null;
-
-                                if ($registration) {
-                                    $activeBadge = '<span class="label label-success">Registered</span><span class="queue-subtle">' . h($registration->registration_no) . '</span>';
-                                } elseif ($isMobileJkn) {
-                                    $checkinStatus = $queue->checkin_status ?: 'Belum Check-in';
-
-                                    if ($checkinStatus === 'Sudah Check-in') {
-                                        $checkinClass = 'label-checkin-done';
-                                    } elseif ($checkinStatus === 'Batal') {
-                                        $checkinClass = 'label-checkin-cancel';
-                                    } elseif ($checkinStatus === 'Selesai') {
-                                        $checkinClass = 'label-success';
-                                    } else {
-                                        $checkinClass = 'label-checkin-pending';
-                                    }
-
-                                    $activeBadge = '<span class="label ' . $checkinClass . '">' . h($checkinStatus) . '</span>';
-
-                                    if (!empty($queue->checkin_time)) {
-                                        $activeBadge .= '<span class="queue-subtle">' . h($queue->checkin_time->format('d-m-Y H:i')) . '</span>';
-                                    }
-                                } elseif ($queue->is_active == 'Y') {
-                                    $activeBadge = '<span class="label label-primary">Active</span>';
-                                } else {
-                                    $activeBadge = '<span class="label label-default">Non Active</span>';
-                                }
-
-                                if (!$registration && $queue->call_status === 'Dipanggil') {
-                                    $activeBadge .= '<span class="queue-subtle">Dipanggil'
-                                        . (!empty($queue->call_count) ? ' x' . h($queue->call_count) : '')
-                                        . '</span>';
-                                }
-
-                                $classCondition = $queue->is_active == 'Y' ? '' : 'class="table-warning"';
-                                ?>
-
-                                <tr <?= $classCondition ?>>
-                                    <td align="center">
-                                        <span class="queue-code"><?= h($queue->code ?: '-') ?></span>
-                                        <?php if ($isMobileJkn && !empty($queue->booking_code)): ?>
-                                            <span class="queue-subtle"><?= h($queue->booking_code) ?></span>
-                                        <?php endif; ?>
-                                    </td>
-
-                                    <td align="center"><?= $sourceBadge ?></td>
-
-                                    <td>
-                                        <div class="queue-patient"><?= h($queue->patients_name ?: '-') ?></div>
-                                        <?php if ($isMobileJkn): ?>
-                                            <span class="queue-subtle">
-                                                NIK: <?= h($queue->identity_number ?: '-') ?> / BPJS: <?= h($queue->bpjs_number ?: '-') ?>
-                                            </span>
-                                        <?php endif; ?>
-                                    </td>
-
-                                    <td><?= h($queue->poly_name ?: '-') ?></td>
-
-                                    <td align="center">
-                                        <span class="badge badge-info"><?= h($queue->queue_number ?: '-') ?></span>
-                                    </td>
-
-                                    <td><?= h($queue->no_telp ?: '-') ?></td>
-
-                                    <td align="center"><?= $activeBadge ?></td>
-
-                                    <td class="actions queue-actions" align="center">
-                                        <?= $this->Html->link(
-                                            '<i class="fa fa-eye"></i>',
-                                            '#modalViewQueue' . $queue->id,
-                                            [
-                                                'class' => 'btn btn-info btn-sm',
-                                                'escape' => false,
-                                                'data-toggle' => 'modal',
-                                                'title' => 'Lihat Detail Antrian'
-                                            ]
-                                        ) ?>
-                                        <?php if (!$registration): ?>
-                                            <?= $this->Html->link(
-                                                '<i class="fa fa-print"></i>',
-                                                ['action' => 'pdf', $queue->id],
-                                                [
-                                                    'class' => 'btn btn-danger btn-sm',
-                                                    'escape' => false,
-                                                    'target' => '_blank',
-                                                    'data-toggle' => 'tooltip',
-                                                    'title' => 'Cetak Nomor Antrian PDF'
-                                                ]
-                                            ) ?>
-
-                                            <?php if (!empty($whatsAppLink)): ?>
-                                                <?= $this->Html->link(
-                                                    '<i class="fab fa-whatsapp"></i>',
-                                                    $whatsAppLink,
-                                                    [
-                                                        'class' => 'btn btn-success btn-sm',
-                                                        'escape' => false,
-                                                        'target' => '_blank',
-                                                        'data-toggle' => 'tooltip',
-                                                        'title' => 'Kirim WhatsApp'
-                                                    ]
-                                                ) ?>
-                                            <?php endif; ?>
-
-                                            <?php if ($queue->is_active == 'Y'): ?>
-                                                <?= $this->Form->postLink(
-                                                    '<i class="fa fa-volume-up"></i>',
-                                                    ['action' => 'callQueue', $queue->id],
-                                                    [
-                                                        'class' => 'btn btn-warning btn-sm',
-                                                        'escape' => false,
-                                                        'data-toggle' => 'tooltip',
-                                                        'title' => 'Panggil pasien ke loket/poli',
-                                                        'confirm' => 'Panggil nomor antrian ' . h($queue->code) . '?'
-                                                    ]
-                                                ) ?>
-                                            <?php endif; ?>
-
-                                            <?php if ($isMobileJkn && $queue->is_active == 'Y'): ?>
-                                                <?php if (in_array((string)$queue->checkin_status, ['Batal', 'Selesai'], true)): ?>
-                                                    <span class="btn btn-default btn-sm disabled" title="<?= h($queue->checkin_status) ?>">
-                                                        <i class="fa fa-ban"></i>
-                                                    </span>
-                                                <?php else: ?>
-                                                    <?php
-                                                    $checkinButtonLabel = $queue->checkin_status === 'Sudah Check-in'
-                                                        ? '<i class="fa fa-clipboard"></i>'
-                                                        : '<i class="fa fa-sign-in-alt"></i>';
-                                                    ?>
-                                                    <?= $this->Form->postLink(
-                                                        $checkinButtonLabel,
-                                                        ['action' => 'checkIn', $queue->id],
-                                                        [
-                                                            'class' => 'btn btn-inverse btn-sm',
-                                                            'escape' => false,
-                                                            'data-toggle' => 'tooltip',
-                                                            'title' => 'Check-in lalu lanjut registrasi',
-                                                            'confirm' => 'Check-in antrian Mobile JKN ini dan lanjut ke registrasi?'
-                                                        ]
-                                                    ) ?>
-                                                <?php endif; ?>
-                                            <?php elseif ($queue->is_active == 'Y'): ?>
-                                                <?= $this->Html->link(
-                                                    '<i class="fa fa-user-plus"></i>',
-                                                    [
-                                                        'controller' => 'Registrations',
-                                                        'action' => 'add',
-                                                        '?' => [
-                                                            'queue_id' => $queue->id,
-                                                            'queue_number' => $queue->queue_number,
-                                                            'queue_code' => $queue->code,
-                                                            'poly_name' => $queue->poly_name,
-                                                        ]
-                                                    ],
-                                                    [
-                                                        'escape' => false,
-                                                        'class' => 'btn btn-success btn-sm'
-                                                    ]
-                                                ) ?>
-                                            <?php else: ?>
-                                                <span class="btn btn-default btn-sm disabled" title="Tidak Aktif">
-                                                    <i class="fa fa-ban"></i>
-                                                </span>
-                                            <?php endif; ?>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="8" class="text-center">
-                                    <div style="padding:20px;">
-                                        <i class="fa fa-database fa-2x"></i>
-                                        <br><br>
-                                        Data antrian tidak ditemukan
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
-
-            <?php if (count($polyclinicQueues) > 0): ?>
-                <?php foreach ($polyclinicQueues as $queue): ?>
-                    <?php
-                    $isMobileJkn = $isMobileJknQueue($queue);
-                    $isReferral = $isReferralQueue($queue);
-
-                    if (in_array(strtolower(trim((string)$queue->source)), ['wa', 'whatsapp'], true)) {
-                        $sourceBadge = '<span class="label label-success">WhatsApp</span>';
-                    } elseif ($isMobileJkn) {
-                        $sourceBadge = '<span class="label label-mobile-jkn">Mobile JKN</span>';
-                    } elseif ($isReferral) {
-                        $sourceBadge = '<span class="label label-info">Rujukan</span>';
-                    } else {
-                        $sourceBadge = '<span class="label label-primary">Manual</span>';
-                    }
-
-                    $registration = $queue->registration ?? null;
-
-                    if ($registration) {
-                        $activeBadge = '<span class="label label-success">Registered</span><span class="queue-subtle">' . h($registration->registration_no) . '</span>';
-                    } elseif ($isMobileJkn) {
-                        $checkinStatus = $queue->checkin_status ?: 'Belum Check-in';
-
-                        if ($checkinStatus === 'Sudah Check-in') {
-                            $checkinClass = 'label-checkin-done';
-                        } elseif ($checkinStatus === 'Batal') {
-                            $checkinClass = 'label-checkin-cancel';
-                        } elseif ($checkinStatus === 'Selesai') {
-                            $checkinClass = 'label-success';
-                        } else {
-                            $checkinClass = 'label-checkin-pending';
-                        }
-
-                        $activeBadge = '<span class="label ' . $checkinClass . '">' . h($checkinStatus) . '</span>';
-
-                        if (!empty($queue->checkin_time)) {
-                            $activeBadge .= '<span class="queue-subtle">' . h($queue->checkin_time->format('d-m-Y H:i')) . '</span>';
-                        }
-                    } elseif ($queue->is_active == 'Y') {
-                        $activeBadge = '<span class="label label-primary">Active</span>';
-                    } else {
-                        $activeBadge = '<span class="label label-default">Non Active</span>';
-                    }
-
-                    if (!$registration && $queue->call_status === 'Dipanggil') {
-                        $activeBadge .= '<span class="queue-subtle">Dipanggil'
-                            . (!empty($queue->call_count) ? ' x' . h($queue->call_count) : '')
-                            . '</span>';
-                    }
-                    ?>
-                    <div class="modal fade" id="modalViewQueue<?= $queue->id ?>" tabindex="-1" role="dialog" aria-labelledby="modalViewQueueTitle<?= $queue->id ?>" aria-hidden="true">
-                        <div class="modal-dialog modal-lg" role="document">
-                            <div class="modal-content">
-                                <div class="modal-header bg-info text-white">
-                                    <h4 class="modal-title" id="modalViewQueueTitle<?= $queue->id ?>">
-                                        Detail Antrian <?= h($queue->code ?: '-') ?>
-                                    </h4>
-                                    <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
-                                </div>
-                                <div class="modal-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-bordered table-striped">
-                                            <tbody>
-                                                <tr>
-                                                    <th width="220">Kode Antrian</th>
-                                                    <td><?= h($queue->code ?: '-') ?></td>
-                                                </tr>
-                                                <tr>
-                                                    <th>Source</th>
-                                                    <td><?= $sourceBadge ?></td>
-                                                </tr>
-                                                <tr>
-                                                    <th>Nama Pasien</th>
-                                                    <td><?= h($queue->patients_name ?: '-') ?></td>
-                                                </tr>
-                                                <?php if ($isMobileJkn): ?>
-                                                    <tr>
-                                                        <th>NIK</th>
-                                                        <td><?= h($queue->identity_number ?: '-') ?></td>
-                                                    </tr>
-                                                    <tr>
-                                                        <th>No BPJS</th>
-                                                        <td><?= h($queue->bpjs_number ?: '-') ?></td>
-                                                    </tr>
-                                                <?php endif; ?>
-                                                <tr>
-                                                    <th>Poliklinik</th>
-                                                    <td><?= h($queue->poly_name ?: '-') ?></td>
-                                                </tr>
-                                                <tr>
-                                                    <th>No Antrian</th>
-                                                    <td><?= h($queue->queue_number ?: '-') ?></td>
-                                                </tr>
-                                                <tr>
-                                                    <th>No HP</th>
-                                                    <td><?= h($queue->no_telp ?: '-') ?></td>
-                                                </tr>
-                                                <tr>
-                                                    <th>Status</th>
-                                                    <td><?= $activeBadge ?></td>
-                                                </tr>
-                                                <?php if ($isMobileJkn): ?>
-                                                    <tr>
-                                                        <th>Booking Code</th>
-                                                        <td><?= h($queue->booking_code ?: '-') ?></td>
-                                                    </tr>
-                                                <?php endif; ?>
-                                                <tr>
-                                                    <th>Call Status</th>
-                                                    <td><?= h($queue->call_status ?: '-') ?></td>
-                                                </tr>
-                                                <tr>
-                                                    <th>Jumlah Dipanggil</th>
-                                                    <td><?= h($queue->call_count ?: '0') ?></td>
-                                                </tr>
-                                                <?php if ($isMobileJkn): ?>
-                                                    <tr>
-                                                        <th>Waktu Check-in</th>
-                                                        <td>
-                                                            <?= !empty($queue->checkin_time)
-                                                                ? h($queue->checkin_time->format('d-m-Y H:i'))
-                                                                : '-' ?>
-                                                        </td>
-                                                    </tr>
-                                                <?php endif; ?>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-default" data-dismiss="modal">
-                                        Tutup
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
+            <?php foreach ($allQueues as $queue): ?>
+                <?= $this->element('polyclinic_queue_index_modal', [
+                    'queue' => $queue,
+                    'isMobileJknQueue' => $isMobileJknQueue,
+                    'isReferralQueue' => $isReferralQueue,
+                ]) ?>
+            <?php endforeach; ?>
 
             <div class="row queue-pagination">
                 <div class="col-md-6">

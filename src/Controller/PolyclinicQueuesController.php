@@ -1206,7 +1206,8 @@ class PolyclinicQueuesController extends AppController
         $patientName = trim((string)$this->request->getData('patient_name'));
         $phoneNumber = trim((string)$this->request->getData('phone_number'));
         $visitDate = trim((string)$this->request->getData('visit_date'));
-
+        $doctorName = trim((string)$this->request->getData('doctor_name'));
+        
         if ($polyName === '') {
             return $this->response
                 ->withType('application/json')

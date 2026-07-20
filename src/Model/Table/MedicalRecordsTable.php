@@ -55,6 +55,8 @@ class MedicalRecordsTable extends Table
         parent::initialize($config);
 
         $this->setTable('medical_records');
+        $this->setDisplayField('id');
+        $this->setPrimaryKey('id');
 
         $this->addBehavior('Timestamp');
 
@@ -113,7 +115,7 @@ class MedicalRecordsTable extends Table
     {
         $validator
             ->integer('id')
-            ->notEmptyString('id');
+            ->allowEmptyString('id', null, 'create');
 
         $validator
             ->scalar('medical_record_no')

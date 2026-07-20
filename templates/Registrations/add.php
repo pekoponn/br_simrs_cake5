@@ -1846,9 +1846,23 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                 }
             }
         }
+
+        function updateRegistrationNumber(type) {
+            $.getJSON(
+                "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'previewRegistrationNo']) ?>",
+                { service_type: type },
+                function(data) {
+                    if (data && data.registration_no) {
+                        $('#registration-no').val(data.registration_no);
+                    }
+                }
+            );
+        }
+        
         setServiceForm('<?= h($currentServiceType) ?>');
         $('input[name="service_type"]').on('change', function() {
             setServiceForm($(this).val());
+            updateRegistrationNumber($(this).val());
         });
 
         // ── Reset dropdown bed ────────────────────────────────────────────────────

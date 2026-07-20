@@ -1155,7 +1155,174 @@ if (empty($nutritionDietOptions)) {
     </div>
 </div>
 
+<div class="modal fade" id="modal-obat" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-obat-dialog">
+        <div class="modal-content modal-obat-content">
+            <div class="modal-obat-title">
+                <span><i class="fa fa-search"></i> DAFTAR OBAT DI FARMASI <span id="modal-obat-depo-label"></span></span>
+                <button type="button" class="close modal-obat-close" data-dismiss="modal">&times;</button>
+            </div>
 
+            <div class="modal-obat-body">
+                <div class="obat-search-row">
+                    <label>Cari</label>
+                    <input type="text"
+                           id="obat-modal-search"
+                           class="form-control input-sm"
+                           placeholder="Ketik kode / nama obat / generic..."
+                           autocomplete="off">
+                </div>
+
+                <div class="obat-modal-grid">
+                    <div class="obat-table-wrap">
+                        <table class="table table-bordered table-condensed obat-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:34px;">Pilih</th>
+                                    <th style="width:95px;">Kode</th>
+                                    <th>Nama Obat</th>
+                                    <th style="width:130px;">Generic</th>
+                                    <th style="width:70px;">Satuan</th>
+                                    <th style="width:100px;">Harga Jual</th>
+                                </tr>
+                            </thead>
+                            <tbody id="obat-modal-tbody">
+                                <tr>
+                                    <td colspan="6" class="obat-empty">Ketik pencarian untuk menampilkan obat.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="obat-selected-box">
+                        <div class="obat-selected-title">Obat Terpilih</div>
+                        <table class="table table-bordered table-condensed obat-selected-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:80px;">Kode</th>
+                                    <th>Nama Obat</th>
+                                    <th style="width:26px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="obat-selected-tbody">
+                                <tr>
+                                    <td colspan="3" class="obat-empty">Belum ada obat dipilih.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="obat-modal-footer">
+                    <button type="button" class="btn btn-primary btn-sm" id="btn-obat-ok">
+                        <i class="fa fa-check"></i> OK
+                    </button>
+                    <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">
+                        <i class="fa fa-times"></i> Batal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-laboratorium" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lab-dialog">
+        <div class="modal-content modal-lab-content">
+            <div class="modal-lab-title">
+                <span><i class="fa fa-flask"></i> LABORATORIUM</span>
+                <button type="button" class="close modal-lab-close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <div class="modal-lab-body">
+                <div class="lab-modal-carabayar-row">
+                    <label style="font-weight:700;margin-right:12px;">Cara Bayar</label>
+                    <label class="lab-carabayar-opt">
+                        <input type="radio" name="lab_cara_bayar" value="Umum" checked> Umum
+                    </label>
+                    <label class="lab-carabayar-opt">
+                        <input type="radio" name="lab_cara_bayar" value="Asuransi"> Asuransi
+                    </label>
+                    <label class="lab-carabayar-opt">
+                        <input type="radio" name="lab_cara_bayar" value="Umum & Asuransi"> Umum &amp; Asuransi
+                    </label>
+                    <label class="lab-carabayar-opt">
+                        <input type="radio" name="lab_cara_bayar" value="OPSI"> OPSI
+                    </label>
+                </div>
+
+                <div class="lab-modal-search-row">
+                    <label>Cari Pemeriksaan</label>
+                    <input type="text"
+                           id="lab-modal-search"
+                           class="form-control input-sm"
+                           placeholder="Ketik kode / nama pemeriksaan..."
+                           autocomplete="off">
+                </div>
+
+                <div class="lab-modal-grid">
+                    <div class="lab-modal-table-wrap">
+                        <table class="table table-bordered table-condensed lab-modal-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:34px;">Ok</th>
+                                    <th style="width:95px;">Kode</th>
+                                    <th>Pemeriksaan</th>
+                                    <th style="width:100px;">Jasa RS</th>
+                                    <th style="width:100px;">Jasa DR</th>
+                                    <th style="width:90px;">Perawat</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lab-modal-tbody">
+                                <tr>
+                                    <td colspan="6" class="lab-modal-empty">Memuat data pemeriksaan...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="lab-modal-category-box">
+                        <div class="lab-modal-category-title">
+                            <label style="margin:0;">
+                                <input type="checkbox" id="lab-cat-semua" checked> Semua Golongan
+                            </label>
+                        </div>
+                        <div class="lab-modal-category-list" id="lab-modal-category-list">
+                            <div class="lab-modal-empty">Memuat kategori...</div>
+                        </div>
+                    </div>
+
+                    <div class="lab-modal-selected-box">
+                        <div class="lab-modal-selected-title">Pemeriksaan Terpilih</div>
+                        <table class="table table-bordered table-condensed lab-modal-selected-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:80px;">Kodetarif</th>
+                                    <th>Pemeriksaan</th>
+                                    <th style="width:26px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="lab-selected-tbody">
+                                <tr>
+                                    <td colspan="3" class="lab-modal-empty">Belum ada pemeriksaan dipilih.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="lab-modal-footer">
+                    <button type="button" class="btn btn-primary btn-sm" id="btn-lab-modal-ok">
+                        <i class="fa fa-check"></i> Ok
+                    </button>
+                    <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">
+                        <i class="fa fa-times"></i> Keluar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="modal fade" id="modal-jenis-mcu" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-mcu-dialog">
@@ -1323,9 +1490,11 @@ if (empty($nutritionDietOptions)) {
 .depo-select { width:240px !important; display:inline-block; font-weight:700; }
 .alkes-label { margin-left:4px; margin-bottom:0; font-size:11px; font-weight:600; }
 .resep-row td { vertical-align:middle; padding:3px 4px !important; }
-.resep-row input.form-control { height:26px; padding:2px 5px; font-size:11px; }
+.resep-row input.form-control,
+.resep-row select.form-control { height:26px; padding:2px 5px; font-size:11px; }
 .resep-row input[type="number"]::-webkit-inner-spin-button, .resep-row input[type="number"]::-webkit-outer-spin-button { -webkit-appearance:none; }
 .resep-row input[type="number"] { -moz-appearance:textfield; }
+.resep-row .aturan-pakai-custom { margin-top:3px; }
 .resep-bottom { margin-top:8px; }
 #patient-search-results .ps-item { padding:7px 10px; cursor:pointer; border-bottom:1px solid #f0f0f0; }
 #patient-search-results .ps-item:hover { background:#e8f0fe; }
@@ -2068,6 +2237,55 @@ if (empty($nutritionDietOptions)) {
 .modal-operation-title{background:#122d91;color:#fff;padding:6px 9px;font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center;}
 .modal-operation-close{color:#fff;opacity:1;font-size:18px;line-height:18px;}
 .modal-operation-body{padding:10px;font-size:12px;}
+.modal-obat-dialog{width:1000px;max-width:96%;}
+.modal-obat-content{border:1px solid #394f90;background:#d9d9ef;box-shadow:0 5px 18px rgba(0,0,0,.35);}
+.modal-obat-title{background:#122d91;color:#fff;padding:6px 9px;font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center;}
+.modal-obat-close{color:#fff;opacity:1;font-size:18px;line-height:18px;}
+.modal-obat-body{padding:10px;font-size:12px;}
+.obat-search-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.obat-search-row label{margin:0;width:45px;font-size:12px;color:#222;}
+.obat-search-row input{max-width:460px;}
+.obat-modal-grid{display:flex;gap:10px;}
+.obat-table-wrap{flex:0 0 70%;height:360px;overflow:auto;border:1px solid #8892b5;background:#fff;}
+.obat-selected-box{flex:1;height:360px;overflow:auto;border:1px solid #8892b5;background:#fff;display:flex;flex-direction:column;}
+.obat-selected-title{background:#c5c9e8;font-weight:700;padding:4px 6px;font-size:11px;}
+.obat-table,.obat-selected-table{font-size:11px;margin:0;background:#fff;}
+.obat-table th,.obat-selected-table th{background:#c5c9e8!important;color:#111!important;text-align:center;vertical-align:middle;padding:4px!important;}
+.obat-table td,.obat-selected-table td{padding:3px 5px!important;vertical-align:middle;}
+.obat-modal-row{cursor:pointer;}
+.obat-modal-row:hover td{background:#e6efff!important;}
+.obat-modal-row.obat-row-active td{background:#bfdbfe!important;font-weight:700;}
+.obat-empty{text-align:center;color:#888;padding:20px!important;}
+.obat-modal-footer{padding-top:9px;text-align:right;}
+.obat-table .mono, .obat-selected-table .mono{font-family:monospace;}
+.modal-lab-dialog{width:1100px;max-width:97%;}
+.modal-lab-content{border:1px solid #394f90;background:#d9d9ef;box-shadow:0 5px 18px rgba(0,0,0,.35);}
+.modal-lab-title{background:#122d91;color:#fff;padding:6px 9px;font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center;}
+.modal-lab-close{color:#fff;opacity:1;font-size:18px;line-height:18px;}
+.modal-lab-body{padding:10px;font-size:12px;}
+.lab-modal-carabayar-row{display:flex;align-items:center;gap:4px;margin-bottom:8px;flex-wrap:wrap;}
+.lab-carabayar-opt{font-weight:500;margin:0 12px 0 0;}
+.lab-modal-search-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.lab-modal-search-row label{margin:0;width:110px;font-size:12px;color:#222;}
+.lab-modal-search-row input{max-width:420px;flex:1;}
+.lab-modal-grid{display:flex;gap:10px;}
+.lab-modal-table-wrap{flex:0 0 52%;height:360px;overflow:auto;border:1px solid #8892b5;background:#fff;}
+.lab-modal-category-box{flex:0 0 25%;height:360px;overflow:auto;border:1px solid #8892b5;background:#fff;padding:6px;}
+.lab-modal-category-title{font-weight:700;font-size:11px;padding-bottom:6px;margin-bottom:6px;border-bottom:1px solid #e3e7ef;}
+.lab-modal-category-list label{display:block;font-size:11px;font-weight:500;margin-bottom:5px;cursor:pointer;}
+.lab-modal-category-list .lab-cat-item{font-size:11px;padding:3px 2px;cursor:pointer;border-radius:3px;}
+.lab-modal-category-list .lab-cat-item:hover{background:#e6efff;}
+.lab-modal-category-list .lab-cat-item.lab-cat-active{color:#122d91;font-weight:800;background:#dbe4ff;}
+.lab-modal-selected-box{flex:1;height:360px;overflow:auto;border:1px solid #8892b5;background:#fff;display:flex;flex-direction:column;}
+.lab-modal-selected-title{background:#c5c9e8;font-weight:700;padding:4px 6px;font-size:11px;}
+.lab-modal-table,.lab-modal-selected-table{font-size:11px;margin:0;background:#fff;}
+.lab-modal-table th,.lab-modal-selected-table th{background:#c5c9e8!important;color:#111!important;text-align:center;vertical-align:middle;padding:4px!important;}
+.lab-modal-table td,.lab-modal-selected-table td{padding:3px 5px!important;vertical-align:middle;}
+.lab-modal-row{cursor:pointer;}
+.lab-modal-row:hover td{background:#e6efff!important;}
+.lab-modal-row.lab-row-active td{background:#bfdbfe!important;font-weight:700;}
+.lab-modal-empty{text-align:center;color:#888;padding:20px!important;}
+.lab-modal-footer{padding-top:9px;text-align:right;}
 .operation-search-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
 .operation-search-row label{margin:0;width:85px;font-size:12px;color:#222;}
 .operation-search-row input{max-width:470px;}
@@ -2324,6 +2542,7 @@ if (empty($nutritionDietOptions)) {
 $(document).ready(function () {
     var CARI_OBAT_URL = '<?= $this->Url->build(['action' => 'cariObat']) ?>';
     var CARI_LAB_URL = '<?= $this->Url->build(['action' => 'cariLaboratorium']) ?>';
+    var KATEGORI_LAB_URL = '<?= $this->Url->build(['action' => 'kategoriLaboratorium']) ?>';
     var CARI_RADIOLOGI_URL = '<?= $this->Url->build(['action' => 'cariRadiologi']) ?>';
     var CARI_PENUNJANG_URL = '<?= $this->Url->build(['action' => 'cariPenunjang']) ?>';
     var CARI_JENIS_OPERASI_URL = '<?= $this->Url->build(['action' => 'cariJenisOperasi']) ?>';
@@ -2336,6 +2555,196 @@ $(document).ready(function () {
     var radioRowIndex = 0;
     var supportRowIndex = 0;
     var isHistoryMode = false;
+    var selectedObatList = [];
+var obatModalSearchTimer = null;
+
+function openObatModal() {
+    if (isHistoryMode) return;
+
+    selectedObatList = [];
+    $('#obat-modal-search').val('');
+    $('#modal-obat-depo-label').text($('#info-lokasi-depo').val() ? ('- ' + $('#info-lokasi-depo').val()) : '');
+    $('#obat-modal-tbody').html('<tr><td colspan="6" class="obat-empty"><i class="fa fa-spinner fa-spin"></i> Memuat data obat...</td></tr>');
+    renderObatSelectedTable();
+    $('#modal-obat').modal('show');
+
+    // Langsung tampilkan semua obat begitu modal dibuka, tanpa nunggu ketik.
+    searchObatModal('');
+
+    setTimeout(function () {
+        $('#obat-modal-search').focus();
+    }, 300);
+}
+
+$('#obat-modal-search').on('input', function () {
+    clearTimeout(obatModalSearchTimer);
+    var q = $.trim($(this).val());
+
+    $('#obat-modal-tbody').html('<tr><td colspan="6" class="obat-empty"><i class="fa fa-spinner fa-spin"></i> Mencari...</td></tr>');
+
+    // q kosong pun tetap dikirim -> controller balikin semua obat lagi (list penuh).
+    obatModalSearchTimer = setTimeout(function () {
+        searchObatModal(q);
+    }, 250);
+});
+
+function searchObatModal(q) {
+    $.getJSON(CARI_OBAT_URL, { q: q }, function (rows) {
+        renderObatModalRows(rows || []);
+    }).fail(function () {
+        $('#obat-modal-tbody').html('<tr><td colspan="6" class="obat-empty" style="color:#a00;">Gagal memuat data obat.</td></tr>');
+    });
+}
+
+function isObatSelected(id) {
+    for (var i = 0; i < selectedObatList.length; i++) {
+        if (String(selectedObatList[i].id) === String(id)) return true;
+    }
+    return false;
+}
+
+function renderObatModalRows(rows) {
+    if (!rows.length) {
+        $('#obat-modal-tbody').html('<tr><td colspan="6" class="obat-empty">Obat tidak ditemukan.</td></tr>');
+        return;
+    }
+
+    var html = '';
+
+    $.each(rows, function (_, d) {
+        var active = isObatSelected(d.id) ? ' obat-row-active' : '';
+        var checked = isObatSelected(d.id) ? ' checked' : '';
+
+        html += '<tr class="obat-modal-row' + active + '"'
+            + ' data-id="' + escHtml(d.id) + '"'
+            + ' data-kode="' + escHtml(d.kode || '') + '"'
+            + ' data-nama="' + escHtml(d.nama || '') + '"'
+            + ' data-generic="' + escHtml(d.generic || '') + '"'
+            + ' data-satuan="' + escHtml(d.unit || '') + '"'
+            + ' data-harga="' + (parseFloat(d.harga || 0)) + '">'
+            + '<td class="text-center"><input type="checkbox" class="obat-modal-check"' + checked + '></td>'
+            + '<td><span class="mono">' + escHtml(d.kode || '') + '</span></td>'
+            + '<td>' + escHtml(d.nama || '') + '</td>'
+            + '<td>' + escHtml(d.generic || '') + '</td>'
+            + '<td>' + escHtml(d.unit || '') + '</td>'
+            + '<td style="text-align:right;">' + fmt(d.harga || 0) + '</td>'
+            + '</tr>';
+    });
+
+    $('#obat-modal-tbody').html(html);
+}
+
+$(document).on('click', '.obat-modal-row', function () {
+    toggleObatRow($(this));
+});
+
+function toggleObatRow($row) {
+    var id = $row.data('id');
+    var idx = -1;
+
+    for (var i = 0; i < selectedObatList.length; i++) {
+        if (String(selectedObatList[i].id) === String(id)) { idx = i; break; }
+    }
+
+    if (idx >= 0) {
+        selectedObatList.splice(idx, 1);
+        $row.removeClass('obat-row-active');
+        $row.find('.obat-modal-check').prop('checked', false);
+    } else {
+        selectedObatList.push({
+            id: id,
+            kode: $row.data('kode') || '',
+            nama: $row.data('nama') || '',
+            generic: $row.data('generic') || '',
+            satuan: $row.data('satuan') || '',
+            harga: parseFloat($row.data('harga')) || 0
+        });
+        $row.addClass('obat-row-active');
+        $row.find('.obat-modal-check').prop('checked', true);
+    }
+
+    renderObatSelectedTable();
+}
+
+function renderObatSelectedTable() {
+    if (!selectedObatList.length) {
+        $('#obat-selected-tbody').html('<tr><td colspan="3" class="obat-empty">Belum ada obat dipilih.</td></tr>');
+        return;
+    }
+
+    var html = '';
+
+    $.each(selectedObatList, function (_, d) {
+        html += '<tr>'
+            + '<td><span class="mono">' + escHtml(d.kode) + '</span></td>'
+            + '<td>' + escHtml(d.nama) + '</td>'
+            + '<td class="text-center"><button type="button" class="btn btn-xs btn-danger btn-remove-obat-selected" data-id="' + escHtml(d.id) + '">&times;</button></td>'
+            + '</tr>';
+    });
+
+    $('#obat-selected-tbody').html(html);
+}
+
+$(document).on('click', '.btn-remove-obat-selected', function (e) {
+    e.stopPropagation();
+    var id = $(this).data('id');
+
+    selectedObatList = selectedObatList.filter(function (d) {
+        return String(d.id) !== String(id);
+    });
+
+    $('.obat-modal-row[data-id="' + id + '"]').removeClass('obat-row-active')
+        .find('.obat-modal-check').prop('checked', false);
+
+    renderObatSelectedTable();
+});
+
+$('#btn-obat-ok').on('click', function () {
+    if (!selectedObatList.length) {
+        alert('Pilih minimal 1 obat terlebih dahulu.');
+        return;
+    }
+
+    $.each(selectedObatList, function (_, d) {
+        addDrugRow({
+            id: d.id,
+            kode: d.kode,
+            nama: d.nama,
+            generic: d.generic,
+            unit: d.satuan,
+            harga: d.harga
+        });
+    });
+
+    $('#modal-obat').modal('hide');
+});
+
+
+    /*
+     * Daftar Aturan Pakai siap pakai (helper dropdown) supaya input obat
+     * lebih cepat. Satuan TIDAK dibuat dropdown/diketik manual karena
+     * satuannya harus ikut apa adanya dari master obat yang dipilih.
+     */
+    var aturanPakaiOptions = [
+        '1x1',
+        '2x1',
+        '3x1',
+        '4x1',
+    ];
+
+    function buildAturanPakaiOptions(selected) {
+        selected = selected || '';
+
+        var html = '<option value=""' + (selected === '' ? ' selected' : '') + '>-- Pilih Aturan Pakai --</option>';
+
+        $.each(aturanPakaiOptions, function (_, opt) {
+            html += '<option value="' + escHtml(opt) + '"' + (selected === opt ? ' selected' : '') + '>' + escHtml(opt) + '</option>';
+        });
+
+        html += '<option value="__custom__"' + (selected === '__custom__' ? ' selected' : '') + '>Lainnya (ketik manual)...</option>';
+
+        return html;
+    }
 
     /*
      * Perbaikan tab Order:
@@ -2502,7 +2911,7 @@ $(document).ready(function () {
         var activeTab = $('#order-tabs li.active a').attr('href');
 
         if (activeTab === '#tab-lab') {
-            addLabRow(null);
+            openLabModal();
             return;
         }
 
@@ -2521,7 +2930,7 @@ $(document).ready(function () {
             return;
         }
 
-        addDrugRow(null);
+        openObatModal();
     });
 
     function addHistoryRow(item, i) {
@@ -2681,8 +3090,11 @@ $(document).ready(function () {
             + '<td><input type="number" name="prescriptions[' + i + '][qty_min]" class="form-control" value="0" min="0" step="0.5" style="text-align:center;"></td>'
             + '<td><input type="number" name="prescriptions[' + i + '][jml_hari]" class="form-control jml-hari-dur-input" value="0" min="0" style="text-align:center;"></td>'
             + '<td><input type="number" name="prescriptions[' + i + '][qty_satuan]" class="form-control qty-satuan-input" value="0" step="0.5" style="text-align:center; background:#fefce8;"></td>'
-            + '<td><input type="text" name="prescriptions[' + i + '][medicine_unit]" class="form-control" value="' + escHtml(d.unit || 'TUBE') + '" style="font-size:10px;" placeholder="Satuan"></td>'
-            + '<td><input type="text" name="prescriptions[' + i + '][aturan_pakai]" class="form-control" placeholder="3x1 sesudah makan..." style="font-size:10px;"></td>'
+            + '<td><input type="text" name="prescriptions[' + i + '][medicine_unit]" class="form-control" value="' + escHtml(d.unit || 'TUBE') + '" readonly style="font-size:10px; background:#f5f5f5; cursor:not-allowed;" title="Satuan mengikuti master obat, tidak bisa diubah"></td>'
+            + '<td>'
+                + '<select name="prescriptions[' + i + '][aturan_pakai]" class="form-control aturan-pakai-select" data-field-name="prescriptions[' + i + '][aturan_pakai]" style="font-size:10px;">' + buildAturanPakaiOptions('') + '</select>'
+                + '<input type="text" class="form-control aturan-pakai-custom" placeholder="Tulis aturan pakai manual..." style="font-size:10px; display:none;">'
+            + '</td>'
             + '<td><input type="text" name="prescriptions[' + i + '][harga]" class="form-control harga-input" value="' + harga + '" readonly style="text-align:right; background:#f5f5f5;"><span class="harga-display" style="display:block; font-size:10px; text-align:right; color:#888;">' + fmt(harga) + '</span></td>'
             + '<td><input type="text" name="prescriptions[' + i + '][total_harga]" class="form-control total-input" value="0" readonly style="text-align:right; background:#f5f5f5; font-weight:600;"></td>'
             + '<td style="text-align:center;"><button type="button" class="btn btn-xs btn-danger btn-remove-drug">&times;</button></td>'
@@ -2695,6 +3107,27 @@ $(document).ready(function () {
             $('#resep-tbody tr:last').find('.drug-name-input').focus();
         }
     }
+
+    /*
+     * Ganti helper "Aturan Pakai": kalau user pilih "Lainnya (ketik manual)...",
+     * tampilkan kotak isian bebas di bawah dropdown; kalau balik pilih salah
+     * satu opsi siap pakai, sembunyikan lagi kotak manualnya. Field yang benar-benar
+     * dikirim ke server (name="prescriptions[i][aturan_pakai]") dipindah antara
+     * dropdown dan input manual supaya hanya satu yang aktif.
+     */
+    $(document).on('change', '.aturan-pakai-select', function () {
+        var $select = $(this);
+        var $custom = $select.closest('td').find('.aturan-pakai-custom');
+        var fieldName = $select.data('field-name');
+
+        if ($select.val() === '__custom__') {
+            $select.removeAttr('name');
+            $custom.attr('name', fieldName).show().focus();
+        } else {
+            $custom.removeAttr('name').hide().val('');
+            $select.attr('name', fieldName);
+        }
+    });
 
     function fillDrugRow($row, drug) {
         $row.find('.medicine-id-input').val(drug.id || '');
@@ -2894,7 +3327,7 @@ $(document).ready(function () {
 
     $('#btn-add-lab-row').on('click', function () {
         if (isHistoryMode) return;
-        addLabRow(null);
+        openLabModal();
     });
 
     $('#btn-clear-lab').on('click', function () {
@@ -2986,6 +3419,204 @@ $(document).ready(function () {
         $('#lab-grand-total').text('Rp ' + fmt(grand));
     }
 
+    var selectedLabList = [];
+    var labModalSearchTimer = null;
+    var labModalCategory = '';
+
+    function openLabModal() {
+        if (isHistoryMode) return;
+
+        selectedLabList = [];
+        labModalCategory = '';
+        $('#lab-modal-search').val('');
+        $('#lab-cat-semua').prop('checked', true);
+        $('.lab-cat-item').removeClass('lab-cat-active');
+        $('#lab-modal-tbody').html('<tr><td colspan="6" class="lab-modal-empty"><i class="fa fa-spinner fa-spin"></i> Memuat data pemeriksaan...</td></tr>');
+        $('#lab-modal-category-list').html('<div class="lab-modal-empty">Memuat kategori...</div>');
+        renderLabSelectedTable();
+        $('#modal-laboratorium').modal('show');
+
+        loadLabCategories();
+        searchLabModal('');
+
+        setTimeout(function () {
+            $('#lab-modal-search').focus();
+        }, 300);
+    }
+
+    function loadLabCategories() {
+        $.getJSON(KATEGORI_LAB_URL, function (cats) {
+            renderLabCategories(cats || []);
+        }).fail(function () {
+            $('#lab-modal-category-list').html('<div class="lab-modal-empty" style="color:#a00;">Gagal memuat kategori.</div>');
+        });
+    }
+
+    function renderLabCategories(cats) {
+        if (!cats.length) {
+            $('#lab-modal-category-list').html('<div class="lab-modal-empty">Belum ada kategori.</div>');
+            return;
+        }
+
+        var html = '';
+
+        $.each(cats, function (_, cat) {
+            html += '<div class="lab-cat-item" data-cat="' + escHtml(cat) + '">' + escHtml(cat) + '</div>';
+        });
+
+        $('#lab-modal-category-list').html(html);
+    }
+
+    $(document).on('click', '.lab-cat-item', function () {
+        labModalCategory = $(this).data('cat') || '';
+        $('#lab-cat-semua').prop('checked', false);
+        $('.lab-cat-item').removeClass('lab-cat-active');
+        $(this).addClass('lab-cat-active');
+        searchLabModal($.trim($('#lab-modal-search').val()));
+    });
+
+    $('#lab-cat-semua').on('change', function () {
+        if ($(this).is(':checked')) {
+            labModalCategory = '';
+            $('.lab-cat-item').removeClass('lab-cat-active');
+            searchLabModal($.trim($('#lab-modal-search').val()));
+        }
+    });
+
+    $('#lab-modal-search').on('input', function () {
+        clearTimeout(labModalSearchTimer);
+        var q = $.trim($(this).val());
+
+        $('#lab-modal-tbody').html('<tr><td colspan="6" class="lab-modal-empty"><i class="fa fa-spinner fa-spin"></i> Mencari...</td></tr>');
+
+        labModalSearchTimer = setTimeout(function () {
+            searchLabModal(q);
+        }, 250);
+    });
+
+    function searchLabModal(q) {
+        $.getJSON(CARI_LAB_URL, { q: q, category: labModalCategory }, function (rows) {
+            renderLabModalRows(rows || []);
+        }).fail(function () {
+            $('#lab-modal-tbody').html('<tr><td colspan="6" class="lab-modal-empty" style="color:#a00;">Gagal memuat data pemeriksaan.</td></tr>');
+        });
+    }
+
+    function isLabSelected(id) {
+        for (var i = 0; i < selectedLabList.length; i++) {
+            if (String(selectedLabList[i].id) === String(id)) return true;
+        }
+        return false;
+    }
+
+    function renderLabModalRows(rows) {
+        if (!rows.length) {
+            $('#lab-modal-tbody').html('<tr><td colspan="6" class="lab-modal-empty">Pemeriksaan tidak ditemukan.</td></tr>');
+            return;
+        }
+
+        var html = '';
+
+        $.each(rows, function (_, d) {
+            var active = isLabSelected(d.id) ? ' lab-row-active' : '';
+            var checked = isLabSelected(d.id) ? ' checked' : '';
+
+            html += '<tr class="lab-modal-row' + active + '"'
+                + ' data-id="' + escHtml(d.id) + '"'
+                + ' data-kode="' + escHtml(d.kode || '') + '"'
+                + ' data-nama="' + escHtml(d.nama || '') + '"'
+                + ' data-tarif="' + (parseFloat(d.tarif || 0)) + '">'
+                + '<td class="text-center"><input type="checkbox" class="lab-modal-check"' + checked + '></td>'
+                + '<td><span class="mono">' + escHtml(d.kode || '') + '</span></td>'
+                + '<td>' + escHtml(d.nama || '') + '</td>'
+                + '<td style="text-align:right;">' + fmt(d.jasa_rs || 0) + '</td>'
+                + '<td style="text-align:right;">' + fmt(d.jasa_dr || 0) + '</td>'
+                + '<td style="text-align:right;">' + fmt(d.jasa_perawat || 0) + '</td>'
+                + '</tr>';
+        });
+
+        $('#lab-modal-tbody').html(html);
+    }
+
+    $(document).on('click', '.lab-modal-row', function () {
+        toggleLabRow($(this));
+    });
+
+    function toggleLabRow($row) {
+        var id = $row.data('id');
+        var idx = -1;
+
+        for (var i = 0; i < selectedLabList.length; i++) {
+            if (String(selectedLabList[i].id) === String(id)) { idx = i; break; }
+        }
+
+        if (idx >= 0) {
+            selectedLabList.splice(idx, 1);
+            $row.removeClass('lab-row-active');
+            $row.find('.lab-modal-check').prop('checked', false);
+        } else {
+            selectedLabList.push({
+                id: id,
+                kode: $row.data('kode') || '',
+                nama: $row.data('nama') || '',
+                tarif: parseFloat($row.data('tarif')) || 0
+            });
+            $row.addClass('lab-row-active');
+            $row.find('.lab-modal-check').prop('checked', true);
+        }
+
+        renderLabSelectedTable();
+    }
+
+    function renderLabSelectedTable() {
+        if (!selectedLabList.length) {
+            $('#lab-selected-tbody').html('<tr><td colspan="3" class="lab-modal-empty">Belum ada pemeriksaan dipilih.</td></tr>');
+            return;
+        }
+
+        var html = '';
+
+        $.each(selectedLabList, function (_, d) {
+            html += '<tr>'
+                + '<td><span class="mono">' + escHtml(d.kode) + '</span></td>'
+                + '<td>' + escHtml(d.nama) + '</td>'
+                + '<td class="text-center"><button type="button" class="btn btn-xs btn-danger btn-remove-lab-selected" data-id="' + escHtml(d.id) + '">&times;</button></td>'
+                + '</tr>';
+        });
+
+        $('#lab-selected-tbody').html(html);
+    }
+
+    $(document).on('click', '.btn-remove-lab-selected', function (e) {
+        e.stopPropagation();
+        var id = $(this).data('id');
+
+        selectedLabList = selectedLabList.filter(function (d) {
+            return String(d.id) !== String(id);
+        });
+
+        $('.lab-modal-row[data-id="' + id + '"]').removeClass('lab-row-active')
+            .find('.lab-modal-check').prop('checked', false);
+
+        renderLabSelectedTable();
+    });
+
+    $('#btn-lab-modal-ok').on('click', function () {
+        if (!selectedLabList.length) {
+            alert('Pilih minimal 1 pemeriksaan terlebih dahulu.');
+            return;
+        }
+
+        $.each(selectedLabList, function (_, d) {
+            addLabRow({
+                kode: d.kode,
+                nama: d.nama,
+                tarif: d.tarif
+            });
+        });
+
+        $('#modal-laboratorium').modal('hide');
+    });
 
     var radioTimer = null;
     var $radioDD = $('#radio-dropdown');

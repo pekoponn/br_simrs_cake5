@@ -1,5 +1,4 @@
 <?php
-
 declare(strict_types=1);
 
 namespace App\Controller;
@@ -53,19 +52,6 @@ class MasterLaboratoriesController extends AppController
     {
         $masterLaboratory = $this->MasterLaboratories->get($id);
 
-        if ($this->request->is('ajax')) {
-
-            $this->viewBuilder()->setClassName('Json');
-
-            $this->set([
-                'success' => true,
-                'data' => $masterLaboratory,
-                '_serialize' => ['success', 'data']
-            ]);
-
-            return;
-        }
-
         $this->set(compact('masterLaboratory'));
     }
 
@@ -76,25 +62,34 @@ class MasterLaboratoriesController extends AppController
         if ($this->request->is('post')) {
             $data = $this->request->getData();
 
-            if (empty($data['code'])) {
-                $data['code'] = $this->generateLabCode();
-            }
-
-            if (!isset($data['is_active']) || $data['is_active'] === '') {
-                $data['is_active'] = 1;
-            }
+            // Kode selalu digenerate server-side, tidak boleh diisi dari form
+            // (field di UI readonly, tapi tetap dibuang di sini untuk keamanan).
+            unset($data['code']);
 
             $masterLaboratory = $this->MasterLaboratories->patchEntity($masterLaboratory, $data);
+            $masterLaboratory->code = $this->generateLabCode();
 
             if ($this->MasterLaboratories->save($masterLaboratory)) {
-                $this->Flash->success('Master laboratorium berhasil disimpan.');
+                $this->Flash->success(__('Data laboratorium berhasil disimpan.'));
                 return $this->redirect(['action' => 'index']);
             }
 
-            $this->Flash->error('Master laboratorium gagal disimpan.');
+            $this->Flash->error(__('Data laboratorium gagal disimpan. Silakan coba lagi.'));
         }
 
         $this->set(compact('masterLaboratory'));
+    }
+
+    private function generateLabCode(): string
+    {
+        $lastRow = $this->MasterLaboratories->find()
+            ->select(['id'])
+            ->order(['MasterLaboratories.id' => 'DESC'])
+            ->first();
+
+        $next = $lastRow ? ((int)$lastRow->id + 1) : 1;
+
+        return 'LAB' . str_pad((string)$next, 5, '0', STR_PAD_LEFT);
     }
 
     public function edit($id = null)
@@ -136,30 +131,4 @@ class MasterLaboratoriesController extends AppController
 
         return $this->redirect(['action' => 'index']);
     }
-
-    private function generateLabCode(): string
-    {
-        $last = $this->MasterLaboratories->find()
-            ->select(['id'])
-            ->order(['MasterLaboratories.id' => 'DESC'])
-            ->first();
-
-        $next = $last ? ((int)$last->id + 1) : 1;
-
-        return 'LAB' . str_pad((string)$next, 5, '0', STR_PAD_LEFT);
-    }
-    // public function viewAjax($id)
-    // {
-    //     $this->request->allowMethod(['get']);
-
-    //     $data = $this->MasterLaboratories->get($id);
-
-    //     $this->viewBuilder()->setClassName('Json');
-
-    //     $this->set([
-    //         'success' => true,
-    //         'data' => $data,
-    //         '_serialize' => ['success','data']
-    //     ]);
-    // }
 }

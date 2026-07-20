@@ -32,17 +32,20 @@ $dpjp       = $d->doctor_name ?? '';
 $kelas      = $r->class_name ?? $visit->class_name ?? '';
 $alergi     = $visit->allergy ?? '';
 
-$summaryHistory = rmVal($m, 'summary_history', $visit->illness_history ?? $visit->chief_complaint ?? '');
+$summaryHistory = rmVal($m, 'summary_history', $emr->illness_history ?? $emr->chief_complaint ?? '');
 $physicalExam   = rmVal($m, 'physical_exam', trim(
-    'TD : ' . ($visit->blood_pressure ?? '') . "\n" .
-    'N  : ' . ($visit->pulse ?? '') . " x/menit\n" .
-    'RR : ' . ($visit->respiratory_rate ?? '') . " x/menit\n" .
-    'S  : ' . ($visit->temperature ?? '') . " °C\n" .
-    'SpO2 : ' . ($visit->oxygen_saturation ?? '') . ' %'
+    'TD : ' . ($emr->blood_pressure ?? '') . "\n" .
+    'N  : ' . ($emr->pulse ?? '') . " x/menit\n" .
+    'RR : ' . ($emr->respiratory_rate ?? '') . " x/menit\n" .
+    'S  : ' . ($emr->temperature ?? '') . " °C\n" .
+    'SpO2 : ' . ($emr->oxygen_saturation ?? '') . ' %'
 ));
-$education = rmVal($m, 'education_instruction', $visit->prescription_notes ?? '');
-$primaryDx = rmVal($m, 'primary_diagnosis', $visit->diagnosis_primary ?? '');
-$secondaryDx = rmVal($m, 'secondary_diagnosis', $visit->diagnosis_secondary ?? '');
+$education = rmVal($m, 'education_instruction', $emr->doctor_notes ?? $emr->prescription_notes ?? '');
+
+// ── Diagnosa & Tindakan — sumber utama adalah data EMR (diisi dokter),
+//    bukan kolom di tabel OutpatientVisits yang memang tidak pernah diisi. ──
+$primaryDx   = rmVal($m, 'primary_diagnosis', $emr->diagnosis_primary ?? $visit->diagnosis_primary ?? '');
+$secondaryDx = rmVal($m, 'secondary_diagnosis', $emr->diagnosis_secondary ?? $visit->diagnosis_secondary ?? '');
 $actionTextFromActions = '';
 if (!empty($visit->outpatient_actions)) {
     $actionLines = [];
@@ -56,20 +59,20 @@ if (!empty($visit->outpatient_actions)) {
     $actionTextFromActions = implode("
 ", $actionLines);
 }
-$action = rmVal($m, 'medical_action', $visit->action_notes ?? $actionTextFromActions);
+$action = rmVal($m, 'medical_action', $emr->action_notes ?? $visit->action_notes ?? $actionTextFromActions);
 
 // ── AUTO FILL DARI EMR / RESUME ─────────────────────────────────────────────
 $icd10Items = $icd10Items ?? [];
-if (empty($icd10Items) && !empty($visit->icd10_items)) {
-    $icd10Items = is_string($visit->icd10_items)
-        ? (json_decode($visit->icd10_items, true) ?: [])
-        : (array)$visit->icd10_items;
+if (empty($icd10Items) && !empty($emr->icd10_items)) {
+    $icd10Items = is_string($emr->icd10_items)
+        ? (json_decode($emr->icd10_items, true) ?: [])
+        : (array)$emr->icd10_items;
 }
 $icd9Items = $icd9Items ?? [];
-if (empty($icd9Items) && !empty($visit->icd9_items)) {
-    $icd9Items = is_string($visit->icd9_items)
-        ? (json_decode($visit->icd9_items, true) ?: [])
-        : (array)$visit->icd9_items;
+if (empty($icd9Items) && !empty($emr->icd9_items)) {
+    $icd9Items = is_string($emr->icd9_items)
+        ? (json_decode($emr->icd9_items, true) ?: [])
+        : (array)$emr->icd9_items;
 }
 $medicineItems = $medicineItems ?? [];
 if (empty($medicineItems) && !empty($visit->resume_drugs)) {
@@ -82,10 +85,8 @@ $icd10RowCount    = max(1, count($icd10Items));
 $icd9RowCount     = max(1, count($icd9Items));
 ?>
 
-<?= $this->Krs->breadcrumb('Outpatient Visits', 'Resume Medis Rawat Jalan') ?>
-
-<div class="outpatient-visits resume-medis content">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+<div class="outpatient-visits resume-medis resume-medis-page">
+    <div class="resume-medis-toolbar" style="display:flex; justify-content:space-between; align-items:center;">
         <h4 style="margin:0; font-weight:700; color:#1e3a5f;">
             <i class="fa fa-file-medical"></i> Resume Medis Rawat Jalan
         </h4>
@@ -208,7 +209,7 @@ $icd9RowCount     = max(1, count($icd9Items));
                             <textarea name="consultation_result" class="form-control rm-textarea"><?= rmText($m->consultation_result ?? '') ?></textarea>
 
                             <label>Diagnosa saat masuk</label>
-                            <textarea name="admission_diagnosis" class="form-control rm-textarea small"><?= rmText($m->admission_diagnosis ?? $visit->admission_diagnosis ?? '') ?></textarea>
+                            <textarea name="admission_diagnosis" class="form-control rm-textarea small"><?= rmText($m->admission_diagnosis ?? $emr->admission_diagnosis ?? '') ?></textarea>
                         </div>
 
                         <div class="col-md-6">
@@ -415,10 +416,24 @@ $(function () {
     $('#chk-risk').change(toggleRisk);
     $('#chk-allergy').change(toggleAllergy);
 
+    $('.rm-tabs a[data-toggle="tab"]').on('click shown.bs.tab', function (e) {
+        var target = $(this).attr('href');
+
+        $('.rm-tabs li').removeClass('active');
+        $(this).closest('li').addClass('active');
+
+        if (target) {
+            $('.rm-tab-content .tab-pane').removeClass('active in').hide();
+            $(target).addClass('active in').show();
+        }
+    });
+
 });
 </script>
 
 <style>
+.outpatient-visits.resume-medis.resume-medis-page{width:100%;max-width:none;margin:0;padding:0}
+.outpatient-visits.resume-medis.resume-medis-page>.resume-medis-toolbar{margin-bottom:10px}
 .resume-medis .rm-panel{border:1px solid #b8c2d1;box-shadow:0 1px 2px rgba(0,0,0,.06)}
 .resume-medis .rm-heading{padding:6px 10px;background:#1e3a5f;color:#fff;font-size:12px}
 .resume-medis .rm-body{padding:8px;background:#f4f6fb;font-size:12px}
@@ -428,9 +443,12 @@ $(function () {
 .resume-medis .form-control.input-sm{height:26px;padding:3px 6px;font-size:12px}
 .resume-medis .rm-search{padding-top:4px;color:#1e3a5f;text-align:center}
 .resume-medis .rm-risk-label{background:#c2b342;color:#111!important;text-align:center;padding:4px!important;margin-left:15px!important}
-.resume-medis .rm-tabs{margin-top:5px;border-bottom:1px solid #9daac0}
+.resume-medis .rm-tabs{margin-top:5px;border-bottom:1px solid #1e3a5f}
 .resume-medis .rm-tabs>li>a{font-size:12px;font-weight:700;padding:6px 28px;background:#dbe4f2;border:1px solid #9daac0;color:#1e3a5f}
-.resume-medis .rm-tabs>li.active>a{background:#fff;color:#1e3a5f}
+.resume-medis .rm-tabs>li>a:hover{background:#cbd8ea;border-color:#8ea1bd;color:#102a47}
+.resume-medis .rm-tabs>li.active>a,
+.resume-medis .rm-tabs>li.active>a:focus,
+.resume-medis .rm-tabs>li.active>a:hover{background:#1e3a5f;border-color:#1e3a5f;color:#fff}
 .resume-medis .rm-tab-content{background:#fff;border:1px solid #9daac0;border-top:0;padding:8px;min-height:390px}
 .resume-medis label{font-size:11px;color:#37516f;margin-bottom:2px}
 .resume-medis .rm-textarea{height:54px;resize:vertical;font-size:12px;line-height:1.3;padding:4px 6px;margin-bottom:5px}

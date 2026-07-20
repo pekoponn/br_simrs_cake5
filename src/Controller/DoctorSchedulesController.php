@@ -3,42 +3,19 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-/**
- * DoctorSchedules Controller
- *
- * @property \App\Model\Table\DoctorSchedulesTable $DoctorSchedules
- * @method \App\Model\Entity\DoctorSchedule[]|\Cake\Datasource\ResultSetInterface paginate($object = null, array $settings = [])
- */
 class DoctorSchedulesController extends AppController
 {
-    public function initialize(): void
-    {
-        parent::initialize();
-
-        $this->loadModel('DoctorSchedules');
-    }
-    /**
-     * Index method
-     *
-     * @return \Cake\Http\Response|null|void Renders view
-     */
     public function index()
     {
         $this->paginate = [
             'contain' => ['Doctors'],
         ];
+
         $doctorSchedules = $this->paginate($this->DoctorSchedules);
 
         $this->set(compact('doctorSchedules'));
     }
 
-    /**
-     * View method
-     *
-     * @param string|null $id Doctor Schedule id.
-     * @return \Cake\Http\Response|null|void Renders view
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
-     */
     public function view($id = null)
     {
         $doctorSchedule = $this->DoctorSchedules->get($id, [
@@ -48,93 +25,152 @@ class DoctorSchedulesController extends AppController
         $this->set(compact('doctorSchedule'));
     }
 
-    /**
-     * Add method
-     *
-     * @return \Cake\Http\Response|null|void Redirects on successful add, renders view otherwise.
-     */
     public function add()
     {
         $doctorSchedule = $this->DoctorSchedules->newEmptyEntity();
-        if ($this->request->is('post')) {
-            $doctorSchedule = $this->DoctorSchedules->patchEntity($doctorSchedule, $this->request->getData());
-            if ($this->DoctorSchedules->save($doctorSchedule)) {
-                $this->Flash->success(__('The doctor schedule has been saved.'));
 
-                return $this->redirect(['action' => 'index']);
+        if ($this->request->is('post')) {
+
+            $data = $this->request->getData();
+
+            // otomatis generate data
+            $data['code'] = 'DS-' . date('YmdHis');
+            $data['is_create'] = 1;
+            $data['is_update'] = 0;
+            $data['is_delete'] = 0;
+            $data['delete_log'] = null;
+
+            $doctorSchedule = $this->DoctorSchedules->patchEntity(
+                $doctorSchedule,
+                $data
+            );
+
+            if ($this->DoctorSchedules->save($doctorSchedule)) {
+
+                $this->Flash->success(
+                    __('Jadwal dokter berhasil disimpan.')
+                );
+
+                return $this->redirect([
+                    'action' => 'index'
+                ]);
             }
-            $this->Flash->error(__('The doctor schedule could not be saved. Please, try again.'));
+
+            $errors = json_encode(
+                $doctorSchedule->getErrors(),
+                JSON_PRETTY_PRINT
+            );
+
+            $this->Flash->error(
+                __('Jadwal dokter gagal disimpan: ' . $errors)
+            );
         }
-        $doctors = $this->getDoctorOptions();
-        $this->set(compact('doctorSchedule', 'doctors'));
+
+        // tampilkan nama dokter
+        $doctors = $this->DoctorSchedules->Doctors
+            ->find('list', [
+                'keyField' => 'id',
+                'valueField' => 'doctor_name' // ganti jika nama field berbeda
+            ])
+            ->toArray();
+
+        // mapping doctor_id => nama poli, dipakai JS untuk auto-isi field Poli
+        $doctorPolyclinics = $this->DoctorSchedules->Doctors
+            ->find()
+            ->select(['id', 'polyclinic_name'])
+            ->all()
+            ->combine('id', 'polyclinic_name')
+            ->toArray();
+
+        $this->set(compact(
+            'doctorSchedule',
+            'doctors',
+            'doctorPolyclinics'
+        ));
     }
 
-    /**
-     * Edit method
-     *
-     * @param string|null $id Doctor Schedule id.
-     * @return \Cake\Http\Response|null|void Redirects on successful edit, renders view otherwise.
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
-     */
     public function edit($id = null)
     {
-        $doctorSchedule = $this->DoctorSchedules->get($id, [
-            'contain' => [],
-        ]);
-        if ($this->request->is(['patch', 'post', 'put'])) {
-            $doctorSchedule = $this->DoctorSchedules->patchEntity($doctorSchedule, $this->request->getData());
+        $doctorSchedule = $this->DoctorSchedules->get($id);
+
+        if ($this->request->is([
+            'patch',
+            'post',
+            'put'
+        ])) {
+
+            $data = $this->request->getData();
+
+            // update otomatis
+            $data['is_update'] = 1;
+
+            $doctorSchedule = $this->DoctorSchedules->patchEntity(
+                $doctorSchedule,
+                $data
+            );
+
             if ($this->DoctorSchedules->save($doctorSchedule)) {
-                $this->Flash->success(__('The doctor schedule has been saved.'));
 
-                return $this->redirect(['action' => 'index']);
+                $this->Flash->success(
+                    __('Jadwal dokter berhasil diubah.')
+                );
+
+                return $this->redirect([
+                    'action' => 'index'
+                ]);
             }
-            $this->Flash->error(__('The doctor schedule could not be saved. Please, try again.'));
-        }
-        $doctors = $this->getDoctorOptions();
-        $this->set(compact('doctorSchedule', 'doctors'));
-    }
 
-    private function getDoctorOptions(): array
-    {
-        $rows = $this->DoctorSchedules->Doctors->find()
-            ->select(['id', 'doctor_name', 'polyclinic_name'])
-            ->order([
-                'Doctors.doctor_name' => 'ASC',
-                'Doctors.id' => 'ASC',
+            $errors = json_encode(
+                $doctorSchedule->getErrors(),
+                JSON_PRETTY_PRINT
+            );
+
+            $this->Flash->error(
+                __('Jadwal dokter gagal diubah: ' . $errors)
+            );
+        }
+
+        $doctors = $this->DoctorSchedules->Doctors
+            ->find('list', [
+                'keyField' => 'id',
+                'valueField' => 'doctor_name' // ganti jika berbeda
             ])
-            ->all();
-        $options = [];
+            ->toArray();
 
-        foreach ($rows as $doctor) {
-            $label = (string)$doctor->doctor_name;
-
-            if (!empty($doctor->polyclinic_name)) {
-                $label .= ' - ' . $doctor->polyclinic_name;
-            }
-
-            $options[$doctor->id] = $label;
-        }
-
-        return $options;
+        $this->set(compact(
+            'doctorSchedule',
+            'doctors'
+        ));
     }
 
-    /**
-     * Delete method
-     *
-     * @param string|null $id Doctor Schedule id.
-     * @return \Cake\Http\Response|null|void Redirects to index.
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
-     */
     public function delete($id = null)
     {
-        $this->request->allowMethod(['post', 'delete']);
+        $this->request->allowMethod([
+            'post',
+            'delete'
+        ]);
+
         $doctorSchedule = $this->DoctorSchedules->get($id);
-        if ($this->DoctorSchedules->delete($doctorSchedule)) {
-            $this->Flash->success(__('The doctor schedule has been deleted.'));
+
+        // soft delete
+        $doctorSchedule->is_delete = 1;
+        $doctorSchedule->delete_log = date('Y-m-d H:i:s');
+
+        if ($this->DoctorSchedules->save($doctorSchedule)) {
+
+            $this->Flash->success(
+                __('Jadwal dokter berhasil dihapus.')
+            );
+
         } else {
-            $this->Flash->error(__('The doctor schedule could not be deleted. Please, try again.'));
+
+            $this->Flash->error(
+                __('Jadwal dokter gagal dihapus.')
+            );
         }
 
-        return $this->redirect(['action' => 'index']);
+        return $this->redirect([
+            'action' => 'index'
+        ]);
     }
 }

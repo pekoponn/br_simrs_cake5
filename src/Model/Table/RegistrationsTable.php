@@ -129,6 +129,7 @@ class RegistrationsTable extends Table
             'polyclinic_queue_id',
             'queue_number',
             'polyclinic_name',
+            'room_name',
             'room_id',
             'bed_id',
             'class_name',
@@ -211,6 +212,11 @@ class RegistrationsTable extends Table
                 },
                 'message' => 'Poli wajib diisi untuk rawat jalan',
             ]);
+
+        $validator
+            ->scalar('room_name')
+            ->maxLength('room_name', 100)
+            ->allowEmptyString('room_name');
 
         $validator
             ->integer('room_id')

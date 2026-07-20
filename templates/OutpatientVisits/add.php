@@ -236,7 +236,7 @@ $prefillPayment     = $registration->payment_method  ?? $visit->registration->pa
                                 <option value="">--</option>
                                 <?php for ($i = 0; $i <= 10; $i++): ?>
                                     <option value="<?= $i ?>"
-                                        <?= ($visit->pain_scale ?? '') == $i ? 'selected' : '' ?>>
+                                        <?= ($emr->pain_scale ?? '') == $i ? 'selected' : '' ?>>
                                         <?= $i ?>
                                     </option>
                                 <?php endfor; ?>

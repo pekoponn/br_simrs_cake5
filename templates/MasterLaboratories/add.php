@@ -1,234 +1,137 @@
 <?php
-/**
- * @var \App\View\AppView $this
- * @var \App\Model\Entity\MasterLaboratory $masterLaboratory
- */
-
-$kategoriPrefix = [
-    'Hematologi' => 'HEM',
-    'Kimia Klinik' => 'KIM',
-    'Imunologi' => 'IMM',
-    'Mikrobiologi' => 'MIK',
-    'Patologi Anatomi' => 'PAT',
-    'Urinalisa' => 'URI',
-    'Serologi' => 'SER',
-    'Lainnya' => 'LAB',
-];
-
-$kategoriOptions = [];
-foreach ($kategoriPrefix as $key => $value) {
-    $kategoriOptions[$key] = $key;
-}
+/** @var \App\View\AppView $this */
+/** @var \App\Model\Entity\MasterLaboratory $masterLaboratory */
 ?>
-
-<?= $this->Krs->breadcrumb('Master', 'Laboratory', 'Buat') ?>
-
+<?= $this->Krs->breadcrumb('Master Laboratories', 'Tambah Data') ?>
 <div class="panel panel-inverse">
-
-    <div class="panel-heading">
-        <h4 class="panel-title">Perincian</h4>
-
-        <div class="panel-heading-btn">
-            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default" data-click="panel-expand">
-                <i class="fa fa-expand"></i>
-            </a>
-        </div>
-    </div>
-
+    <div class="panel-heading"><h4 class="panel-title"><i class="fa fa-plus"></i> Tambah Master Laboratory</h4></div>
     <div class="panel-body">
-
-        <?= $this->Form->create($masterLaboratory, ['id' => 'form-add-laboratory']) ?>
-
-        <div class="row">
-
-            <div class="col-md-4 form-group">
-                <label>Kategori <span class="text-danger">*</span></label>
-
-                <?= $this->Form->select('category', $kategoriOptions, [
-                    'id' => 'category',
-                    'class' => 'form-control',
-                    'empty' => 'Pilih Kategori',
-                    'required' => true,
-                ]) ?>
-            </div>
-
-            <div class="col-md-4 form-group">
-
-                <label>Kode <span class="text-danger">*</span></label>
-
-                <div class="input-group">
-
-                    <?= $this->Form->text('code', [
-                        'id' => 'code',
-                        'class' => 'form-control',
-                        'placeholder' => 'Pilih kategori dahulu',
-                        'readonly' => true,
-                        'required' => true,
-                    ]) ?>
-
-                    <span class="input-group-btn">
-
-                        <button class="btn btn-info" type="button" id="btn-generate">
-                            <i class="fa fa-sync-alt"></i>
-                        </button>
-
-                        <button class="btn btn-default" type="button" id="btn-edit">
-                            <i class="fa fa-edit"></i>
-                        </button>
-
-                    </span>
-
+        <?= $this->Form->create($masterLaboratory) ?>
+        <div class="panel panel-default">
+            <div class="panel-heading" style="background:#1e3a5f;color:#fff;"><strong><i class="fa fa-flask"></i> Form Pemeriksaan Laboratorium</strong></div>
+            <div class="panel-body" style="background:#f8f9fa;">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label>Kode</label>
+                        <?= $this->Form->control('code', [
+                            'label' => false,
+                            'class' => 'form-control input-sm',
+                            'value' => 'AUTO',
+                            'readonly' => true,
+                            'style' => 'background:#eef1f5;font-weight:700;',
+                        ]) ?>
+                        <small style="color:#888;">Kode dibuat otomatis oleh sistem saat disimpan.</small>
+                    </div>
+                    <div class="col-md-5">
+                        <label>Nama Pemeriksaan <span style="color:red;">*</span></label>
+                        <?= $this->Form->control('name', ['label' => false, 'class' => 'form-control input-sm', 'placeholder' => 'Contoh: Hemoglobin', 'required' => true]) ?>
+                    </div>
+                    <div class="col-md-4">
+                        <label>Kategori</label>
+                        <?= $this->Form->control('category', [
+                            'label' => false,
+                            'type' => 'select',
+                            'options' => $this->Krs->laboratoryCategories(),
+                            'empty' => '-- Pilih Kategori --',
+                            'class' => 'form-control input-sm',
+                        ]) ?>
+                    </div>
                 </div>
 
-            </div>
-
-            <div class="col-md-4 form-group">
-
-                <label>Status</label>
-
-                <?= $this->Form->select('is_active', [
-                    1 => 'Aktif',
-                    0 => 'Nonaktif'
-                ],[
-                    'class'=>'form-control',
-                    'value'=>1
-                ]) ?>
-
-            </div>
-
-            <div class="col-md-8 form-group">
-
-                <label>Nama Laboratorium <span class="text-danger">*</span></label>
-
-                <?= $this->Form->text('name',[
-                    'class'=>'form-control',
-                    'placeholder'=>'Nama pemeriksaan laboratorium',
-                    'required'=>true
-                ]) ?>
-
-            </div>
-
-            <div class="col-md-4 form-group">
-
-                <label>Tarif <span class="text-danger">*</span></label>
-
-                <div class="input-group">
-
-                    <span class="input-group-addon">Rp</span>
-
-                    <input
-                        type="text"
-                        id="tariff-display"
-                        class="form-control"
-                        placeholder="0">
-
+                <div class="row" style="margin-top:8px;">
+                    <div class="col-md-3">
+                        <label>Jasa RS <span style="color:red;">*</span></label>
+                        <?= $this->Form->control('jasa_rs', [
+                            'label' => false,
+                            'type' => 'number',
+                            'id' => 'input-jasa-rs',
+                            'class' => 'form-control input-sm lab-jasa-input',
+                            'placeholder' => '0',
+                            'min' => 0,
+                            'step' => 100,
+                            'default' => 0,
+                        ]) ?>
+                    </div>
+                    <div class="col-md-3">
+                        <label>Jasa DR</label>
+                        <?= $this->Form->control('jasa_dr', [
+                            'label' => false,
+                            'type' => 'number',
+                            'id' => 'input-jasa-dr',
+                            'class' => 'form-control input-sm lab-jasa-input',
+                            'placeholder' => '0',
+                            'min' => 0,
+                            'step' => 100,
+                            'default' => 0,
+                        ]) ?>
+                    </div>
+                    <div class="col-md-3">
+                        <label>Perawat</label>
+                        <?= $this->Form->control('jasa_perawat', [
+                            'label' => false,
+                            'type' => 'number',
+                            'id' => 'input-jasa-perawat',
+                            'class' => 'form-control input-sm lab-jasa-input',
+                            'placeholder' => '0',
+                            'min' => 0,
+                            'step' => 100,
+                            'default' => 0,
+                        ]) ?>
+                    </div>
+                    <div class="col-md-3">
+                        <label>Tarif Rp (Total)</label>
+                        <?= $this->Form->control('tariff', [
+                            'label' => false,
+                            'type' => 'number',
+                            'id' => 'input-tariff-total',
+                            'class' => 'form-control input-sm',
+                            'placeholder' => '0',
+                            'min' => 0,
+                            'step' => 100,
+                            'readonly' => true,
+                            'style' => 'background:#eef1f5;font-weight:700;',
+                        ]) ?>
+                        <small style="color:#888;">Otomatis = Jasa RS + Jasa DR + Perawat.</small>
+                    </div>
                 </div>
 
-                <?= $this->Form->hidden('tariff',[
-                    'id'=>'tariff'
-                ]) ?>
-
+                <div class="row" style="margin-top:8px;">
+                    <div class="col-md-2">
+                        <label>Status</label>
+                        <?= $this->Form->control('is_active', [
+                            'label' => false,
+                            'type' => 'select',
+                            'options' => [1 => 'Aktif', 0 => 'Tidak Aktif'],
+                            'default' => 1,
+                            'class' => 'form-control input-sm',
+                        ]) ?>
+                    </div>
+                </div>
             </div>
-
         </div>
 
-        <div class="m-t-15">
-
-            <button class="btn btn-primary">
-
-                <i class="fa fa-save"></i> Simpan
-
-            </button>
-
-            <?= $this->Html->link(
-                '<i class="fa fa-arrow-left"></i> Kembali',
-                ['action'=>'index'],
-                [
-                    'class'=>'btn btn-default',
-                    'escape'=>false
-                ]
-            ) ?>
-
+        <div style="display:flex;gap:6px;">
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-save"></i> Simpan</button>
+            <?= $this->Html->link('<i class="fa fa-arrow-left"></i> Kembali', ['action' => 'index'], ['escape' => false, 'class' => 'btn btn-default btn-sm']) ?>
         </div>
-
         <?= $this->Form->end() ?>
-
     </div>
-
 </div>
 
 <script>
+document.addEventListener('DOMContentLoaded', function () {
+    function recalcTariffTotal() {
+        var jasaRs = parseFloat(document.getElementById('input-jasa-rs').value) || 0;
+        var jasaDr = parseFloat(document.getElementById('input-jasa-dr').value) || 0;
+        var jasaPerawat = parseFloat(document.getElementById('input-jasa-perawat').value) || 0;
 
-(function(){
-
-var prefixMap = <?= json_encode($kategoriPrefix) ?>;
-
-var category = document.getElementById('category');
-var code = document.getElementById('code');
-
-function pad(v){
-    return v<10 ? '0'+v : v;
-}
-
-function generateCode(){
-
-    var prefix = prefixMap[category.value];
-
-    if(!prefix){
-        code.value='';
-        return;
+        document.getElementById('input-tariff-total').value = jasaRs + jasaDr + jasaPerawat;
     }
 
-    var d = new Date();
+    document.querySelectorAll('.lab-jasa-input').forEach(function (el) {
+        el.addEventListener('input', recalcTariffTotal);
+    });
 
-    var no =
-        String(d.getFullYear()).substr(2)+
-        pad(d.getMonth()+1)+
-        pad(d.getDate())+
-        pad(d.getHours())+
-        pad(d.getMinutes())+
-        pad(d.getSeconds());
-
-    code.value = prefix + '-' + no;
-
-    code.readOnly = true;
-
-}
-
-category.onchange = generateCode;
-
-document.getElementById('btn-generate').onclick = generateCode;
-
-document.getElementById('btn-edit').onclick = function(){
-
-    code.readOnly = false;
-    code.focus();
-
-};
-
-var tarifDisplay = document.getElementById('tariff-display');
-var tarif = document.getElementById('tariff');
-
-function syncTarif(){
-
-    var raw = tarifDisplay.value.replace(/\D/g,'');
-
-    tarifDisplay.value = raw
-        ? parseInt(raw).toLocaleString('id-ID')
-        : '';
-
-    tarif.value = raw;
-
-}
-
-tarifDisplay.addEventListener('input',syncTarif);
-
-document.getElementById('form-add-laboratory').addEventListener('submit',function(){
-
-    syncTarif();
-    code.readOnly = false;
-
+    recalcTariffTotal();
 });
-
-})();
 </script>

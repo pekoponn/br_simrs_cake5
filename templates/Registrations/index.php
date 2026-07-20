@@ -58,127 +58,82 @@ $summaryUrl = $this->Url->build(['action' => 'getSummary']);
 
     <div class="panel-body">
 
-        <!-- TOOLBAR -->
+        <!-- TOOLBAR — semua filter dalam satu baris -->
         <div class="table-toolbar" style="margin-bottom:16px;">
-            <div class="row align-items-end">
+            <?= $this->Form->create(null, ['type' => 'get', 'id' => 'search-form']) ?>
 
-                <div class="col-md-7" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
 
-                    <?= $this->Html->link(
-                        '<i class="fa fa-plus"></i> Registrasi Baru',
-                        ['action' => 'add'],
-                        ['class' => 'btn btn-primary btn-sm', 'escape' => false]
-                    ) ?>
+                <?= $this->Html->link(
+                    '<i class="fa fa-plus"></i> Registrasi Baru',
+                    ['action' => 'add'],
+                    ['class' => 'btn btn-primary btn-sm', 'escape' => false]
+                ) ?>
 
-                    <!-- Filter Status — submit form saat klik -->
-                    <div class="btn-group btn-group-sm">
-                        <?php
-                        $filterTabs = [
-                            ''        => ['label' => 'Semua',    'class' => 'btn-default'],
-                            'aktif'   => ['label' => 'Aktif',    'class' => 'btn-success'],
-                            'selesai' => ['label' => 'Selesai',  'class' => 'btn-info'],
-                            'batal'   => ['label' => 'Batal',    'class' => 'btn-danger'],
-                        ];
-                        $currentStatus = $this->request->getQuery('status', '');
-                        foreach ($filterTabs as $val => $opt):
-                            $active = ($currentStatus === $val) ? 'active' : '';
-                        ?>
-                            <a href="<?= $this->Url->build(['action' => 'index', '?' => [
-                                'status'         => $val,
-                                'q'              => $this->request->getQuery('q'),
-                                'date'           => $this->request->getQuery('date'),
-                                'service_type'   => $this->request->getQuery('service_type'),
-                                'payment_method' => $this->request->getQuery('payment_method'),
-                            ]]) ?>" class="btn <?= $opt['class'] ?> <?= $active ?>">
-                                <?= $opt['label'] ?>
-                            </a>
-                        <?php endforeach; ?>
-                    </div>
+                <?php $currentStatus = $this->request->getQuery('status', ''); ?>
+                <select name="status" class="form-control form-control-sm"
+                        style="width:130px;" onchange="this.form.submit()">
+                    <option value=""        <?= $currentStatus === ''        ? 'selected' : '' ?>>Semua Status</option>
+                    <option value="aktif"   <?= $currentStatus === 'aktif'   ? 'selected' : '' ?>>Aktif</option>
+                    <option value="selesai" <?= $currentStatus === 'selesai' ? 'selected' : '' ?>>Selesai</option>
+                    <option value="batal"   <?= $currentStatus === 'batal'   ? 'selected' : '' ?>>Batal</option>
+                </select>
 
-                    <!-- Filter Pelayanan -->
-                    <div class="btn-group btn-group-sm">
-                        <?php
-                        $svcTabs = [
-                            ''            => ['label' => 'Semua Layanan', 'class' => 'btn-default'],
-                            'rawat_jalan' => ['label' => 'Rawat Jalan',   'class' => 'btn-primary'],
-                            'igd'         => ['label' => 'IGD',           'class' => 'btn-danger'],
-                            'rawat_inap'  => ['label' => 'Rawat Inap',    'class' => 'btn-success'],
-                        ];
-                        $currentSvc = $this->request->getQuery('service_type', '');
-                        foreach ($svcTabs as $val => $opt):
-                            $active = ($currentSvc === $val) ? 'active' : '';
-                        ?>
-                            <a href="<?= $this->Url->build(['action' => 'index', '?' => [
-                                'service_type'   => $val,
-                                'q'              => $this->request->getQuery('q'),
-                                'date'           => $this->request->getQuery('date'),
-                                'status'         => $this->request->getQuery('status'),
-                                'payment_method' => $this->request->getQuery('payment_method'),
-                            ]]) ?>" class="btn <?= $opt['class'] ?> <?= $active ?>">
-                                <?= $opt['label'] ?>
-                            </a>
-                        <?php endforeach; ?>
-                    </div>
+                <?php $currentSvc = $this->request->getQuery('service_type', ''); ?>
+                <select name="service_type" class="form-control form-control-sm"
+                        style="width:150px;" onchange="this.form.submit()">
+                    <option value=""             <?= $currentSvc === ''             ? 'selected' : '' ?>>Semua Layanan</option>
+                    <option value="rawat_jalan"  <?= $currentSvc === 'rawat_jalan'  ? 'selected' : '' ?>>Rawat Jalan</option>
+                    <option value="igd"          <?= $currentSvc === 'igd'          ? 'selected' : '' ?>>IGD</option>
+                    <option value="rawat_inap"   <?= $currentSvc === 'rawat_inap'   ? 'selected' : '' ?>>Rawat Inap</option>
+                </select>
 
-                </div>
+                <input type="date"
+                    name="date_from"
+                    class="form-control form-control-sm"
+                    style="width:150px;"
+                    value="<?= h($this->request->getQuery('date_from', date('Y-m-d'))) ?>">
 
-                <!-- SEARCH FORM — submit ke server -->
-                <div class="col-md-5">
-                    <?= $this->Form->create(null, ['type' => 'get', 'id' => 'search-form']) ?>
+                <span>-</span>
 
-                    <div class="input-group pull-right" style="width:100%; max-width:340px;">
-                        <input type="text" id="search-q" name="q" class="form-control"
-                               placeholder="Cari no registrasi / nama pasien..."
-                               value="<?= h($this->request->getQuery('q')) ?>"
-                               autocomplete="off">
-                        <!-- Pertahankan filter aktif saat search -->
-                        <input type="hidden" name="status"          value="<?= h($this->request->getQuery('status')) ?>">
-                        <input type="hidden" name="service_type"    value="<?= h($this->request->getQuery('service_type')) ?>">
-                        <input type="hidden" name="payment_method"  value="<?= h($this->request->getQuery('payment_method')) ?>">
-                        <input type="hidden" name="date"            value="<?= h($this->request->getQuery('date')) ?>">
-                        <span class="input-group-btn">
-                            <button type="submit" class="btn btn-warning" id="btn-search">
-                                <i class="fa fa-search"></i>
-                            </button>
-                            <a href="<?= $this->Url->build(['action' => 'index']) ?>"
-                               class="btn btn-default" title="Reset filter">
-                                <i class="fa fa-rotate-left"></i>
-                            </a>
-                        </span>
-                    </div>
+                <input type="date"
+                    name="date_to"
+                    class="form-control form-control-sm"
+                    style="width:150px;"
+                    value="<?= h($this->request->getQuery('date_to', date('Y-m-d'))) ?>">
 
-                    <div style="margin-top:6px; display:flex; gap:8px; align-items:center; justify-content:flex-end;">
-                    <input type="date"
-                        name="date_from"
-                        class="form-control form-control-sm"
-                        style="width:145px;"
-                        value="<?= h($this->request->getQuery('date_from', date('Y-m-d'))) ?>">
+                <select name="payment_method" class="form-control form-control-sm"
+                        style="width:130px;" onchange="this.form.submit()">
+                    <option value="">Cara Bayar</option>
+                    <option value="UMUM"
+                        <?= $this->request->getQuery('payment_method') === 'UMUM' ? 'selected' : '' ?>>
+                        UMUM
+                    </option>
+                    <option value="ASURANSI"
+                        <?= $this->request->getQuery('payment_method') === 'ASURANSI' ? 'selected' : '' ?>>
+                        ASURANSI
+                    </option>
+                </select>
 
-                    <span style="padding:0 5px;">-</span>
-
-                    <input type="date"
-                        name="date_to"
-                        class="form-control form-control-sm"
-                        style="width:145px;"
-                        value="<?= h($this->request->getQuery('date_to', date('Y-m-d'))) ?>">
-                        <select name="payment_method" class="form-control form-control-sm"
-                                style="width:130px;" onchange="this.form.submit()">
-                            <option value="">Cara Bayar</option>
-                            <option value="UMUM"
-                                <?= $this->request->getQuery('payment_method') === 'UMUM' ? 'selected' : '' ?>>
-                                UMUM
-                            </option>
-                            <option value="ASURANSI"
-                                <?= $this->request->getQuery('payment_method') === 'ASURANSI' ? 'selected' : '' ?>>
-                                ASURANSI
-                            </option>
-                        </select>
-                    </div>
-
-                    <?= $this->Form->end() ?>
+                <div class="input-group" style="flex:1 1 200px; min-width:200px; max-width:320px;">
+                    <input type="text" id="search-q" name="q" class="form-control"
+                           placeholder="Cari no registrasi / nama pasien..."
+                           value="<?= h($this->request->getQuery('q')) ?>"
+                           autocomplete="off">
+                    <span class="input-group-btn">
+                        <button type="submit" class="btn btn-warning" id="btn-search">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        <a href="<?= $this->Url->build(['action' => 'index']) ?>"
+                           class="btn btn-default" title="Reset filter">
+                            <i class="fa fa-rotate-left"></i>
+                        </a>
+                    </span>
                 </div>
 
             </div>
+
+            <?= $this->Form->end() ?>
         </div>
 
         <!-- SUMMARY CARDS — diisi via AJAX polling -->
@@ -387,14 +342,15 @@ $summaryUrl = $this->Url->build(['action' => 'getSummary']);
 <script>
 // ── URL summary endpoint ──────────────────────────────────────────────────────
 var SUMMARY_URL = '<?= $summaryUrl ?>';
-
-// ── Jumlah registrasi saat halaman pertama kali dimuat (untuk deteksi data baru)
+var summaryParams = {
+    date_from: '<?= h($this->request->getQuery('date_from', date('Y-m-d'))) ?>',
+    date_to:   '<?= h($this->request->getQuery('date_to', date('Y-m-d'))) ?>'
+};
 var initialTotal = <?= iterator_count($registrations) ?>;
 var lastKnownTotal = null;
 
-// ── Fetch summary dari server dan update kartu ────────────────────────────────
 function fetchSummary() {
-    $.getJSON(SUMMARY_URL, function (data) {
+    $.getJSON(SUMMARY_URL, summaryParams, function (data) {
 
         // Update kartu angka
         $.each(['aktif', 'rawat_jalan', 'igd', 'rawat_inap'], function (i, key) {
