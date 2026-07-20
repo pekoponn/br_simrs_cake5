@@ -61,6 +61,10 @@ class MedicinesTable extends Table
             'foreignKey' => 'medicine_group_id',
             'joinType' => 'INNER',
         ]);
+        $this->hasOne('MedicineStocks', [
+            'foreignKey' => 'medicine_id',
+            'strategy' => 'join',   
+        ]);
     }
 
     /**

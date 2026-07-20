@@ -1284,4 +1284,67 @@ class KrsHelper extends Helper
 			'Diet Dislipidemia' => 'Diet Dislipidemia',
 		];
 	}
+	public function laboratoryCategories(): array
+	{
+		return [
+			'ALERGI' => 'Alergi',
+			'ANALISA CAIRAN' => 'Analisa Cairan',
+			'ANALISA CSF' => 'Analisa CSF',
+			'ANEMIA' => 'Anemia',
+			'BIOMOLEKULER' => 'Biomolekuler',
+			'BMP' => 'BMP',
+			'ENDOKRINOLOGI' => 'Endokrinologi',
+			'FEACES' => 'Feaces',
+			'HEMATOLOGI' => 'Hematologi',
+			'IMUNO-SEROLOGI' => 'Imuno-Serologi',
+			'IMUNOHISTOKIMIA' => 'Imunohistokimia',
+			'JANTUNG' => 'Jantung',
+			'KESMAS' => 'Kesmas',
+			'KIMIA KLINIK' => 'Kimia Klinik',
+			'KIMIA LAIN' => 'Kimia Lain',
+			'MIKROBIOLOGI' => 'Mikrobiologi',
+			'PATOLOGI ANATOMI' => 'Patologi Anatomi',
+			'TRANFUSI' => 'Tranfusi',
+			'URINALISIS' => 'Urinalisis',
+		];
+	}
+
+	public function gudangFarmasi($value = null)
+	{
+		$data = [
+			'DRIVER'   => 'DRIVER DEPO',
+			'EXPDATE'  => 'EXPIRE DATE / REJECT DEPO',
+			'FARMASI1' => 'FARMASI 1 RAWAT + ICU DEPO',
+			'FARMASI2' => 'FARMASI 2 RAJAL DEPO',
+			'GBHP'     => 'GUDANG BHP',
+			'GFARMA'   => 'GUDANG OBAT/ALKES',
+		];
+	
+		$result = ($value !== null) ? ($data[$value] ?? $value) : $data;
+		return $result;
+	}
+	public function kirimVia($value = null)
+	{
+		$data = array(
+			'Kurir Internal' => 'Kurir Internal',
+			'Ekspedisi' => 'Ekspedisi / Jasa Pengiriman',
+			'Diambil Sendiri' => 'Diambil Sendiri',
+			'Sales Supplier' => 'Diantar Sales Supplier',
+		);
+		$result = ($value) ? $data[$value] : $data;
+		return $result;
+	}
+
+	public function jenisOrderPembelian($value = null)
+	{
+		$data = array(
+			'Reguler' => 'Reguler',
+			'Urgent' => 'Urgent / CITO',
+			'Konsinyasi' => 'Konsinyasi',
+			'Tender' => 'Tender / Kontrak',
+		);
+		$result = ($value) ? $data[$value] : $data;
+		return $result;
+	}
+
 }

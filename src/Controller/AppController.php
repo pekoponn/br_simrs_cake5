@@ -214,6 +214,30 @@ class AppController extends Controller
             && in_array($getAction, $outpatientVisitEmrHelperActions, true)
             && !empty($resultCheck['emr']);
 
+          $canAccessOutpatientVisitEmrPage = $getController === 'outpatientvisitemr'
+            && $getAction === 'emr'
+            && (
+              !empty($resultCheck['emr'])
+              || !empty($checkUrl['outpatientvisits']['emr'])
+            );
+
+          $outpatientLetterHelperActions = [
+            'getSuratSakit',
+            'simpanSuratSakit',
+            'getSuratKonsultasi',
+            'simpanSuratKonsultasi',
+            'cetakSuratSakit',
+          ];
+
+          $canAccessOutpatientLetterHelper = $getController === 'outpatientletters'
+            && in_array($getAction, $outpatientLetterHelperActions, true)
+            && (
+              !empty($resultCheck['add'])
+              || !empty($resultCheck['edit'])
+              || !empty($checkUrl['outpatientvisits']['emr'])
+              || !empty($checkUrl['outpatientvisitemr']['emr'])
+            );
+
           $medicalRecordHelperActions = [
             'searchPatients',
           ];
@@ -288,6 +312,44 @@ class AppController extends Controller
               || !empty($checkUrl['outpatientvisits']['emr'])
             );
 
+          $canAccessOrderPharmacy = $getController === 'orders'
+            && in_array($getAction, ['antrianFarmasi', 'proses'], true)
+            && (
+              !empty($resultCheck['antrianFarmasi'])
+              || !empty($resultCheck['proses'])
+            );
+
+          $canAccessStockHelper = (
+              $getController === 'kartustok'
+              && $getAction === 'searchMedicine'
+              && !empty($resultCheck['index'])
+            )
+            || (
+              $getController === 'medicinestocks'
+              && $getAction === 'toggleValid'
+              && !empty($resultCheck['index'])
+            );
+
+          $canAccessPurchaseHelper = (
+              $getController === 'rencanapembelians'
+              && $getAction === 'ambilDetail'
+              && (
+                !empty($resultCheck['index'])
+                || !empty($resultCheck['view'])
+                || !empty($checkUrl['orderpembelians']['add'])
+                || !empty($checkUrl['orderpembelians']['edit'])
+              )
+            )
+            || (
+              $getController === 'invoices'
+              && $getAction === 'cariBapb'
+              && (
+                !empty($resultCheck['index'])
+                || !empty($checkUrl['returpembelians']['add'])
+                || !empty($checkUrl['returpembelians']['edit'])
+              )
+            );
+
           $hasDirectAccess = !empty($resultCheck[$getAction]);
           $hasRelatedAccess = $canAccessRegistrationHelper
             || $canAccessRegistrationView
@@ -299,13 +361,18 @@ class AppController extends Controller
             || $canAccessOutpatientVisitHelper
             || $canAccessOutpatientVisitCppt
             || $canAccessOutpatientVisitEmrHelper
+            || $canAccessOutpatientVisitEmrPage
+            || $canAccessOutpatientLetterHelper
             || $canAccessMedicalRecordHelper
             || $canAccessPatientHistoryHelper
             || $canAccessMasterDataView
             || $canAccessEmrMasterSearch
             || $canAccessOrderForm
             || $canAccessOrderFormHelper
-            || $canAccessOrderDetail;
+            || $canAccessOrderDetail
+            || $canAccessOrderPharmacy
+            || $canAccessStockHelper
+            || $canAccessPurchaseHelper;
 
           if (!$hasDirectAccess && !$hasRelatedAccess) {
             $jsonEndpointActions = [
@@ -326,9 +393,14 @@ class AppController extends Controller
                 'historyPasien',
                 'historyOrderDetail',
               ],
+              'invoices' => ['cariBapb'],
+              'kartustok' => ['searchMedicine'],
+              'medicinestocks' => ['toggleValid'],
+              'outpatientletters' => ['getSuratSakit', 'simpanSuratSakit', 'getSuratKonsultasi', 'simpanSuratKonsultasi', 'cetakSuratSakit'],
               'outpatientvisits' => ['getSummary', 'liveData', 'addCppt', 'deleteCppt', 'panggil', 'searchIcd10', 'searchIcd9', 'hasilPemeriksaan'],
               'patienthistories' => ['searchPatients'],
               'polyclinicqueues' => ['searchPoly', 'searchPolyQueue', 'callQueue', 'createReferralQueue', 'searchPatients'],
+              'rencanapembelians' => ['ambilDetail'],
               'registrations' => ['getSummary', 'searchPatients', 'getKabupatens', 'getKecamatans', 'getKelurahans', 'getBedClass', 'getAvailableBeds', 'getDoctorSchedules'],
             ];
             $expectsJson = $this->request->is('ajax')
@@ -359,5 +431,18 @@ class AppController extends Controller
         $response = $this->response->withType('json')->withStringBody($json_data);
         return $response;
 
+    }
+    protected function getCurrentUserId(): ?int
+    {
+        $result = $this->Authentication->getResult();
+
+        if ($result && $result->getStatus() === 'SUCCESS') {
+            $getUser = $result->getData();
+            if (!empty($getUser->id)) {
+                return (int)$getUser->id;
+            }
+        }
+
+        return null;
     }
 }

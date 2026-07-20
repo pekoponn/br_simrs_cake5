@@ -4,11 +4,13 @@
  * @var \App\Model\Entity\Doctor $doctor
  * @var array $polyclinics
  * @var array $religions
+ * @var array $specialists
  */
 
 $dataChild = $this->Html->link('Doctor', ['action' => 'index'], ['full_base' => true]);
 $polyclinics = $polyclinics ?? $this->Krs->polyclinics();
 $religions = $religions ?? $this->Krs->religions();
+$specialists = $specialists ?? $this->Krs->specialists();
 ?>
 
 <?= $this->Krs->breadcrumb('Master', $dataChild, 'Buat') ?>
@@ -46,8 +48,9 @@ $religions = $religions ?? $this->Krs->religions();
                 echo $this->Form->control('code', [
                     'label' => false,
                     'class' => 'form-control',
-                    'placeholder' => 'Kosongkan untuk auto-generate',
-                    'required' => false
+                    'placeholder' => 'Otomatis',
+                    'readonly' => true,
+                    'value' => 'Otomatis'
                 ]);
                 ?>
 
@@ -116,9 +119,11 @@ $religions = $religions ?? $this->Krs->religions();
 
                 <?php
                 echo $this->Form->control('specialist', [
+                    'type' => 'select',
                     'label' => false,
-                    'class' => 'form-control',
-                    'placeholder' => 'Specialist...'
+                    'class' => 'form-control select2Form',
+                    'options' => $specialists,
+                    'empty' => '-- Pilih Specialist --'
                 ]);
                 ?>
 

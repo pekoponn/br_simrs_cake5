@@ -2,252 +2,410 @@
 /**
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\DoctorSchedule $doctorSchedule
- * @var \Cake\Collection\CollectionInterface|string[] $doctors
+ * @var array $doctors
+ * @var array $doctorPolyclinics
  */
-
-$dataChild = $this->Html->link(
-    'Doctor Schedule',
-    ['action' => 'index'],
-    ['full_base' => true]
-);
 ?>
 
-<?= $this->Krs->breadcrumb('Master', $dataChild, 'Buat') ?>
+<style>
+    .dsf-page {
+        background: #f4f7fb;
+        padding: 18px;
+        border-radius: 16px;
+        font-family: "Open Sans", "Segoe UI", Arial, sans-serif;
+    }
 
-<div class="panel panel-inverse">
+    .dsf-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+    }
 
-    <div class="panel-heading">
+    .dsf-header-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
 
-        <h4 class="panel-title">
-            Perincian
-        </h4>
+    .dsf-header-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: linear-gradient(145deg, #2563eb, #1d4ed8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: #ffffff;
+        box-shadow: 0 6px 14px rgba(37, 99, 235, .30);
+    }
 
-        <div class="panel-heading-btn">
+    .dsf-title {
+        margin: 0;
+        font-weight: 800;
+        color: #1f2d3d;
+        font-size: 19px;
+    }
 
-            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default" data-click="panel-expand">
+    .dsf-subtitle {
+        color: #64748b;
+        font-size: 12.5px;
+        font-weight: 600;
+        margin-top: 2px;
+    }
 
-                <i class="fa fa-expand"></i>
+    .dsf-btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #fff;
+        border: 1px solid #d7dee8;
+        color: #334155 !important;
+        font-weight: 700;
+        font-size: 13.5px;
+        border-radius: 10px;
+        padding: 10px 16px;
+        transition: background .15s ease, transform .15s ease;
+    }
 
-            </a>
+    .dsf-btn-back:hover {
+        background: #f1f5f9;
+        color: #334155;
+        transform: translateY(-1px);
+    }
 
+    .dsf-card {
+        background: #ffffff;
+        border: 1px solid #e3e8ef;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(31, 45, 61, .06);
+        padding: 24px;
+    }
+
+    .dsf-section-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: #2563eb;
+        margin-bottom: 18px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #eef2f7;
+    }
+
+    .dsf-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 18px 20px;
+    }
+
+    .dsf-grid .dsf-full {
+        grid-column: 1 / -1;
+    }
+
+    .dsf-field label {
+        display: block;
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .02em;
+        color: #64748b;
+        margin-bottom: 6px;
+    }
+
+    .dsf-field .input,
+    .dsf-field select,
+    .dsf-field textarea,
+    .dsf-field input[type="text"],
+    .dsf-field input[type="time"],
+    .dsf-field input[type="number"] {
+        width: 100%;
+        height: 42px;
+        border-radius: 10px !important;
+        border: 1px solid #d7dee8 !important;
+        font-size: 13.5px;
+        padding: 0 12px;
+        background: #fff;
+        transition: border-color .15s ease, box-shadow .15s ease;
+        box-sizing: border-box;
+    }
+
+    .dsf-field textarea {
+        height: auto;
+        padding: 10px 12px;
+        resize: vertical;
+    }
+
+    .dsf-field select:focus,
+    .dsf-field input:focus,
+    .dsf-field textarea:focus {
+        border-color: #93b4fb !important;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+        outline: none;
+    }
+
+    .dsf-field .help-block,
+    .dsf-field .error-message {
+        font-size: 11.5px;
+        color: #dc2626;
+        margin-top: 4px;
+        font-weight: 600;
+    }
+
+    /* Field Poli - readonly, auto-terisi */
+    .dsf-poli-wrap {
+        position: relative;
+    }
+
+    .dsf-poli-wrap input {
+        background: #f8fafc !important;
+        color: #1d4ed8;
+        font-weight: 800;
+        cursor: not-allowed;
+    }
+
+    .dsf-poli-wrap .dsf-poli-tag {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: #94a3b8;
+        background: #eef2f7;
+        padding: 3px 8px;
+        border-radius: 999px;
+        pointer-events: none;
+    }
+
+    .dsf-actions {
+        margin-top: 22px;
+        padding-top: 18px;
+        border-top: 1px solid #eef2f7;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .dsf-btn-save {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #2563eb;
+        border: none;
+        color: #fff !important;
+        font-weight: 700;
+        font-size: 13.5px;
+        border-radius: 10px;
+        padding: 11px 22px;
+        box-shadow: 0 6px 14px rgba(37, 99, 235, .35);
+        cursor: pointer;
+        transition: background .15s ease, transform .15s ease;
+    }
+
+    .dsf-btn-save:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+    }
+
+    @media (max-width: 720px) {
+        .dsf-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="doctorSchedules form content dsf-page">
+
+    <div class="dsf-header">
+        <div class="dsf-header-left">
+            <div class="dsf-header-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="3"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                    <line x1="12" y1="14" x2="12" y2="18"></line>
+                    <line x1="10" y1="16" x2="14" y2="16"></line>
+                </svg>
+            </div>
+            <div>
+                <h3 class="dsf-title">Tambah Jadwal Dokter</h3>
+                <div class="dsf-subtitle">Isi data jadwal praktik dokter di bawah ini</div>
+            </div>
         </div>
 
+        <?= $this->Html->link(
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg> Kembali ke Daftar',
+            ['action' => 'index'],
+            ['class' => 'dsf-btn-back', 'escape' => false]
+        ) ?>
     </div>
 
-    <?= $this->Form->create(
-        $doctorSchedule,
-        ['data-parsley-validate' => 'true']
-    ) ?>
+    <div class="dsf-card">
 
-    <div class="panel-body">
+        <?= $this->Form->create($doctorSchedule) ?>
 
-        <!-- ROW 1 -->
-        <div class="form-group row m-b-15">
+        <div class="dsf-section-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+            Detail Jadwal
+        </div>
 
-            <label class="col-form-label col-md-1">
-                Kode
-            </label>
+        <div class="dsf-grid">
 
-            <div class="col-md-3">
-
-                <?php
-                echo $this->Form->control('code', [
-                    'label' => false,
-                    'class' => 'form-control',
-                    'placeholder' => 'Kode Jadwal...',
-                    'required' => true,
-                    'data-parsley-required-message' =>
-                        'Kode tidak boleh kosong!'
-                ]);
-                ?>
-
-            </div>
-
-            <label class="col-form-label col-md-2">
-                Dokter
-            </label>
-
-            <div class="col-md-6">
-
-                <?php
-                echo $this->Form->control('doctor_id', [
-                    'label' => false,
-                    'class' => 'form-control select2Form',
+            <div class="dsf-field">
+                <?= $this->Form->control('doctor_id', [
+                    'label' => 'Dokter',
                     'options' => $doctors,
                     'empty' => '-- Pilih Dokter --',
-                    'required' => true,
-                    'data-parsley-required-message' =>
-                        'Dokter wajib dipilih!'
-                ]);
-                ?>
-
+                    'class' => 'input',
+                    'id' => 'ds-doctor-id',
+                    'templates' => [
+                        'inputContainer' => '{{content}}',
+                    ],
+                ]) ?>
             </div>
 
-        </div>
+            <div class="dsf-field">
+                <label for="ds-poli-display">Poli</label>
+                <div class="dsf-poli-wrap">
+                    <input
+                        type="text"
+                        id="ds-poli-display"
+                        class="input"
+                        value=""
+                        placeholder="Otomatis terisi setelah memilih dokter"
+                        readonly
+                    >
+                    <span class="dsf-poli-tag">Auto</span>
+                </div>
+            </div>
 
-        <!-- ROW 2 -->
-        <div class="form-group row m-b-15">
-
-            <label class="col-form-label col-md-1">
-                Hari
-            </label>
-
-            <div class="col-md-3">
-
-                <?php
-                echo $this->Form->control('day', [
-                    'label' => false,
-                    'class' => 'form-control select2Form',
+            <div class="dsf-field">
+                <?= $this->Form->control('day', [
+                    'label' => 'Hari',
+                    'type' => 'select',
                     'options' => [
-                        'Monday' => 'Senin',
-                        'Tuesday' => 'Selasa',
-                        'Wednesday' => 'Rabu',
-                        'Thursday' => 'Kamis',
-                        'Friday' => 'Jumat',
-                        'Saturday' => 'Sabtu',
-                        'Sunday' => 'Minggu'
+                        'Senin' => 'Senin',
+                        'Selasa' => 'Selasa',
+                        'Rabu' => 'Rabu',
+                        'Kamis' => 'Kamis',
+                        'Jumat' => 'Jumat',
+                        'Sabtu' => 'Sabtu',
+                        'Minggu' => 'Minggu'
                     ],
                     'empty' => '-- Pilih Hari --',
-                    'required' => true,
-                    'data-parsley-required-message' =>
-                        'Hari wajib dipilih!'
-                ]);
-                ?>
-
+                    'class' => 'input',
+                    'templates' => [
+                        'inputContainer' => '{{content}}',
+                    ],
+                ]) ?>
             </div>
 
-            <label class="col-form-label col-md-2">
-                Kuota
-            </label>
+            <div class="dsf-field">
+                <?= $this->Form->control('is_active', [
+                    'label' => 'Status',
+                    'type' => 'select',
+                    'options' => [
+                        1 => 'Aktif',
+                        0 => 'Tidak Aktif'
+                    ],
+                    'class' => 'input',
+                    'templates' => [
+                        'inputContainer' => '{{content}}',
+                    ],
+                ]) ?>
+            </div>
 
-            <div class="col-md-2">
+            <div class="dsf-field">
+                <?= $this->Form->control('start_time', [
+                    'label' => 'Jam Mulai',
+                    'type' => 'time',
+                    'class' => 'input',
+                    'templates' => [
+                        'inputContainer' => '{{content}}',
+                    ],
+                ]) ?>
+            </div>
 
-                <?php
-                echo $this->Form->control('quota', [
-                    'label' => false,
+            <div class="dsf-field">
+                <?= $this->Form->control('end_time', [
+                    'label' => 'Jam Selesai',
+                    'type' => 'time',
+                    'class' => 'input',
+                    'templates' => [
+                        'inputContainer' => '{{content}}',
+                    ],
+                ]) ?>
+            </div>
+
+            <div class="dsf-field">
+                <?= $this->Form->control('quota', [
+                    'label' => 'Kuota Pasien',
                     'type' => 'number',
-                    'class' => 'form-control',
-                    'placeholder' => 'Kuota...'
-                ]);
-                ?>
-
+                    'class' => 'input',
+                    'templates' => [
+                        'inputContainer' => '{{content}}',
+                    ],
+                ]) ?>
             </div>
 
-        </div>
-
-        <!-- ROW 3 -->
-        <div class="form-group row m-b-15">
-
-            <label class="col-form-label col-md-1">
-                Jam Mulai
-            </label>
-
-            <div class="col-md-3">
-
-                <?php
-                echo $this->Form->control('start_time', [
-                    'type' => 'time',
-                    'label' => false,
-                    'class' => 'form-control',
-                    'step' => false
-                ]);
-                ?>
-
-            </div>
-
-            <label class="col-form-label col-md-2">
-                Jam Selesai
-            </label>
-
-            <div class="col-md-3">
-
-                <?php
-                echo $this->Form->control('end_time', [
-                    'type' => 'time',
-                    'label' => false,
-                    'class' => 'form-control',
-                    'step' => false
-                ]);
-                ?>
-
-            </div>
-
-        </div>
-
-        <!-- ROW 4 -->
-        <div class="form-group row m-b-15">
-
-            <label class="col-form-label col-md-1">
-                Catatan
-            </label>
-
-            <div class="col-md-11">
-
-                <?php
-                echo $this->Form->control('note', [
+            <div class="dsf-field dsf-full">
+                <?= $this->Form->control('note', [
+                    'label' => 'Catatan',
                     'type' => 'textarea',
-                    'label' => false,
-                    'class' => 'form-control',
-                    'placeholder' => 'Catatan jadwal...',
-                    'rows' => 3
-                ]);
-                ?>
-
+                    'rows' => 3,
+                    'class' => 'input',
+                    'templates' => [
+                        'inputContainer' => '{{content}}',
+                    ],
+                ]) ?>
             </div>
 
         </div>
 
-        <!-- HIDDEN -->
-        <?php
-        echo $this->Form->hidden('is_create', [
-            'value' => 1
-        ]);
+        <div class="dsf-actions">
+            <?= $this->Html->link('Batal', ['action' => 'index'], ['class' => 'dsf-btn-back']) ?>
 
-        echo $this->Form->hidden('is_update', [
-            'value' => 0
-        ]);
+            <?= $this->Form->button('
+                Simpan Jadwal
+            ', [
+                'class' => 'dsf-btn-save',
+                'escape' => false,
+            ]) ?>
+        </div>
 
-        echo $this->Form->hidden('is_delete', [
-            'value' => 0
-        ]);
-
-        echo $this->Form->hidden('is_active', [
-            'value' => 'Y'
-        ]);
-        ?>
+        <?= $this->Form->end() ?>
 
     </div>
-
-    <?= $this->Krs->btnSave(); ?>
-
-    <?= $this->Form->end() ?>
-
 </div>
 
-<script type="text/javascript">
+<script>
+(function () {
+    // Mapping doctor_id => nama poli, dikirim dari controller (Doctors->polyclinic_name)
+    var doctorPolyclinics = <?= json_encode($doctorPolyclinics ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 
-    $(document).ready(function () {
+    var doctorSelect = document.getElementById('ds-doctor-id');
+    var poliInput = document.getElementById('ds-poli-display');
 
-        $(".select2Form").select2();
+    if (!doctorSelect || !poliInput) {
+        return;
+    }
 
-        var confirmTitle =
-            "Apakah anda ingin menyimpan data tersebut ?";
+    function updatePoli() {
+        var selectedId = doctorSelect.value;
+        var poli = doctorPolyclinics[selectedId];
+        poliInput.value = poli ? poli : '';
+    }
 
-        var formAction = "<?= $this->Url->build(
-            [
-                'controller' => 'DoctorSchedules',
-                'action' => 'add'
-            ],
-            ['fullBase' => true]
-        ); ?>";
-
-        handleFormConfirmSubmitValid(
-            'DoctorScheduleAddForm',
-            'btn-add',
-            confirmTitle,
-            formAction
-        );
-
-    });
-
+    doctorSelect.addEventListener('change', updatePoli);
+    updatePoli();
+})();
 </script>
