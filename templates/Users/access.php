@@ -1845,6 +1845,8 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
                                     <?= $ruleCheckbox('orders', 'cariNutritionCombine', 'Cari Gizi') ?>
                                     <?= $ruleCheckbox('orders', 'cariJenisMcu', 'Cari MCU') ?>
                                     <?= $ruleCheckbox('orders', 'cariJenisOperasi', 'Cari Operasi') ?>
+                                    <?= $ruleCheckbox('orders', 'antrianFarmasi', 'Antrian Farmasi') ?>
+                                    <?= $ruleCheckbox('orders', 'proses', 'Proses Farmasi') ?>
                                     <div class="form-check form-check-inline">
                                         <?php
                                         echo $this->Form->checkbox('Rules.orders.historyOrderDetail', ['value' => '1', 'hiddenField' => true, 'checked' => $orderHistoryDetail, 'class' => 'form-check-input']);
@@ -1882,6 +1884,51 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
                             'add' => 'Tambah',
                             'edit' => 'Ubah',
                             'delete' => 'Hapus',
+                        ]) ?>
+                        <?= $ruleRow('Rencana Pembelian Farmasi', 'rencanapembelians', [
+                            'index' => 'Daftar',
+                            'view' => 'Tampilkan',
+                            'add' => 'Tambah',
+                            'edit' => 'Ubah',
+                            'delete' => 'Hapus',
+                            'ambilDetail' => 'Ambil Detail',
+                        ]) ?>
+                        <?= $ruleRow('Order Pembelian Farmasi', 'orderpembelians', [
+                            'index' => 'Daftar',
+                            'view' => 'Tampilkan',
+                            'add' => 'Tambah',
+                            'edit' => 'Ubah',
+                            'delete' => 'Hapus',
+                        ]) ?>
+                        <?= $ruleRow('BAPB / Invoice Farmasi', 'invoices', [
+                            'index' => 'Daftar',
+                            'view' => 'Tampilkan',
+                            'add' => 'Tambah',
+                            'edit' => 'Ubah',
+                            'delete' => 'Hapus',
+                            'cariBapb' => 'Cari BAPB',
+                        ]) ?>
+                        <?= $ruleRow('Detail BAPB / Invoice', 'invoicedetails', [
+                            'index' => 'Daftar',
+                            'view' => 'Tampilkan',
+                            'add' => 'Tambah',
+                            'edit' => 'Ubah',
+                            'delete' => 'Hapus',
+                        ]) ?>
+                        <?= $ruleRow('Retur Pembelian Farmasi', 'returpembelians', [
+                            'index' => 'Daftar',
+                            'view' => 'Tampilkan',
+                            'add' => 'Tambah',
+                            'edit' => 'Ubah',
+                            'delete' => 'Hapus',
+                        ]) ?>
+                        <?= $ruleRow('Informasi Stok Obat', 'medicinestocks', [
+                            'index' => 'Daftar',
+                            'toggleValid' => 'Validasi',
+                        ]) ?>
+                        <?= $ruleRow('Kartu Stok Obat', 'kartustok', [
+                            'index' => 'Daftar',
+                            'searchMedicine' => 'Cari Obat',
                         ]) ?>
 
                         <tr>
@@ -3709,6 +3756,21 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
                             'add' => 'Tambah',
                             'edit' => 'Ubah',
                             'delete' => 'Hapus',
+                        ]) ?>
+                        <?= $ruleRow('EMR Rawat Jalan', 'outpatientvisitemr', [
+                            'emr' => 'EMR',
+                        ]) ?>
+                        <?= $ruleRow('Surat Rawat Jalan', 'outpatientletters', [
+                            'index' => 'Daftar',
+                            'view' => 'Tampilkan',
+                            'add' => 'Tambah',
+                            'edit' => 'Ubah',
+                            'delete' => 'Hapus',
+                            'getSuratSakit' => 'Ambil Surat Sakit',
+                            'simpanSuratSakit' => 'Simpan Surat Sakit',
+                            'getSuratKonsultasi' => 'Ambil Surat Konsultasi',
+                            'simpanSuratKonsultasi' => 'Simpan Surat Konsultasi',
+                            'cetakSuratSakit' => 'Cetak Surat Sakit',
                         ]) ?>
                         <tr>
                             <td>Rawat Inap</td>

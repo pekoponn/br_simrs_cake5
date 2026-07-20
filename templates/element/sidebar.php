@@ -26,6 +26,9 @@ $placementOfGood = (isset($checkUrl['placementofgoods'])) ? $checkUrl['placement
 $submission = (isset($checkUrl['submissions'])) ? $checkUrl['submissions'] : array();
 $order = (isset($checkUrl['orders'])) ? $checkUrl['orders'] : array();
 $orderpo = (isset($checkUrl['orderpos'])) ? $checkUrl['orderpos'] : array();
+$rencanaPembelian = (isset($checkUrl['rencanapembelians'])) ? $checkUrl['rencanapembelians'] : array();
+$orderPembelian = (isset($checkUrl['orderpembelians'])) ? $checkUrl['orderpembelians'] : array();
+$returPembelian = (isset($checkUrl['returpembelians'])) ? $checkUrl['returpembelians'] : array();
 $supplier = (isset($checkUrl['suppliers'])) ? $checkUrl['suppliers'] : array();
 $suppliermou = (isset($checkUrl['suppliermous'])) ? $checkUrl['suppliermous'] : array();
 $medicine = (isset($checkUrl['medicines'])) ? $checkUrl['medicines'] : array();
@@ -33,6 +36,8 @@ $medicineUbs = (isset($checkUrl['medicineubs'])) ? $checkUrl['medicineubs'] : ar
 $medicineUbsUpload = (isset($checkUrl['medicineubsuploads'])) ? $checkUrl['medicineubsuploads'] : array();
 $medicineMerk = (isset($checkUrl['medicinemerks'])) ? $checkUrl['medicinemerks'] : array();
 $medicineGroup = (isset($checkUrl['medicinegroups'])) ? $checkUrl['medicinegroups'] : array();
+$medicineStock = (isset($checkUrl['medicinestocks'])) ? $checkUrl['medicinestocks'] : array();
+$kartuStok = (isset($checkUrl['kartustok'])) ? $checkUrl['kartustok'] : array();
 
 $warehouseReceive = (isset($checkUrl['warehousereceives'])) ? $checkUrl['warehousereceives'] : array();
 $patient = (isset($checkUrl['patients'])) ? $checkUrl['patients'] : array();
@@ -61,6 +66,7 @@ $polyclinicQueue = (isset($checkUrl['polyclinicqueues'])) ? $checkUrl['polyclini
 $registration = (isset($checkUrl['registrations'])) ? $checkUrl['registrations'] : array();
 $patientAdmission = (isset($checkUrl['patientadmissions'])) ? $checkUrl['patientadmissions'] : array();
 $outpatientVisit = (isset($checkUrl['outpatientvisits'])) ? $checkUrl['outpatientvisits'] : array();
+$outpatientLetter = (isset($checkUrl['outpatientletters'])) ? $checkUrl['outpatientletters'] : array();
 $emergencyEntry = (isset($checkUrl['emergencyentries'])) ? $checkUrl['emergencyentries'] : array();
 $inpatientEntry = (isset($checkUrl['inpatiententries'])) ? $checkUrl['inpatiententries'] : array();
 $medicalRecord = (isset($checkUrl['medicalrecords'])) ? $checkUrl['medicalrecords'] : array();
@@ -390,9 +396,9 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 				}
 				if ($order['index'] == 1 || $orderpo['index'] == 1) {
 
-					$menuScmLink = ($getController == 'orders' || $getController == 'orderpos') ? 'active' : '';
+					$menuScmLink = (($getController == 'orders' && !in_array($getAction, ['antrianFarmasi', 'proses'], true)) || $getController == 'orderpos') ? 'active' : '';
 
-					$menuDataOrder = ($getController == 'orders') ? ' class="active"' : '';
+					$menuDataOrder = ($getController == 'orders' && !in_array($getAction, ['antrianFarmasi', 'proses'], true)) ? ' class="active"' : '';
 					$menuDataOrderPo = ($getController == 'orderpos') ? ' class="active"' : '';
 				?>
 					<li class="has-sub <?php echo $menuScmLink; ?>">
@@ -447,6 +453,90 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 							}
 							*/
 							?>
+						</ul>
+					</li>
+				<?php
+				}
+				if (
+					!empty($order['antrianFarmasi']) ||
+					!empty($order['proses']) ||
+					!empty($rencanaPembelian['index']) ||
+					!empty($orderPembelian['index']) ||
+					!empty($returPembelian['index']) ||
+					!empty($invoice['index']) ||
+					!empty($medicineStock['index']) ||
+					!empty($kartuStok['index'])
+				) {
+
+					$menuFarmasi = (
+						($getController == 'orders' && in_array($getAction, ['antrianFarmasi', 'proses'], true))
+						|| in_array($getController, [
+							'rencanapembelians',
+							'orderpembelians',
+							'returpembelians',
+							'invoices',
+							'medicinestocks',
+							'kartustok',
+						], true)
+					) ? 'active' : '';
+
+					$menuAntrianFarmasi = ($getController == 'orders' && $getAction == 'antrianFarmasi') ? ' class="active"' : '';
+					$menuProsesFarmasi = ($getController == 'orders' && $getAction == 'proses') ? ' class="active"' : '';
+					$menuRencanaPembelian = ($getController == 'rencanapembelians') ? ' class="active"' : '';
+					$menuOrderPembelian = ($getController == 'orderpembelians') ? ' class="active"' : '';
+					$menuReturPembelian = ($getController == 'returpembelians') ? ' class="active"' : '';
+					$menuInvoiceFarmasi = ($getController == 'invoices') ? ' class="active"' : '';
+					$menuMedicineStock = ($getController == 'medicinestocks') ? ' class="active"' : '';
+					$menuKartuStok = ($getController == 'kartustok') ? ' class="active"' : '';
+				?>
+					<li class="has-sub <?= $menuFarmasi ?>">
+						<a href="javascript:;">
+							<b class="caret pull-right"></b>
+							<i class="fa fa-prescription-bottle-alt"></i>
+							<span>Farmasi</span>
+						</a>
+
+						<ul class="sub-menu">
+							<?php if (!empty($order['antrianFarmasi'])) { ?>
+								<li <?= $menuAntrianFarmasi ?>>
+									<?= $this->Html->link('Antrian Farmasi', ['controller' => 'Orders', 'action' => 'antrianFarmasi'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+							<?php } ?>
+							<?php if (!empty($order['proses'])) { ?>
+								<li <?= $menuProsesFarmasi ?>>
+									<?= $this->Html->link('Proses Resep Luar', ['controller' => 'Orders', 'action' => 'proses'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+							<?php } ?>
+							<?php if (!empty($rencanaPembelian['index'])) { ?>
+								<li <?= $menuRencanaPembelian ?>>
+									<?= $this->Html->link('Rencana Pembelian', ['controller' => 'RencanaPembelians', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+							<?php } ?>
+							<?php if (!empty($orderPembelian['index'])) { ?>
+								<li <?= $menuOrderPembelian ?>>
+									<?= $this->Html->link('Order Pembelian', ['controller' => 'OrderPembelians', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+							<?php } ?>
+							<?php if (!empty($invoice['index'])) { ?>
+								<li <?= $menuInvoiceFarmasi ?>>
+									<?= $this->Html->link('BAPB / Invoice', ['controller' => 'Invoices', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+							<?php } ?>
+							<?php if (!empty($returPembelian['index'])) { ?>
+								<li <?= $menuReturPembelian ?>>
+									<?= $this->Html->link('Retur Pembelian', ['controller' => 'ReturPembelians', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+							<?php } ?>
+							<?php if (!empty($medicineStock['index'])) { ?>
+								<li <?= $menuMedicineStock ?>>
+									<?= $this->Html->link('Informasi Stok', ['controller' => 'MedicineStocks', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+							<?php } ?>
+							<?php if (!empty($kartuStok['index'])) { ?>
+								<li <?= $menuKartuStok ?>>
+									<?= $this->Html->link('Kartu Stok', ['controller' => 'KartuStok', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+							<?php } ?>
 						</ul>
 					</li>
 				<?php
@@ -534,12 +624,13 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 				<?php
 				}
 
-				if (!empty($outpatientVisit['index']) || !empty($outpatientBilling['index']) || !empty($medicalRecord['index'])) {
+				if (!empty($outpatientVisit['index']) || !empty($outpatientBilling['index']) || !empty($medicalRecord['index']) || !empty($outpatientLetter['index'])) {
 
-					$menuOutpatientVisit = ($getController == 'outpatientvisits' || $getController == 'outpatientbillings' || $getController == 'medicalrecords') ? 'active' : '';
+					$menuOutpatientVisit = ($getController == 'outpatientvisits' || $getController == 'outpatientbillings' || $getController == 'medicalrecords' || $getController == 'outpatientletters') ? 'active' : '';
 					$menuOutpatientVisitIndex = ($getController == 'outpatientvisits') ? ' class="active"' : '';
 					$menuOutpatientBillingIndex = ($getController == 'outpatientbillings') ? ' class="active"' : '';
 					$menuMedicalRecordIndex = ($getController == 'medicalrecords') ? ' class="active"' : '';
+					$menuOutpatientLetterIndex = ($getController == 'outpatientletters') ? ' class="active"' : '';
 				?>
 					<li class="has-sub <?= $menuOutpatientVisit ?>">
 						<a href="javascript:;">
@@ -589,6 +680,24 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 										'Rekam Medis',
 										[
 											'controller' => 'MedicalRecords',
+											'action' => 'index'
+										],
+										[
+											'fullBase' => true,
+											'escape' => false
+										]
+									) ?>
+								</li>
+							<?php
+							}
+
+							if (!empty($outpatientLetter['index'])) {
+							?>
+								<li <?= $menuOutpatientLetterIndex ?>>
+									<?= $this->Html->link(
+										'Surat Rawat Jalan',
+										[
+											'controller' => 'OutpatientLetters',
 											'action' => 'index'
 										],
 										[
