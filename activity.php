@@ -1204,3 +1204,333 @@ ADD COLUMN allergy TEXT NULL AFTER service_type;
 ALTER TABLE registrations
 ADD doctor_schedule_id INT NULL AFTER doctor_id,
 ADD skdp_no VARCHAR(50) NULL AFTER sep_no;
+
+ALTER TABLE registrations
+ADD COLUMN room_name VARCHAR(100) NULL AFTER polyclinic_name;
+
+ALTER TABLE medical_record_examinations
+ADD COLUMN history_no VARCHAR(30) NULL AFTER patient_history_id;
+
+
+ALTER TABLE medical_records
+DROP COLUMN no_rm;
+
+-- 1. Buat tabel baru untuk data klinis EMR
+CREATE TABLE outpatient_visit_emr (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    outpatient_visit_id INT UNSIGNED NOT NULL,
+
+    blood_pressure VARCHAR(20) NULL,
+    pulse INT UNSIGNED NULL,
+    temperature DECIMAL(4,1) UNSIGNED NULL,
+    respiratory_rate INT UNSIGNED NULL,
+    oxygen_saturation INT UNSIGNED NULL,
+    weight DECIMAL(5,2) UNSIGNED NULL,
+    height DECIMAL(5,2) UNSIGNED NULL,
+    bmi DECIMAL(5,2) UNSIGNED NULL,
+
+    chief_complaint TEXT NULL,
+    illness_history TEXT NULL,
+    admission_diagnosis VARCHAR(255) NULL,
+    allergy VARCHAR(255) NULL,
+    pain_scale INT UNSIGNED NULL,
+
+    diagnosis_primary VARCHAR(100) NULL,
+    diagnosis_secondary VARCHAR(255) NULL,
+    diagnosis_desc TEXT NULL,
+    icd10_items TEXT NULL,
+    icd9_items TEXT NULL,
+
+    action_notes TEXT NULL,
+    doctor_notes TEXT NULL,
+    prescription_notes TEXT NULL,
+
+    follow_up_date DATE NULL,
+    referral_to VARCHAR(100) NULL,
+    referral_reason TEXT NULL,
+
+    payment_method VARCHAR(30) NULL,
+    total_fee DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    paid TINYINT(1) NOT NULL DEFAULT 0,
+
+    created DATETIME NULL,
+    modified DATETIME NULL,
+
+    UNIQUE KEY uq_outpatient_visit_emr_visit (outpatient_visit_id),
+    CONSTRAINT fk_emr_outpatient_visit
+        FOREIGN KEY (outpatient_visit_id) REFERENCES outpatient_visits(id)
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 2. Pindahkan data lama dari outpatient_visits ke outpatient_visit_emr
+INSERT INTO outpatient_visit_emr (
+    outpatient_visit_id, blood_pressure, pulse, temperature, respiratory_rate,
+    oxygen_saturation, weight, height, bmi, chief_complaint, illness_history,
+    admission_diagnosis, allergy, pain_scale, diagnosis_primary, diagnosis_secondary,
+    diagnosis_desc, icd10_items, icd9_items, action_notes, doctor_notes,
+    prescription_notes, follow_up_date, referral_to, referral_reason,
+    payment_method, total_fee, paid, created, modified
+)
+SELECT
+    id, blood_pressure, pulse, temperature, respiratory_rate,
+    oxygen_saturation, weight, height, bmi, chief_complaint, illness_history,
+    admission_diagnosis, allergy, pain_scale, diagnosis_primary, diagnosis_secondary,
+    diagnosis_desc, icd10_items, icd9_items, action_notes, doctor_notes,
+    prescription_notes, follow_up_date, referral_to, referral_reason,
+    payment_method, total_fee, paid, created, modified
+FROM outpatient_visits;
+
+-- 3. Setelah dicek datanya sudah pindah dengan benar, baru hapus kolom lama dari outpatient_visits
+-- ⚠️ JALANKAN INI SETELAH VERIFIKASI DATA AMAN (backup dulu!)
+ALTER TABLE outpatient_visits
+    DROP COLUMN blood_pressure,
+    DROP COLUMN pulse,
+    DROP COLUMN temperature,
+    DROP COLUMN respiratory_rate,
+    DROP COLUMN oxygen_saturation,
+    DROP COLUMN weight,
+    DROP COLUMN height,
+    DROP COLUMN bmi,
+    DROP COLUMN chief_complaint,
+    DROP COLUMN illness_history,
+    DROP COLUMN admission_diagnosis,
+    DROP COLUMN allergy,
+    DROP COLUMN pain_scale,
+    DROP COLUMN diagnosis_primary,
+    DROP COLUMN diagnosis_secondary,
+    DROP COLUMN diagnosis_desc,
+    DROP COLUMN icd10_items,
+    DROP COLUMN icd9_items,
+    DROP COLUMN action_notes,
+    DROP COLUMN doctor_notes,
+    DROP COLUMN prescription_notes,
+    DROP COLUMN follow_up_date,
+    DROP COLUMN referral_to,
+    DROP COLUMN referral_reason,
+    DROP COLUMN payment_method,
+    DROP COLUMN total_fee,
+    DROP COLUMN paid;
+
+-- 1. Lepas foreign key yang menahan index unique
+ALTER TABLE outpatient_visit_emr DROP FOREIGN KEY fk_emr_outpatient_visit;
+
+-- 2. Sekarang index unique-nya boleh dihapus
+ALTER TABLE outpatient_visit_emr DROP INDEX uq_outpatient_visit_emr_visit;
+
+-- 3. Buat index biasa (non-unique) di kolom yang sama
+ALTER TABLE outpatient_visit_emr ADD INDEX idx_outpatient_visit_emr_visit (outpatient_visit_id);
+
+ALTER TABLE outpatient_visit_emr
+    ADD CONSTRAINT fk_emr_outpatient_visit
+    FOREIGN KEY (outpatient_visit_id) REFERENCES outpatient_visits(id)
+    ON DELETE CASCADE;
+    
+
+ALTER TABLE `patient_histories`
+ADD COLUMN `user_id` INT NULL DEFAULT NULL AFTER `registration_id`;
+
+ALTER TABLE medicines ENGINE = InnoDB;
+CREATE TABLE `medicine_stocks` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `branch_id` INT NOT NULL DEFAULT 1,
+    `medicine_id` INT NOT NULL,
+    `last_so_date` DATE NULL DEFAULT NULL COMMENT 'Tgl SO terakhir',
+    `hasil_so` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    `adjustment` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    `terima` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    `keluar` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    `saldo_akhir` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    `max_stock` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    `is_valid` ENUM('Y','N') NOT NULL DEFAULT 'N' COMMENT 'Status validasi stock',
+    `created` DATETIME NULL DEFAULT NULL,
+    `modified` DATETIME NULL DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uniq_branch_medicine` (`branch_id`, `medicine_id`),
+    KEY `fk_medicine_stocks_medicine` (`medicine_id`),
+    CONSTRAINT `fk_medicine_stocks_medicine`
+        FOREIGN KEY (`medicine_id`) REFERENCES `medicines` (`id`)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci
+COMMENT='Informasi stock per obat, relasi ke master medicines';
+
+ALTER TABLE `master_laboratories`
+    ADD COLUMN `jasa_rs` DECIMAL(15,2) NOT NULL DEFAULT 0.00 AFTER `tariff`,
+    ADD COLUMN `jasa_dr` DECIMAL(15,2) NOT NULL DEFAULT 0.00 AFTER `jasa_rs`,
+    ADD COLUMN `jasa_perawat` DECIMAL(15,2) NOT NULL DEFAULT 0.00 AFTER `jasa_dr`;
+
+UPDATE `master_laboratories` SET `jasa_rs` = `tariff` WHERE `jasa_rs` = 0;
+
+CREATE TABLE `order_pembelians` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `supplier_id` INT UNSIGNED NOT NULL,
+  `po_no` VARCHAR(30) NOT NULL,
+  `tgl_po` DATE NOT NULL,
+  `ref_no` VARCHAR(50) DEFAULT NULL,
+  `tgl_kirim` DATE DEFAULT NULL,
+  `barang_dikirim_ke` TEXT DEFAULT NULL,
+  `kirim_via` VARCHAR(50) DEFAULT NULL,
+  `jenis` VARCHAR(50) DEFAULT NULL,
+  `total` DECIMAL(18,2) NOT NULL DEFAULT 0,
+  `status` VARCHAR(20) NOT NULL DEFAULT 'draft',
+  `created` DATETIME DEFAULT NULL,
+  `modified` DATETIME DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_order_pembelians_po_no` (`po_no`),
+  KEY `idx_order_pembelians_supplier_id` (`supplier_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `order_pembelian_details` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `order_pembelian_id` INT UNSIGNED NOT NULL,
+  `barang_id` INT UNSIGNED DEFAULT NULL,   
+  `kode_barang` VARCHAR(30) DEFAULT NULL,  
+  `nama_barang` VARCHAR(200) DEFAULT NULL, 
+  `qty_rencana` DECIMAL(12,2) NOT NULL DEFAULT 0,
+  `qty_po` DECIMAL(12,2) NOT NULL DEFAULT 0,
+  `satuan` VARCHAR(20) DEFAULT NULL,
+  `harga` DECIMAL(18,2) NOT NULL DEFAULT 0,
+  `discount` DECIMAL(18,2) NOT NULL DEFAULT 0,
+  `tax` DECIMAL(18,2) NOT NULL DEFAULT 0,
+  `total_harga` DECIMAL(18,2) NOT NULL DEFAULT 0,
+  `created` DATETIME DEFAULT NULL,
+  `modified` DATETIME DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_opd_order_pembelian_id` (`order_pembelian_id`),
+  KEY `idx_opd_barang_id` (`barang_id`),
+  CONSTRAINT `fk_opd_order_pembelian`
+    FOREIGN KEY (`order_pembelian_id`) REFERENCES `order_pembelians` (`id`)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE rencana_pembelians (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    no_perencanaan VARCHAR(30) NOT NULL,
+    tgl_perencanaan DATE NOT NULL,
+    no_dokumen VARCHAR(50) DEFAULT NULL,
+    status ENUM('draft','diajukan','disetujui','ditolak') NOT NULL DEFAULT 'draft',
+    supplier_id INT UNSIGNED DEFAULT NULL,
+    nama_supplier VARCHAR(150) DEFAULT NULL,
+    diminta_oleh VARCHAR(150) DEFAULT NULL,
+    total_qty_permintaan DECIMAL(14,2) NOT NULL DEFAULT 0,
+    total_permintaan DECIMAL(14,2) NOT NULL DEFAULT 0,
+    created DATETIME NOT NULL,
+    modified DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_no_perencanaan (no_perencanaan)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE rencana_pembelian_details (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    rencana_pembelian_id INT UNSIGNED NOT NULL,
+    medicine_id INT UNSIGNED DEFAULT NULL,
+    kode_barang VARCHAR(50) DEFAULT NULL,
+    nama_barang VARCHAR(200) DEFAULT NULL,
+    qty DECIMAL(14,2) NOT NULL DEFAULT 0,
+    harga DECIMAL(14,2) NOT NULL DEFAULT 0,
+    satuan VARCHAR(30) DEFAULT NULL,
+    total DECIMAL(14,2) NOT NULL DEFAULT 0,
+    total_approv DECIMAL(14,2) NOT NULL DEFAULT 0,
+    is_obat ENUM('Y','N') NOT NULL DEFAULT 'Y',
+    keterangan VARCHAR(255) DEFAULT NULL,
+    created DATETIME NOT NULL,
+    modified DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    KEY idx_rencana_pembelian_id (rencana_pembelian_id),
+    KEY idx_medicine_id (medicine_id),
+    CONSTRAINT fk_rpd_rencana FOREIGN KEY (rencana_pembelian_id)
+        REFERENCES rencana_pembelians (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE retur_pembelians (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    retur_no VARCHAR(30) NOT NULL,
+    tgl_retur DATE NOT NULL,
+    bapb_no VARCHAR(50) DEFAULT NULL,
+    no_faktur VARCHAR(50) DEFAULT NULL,
+    gudang_depo VARCHAR(100) DEFAULT NULL,
+    supplier_id INT UNSIGNED DEFAULT NULL,
+    nama_supplier VARCHAR(150) DEFAULT NULL,
+    catatan VARCHAR(255) DEFAULT NULL,
+    total DECIMAL(14,2) NOT NULL DEFAULT 0,
+    created DATETIME NOT NULL,
+    modified DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_retur_no (retur_no)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE retur_pembelian_details (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    retur_pembelian_id INT UNSIGNED NOT NULL,
+    medicine_id INT UNSIGNED DEFAULT NULL,
+    kode_barang VARCHAR(50) DEFAULT NULL,
+    nama_barang VARCHAR(200) DEFAULT NULL,
+    qty DECIMAL(14,2) NOT NULL DEFAULT 0,
+    unit VARCHAR(30) DEFAULT NULL,
+    harga DECIMAL(14,2) NOT NULL DEFAULT 0,
+    tax DECIMAL(14,2) NOT NULL DEFAULT 0,
+    ppn_rp DECIMAL(14,2) NOT NULL DEFAULT 0,
+    discount DECIMAL(14,2) NOT NULL DEFAULT 0,
+    total_harga DECIMAL(14,2) NOT NULL DEFAULT 0,
+    tgl_kadaluarsa DATE DEFAULT NULL,
+    created DATETIME NOT NULL,
+    modified DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    KEY idx_retur_pembelian_id (retur_pembelian_id),
+    KEY idx_medicine_id (medicine_id),
+    CONSTRAINT fk_rpbd_retur FOREIGN KEY (retur_pembelian_id)
+        REFERENCES retur_pembelians (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE invoices (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    bapb_no VARCHAR(30) NOT NULL,
+    nama_supplier VARCHAR(150) DEFAULT NULL,
+    supplier_id INT UNSIGNED DEFAULT NULL,
+    tgl_terima DATE NOT NULL,
+    no_faktur VARCHAR(50) DEFAULT NULL,
+    sj_no VARCHAR(50) DEFAULT NULL,
+    tgl_tukar_faktur DATE DEFAULT NULL,
+    kurs VARCHAR(10) NOT NULL DEFAULT 'IDR',
+    rate DECIMAL(14,4) NOT NULL DEFAULT 1,
+    pembayaran ENUM('cash','kredit') NOT NULL DEFAULT 'cash',
+    tgl_jatuh_tempo DATE DEFAULT NULL,
+    diterima_lokasi_gudang VARCHAR(100) DEFAULT NULL,
+    materai ENUM('3000','6000','tanpa') NOT NULL DEFAULT 'tanpa',
+    discount_percent DECIMAL(5,2) NOT NULL DEFAULT 0,
+    discount_rp DECIMAL(14,2) NOT NULL DEFAULT 0,
+    ongkos_kirim DECIMAL(14,2) NOT NULL DEFAULT 0,
+    total DECIMAL(14,2) NOT NULL DEFAULT 0,
+    grand_total DECIMAL(14,2) NOT NULL DEFAULT 0,
+    catatan VARCHAR(255) DEFAULT NULL,
+    created DATETIME NOT NULL,
+    modified DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_bapb_no (bapb_no)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE invoice_details (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    invoice_id INT UNSIGNED NOT NULL,
+    medicine_id INT UNSIGNED DEFAULT NULL,
+    kode_barang VARCHAR(50) DEFAULT NULL,
+    nama_barang VARCHAR(200) DEFAULT NULL,
+    qty DECIMAL(14,2) NOT NULL DEFAULT 0,
+    satuan VARCHAR(30) DEFAULT NULL,
+    harga DECIMAL(14,2) NOT NULL DEFAULT 0,
+    discount_percent DECIMAL(5,2) NOT NULL DEFAULT 0,
+    discount_rp DECIMAL(14,2) NOT NULL DEFAULT 0,
+    tax DECIMAL(14,2) NOT NULL DEFAULT 0,
+    total_harga DECIMAL(14,2) NOT NULL DEFAULT 0,
+    tgl_kadaluarsa DATE DEFAULT NULL,
+    po_no VARCHAR(50) DEFAULT NULL,
+    histori VARCHAR(100) DEFAULT NULL,
+    nilai_diskon DECIMAL(14,2) NOT NULL DEFAULT 0,
+    created DATETIME NOT NULL,
+    modified DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    KEY idx_invoice_id (invoice_id),
+    KEY idx_medicine_id (medicine_id),
+    CONSTRAINT fk_invd_invoice FOREIGN KEY (invoice_id)
+        REFERENCES invoices (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

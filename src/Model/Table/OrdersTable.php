@@ -44,6 +44,16 @@ class OrdersTable extends Table
             'dependent' => true,
         ]);
 
+        $this->hasMany('OrderSurgeries', [
+            'foreignKey' => 'order_id',
+            'dependent' => true,
+        ]);
+
+        $this->hasMany('OrderMcus', [
+            'foreignKey' => 'order_id',
+            'dependent' => true,
+        ]);
+
         $this->addBehavior('Timestamp');
     }
 
@@ -103,6 +113,9 @@ class OrdersTable extends Table
                 'OrderPrescriptions',
                 'OrderLaboratories',
                 'OrderRadiologies',
+                'OrderSupports',
+                'OrderSurgeries',
+                'OrderMcus',
             ])
             ->where(['Orders.patient_id' => $patientId])
             ->order(['Orders.tgl_order' => 'DESC'])

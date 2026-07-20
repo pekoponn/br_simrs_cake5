@@ -130,6 +130,294 @@ class OrdersController extends AppController
         ));
     }
 
+public function antrianFarmasi()
+{
+    $dateFrom = $this->request->getQuery('date_from', date('Y-m-d'));
+
+    if (empty($dateFrom)) {
+        $dateFrom = date('Y-m-d');
+    }
+
+    $query = $this->Orders->find()
+        ->contain(['Patients', 'Doctors', 'Registrations'])
+        ->innerJoinWith('OrderPrescriptions')
+        ->innerJoinWith('Registrations')
+        ->where([
+            'DATE(Orders.tgl_order) >=' => $dateFrom,
+            'Orders.status_id' => 1, // status "Baru" / belum diproses farmasi
+            'Registrations.service_type IN' => ['rawat_jalan', 'igd'], // Rawat Inap dikecualikan, beda alur
+        ])
+        ->group(['Orders.id'])
+        ->order(['Orders.tgl_order' => 'ASC', 'Orders.id' => 'ASC']);
+
+    $orders = $query->all();
+
+    // Ambil No Rekam Medis per registration_id sekali jalan (hindari query di dalam loop).
+    $registrationIds = [];
+    foreach ($orders as $o) {
+        if (!empty($o->registration_id)) {
+            $registrationIds[] = (int)$o->registration_id;
+        }
+    }
+
+    $medicalRecordMap = [];
+    if (!empty($registrationIds)) {
+        $this->loadModel('MedicalRecords');
+
+        $medicalRecords = $this->MedicalRecords->find()
+            ->select(['registration_id', 'medical_record_no'])
+            ->where(['registration_id IN' => array_unique($registrationIds)])
+            ->enableHydration(false)
+            ->all();
+
+        foreach ($medicalRecords as $mr) {
+            $medicalRecordMap[(int)$mr['registration_id']] = $mr['medical_record_no'];
+        }
+    }
+
+    $rows = [];
+    $noAntri = 0;
+
+    foreach ($orders as $o) {
+        $noAntri++;
+        $rows[] = [
+            'no_antri' => 'A-' . str_pad((string)$noAntri, 4, '0', STR_PAD_LEFT),
+            'order' => $o,
+            'medical_record_no' => $medicalRecordMap[(int)$o->registration_id] ?? '-',
+        ];
+    }
+
+    $sisaResep = count($rows);
+
+    $this->set(compact('rows', 'dateFrom', 'sisaResep'));
+}
+
+public function proses($id = null)
+{
+    // ── MODE 1: Resep Luar (langsung dari sidebar, tanpa order/registrasi) ──
+    // Dipakai ketika pegawai/pasien mau beli obat langsung tanpa lewat
+    // pendaftaran/registrasi. Order tetap dibuat & obat tetap dicatat
+    // dari master obat (stok/pembelian), cuma tidak terikat ke
+    // patient_id / registration_id.
+    $isResepLuar = empty($id);
+
+    $patient = null;
+    $doctor = null;
+    $registration = null;
+    $medicalRecordNo = '-';
+
+    if ($isResepLuar) {
+        $order = $this->Orders->newEmptyEntity();
+        $order->tgl_order = new \Cake\I18n\FrozenTime();
+        $order->lokasi_depo = 'FARMASI 2 RAJAL DEPO';
+        $order->status_id = 1;
+    } else {
+        $order = $this->Orders->find()
+            ->contain([
+                'Patients',
+                'Doctors',
+                'Registrations',
+                'OrderPrescriptions' => ['Medicines'],
+            ])
+            ->where(['Orders.id' => (int)$id])
+            ->first();
+
+        if (!$order) {
+            $this->Flash->error('Order tidak ditemukan.');
+            return $this->redirect(['action' => 'antrianFarmasi']);
+        }
+
+        $patient = $order->patient ?? null;
+        $doctor = $order->doctor ?? null;
+        $registration = $order->registration ?? null;
+
+        // Ambil No Rekam Medis dari registration_id order ini.
+        if (!empty($order->registration_id)) {
+            $this->loadModel('MedicalRecords');
+            $mr = $this->MedicalRecords->find()
+                ->select(['medical_record_no'])
+                ->where(['registration_id' => (int)$order->registration_id])
+                ->first();
+
+            if ($mr) {
+                $medicalRecordNo = $mr->medical_record_no;
+            }
+        }
+    }
+
+    if ($this->request->is('post')) {
+        $data = $this->request->getData();
+
+        $identity = $this->request->getAttribute('identity');
+        $userId = $identity ? ($identity->id ?? null) : null;
+
+        if ($isResepLuar) {
+            // ── SUBMIT RESEP LUAR: buat order baru dari nol ──
+            $namaPembeli = trim((string)($data['nama_pembeli'] ?? ''));
+
+            if ($namaPembeli === '') {
+                $this->Flash->error('Nama pembeli wajib diisi untuk resep luar.');
+                return $this->redirect($this->referer());
+            }
+
+            $rows = $data['prescriptions'] ?? [];
+            $prescriptions = [];
+
+            foreach ($rows as $row) {
+                $medicineId = !empty($row['medicine_id']) ? (int)$row['medicine_id'] : 0;
+
+                if ($medicineId <= 0) {
+                    continue;
+                }
+
+                if (!$this->Medicines->exists(['Medicines.id' => $medicineId])) {
+                    continue;
+                }
+
+                $qty = (float)($row['qty_tagih'] ?? 0);
+
+                if ($qty <= 0) {
+                    continue;
+                }
+
+                $harga = (float)($row['harga'] ?? 0);
+
+                $rxSchema = $this->OrderPrescriptions->getSchema();
+
+                $prescriptionRow = [
+                    'medicine_id' => $medicineId,
+                    'qty_satuan' => $qty,
+                    'harga' => $harga,
+                    'total_harga' => $qty * $harga,
+                    'aturan_pakai' => trim((string)($row['aturan_pakai'] ?? '')),
+                ];
+
+                if ($rxSchema->hasColumn('waktu_minum')) {
+                    $prescriptionRow['waktu_minum'] = trim((string)($row['waktu_minum'] ?? ''));
+                }
+
+                if ($rxSchema->hasColumn('is_kronis')) {
+                    $prescriptionRow['is_kronis'] = !empty($row['is_kronis']) ? 1 : 0;
+                }
+
+                $prescriptions[] = $prescriptionRow;
+            }
+
+            if (empty($prescriptions)) {
+                $this->Flash->error('Pilih minimal 1 obat untuk resep luar.');
+                return $this->redirect($this->referer());
+            }
+
+            $order->patient_id = null;
+            $order->registration_id = null;
+            $order->doctor_id = null;
+            $order->pesan = 'RESEP LUAR';
+            $order->tgl_order = date('Y-m-d H:i:s');
+            $order->no_order = $this->generateOrderNumber();
+            $order->status_id = 1;
+            $order->created_by = !empty($userId) ? (int)$userId : 1;
+
+            // Simpan nama pembeli. Kalau kolom 'nama_pembeli' belum ada di
+            // tabel orders, dicatat sementara di kolom 'catatan' supaya
+            // tidak error dan tetap kelihatan di history/detail order.
+            $schema = $this->Orders->getSchema();
+            if ($schema->hasColumn('nama_pembeli')) {
+                $order->nama_pembeli = $namaPembeli;
+            } else {
+                $order->catatan = 'Pembeli (Resep Luar): ' . $namaPembeli;
+            }
+
+            if (!$this->Orders->save($order)) {
+                $this->Flash->error('Gagal menyimpan order resep luar. Silakan coba lagi.');
+                return $this->redirect($this->referer());
+            }
+
+            foreach ($prescriptions as $prescription) {
+                $prescription['order_id'] = $order->id;
+                $entity = $this->OrderPrescriptions->newEntity($prescription);
+
+                if (!$this->OrderPrescriptions->save($entity)) {
+                    continue;
+                }
+
+                // TODO: potong stok obat & catat sebagai transaksi
+                // pembelian di sini sesuai struktur tabel stok/pembelian
+                // yang dipakai (mis. StockMovements / PharmacyItems),
+                // begitu skema stoknya dikonfirmasi.
+            }
+
+            // Resep luar dianggap langsung selesai/terbayar saat itu juga.
+            $nextStatus = $this->OrderStatuses->find()
+                ->where([
+                    'OR' => [
+                        'nama LIKE' => '%proses%',
+                        'nama LIKE' => '%selesai%',
+                    ],
+                ])
+                ->order(['urutan' => 'ASC'])
+                ->first();
+
+            $order->status_id = $nextStatus ? $nextStatus->id : 2;
+            $this->Orders->save($order);
+
+            $this->Flash->success('Resep luar berhasil diposting. No Order: ' . $order->no_order);
+
+            return $this->redirect(['action' => 'proses']);
+        }
+
+        // ── SUBMIT ORDER TERDAFTAR (alur lama, dari Antrian Farmasi) ──
+        $rows = $data['prescriptions'] ?? [];
+
+        $rxSchema = $this->OrderPrescriptions->getSchema();
+
+        foreach ($order->order_prescriptions as $rx) {
+            $rowId = (string)$rx->id;
+
+            if (!isset($rows[$rowId])) {
+                continue;
+            }
+
+            $qtyTagih = (float)($rows[$rowId]['qty_tagih'] ?? $rx->qty_satuan);
+            $harga = (float)$rx->harga;
+
+            $rx->qty_satuan = $qtyTagih;
+            $rx->total_harga = $qtyTagih * $harga;
+
+            if ($rxSchema->hasColumn('waktu_minum')) {
+                $rx->waktu_minum = trim((string)($rows[$rowId]['waktu_minum'] ?? ''));
+            }
+
+            if ($rxSchema->hasColumn('is_kronis')) {
+                $rx->is_kronis = !empty($rows[$rowId]['is_kronis']) ? 1 : 0;
+            }
+
+            $this->OrderPrescriptions->save($rx);
+        }
+
+        $nextStatus = $this->OrderStatuses->find()
+            ->where([
+                'OR' => [
+                    'nama LIKE' => '%proses%',
+                    'nama LIKE' => '%selesai%',
+                ],
+            ])
+            ->order(['urutan' => 'ASC'])
+            ->first();
+
+        $order->status_id = $nextStatus ? $nextStatus->id : 2;
+
+        if ($this->Orders->save($order)) {
+            $this->Flash->success('Resep berhasil di-posting. No Order: ' . $order->no_order);
+            return $this->redirect(['action' => 'antrianFarmasi']);
+        }
+
+        $this->Flash->error('Gagal posting resep. Silakan coba lagi.');
+        return $this->redirect(['action' => 'proses', $order->id]);
+    }
+
+    $this->set(compact('order', 'medicalRecordNo', 'isResepLuar', 'patient', 'doctor', 'registration'));
+}
+
     public function form($registrationId = null)
     {
         $registration = null;
@@ -634,18 +922,28 @@ class OrdersController extends AppController
     }
 
     public function historyOrderDetail($id = null)
-    {
-        $this->request->allowMethod(['get']);
-        $this->autoRender = false;
+{
+    $this->request->allowMethod(['get']);
+    $this->autoRender = false;
 
-        if (empty($id) || !is_numeric($id)) {
-            return $this->response
-                ->withType('application/json')
-                ->withStringBody(json_encode([
-                    'success' => false,
-                    'message' => 'ID order tidak valid.',
-                ], JSON_UNESCAPED_UNICODE));
-        }
+    if (empty($id) || !is_numeric($id)) {
+        return $this->response
+            ->withType('application/json')
+            ->withStringBody(json_encode([
+                'success' => false,
+                'message' => 'ID order tidak valid.',
+            ], JSON_UNESCAPED_UNICODE));
+    }
+
+    try {
+        $fmtDateOrder = function ($v) {
+            if (empty($v)) return '-';
+            return is_object($v) && method_exists($v, 'format') ? $v->format('d-m-Y') : (string)$v;
+        };
+        $fmtTimeOrder = function ($v) {
+            if (empty($v)) return '-';
+            return is_object($v) && method_exists($v, 'format') ? $v->format('H:i:s') : (string)$v;
+        };
 
         $order = $this->Orders->find()
             ->contain([
@@ -657,7 +955,6 @@ class OrdersController extends AppController
                 'OrderLaboratories',
                 'OrderRadiologies',
                 'OrderSupports',
-                'OrderMcus',
             ])
             ->where(['Orders.id' => (int)$id])
             ->first();
@@ -750,7 +1047,7 @@ class OrdersController extends AppController
             ];
         }
 
-        $surgery = null; 
+        $surgery = null;
 
         $surgeryEntity = $this->OrderSurgeries->find()
             ->where(['OrderSurgeries.order_id' => (int)$id])
@@ -790,7 +1087,6 @@ class OrdersController extends AppController
             ];
         }
 
-
         return $this->response
             ->withType('application/json')
             ->withStringBody(json_encode([
@@ -798,8 +1094,8 @@ class OrdersController extends AppController
                 'order' => [
                     'id' => $order->id,
                     'no_order' => $order->no_order ?? '-',
-                    'tgl_order' => !empty($order->tgl_order) ? $order->tgl_order->format('d-m-Y') : '-',
-                    'jam_order' => !empty($order->tgl_order) ? $order->tgl_order->format('H:i:s') : '-',
+                    'tgl_order' => $fmtDateOrder($order->tgl_order),
+                    'jam_order' => $fmtTimeOrder($order->tgl_order),
                     'lokasi_depo' => $order->lokasi_depo ?? '-',
                     'pesan' => $order->pesan ?? '',
                     'catatan' => $order->catatan ?? '',
@@ -821,7 +1117,15 @@ class OrdersController extends AppController
                 'supports' => $supports,
                 'surgery' => $surgery,
             ], JSON_UNESCAPED_UNICODE));
+    } catch (\Throwable $e) {
+        return $this->response
+            ->withType('application/json')
+            ->withStringBody(json_encode([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
+            ], JSON_UNESCAPED_UNICODE));
     }
+}
 
     public function cariPasien()
     {
@@ -865,32 +1169,36 @@ class OrdersController extends AppController
         $q = trim((string)$this->request->getQuery('q', ''));
         $results = [];
 
-        if (strlen($q) >= 2) {
-            $rows = $this->Medicines->find()
-                ->where([
-                    'OR' => [
-                        'Medicines.code LIKE' => '%' . $q . '%',
-                        'Medicines.code_kfa LIKE' => '%' . $q . '%',
-                        'Medicines.name LIKE' => '%' . $q . '%',
-                        'Medicines.generic_name LIKE' => '%' . $q . '%',
-                        'Medicines.inventory_category LIKE' => '%' . $q . '%',
-                    ],
-                ])
-                ->order(['Medicines.name' => 'ASC'])
-                ->limit(30)
-                ->all();
+        // q kosong (baru buka modal) -> tampilkan daftar obat (dibatasi 200 biar tetap ringan).
+        // q diisi -> filter sesuai kata kunci, limit lebih kecil.
+        $query = $this->Medicines->find()
+            ->order(['Medicines.name' => 'ASC'])
+            ->limit($q === '' ? 200 : 30);
 
-            foreach ($rows as $m) {
-                $results[] = [
-                    'id' => $m->id,
-                    'kode' => $m->code ?? '',
-                    'nama' => $m->name ?? '',
-                    'generic' => $m->generic_name ?? '',
-                    'kategori' => $m->inventory_category ?? '',
-                    'harga' => (float)($m->harga_jual ?? $m->hna ?? 0),
-                    'unit' => $m->unit_1 ?? '',
-                ];
-            }
+        if ($q !== '') {
+            $query->where([
+                'OR' => [
+                    'Medicines.code LIKE' => '%' . $q . '%',
+                    'Medicines.code_kfa LIKE' => '%' . $q . '%',
+                    'Medicines.name LIKE' => '%' . $q . '%',
+                    'Medicines.generic_name LIKE' => '%' . $q . '%',
+                    'Medicines.inventory_category LIKE' => '%' . $q . '%',
+                ],
+            ]);
+        }
+
+        $rows = $query->all();
+
+        foreach ($rows as $m) {
+            $results[] = [
+                'id' => $m->id,
+                'kode' => $m->code ?? '',
+                'nama' => $m->name ?? '',
+                'generic' => $m->generic_name ?? '',
+                'kategori' => $m->inventory_category ?? '',
+                'harga' => (float)($m->harga_jual ?? $m->hna ?? 0),
+                'unit' => $m->unit_1 ?? '',
+            ];
         }
 
         return $this->response
@@ -904,36 +1212,84 @@ class OrdersController extends AppController
         $this->autoRender = false;
 
         $q = trim((string)$this->request->getQuery('q', ''));
+        $category = trim((string)$this->request->getQuery('category', ''));
         $results = [];
 
-        if (strlen($q) >= 2) {
-            $rows = $this->MasterLaboratories->find()
-                ->where([
-                    'OR' => [
-                        'MasterLaboratories.code LIKE' => '%' . $q . '%',
-                        'MasterLaboratories.name LIKE' => '%' . $q . '%',
-                        'MasterLaboratories.category LIKE' => '%' . $q . '%',
-                    ],
-                    'MasterLaboratories.is_active' => 1,
-                ])
-                ->order(['MasterLaboratories.name' => 'ASC'])
-                ->limit(30)
-                ->all();
+        $query = $this->MasterLaboratories->find()
+            ->where(['MasterLaboratories.is_active' => 1])
+            ->order(['MasterLaboratories.name' => 'ASC'])
+            ->limit($q === '' && $category === '' ? 300 : 100);
 
-            foreach ($rows as $lab) {
-                $results[] = [
-                    'id' => $lab->id,
-                    'kode' => $lab->code ?? '',
-                    'nama' => $lab->name ?? '',
-                    'tarif' => (float)($lab->tariff ?? 0),
-                    'kategori' => $lab->category ?? '',
-                ];
+        if ($q !== '') {
+            $query->where([
+                'OR' => [
+                    'MasterLaboratories.code LIKE' => '%' . $q . '%',
+                    'MasterLaboratories.name LIKE' => '%' . $q . '%',
+                    'MasterLaboratories.category LIKE' => '%' . $q . '%',
+                ],
+            ]);
+        }
+
+        if ($category !== '') {
+            $query->where(['MasterLaboratories.category' => $category]);
+        }
+
+        $rows = $query->all();
+
+        $schema = $this->MasterLaboratories->getSchema();
+        $hasJasaRs = $schema->hasColumn('jasa_rs');
+        $hasJasaDr = $schema->hasColumn('jasa_dr');
+        $hasJasaPerawat = $schema->hasColumn('jasa_perawat');
+
+        foreach ($rows as $lab) {
+            $jasaRs = $hasJasaRs ? (float)($lab->jasa_rs ?? 0) : 0;
+            $jasaDr = $hasJasaDr ? (float)($lab->jasa_dr ?? 0) : 0;
+            $jasaPerawat = $hasJasaPerawat ? (float)($lab->jasa_perawat ?? 0) : 0;
+            $tariff = (float)($lab->tariff ?? 0);
+
+            if ($tariff <= 0) {
+                $tariff = $jasaRs + $jasaDr + $jasaPerawat;
             }
+
+            $results[] = [
+                'id' => $lab->id,
+                'kode' => $lab->code ?? '',
+                'nama' => $lab->name ?? '',
+                'tarif' => $tariff,
+                'jasa_rs' => $jasaRs,
+                'jasa_dr' => $jasaDr,
+                'jasa_perawat' => $jasaPerawat,
+                'kategori' => $lab->category ?? '',
+            ];
         }
 
         return $this->response
             ->withType('application/json')
             ->withStringBody(json_encode($results, JSON_UNESCAPED_UNICODE));
+    }
+
+    public function kategoriLaboratorium()
+    {
+        $this->request->allowMethod(['get']);
+        $this->autoRender = false;
+
+        $rows = $this->MasterLaboratories->find()
+            ->select(['category'])
+            ->where([
+                'MasterLaboratories.is_active' => 1,
+                'MasterLaboratories.category IS NOT' => null,
+                'MasterLaboratories.category !=' => '',
+            ])
+            ->distinct(['category'])
+            ->order(['category' => 'ASC'])
+            ->enableHydration(false)
+            ->all()
+            ->extract('category')
+            ->toList();
+
+        return $this->response
+            ->withType('application/json')
+            ->withStringBody(json_encode($rows, JSON_UNESCAPED_UNICODE));
     }
 
     public function cariRadiologi()
@@ -1030,13 +1386,6 @@ class OrdersController extends AppController
             $query = $this->NutritionCombine->find();
             $schema = $this->NutritionCombine->getSchema();
 
-            /*
-             * FIX MASTER GIZI:
-             * Di database kamu nama kolom kandungan adalah nutrition_content_name,
-             * bukan nutrition_content. Kalau tetap pakai nutrition_content, query SQL error
-             * lalu masuk catch dan hasilnya kosong: "Data gizi tidak ditemukan".
-             * Bagian ini dibuat fleksibel supaya tetap aman kalau nama kolom berbeda.
-             */
             $contentField = null;
             foreach (['nutrition_content_name', 'nutrition_content', 'content_name', 'kandungan'] as $field) {
                 if ($schema->hasColumn($field)) {
