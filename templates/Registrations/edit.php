@@ -546,7 +546,11 @@ $patient = $registration->patient ?? null;
                                 <i class="fa fa-users"></i> Penanggung Jawab Pasien
                             </div>
 
-                            <?php $pr = $registration->person_responsible ?? null; ?>
+                            <!-- <?php $pr = $registration->person_responsible ?? null; ?> -->
+                            <?php
+                                $personResponsibleList = $registration->person_responsibles ?? [];
+                                $pr = !empty($personResponsibleList) ? $personResponsibleList[0] : null;
+                                ?>
 
                             <div class="form-card-body">
                                 <div class="row">
@@ -1003,8 +1007,9 @@ $patient = $registration->patient ?? null;
             </fieldset>
 
             <div class="submit-card">
-                <?= $this->Form->button('Update Registrasi', [
+                <?= $this->Form->button('Simpan', [
                     'type' => 'submit',
+                    'escape' => false,
                     'class' => 'btn btn-primary',
                     'id' => 'btn-save-registration'
                 ]) ?>

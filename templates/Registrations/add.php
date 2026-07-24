@@ -605,9 +605,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                                         <?php $vNationality = $patientFieldValue('nationality'); ?>
                                         <select id="view-nationality" name="patient[nationality]" class="form-control select2Form">
                                             <option value="">-- Pilih Negara --</option>
-                                            <option value="Indonesia" <?= $vNationality === 'Indonesia' ? 'selected' : '' ?>>Indonesia</option>
                                             <option value="INDONESIA" <?= $vNationality === 'INDONESIA' ? 'selected' : '' ?>>INDONESIA</option>
-                                            <option value="Lainnya" <?= $vNationality === 'Lainnya' ? 'selected' : '' ?>>Lainnya</option>
                                             <option value="MALAYSIA" <?= $vNationality === 'MALAYSIA' ? 'selected' : '' ?>>MALAYSIA</option>
                                             <option value="SINGAPURA" <?= $vNationality === 'SINGAPURA' ? 'selected' : '' ?>>SINGAPURA</option>
                                             <option value="THAILAND" <?= $vNationality === 'THAILAND' ? 'selected' : '' ?>>THAILAND</option>

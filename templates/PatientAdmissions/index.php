@@ -159,7 +159,8 @@ $baseUrl = ['controller' => 'PatientAdmissions', 'action' => 'index'];
 
 <?= $this->Krs->breadcrumb('Patient Admissions', 'Pendaftaran Pasien') ?>
 
-<div class="patient-admission-index content">
+<!-- <div class="patient-admission-index content"> -->
+    <div class="patient-admission">
     <div class="pa-header">
         <div>
             <h4><i class="fa fa-user-plus"></i> Pendaftaran Pasien</h4>

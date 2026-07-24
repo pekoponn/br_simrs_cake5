@@ -173,16 +173,16 @@ $summaryUrl = $this->Url->build(['action' => 'getSummary']);
                 <thead>
                     <tr class="text-center" style="background:#2c3e50; color:#fff;">
                         <th width="40">No</th>
-                        <th width="140"><?= $this->Paginator->sort('registration_no', 'No Registrasi') ?></th>
-                        <th width="100"><?= $this->Paginator->sort('registration_date', 'Tgl Masuk') ?></th>
+                        <th width="130"><?= $this->Paginator->sort('registration_no', 'No Registrasi') ?></th>
+                        <th width="90"><?= $this->Paginator->sort('registration_date', 'Tgl Masuk') ?></th>
                         <th>Pasien</th>
-                        <th width="100"><?= $this->Paginator->sort('service_type', 'Pelayanan') ?></th>
-                        <th width="120">Poli / Unit</th>
-                        <th width="150">Dokter</th>
-                        <th width="90"><?= $this->Paginator->sort('payment_method', 'Cara Bayar') ?></th>
-                        <th width="100">Penjamin</th>
-                        <th width="90"><?= $this->Paginator->sort('status', 'Status') ?></th>
-                        <th width="230">Aksi</th>
+                        <th width="95"><?= $this->Paginator->sort('service_type', 'Pelayanan') ?></th>
+                        <th width="110">Poli / Unit</th>
+                        <th width="140">Dokter</th>
+                        <th width="85"><?= $this->Paginator->sort('payment_method', 'Cara Bayar') ?></th>
+                        <th width="90">Penjamin</th>
+                        <th width="80"><?= $this->Paginator->sort('status', 'Status') ?></th>
+                        <th width="90">Aksi</th>
                     </tr>
                 </thead>
                 <tbody id="reg-tbody">
@@ -337,6 +337,23 @@ $summaryUrl = $this->Url->build(['action' => 'getSummary']);
 .label-default { background:#e9ecef; color:#495057; }
 .label-badge   { display:inline-block; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:600; }
 .btn-xs        { padding:3px 8px; font-size:12px; line-height:1.5; border-radius:4px; }
+table thead th {
+    background: #2c3e50 !important;
+    color: #fff !important;
+    border-color: #2c3e50 !important;
+}
+
+.table thead th a,
+.table thead th a:hover,
+.table thead th a:focus,
+.table thead th a:visited {
+    background: transparent !important;
+    color: #fff !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+}
 </style>
 
 <script>

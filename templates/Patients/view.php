@@ -464,28 +464,21 @@ foreach (($patient->registrations ?? []) as $registration) {
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($patient->registrations as $registration): ?>
-                                    <tr>
-                                        <td><b><?= $display($registration->registration_no ?? $registration->registration_number ?? null) ?></b></td>
-                                        <td><?= $display($registration->registration_date ?? null) ?></td>
-                                        <td><?= $display($registration->service_type ?? null) ?></td>
-                                        <td><?= $display($registration->polyclinic_name ?? null) ?></td>
-                                        <td><?= $display($registration->status ?? null) ?></td>
-                                        <td class="text-center">
-                                            <?= $this->Html->link(
-                                                '<i class="fa fa-eye"></i>',
-                                                ['controller' => 'Registrations', 'action' => 'view', $registration->id],
-                                                [
-                                                    'class' => 'btn btn-yellow btn-sm p-l-15 p-r-15',
-                                                    'escape' => false,
-                                                    'data-toggle' => 'tooltip',
-                                                    'data-placement' => 'top',
-                                                    'data-original-title' => 'Lihat Registrasi'
-                                                ]
-                                            ) ?>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
+                                <?php $rno = 1; foreach ($patient->registrations as $reg): ?>
+                            <tr>
+                                <td class="text-center"><?= $rno++ ?></td>
+                                <td><code style="font-size:11px;"><?= h($reg->registration_no) ?: '—' ?></code></td>
+                                <td><?= fmtPatientDate($reg->registration_date) ?></td>
+                                <td><?= h($reg->service_type) ?: '—' ?></td>
+                                <td><?= !empty($reg->doctor) ? h($reg->doctor->doctor_name) : '—' ?></td>
+                                <td>
+                                    <span style="background:#e9ecef; color:#495057; padding:2px 8px;
+                                                border-radius:10px; font-size:11px;">
+                                        <?= h($reg->status) ?: '—' ?>
+                                    </span>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
                             </tbody>
                         </table>
                     </div>
