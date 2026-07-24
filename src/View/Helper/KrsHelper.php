@@ -32,7 +32,7 @@ class KrsHelper extends Helper
 	public $emailInvoice = "triatamuliaindonesiabali2@gmail.com";
 	public $headerManifestProcessor = "header-triata.jpg";
 	public $footerManifestProcessor = "footer-triata.jpg";
-	public $loginBg = "login-bg.jpg";
+	public $loginBg = "login-bg2.png";
 	public $nettoPrice = "N";
 	public $signInvoice = 1;
 
@@ -182,22 +182,26 @@ class KrsHelper extends Helper
 		//$this->Form->button('<i class="fas fa-plus"></i> (BARU)', array('class'=>'btn btn-sm btn-inverse width-120 m-r-5 m-b-5', 'escape' => false));
 	}
 
-	public function breadcrumb($dataParent = null, $dataChild = null, $dataGrandChild = null)
+	public function breadcrumb($dataParent = null, $dataChild = null, $dataGrandChild = null, $showBreadcrumb = false, $showTitle = false)
 	{
-		$view = '<ol class="breadcrumb float-xl-right">';
-		if (!empty($dataChild)) {
-			$view .= (isset($dataParent)) ? '<li class="breadcrumb-item">' . $dataParent . '</li>' : '';
+		$view = '';
+		if ($showBreadcrumb) {
+			$view .= '<ol class="breadcrumb float-xl-right">';
+			if (!empty($dataChild)) {
+				$view .= (isset($dataParent)) ? '<li class="breadcrumb-item">' . $dataParent . '</li>' : '';
+			}
+			if (!empty($dataChild)) {
+				$view .= (isset($dataChild)) ? '<li class="breadcrumb-item">' . $dataChild . '</li>' : '<li class="breadcrumb-item active">' . $dataChild . '</li>';
+			}
+			if (!empty($dataGrandChild)) {
+				$view .= (isset($dataGrandChild)) ? '<li class="breadcrumb-item active">' . $dataGrandChild . '</li>' : '';
+			}
+			$view .= '</ol>';
 		}
-		if (!empty($dataChild)) {
-			$view .= (isset($dataChild)) ? '<li class="breadcrumb-item">' . $dataChild . '</li>' : '<li class="breadcrumb-item active">' . $dataChild . '</li>';
+
+		if ($showTitle) {
+			$view .= '<h1 class="page-header">' . trim(strip_tags($dataChild)) . '</h1>';
 		}
-		if (!empty($dataGrandChild)) {
-			$view .= (isset($dataGrandChild)) ? '<li class="breadcrumb-item active">' . $dataGrandChild . '</li>' : '';
-		}
-		$view .= '</ol>';
-		//if(!empty($dataChild)) {
-		$view .= '<h1 class="page-header">' . trim(strip_tags($dataChild)) . ' <small>kumpulan beberapa data...</small></h1>';
-		//}
 
 		return $view;
 	}
@@ -1216,20 +1220,20 @@ class KrsHelper extends Helper
 	public function outpatientRooms($value = null)
 	{
 		$data = [
-			'Ruang Poli Umum 01' => 'Ruang Poli Umum 01',
-			'Ruang Poli Gigi 01' => 'Ruang Poli Gigi 01',
-			'Ruang Poli Anak 01' => 'Ruang Poli Anak 01',
-			'Ruang Poli Kandungan 01' => 'Ruang Poli Kandungan 01',
-			'Ruang Poli Penyakit Dalam 01' => 'Ruang Poli Penyakit Dalam 01',
-			'Ruang Poli Mata 01' => 'Ruang Poli Mata 01',
-			'Ruang Poli THT 01' => 'Ruang Poli THT 01',
-			'Ruang Poli Bedah 01' => 'Ruang Poli Bedah 01',
-			'Ruang Poli Saraf 01' => 'Ruang Poli Saraf 01',
-			'Ruang Poli Kulit 01' => 'Ruang Poli Kulit 01',
-			'Ruang Poli Jantung 01' => 'Ruang Poli Jantung 01',
-			'Ruang IGD 01' => 'Ruang IGD 01',
-			'Ruang IGD 02' => 'Ruang IGD 02',
-			'Ruang Triage IGD' => 'Ruang Triage IGD',
+			' Poli Umum 01' => ' Poli Umum 01',
+			' Poli Gigi 01' => ' Poli Gigi 01',
+			' Poli Anak 01' => ' Poli Anak 01',
+			' Poli Kandungan 01' => ' Poli Kandungan 01',
+			' Poli Penyakit Dalam 01' => ' Poli Penyakit Dalam 01',
+			' Poli Mata 01' => ' Poli Mata 01',
+			' Poli THT 01' => ' Poli THT 01',
+			' Poli Bedah 01' => ' Poli Bedah 01',
+			' Poli Saraf 01' => ' Poli Saraf 01',
+			' Poli Kulit 01' => ' Poli Kulit 01',
+			' Poli Jantung 01' => ' Poli Jantung 01',
+			' IGD 01' => ' IGD 01',
+			' IGD 02' => ' IGD 02',
+			' Triage IGD' => ' Triage IGD',
 		];
 
 		return $value !== null ? ($data[$value] ?? $value) : $data;
@@ -1345,6 +1349,40 @@ class KrsHelper extends Helper
 		);
 		$result = ($value) ? $data[$value] : $data;
 		return $result;
+	}
+	public function specialists($value = null)
+	{
+		$data = [
+			'Anak'                          => 'Anak',
+			'Anestesi'                      => 'Anestesi',
+			'Bedah Umum'                    => 'Bedah Umum',
+			'Bedah Plastik'                 => 'Bedah Plastik',
+			'Bedah Saraf'                   => 'Bedah Saraf',
+			'Bedah Toraks Kardiovaskular'   => 'Bedah Toraks Kardiovaskular',
+			'THT'                           => 'THT',
+			'Forensik'                      => 'Forensik',
+			'Jantung & Pembuluh Darah'      => 'Jantung & Pembuluh Darah',
+			'Kulit & Kelamin'               => 'Kulit & Kelamin',
+			'Kedokteran Jiwa'               => 'Kedokteran Jiwa',
+			'Kedokteran Fisik & Rehabilitasi' => 'Kedokteran Fisik & Rehabilitasi',
+			'Mata'                          => 'Mata',
+			'Kandungan'                     => 'Kandungan',
+			'Ortopedi'                      => 'Ortopedi',
+			'Patologi Anatomi'              => 'Patologi Anatomi',
+			'Patologi Klinik'               => 'Patologi Klinik',
+			'Penyakit Dalam'                => 'Penyakit Dalam',
+			'Paru'                          => 'Paru',
+			'Radiologi'                     => 'Radiologi',
+			'Saraf'                         => 'Saraf',
+			'Urologi'                       => 'Urologi',
+			'Gizi Klinik'                   => 'Gizi Klinik',
+			'Dermatovenereologi'            => 'Dermatovenereologi',
+			'Dokter Umum'                   => 'Dokter Umum',
+			'Dokter Gigi'                   => 'Dokter Gigi',
+			'Lainnya'                       => 'Lainnya',
+		];
+
+		return $value !== null ? ($data[$value] ?? $value) : $data;
 	}
 
 }

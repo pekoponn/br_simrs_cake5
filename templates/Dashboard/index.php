@@ -79,7 +79,7 @@
 
                             <div class="col-xl-3 col-lg-4 align-items-center d-flex justify-content-center">
                                 <?php
-                                echo $this->Html->image('/img/svg/img-1.svg', array('alt' => 'logo', 'border' => 0, 'height'=>'150px', 'class'=>'d-none d-lg-block', 'fullBase' => true)); 
+                                echo $this->Html->image('/img/svg/img-2.svg', array('alt' => 'logo', 'border' => 0, 'height'=>'150px', 'class'=>'d-none d-lg-block', 'fullBase' => true)); 
                                 ?>
                             </div>
                         </div>

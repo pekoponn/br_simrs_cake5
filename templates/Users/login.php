@@ -1,5 +1,5 @@
 <div class="login-cover">
-	<div class="login-cover-image" style="background-image: url(<?= $this->Url->build(["controller" => "img", "action" => "login-bg", $this->Krs->loginBg], ['fullBase' => true]) ?>)" data-id="login-cover-image"></div>
+	<div class="login-cover-image" style="background-image: url(<?= $this->Url->image('login-bg/' . $this->Krs->loginBg, ['fullBase' => true]) ?>)" data-id="login-cover-image"></div>
 	<div class="login-cover-bg"></div>
 </div>
 
@@ -8,7 +8,7 @@
 		<div class="login-header">
 			<div class="brand">
 				<?php
-		        echo $this->Html->image('/img/logo/logo.png', array('alt' => 'logo', 'border' => 0, 'fullBase' => true)); 
+		        echo $this->Html->image('logo_br2.png', array('alt' => 'logo', 'border' => 0, 'fullBase' => true, 'width' => 40, 'height' => 40, 'style' => 'object-fit: contain;')); 
 		        //<span class="logo"></span> <b><?= $this->Krs->companyName; ?>
 				<small><?= $this->Krs->titleLogin; ?></small>
 			</div>
