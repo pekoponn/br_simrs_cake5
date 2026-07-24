@@ -162,11 +162,13 @@
                                                 '<i class="fa fa-volume-up"></i>',
                                                 ['action' => 'callQueue', $queue->id],
                                                 [
-                                                    'class' => 'btn btn-warning btn-sm',
+                                                    'class' => 'btn btn-warning btn-sm btn-panggil-queue',
                                                     'escape' => false,
                                                     'data-toggle' => 'tooltip',
                                                     'title' => 'Panggil pasien ke loket/poli',
-                                                    'confirm' => 'Panggil nomor antrian ' . h($queue->code) . '?'
+                                                    'data-queue-code' => h($queue->code ?: '-'),
+                                                    'data-queue-number' => h($queue->queue_number ?: ''),
+                                                    'data-poli' => h($queue->poly_name ?: '')
                                                 ]
                                             ) ?>
                                         <?php endif; ?>

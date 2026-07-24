@@ -360,10 +360,22 @@ foreach ($allQueues as $queue) {
                             ]) ?>
                         </div>
 
-                        <div class="col-md-1">
+                        <div class="col-md-2 m-b-10 d-flex" style="gap: 6px;">
                             <button type="submit" class="btn btn-warning">
                                 <i class="fa fa-search"></i>
                             </button>
+
+                            <?= $this->Html->link(
+                                '<i class="fa fa-sync-alt"></i>',
+                                ['action' => 'index'],
+                                [
+                                    'class' => 'btn btn-inverse',
+                                    'escape' => false,
+                                    'data-toggle' => 'tooltip',
+                                    'data-placement' => 'top',
+                                    'title' => 'Refresh data antrian'
+                                ]
+                            ) ?>
                         </div>
                     </div>
                 </div>
@@ -416,4 +428,99 @@ foreach ($allQueues as $queue) {
             </div>
         </div>
     </div>
+
+    <script>
+$(function () {
+
+    // ── Cari suara Bahasa Indonesia yang tersedia di browser ─────────────────
+    var idVoice = null;
+    function loadIndonesianVoice() {
+        if (!('speechSynthesis' in window)) return;
+        var voices = window.speechSynthesis.getVoices();
+        idVoice = voices.find(function (v) { return v.lang === 'id-ID'; })
+               || voices.find(function (v) { return v.lang && v.lang.toLowerCase().indexOf('id') === 0; })
+               || null;
+    }
+    if ('speechSynthesis' in window) {
+        loadIndonesianVoice();
+        window.speechSynthesis.onvoiceschanged = loadIndonesianVoice;
+    }
+
+    function speakText(text) {
+        if (!('speechSynthesis' in window) || !text) return;
+        try {
+            window.speechSynthesis.cancel();
+            var utter = new SpeechSynthesisUtterance(text);
+            utter.lang = 'id-ID';
+            if (idVoice) utter.voice = idVoice;
+            utter.rate = 0.9;
+            utter.pitch = 1;
+            window.speechSynthesis.speak(utter);
+        } catch (e) {}
+    }
+
+    // ── Chime "ting-tong" sebelum suara bicara ────────────────────────────────
+    function playCallChime() {
+        try {
+            var ctx = new (window.AudioContext || window.webkitAudioContext)();
+            var notes = [880, 1108.73];
+            notes.forEach(function (freq, i) {
+                var osc  = ctx.createOscillator();
+                var gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                var start = ctx.currentTime + i * 0.22;
+                gain.gain.setValueAtTime(0.0001, start);
+                gain.gain.exponentialRampToValueAtTime(0.3, start + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.2);
+                osc.connect(gain).connect(ctx.destination);
+                osc.start(start);
+                osc.stop(start + 0.22);
+            });
+        } catch (e) {}
+    }
+
+    var ADMISSION_DESTINATION = 'admisi satu';
+
+    function announceQueueCall(queueCode) {
+        playCallChime();
+
+        var text = queueCode
+            ? ('Nomor ' + queueCode + ', silakan menuju ' + ADMISSION_DESTINATION + '.')
+            : ('Pasien berikutnya, silakan menuju ' + ADMISSION_DESTINATION + '.');
+
+        setTimeout(function () {
+            speakText(text);
+        }, 600);
+    }
+
+    // ── Cegat klik tombol Panggil: konfirmasi → suara → baru submit form ─────
+    $(document).on('click', '.btn-panggil-queue', function (e) {
+        e.preventDefault();
+
+        var $btn = $(this);
+        var queueCode   = $btn.data('queue-code');
+        var queueNumber = $btn.data('queue-number');
+        var poli        = $btn.data('poli');
+
+        if (!confirm('Panggil nomor antrian ' + queueCode + '?')) {
+            return;
+        }
+
+        announceQueueCall(queueCode, queueNumber, poli);
+
+        // Beri jeda supaya suara sempat terdengar sebelum halaman redirect.
+        // postLink CakePHP membuat <form> tersembunyi tepat setelah elemen link ini.
+        var $form = $btn.next('form');
+        setTimeout(function () {
+            if ($form.length) {
+                $form.trigger('submit');
+            } else {
+                window.location.href = $btn.attr('href');
+            }
+        }, 2500);
+    });
+
+});
+</script>
 </div>

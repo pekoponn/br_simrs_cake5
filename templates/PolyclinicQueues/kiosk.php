@@ -123,8 +123,8 @@ $todayLabel = date('d F Y');
 
     .brand-mark img {
         display: block;
-        width: 100%;
-        height: 100%;
+        width: 40px;
+        height: 40px;
         object-fit: contain;
     }
 
@@ -568,7 +568,7 @@ $todayLabel = date('d F Y');
         <div class="kiosk-top">
             <div class="hospital-brand">
                 <div class="brand-mark">
-                    <?= $this->Html->image('logo_br.png', ['alt' => 'Logo Rumah Sakit Bhakti Rahayu']) ?>
+                    <?= $this->Html->image('logo_br2.png', ['alt' => 'Logo Rumah Sakit Bhakti Rahayu']) ?>
                 </div>
                 <div>
                     <h1 class="brand-name">Rumah Sakit Bhakti Rahayu</h1>

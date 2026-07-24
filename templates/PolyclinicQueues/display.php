@@ -107,11 +107,11 @@ $currentStatus = $calledQueue ? 'Sedang dipanggil' : 'Belum ada panggilan';
     }
 
     .brand-logo {
-        width: 50px;
-        height: 50px;
-        padding: 7px;
+        width: 78px;
+        height: 78px;
+        padding: 8px;
         border: 1px solid #d8e3ec;
-        border-radius: 16px;
+        border-radius: 18px;
         background: #fff;
         box-shadow: 0 10px 24px rgba(15, 118, 110, 0.16);
     }
@@ -568,7 +568,7 @@ $currentStatus = $calledQueue ? 'Sedang dipanggil' : 'Belum ada panggilan';
     <div class="display-top">
         <div class="display-brand">
             <div class="brand-logo">
-                <?= $this->Html->image('logo_br.png', ['alt' => 'Logo Rumah Sakit Bhakti Rahayu']) ?>
+                <?= $this->Html->image('logo_br2.png', ['alt' => 'Logo Rumah Sakit Bhakti Rahayu']) ?>
             </div>
             <div>
                 <h1 class="brand-title">Antrian Loket Pendaftaran</h1>
