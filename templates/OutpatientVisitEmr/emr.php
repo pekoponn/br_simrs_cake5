@@ -888,34 +888,6 @@ $orderRegistrationNo = $visit->registration_no
                             <?php endif; ?>
                         </div>
 
-                        <!-- Search bar ICD-10 -->
-                        <?php if (!$isDone): ?>
-                        <div id="icd10-search-bar" style="display:none; margin-bottom:6px; position:relative;">
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-addon" style="background:#1e3a5f; color:#fff;">
-                                    <i class="fa fa-search"></i>
-                                </span>
-                                <input type="text" id="icd10-search-input"
-                                       class="form-control"
-                                       placeholder="Ketik kode (A09) atau nama diagnosa..."
-                                       autocomplete="off">
-                                <span class="input-group-btn">
-                                    <button type="button" class="btn btn-sm btn-default" id="btn-close-icd10-search">
-                                        <i class="fa fa-times"></i>
-                                    </button>
-                                </span>
-                            </div>
-                            <!-- dropdown hasil pencarian ICD-10 -->
-                            <div id="icd10-dropdown" style="
-                                display:none; position:absolute; z-index:9999;
-                                background:#fff; border:1px solid #ced4da;
-                                border-radius:6px; box-shadow:0 4px 16px rgba(0,0,0,.12);
-                                max-height:240px; overflow-y:auto;
-                                width:100%; font-size:12px; top:100%; left:0;">
-                            </div>
-                        </div>
-                        <?php endif; ?>
-
                         <!-- Tabel ICD-10: Kode + Nama Diagnosa saja -->
                         <table class="table table-bordered table-sm" style="font-size:11px; margin-bottom:0;">
                             <thead>
@@ -1004,35 +976,6 @@ $orderRegistrationNo = $visit->registration_no
                                 </button>
                             <?php endif; ?>
                         </div>
-
-                        <!-- Search bar ICD-9 -->
-                        <?php if (!$isDone): ?>
-                        <div id="icd9-search-bar" style="display:none; margin-bottom:6px; position:relative;">
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-addon" style="background:#6f42c1; color:#fff;">
-                                    <i class="fa fa-search"></i>
-                                </span>
-                                <input type="text" id="icd9-search-input"
-                                       class="form-control"
-                                       placeholder="Ketik kode (47.09) atau nama tindakan..."
-                                       autocomplete="off">
-                                <span class="input-group-btn">
-                                    <button type="button" class="btn btn-sm btn-default"
-                                            id="btn-close-icd9-search">
-                                        <i class="fa fa-times"></i>
-                                    </button>
-                                </span>
-                            </div>
-                            <!-- dropdown hasil pencarian ICD-9 -->
-                            <div id="icd9-dropdown" style="
-                                display:none; position:absolute; z-index:9999;
-                                background:#fff; border:1px solid #ced4da;
-                                border-radius:6px; box-shadow:0 4px 16px rgba(0,0,0,.12);
-                                max-height:240px; overflow-y:auto;
-                                width:100%; font-size:12px; top:100%; left:0;">
-                            </div>
-                        </div>
-                        <?php endif; ?>
 
                         <!-- Tabel ICD-9: Kode + Nama Tindakan saja -->
                         <table class="table table-bordered table-sm" style="font-size:11px; margin-bottom:0;">
@@ -1869,6 +1812,237 @@ $orderRegistrationNo = $visit->registration_no
     </div>
 </div>
 
+<!-- ── MODAL PILIH TINDAKAN & TARIF ── -->
+<div class="modal fade" id="modal-pilih-tindakan" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" style="width:960px; max-width:96%;" role="document">
+        <div class="modal-content hasil-window">
+            <div class="hasil-title">
+                <span><i class="fa fa-search"></i> DAFTAR TINDAKAN & TARIF</span>
+                <button type="button" class="hasil-close" data-dismiss="modal" aria-label="Close">&times;</button>
+            </div>
+            <div class="hasil-body" style="padding:14px;">
+                <div class="row" style="margin-bottom:10px;">
+                    <div class="col-xs-12">
+                        <label style="font-weight:600;">Cari</label>
+                        <input type="text" id="pt-search-input" class="form-control input-sm"
+                               placeholder="Ketik kode / nama tindakan..." autocomplete="off">
+                    </div>
+                </div>
+                <div class="row">
+                    <!-- Daftar tindakan -->
+                    <div class="col-xs-8">
+                        <div style="border:1px solid #9eb2d1; background:#f7f9ff; max-height:360px; overflow-y:auto;">
+                            <table class="table table-bordered table-sm" style="margin-bottom:0; font-size:12px;">
+                                <thead>
+                                    <tr style="background:#c8d8f0;">
+                                        <th style="width:34px; text-align:center;">Pilih</th>
+                                        <th style="width:80px;">Kode</th>
+                                        <th>Nama Tindakan</th>
+                                        <th style="width:110px;">Kategori</th>
+                                        <th style="width:110px; text-align:right;">Tarif</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pt-list-body">
+                                    <tr>
+                                        <td colspan="5" style="text-align:center; color:#999; padding:14px;">
+                                            <i class="fa fa-spinner fa-spin"></i> Memuat data...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tindakan terpilih -->
+                    <div class="col-xs-4">
+                        <div style="border:1px solid #9eb2d1; background:#eef3ff; max-height:360px; overflow-y:auto; min-height:360px;">
+                            <div style="background:#c8d8f0; padding:6px 10px; font-weight:700; font-size:11px;">
+                                Tindakan Terpilih
+                            </div>
+                            <table class="table table-bordered table-sm" style="margin-bottom:0; font-size:11px;">
+                                <thead>
+                                    <tr style="background:#dbe6fb;">
+                                        <th style="width:60px;">Kode</th>
+                                        <th>Nama</th>
+                                        <th style="width:80px; text-align:right;">Tarif</th>
+                                        <th style="width:24px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pt-selected-body">
+                                    <tr id="pt-selected-empty">
+                                        <td colspan="4" style="text-align:center; color:#aaa; padding:12px; font-size:11px;">
+                                            Belum ada tindakan dipilih.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top:12px;">
+                    <div class="col-xs-12 text-right">
+                        <button type="button" class="btn btn-primary btn-sm" id="btn-ok-pilih-tindakan">
+                            <i class="fa fa-check"></i> OK
+                        </button>
+                        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">
+                            <i class="fa fa-times"></i> Batal
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── MODAL PILIH ICD-10 ── -->
+<div class="modal fade" id="modal-pilih-icd10" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" style="width:900px; max-width:96%;" role="document">
+        <div class="modal-content hasil-window">
+            <div class="hasil-title">
+                <span><i class="fa fa-diagnoses"></i> DAFTAR ICD-10</span>
+                <button type="button" class="hasil-close" data-dismiss="modal" aria-label="Close">&times;</button>
+            </div>
+            <div class="hasil-body" style="padding:14px;">
+                <div class="row" style="margin-bottom:10px;">
+                    <div class="col-xs-12">
+                        <label style="font-weight:600;">Cari</label>
+                        <input type="text" id="i10-search-input" class="form-control input-sm"
+                               placeholder="Ketik kode / nama diagnosa..." autocomplete="off">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-8">
+                        <div style="border:1px solid #9eb2d1; background:#f7f9ff; max-height:360px; overflow-y:auto;">
+                            <table class="table table-bordered table-sm" style="margin-bottom:0; font-size:12px;">
+                                <thead>
+                                    <tr style="background:#dbeafe;">
+                                        <th style="width:34px; text-align:center;">Pilih</th>
+                                        <th style="width:90px;">Kode</th>
+                                        <th>Nama Diagnosa</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="i10-list-body">
+                                    <tr><td colspan="3" style="text-align:center; color:#999; padding:14px;">
+                                        <i class="fa fa-spinner fa-spin"></i> Memuat data...
+                                    </td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-xs-4">
+                        <div style="border:1px solid #9eb2d1; background:#eef3ff; max-height:360px; overflow-y:auto; min-height:360px;">
+                            <div style="background:#dbeafe; padding:6px 10px; font-weight:700; font-size:11px;">
+                                ICD-10 Terpilih
+                            </div>
+                            <table class="table table-bordered table-sm" style="margin-bottom:0; font-size:11px;">
+                                <thead>
+                                    <tr style="background:#e6efff;">
+                                        <th style="width:70px;">Kode</th>
+                                        <th>Nama</th>
+                                        <th style="width:24px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="i10-selected-body">
+                                    <tr id="i10-selected-empty">
+                                        <td colspan="3" style="text-align:center; color:#aaa; padding:12px; font-size:11px;">
+                                            Belum ada dipilih.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" style="margin-top:12px;">
+                    <div class="col-xs-12 text-right">
+                        <button type="button" class="btn btn-primary btn-sm" id="btn-ok-pilih-icd10">
+                            <i class="fa fa-check"></i> OK
+                        </button>
+                        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">
+                            <i class="fa fa-times"></i> Batal
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── MODAL PILIH ICD-9 ── -->
+<div class="modal fade" id="modal-pilih-icd9" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" style="width:900px; max-width:96%;" role="document">
+        <div class="modal-content hasil-window">
+            <div class="hasil-title">
+                <span><i class="fa fa-clipboard-list"></i> DAFTAR ICD-9 CM</span>
+                <button type="button" class="hasil-close" data-dismiss="modal" aria-label="Close">&times;</button>
+            </div>
+            <div class="hasil-body" style="padding:14px;">
+                <div class="row" style="margin-bottom:10px;">
+                    <div class="col-xs-12">
+                        <label style="font-weight:600;">Cari</label>
+                        <input type="text" id="i9-search-input" class="form-control input-sm"
+                               placeholder="Ketik kode / nama tindakan..." autocomplete="off">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-8">
+                        <div style="border:1px solid #9eb2d1; background:#f7f9ff; max-height:360px; overflow-y:auto;">
+                            <table class="table table-bordered table-sm" style="margin-bottom:0; font-size:12px;">
+                                <thead>
+                                    <tr style="background:#f3e8ff;">
+                                        <th style="width:34px; text-align:center;">Pilih</th>
+                                        <th style="width:90px;">Kode</th>
+                                        <th>Nama Tindakan</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="i9-list-body">
+                                    <tr><td colspan="3" style="text-align:center; color:#999; padding:14px;">
+                                        <i class="fa fa-spinner fa-spin"></i> Memuat data...
+                                    </td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-xs-4">
+                        <div style="border:1px solid #9eb2d1; background:#eef3ff; max-height:360px; overflow-y:auto; min-height:360px;">
+                            <div style="background:#f3e8ff; padding:6px 10px; font-weight:700; font-size:11px;">
+                                ICD-9 Terpilih
+                            </div>
+                            <table class="table table-bordered table-sm" style="margin-bottom:0; font-size:11px;">
+                                <thead>
+                                    <tr style="background:#f6efff;">
+                                        <th style="width:70px;">Kode</th>
+                                        <th>Nama</th>
+                                        <th style="width:24px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="i9-selected-body">
+                                    <tr id="i9-selected-empty">
+                                        <td colspan="3" style="text-align:center; color:#aaa; padding:12px; font-size:11px;">
+                                            Belum ada dipilih.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" style="margin-top:12px;">
+                    <div class="col-xs-12 text-right">
+                        <button type="button" class="btn btn-primary btn-sm" id="btn-ok-pilih-icd9">
+                            <i class="fa fa-check"></i> OK
+                        </button>
+                        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">
+                            <i class="fa fa-times"></i> Batal
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="tindakan-dropdown" style="
     display:none;
     position:fixed;
@@ -2093,6 +2267,26 @@ input.action-unit-price-display:focus {
     padding: 5px;
 }
 
+#pt-list-body tr.pt-row:hover {
+    background: #eef3ff;
+}
+#pt-list-body tr.pt-row-selected {
+    background: #dbe6fb;
+}
+#pt-list-body tr.pt-row-selected:hover {
+    background: #cddaf5;
+}
+
+#pt-list-body tr.pt-row-disabled {
+    background: #f5f5f5 !important;
+}
+#pt-list-body tr.pt-row-disabled:hover {
+    background: #f5f5f5 !important;
+}
+
+#i10-list-body tr.i10-row:hover, #i9-list-body tr.i9-row:hover { background:#eef3ff; }
+#i10-list-body tr.i10-row-selected, #i9-list-body tr.i9-row-selected { background:#dbe6fb; }
+#i10-list-body tr.i10-row-disabled, #i9-list-body tr.i9-row-disabled { background:#f5f5f5 !important; }
 </style>
 
 <script>
@@ -3034,59 +3228,291 @@ $('#btn-cetak-spt').on('click', function () {
 
     $(document).on('input', '.action-qty', calcGrandTotal);
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // TAMBAH / HAPUS BARIS TINDAKAN
-    // ══════════════════════════════════════════════════════════════════════════
     var actionIndex = <?= !empty($visit->outpatient_actions) ? count($visit->outpatient_actions) : 0 ?>;
 
-    $('#btn-add-action').on('click', function () { addActionRow(); });
+var ptSelected  = {}; 
+var ptAllData   = []; 
+var ptSearchTimer = null;
+
+function ptRenderList(data) {
+    var $body = $('#pt-list-body');
+    $body.empty();
+
+    data = (data || []).map(function (item) {
+        return {
+            kode: item.kode ?? item.code ?? '',
+            nama: item.nama ?? item.name ?? '',
+            kategori: item.kategori ?? item.category ?? '',
+            harga: item.harga ?? item.price ?? item.tarif ?? 0
+        };
+    });
+
+    if (!data.length) {
+        $body.html('<tr><td colspan="5" style="text-align:center;color:#aaa;padding:14px;">Tindakan tidak ditemukan</td></tr>');
+        return;
+    }
+
+    var existingCodes = ptGetExistingCodes();
+
+    $.each(data, function (_, item) {
+        var key         = item.kode + '||' + item.nama;
+        var isPicked    = !!ptSelected[key];
+        var alreadyAdded = !!existingCodes[key];
+        var checked     = isPicked ? 'checked' : '';
+        var harga       = parseFloat(item.harga) || 0;
+
+        var rowClass = 'pt-row';
+        var rowStyle = 'cursor:pointer;';
+        var extraNote = '';
+
+        if (alreadyAdded) {
+            rowClass += ' pt-row-disabled';
+            rowStyle = 'cursor:not-allowed; opacity:0.5;';
+            extraNote = ' <span style="color:#999; font-size:10px;">(sudah ditambahkan)</span>';
+        } else if (isPicked) {
+            rowClass += ' pt-row-selected';
+        }
+
+        var $tr = $(
+            '<tr class="' + rowClass + '" data-already-added="' + (alreadyAdded ? '1' : '0') + '" style="' + rowStyle + '">' +
+            '<td class="text-center"><input type="checkbox" class="pt-checkbox" style="pointer-events:none;" ' + checked + (alreadyAdded ? ' disabled' : '') + '></td>' +
+            '<td>' + escHtml(item.kode || '') + '</td>' +
+            '<td>' + escHtml(item.nama || '') + extraNote + '</td>' +
+            '<td>' + escHtml(item.kategori || '') + '</td>' +
+            '<td style="text-align:right;">' + harga.toLocaleString('id-ID') + '</td>' +
+            '</tr>'
+        );
+        $tr.data('item', item);
+        $body.append($tr);
+    });
+}
+
+function ptRenderSelected() {
+    var $body = $('#pt-selected-body');
+    $body.empty();
+    var keys = Object.keys(ptSelected);
+    if (!keys.length) {
+        $body.html(
+            '<tr id="pt-selected-empty"><td colspan="4" style="text-align:center;color:#aaa;padding:12px;font-size:11px;">' +
+            'Belum ada tindakan dipilih.</td></tr>'
+        );
+        return;
+    }
+    $.each(keys, function (_, key) {
+        var item  = ptSelected[key];
+        var harga = parseFloat(item.harga) || 0;
+        var $tr = $(
+            '<tr>' +
+            '<td>' + escHtml(item.kode || '') + '</td>' +
+            '<td>' + escHtml(item.nama || '') + '</td>' +
+            '<td style="text-align:right;">' + harga.toLocaleString('id-ID') + '</td>' +
+            '<td class="text-center"><button type="button" class="btn btn-xs btn-danger pt-remove" data-key="' + escHtml(key) + '">&times;</button></td>' +
+            '</tr>'
+        );
+        $body.append($tr);
+    });
+}
+
+function ptFilterAndRender(q) {
+    q = $.trim(q || '').toLowerCase();
+
+    if (q === '') {
+        ptRenderList(ptAllData);
+        return;
+    }
+
+    var scored = [];
+    $.each(ptAllData, function (_, item) {
+        var kode = String(item.kode || '').toLowerCase();
+        var nama = String(item.nama || '').toLowerCase();
+
+        var score = -1;
+        if (kode === q || nama === q)                 score = 0;
+        else if (kode.indexOf(q) === 0 || nama.indexOf(q) === 0) score = 1;
+        else if (kode.indexOf(q) !== -1 || nama.indexOf(q) !== -1) score = 2;
+
+        if (score !== -1) scored.push({ item: item, score: score });
+    });
+
+    scored.sort(function (a, b) {
+        if (a.score !== b.score) return a.score - b.score;
+        return String(a.item.nama || '').localeCompare(String(b.item.nama || ''));
+    });
+
+    ptRenderList($.map(scored, function (s) { return s.item; }));
+}
+
+function ptGetExistingCodes() {
+    var codes = {};
+    $('#actions-body tr.action-row').each(function () {
+        var kode = $.trim($(this).find('input[name$="[action_code]"]').val());
+        var nama = $.trim($(this).find('input[name$="[action_name]"]').val());
+        if (kode || nama) {
+            codes[kode + '||' + nama] = true;
+        }
+    });
+    return codes;
+}
+
+function ptLoadAll() {
+    $('#pt-list-body').html(
+        '<tr><td colspan="5" style="text-align:center;color:#999;padding:14px;"><i class="fa fa-spinner fa-spin"></i> Memuat data...</td></tr>'
+    );
+    $.ajax({
+        url: SEARCH_URL, method: 'GET', data: { q: '' },
+        dataType: 'json', timeout: 8000,
+        success: function (res) {
+            var rows = [];
+            if (Array.isArray(res)) {
+                rows = res;
+            } else if (res && Array.isArray(res.data)) {
+                rows = res.data;
+            } else if (res && Array.isArray(res.results)) {
+                rows = res.results;
+            }
+
+            ptAllData = rows;
+
+            if (!rows.length) {
+                console.warn('[pt-modal] Endpoint tindakan mengembalikan data kosong untuk q="".', res);
+                $('#pt-list-body').html(
+                    '<tr><td colspan="5" style="text-align:center;color:#dc3545;padding:14px; font-size:11px;">' +
+                    'Data tindakan kosong dari server. Cek console (F12) untuk detail respon.</td></tr>'
+                );
+                return;
+            }
+
+            ptRenderList(ptAllData);
+        },
+        error: function (xhr, status, err) {
+            console.error('[pt-modal] Gagal ambil data tindakan:', status, err, xhr.responseText);
+            $('#pt-list-body').html(
+                '<tr><td colspan="5" style="text-align:center;color:#dc3545;padding:14px;">' +
+                'Gagal memuat data tindakan (' + (xhr.status || status) + '). Cek console (F12) untuk detail.' +
+                '</td></tr>'
+            );
+        }
+    });
+}
+
+$('#btn-add-action').on('click', function () {
+    ptSelected = {};
+    ptRenderSelected();
+    $('#pt-search-input').val('');
+    ptLoadAll();
+    $('#modal-pilih-tindakan').modal('show');
+});
+
+$('#pt-search-input').on('input', function () {
+    clearTimeout(ptSearchTimer);
+    var q = $(this).val();
+    ptSearchTimer = setTimeout(function () { ptFilterAndRender(q); }, 120);
+});
+
+$(document).on('click', '#pt-list-body tr.pt-row', function () {
+    if ($(this).data('already-added') == '1' || $(this).attr('data-already-added') === '1') {
+        return; // sudah ada di tabel Tindakan & Tarif, tidak bisa dipilih lagi
+    }
+
+    var item = $(this).data('item');
+    if (!item) return;
+
+    var key   = item.kode + '||' + item.nama;
+    var $chk  = $(this).find('.pt-checkbox');
+    var newlyChecked = !ptSelected[key];
+
+    if (newlyChecked) {
+        ptSelected[key] = item;
+    } else {
+        delete ptSelected[key];
+    }
+
+    $chk.prop('checked', newlyChecked);
+    $(this).toggleClass('pt-row-selected', newlyChecked);
+    ptRenderSelected();
+});
+
+$(document).on('click', '.pt-remove', function () {
+    var key = $(this).data('key');
+    delete ptSelected[key];
+    ptRenderSelected();
+    $('#pt-list-body tr').each(function () {
+        var item = $(this).data('item');
+        if (item && (item.kode + '||' + item.nama) === key) {
+            $(this).find('.pt-checkbox').prop('checked', false);
+        }
+    });
+});
+
+$('#btn-ok-pilih-tindakan').on('click', function () {
+    var keys = Object.keys(ptSelected);
+    if (!keys.length) {
+        alert('Pilih minimal satu tindakan.');
+        return;
+    }
+    $.each(keys, function (_, key) {
+        var item = ptSelected[key];
+        addActionRow({
+            kode: item.kode,
+            nama: item.nama,
+            kategori: item.kategori || 'tindakan_medis',
+            harga: item.harga
+        });
+    });
+    $('#modal-pilih-tindakan').modal('hide');
+});
 
     function addActionRow(prefill) {
-        prefill = prefill || {};
-        var i            = actionIndex++;
-        var hargaRaw     = parseFloat(prefill.harga) || 0;
-        var hargaDisplay = hargaRaw > 0 ? hargaRaw.toLocaleString('id-ID') : '0';
+    prefill = prefill || {};
+    var i            = actionIndex++;
+    var hargaRaw     = parseFloat(prefill.harga) || 0;
+    var hargaDisplay = hargaRaw > 0 ? hargaRaw.toLocaleString('id-ID') : '0';
+    var isLocked     = !!(prefill.kode || prefill.nama); // terkunci kalau berasal dari pilihan modal
 
-        var row = '<tr class="action-row">'
-            + '<td>'
-            +   '<input type="text" name="outpatient_actions[' + i + '][action_code]"'
-            +   ' class="form-control input-sm" placeholder="Kode..."'
-            +   ' value="' + escHtml(prefill.kode || '') + '">'
-            + '</td>'
-            + '<td style="position:relative;">'
-            +   '<input type="text" name="outpatient_actions[' + i + '][action_name]"'
-            +   ' class="form-control input-sm action-name"'
-            +   ' placeholder="Ketik nama tindakan..." autocomplete="off" required'
-            +   ' value="' + escHtml(prefill.nama || '') + '">'
-            +   '<input type="hidden" name="outpatient_actions[' + i + '][action_category]"'
-            +   ' value="' + escHtml(prefill.kategori || 'tindakan_medis') + '">'
-            +   '<input type="hidden" name="outpatient_actions[' + i + '][notes]" value="">'
-            + '</td>'
-            + '<td>'
-            +   '<input type="number" name="outpatient_actions[' + i + '][quantity]"'
-            +   ' class="form-control input-sm action-qty" value="1" min="1"'
-            +   ' style="text-align:center; -moz-appearance:textfield;">'
-            + '</td>'
-            + '<td>'
-            +   '<input type="text" class="form-control input-sm action-unit-price-display"'
-            +   ' value="' + hargaDisplay + '" readonly'
-            +   ' style="text-align:right; background:#f0f0f0; cursor:default; color:#333; font-weight:600;">'
-            +   '<input type="hidden" name="outpatient_actions[' + i + '][unit_price]"'
-            +   ' class="action-unit-price" value="' + hargaRaw + '">'
-            + '</td>'
-            + '<td>'
-            +   '<input type="text" class="form-control input-sm action-total" readonly value="0"'
-            +   ' style="background:#f5f5f5; text-align:right;">'
-            + '</td>'
-            + '<td class="text-center">'
-            +   '<button type="button" class="btn btn-xs btn-danger btn-remove-action">&times;</button>'
-            + '</td>'
-            + '</tr>';
+    var row = '<tr class="action-row">'
+        + '<td>'
+        +   '<input type="text" name="outpatient_actions[' + i + '][action_code]"'
+        +   ' class="form-control input-sm" placeholder="Kode..."'
+        +   (isLocked ? ' readonly style="background:#f0f0f0; cursor:default; color:#333; font-weight:600;"' : '')
+        +   ' value="' + escHtml(prefill.kode || '') + '">'
+        + '</td>'
+        + '<td style="position:relative;">'
+        +   '<input type="text" name="outpatient_actions[' + i + '][action_name]"'
+        +   ' class="form-control input-sm action-name"'
+        +   ' placeholder="Ketik nama tindakan..." autocomplete="off" required'
+        +   (isLocked ? ' readonly style="background:#f0f0f0; cursor:default; color:#333; font-weight:600;"' : '')
+        +   ' value="' + escHtml(prefill.nama || '') + '">'
+        +   '<input type="hidden" name="outpatient_actions[' + i + '][action_category]"'
+        +   ' value="' + escHtml(prefill.kategori || 'tindakan_medis') + '">'
+        +   '<input type="hidden" name="outpatient_actions[' + i + '][notes]" value="">'
+        + '</td>'
+        + '<td>'
+        +   '<input type="number" name="outpatient_actions[' + i + '][quantity]"'
+        +   ' class="form-control input-sm action-qty" value="1" min="1"'
+        +   ' style="text-align:center; -moz-appearance:textfield;">'
+        + '</td>'
+        + '<td>'
+        +   '<input type="text" class="form-control input-sm action-unit-price-display"'
+        +   ' value="' + hargaDisplay + '" readonly'
+        +   ' style="text-align:right; background:#f0f0f0; cursor:default; color:#333; font-weight:600;">'
+        +   '<input type="hidden" name="outpatient_actions[' + i + '][unit_price]"'
+        +   ' class="action-unit-price" value="' + hargaRaw + '">'
+        + '</td>'
+        + '<td>'
+        +   '<input type="text" class="form-control input-sm action-total" readonly value="0"'
+        +   ' style="background:#f5f5f5; text-align:right;">'
+        + '</td>'
+        + '<td class="text-center">'
+        +   '<button type="button" class="btn btn-xs btn-danger btn-remove-action">&times;</button>'
+        + '</td>'
+        + '</tr>';
 
-        $('#actions-body').append(row);
+    $('#actions-body').append(row);
+    if (!isLocked) {
         $('#actions-body tr:last .action-name').focus();
-        calcGrandTotal();
     }
+    calcGrandTotal();
+}
 
     $(document).on('click', '.btn-remove-action', function () {
         $(this).closest('tr').remove();
@@ -3199,9 +3625,10 @@ $('#btn-cetak-spt').on('click', function () {
         else if (itemBottom > ddHeight) $dropdown.scrollTop(scrollTop + (itemBottom - ddHeight));
     }
 
-    $(document).on('input', '.action-name', function () {
-        var $input = $(this);
-        $activeInput = $input;
+$(document).on('input', '.action-name', function () {
+    if (this.readOnly) return;
+    var $input = $(this);
+    $activeInput = $input;
         clearTimeout(autocompleteTimer);
         var q = $.trim($input.val());
         if (q.length < 1) { closeDropdown(); return; }
@@ -3211,6 +3638,7 @@ $('#btn-cetak-spt').on('click', function () {
     });
 
     $(document).on('focus', '.action-name', function () {
+        if (this.readOnly) return;
         var $input = $(this);
         var q = $.trim($input.val());
         if (q.length >= 1 && !$dropdown.is(':visible')) {
@@ -3664,8 +4092,14 @@ $('#btn-selesai-periksa').on('click', function () {
     form.submit();
 });
 
-var ICD10_SEARCH_URL = '<?= $this->Url->build(["action" => "searchIcd10"]) ?>';
-var ICD9_SEARCH_URL  = '<?= $this->Url->build(["action" => "searchIcd9"]) ?>';
+var ICD10_SEARCH_URL = <?= json_encode($this->Url->build([
+    'controller' => 'MasterIcd10',
+    'action'     => 'search',
+])) ?>;
+var ICD9_SEARCH_URL  = <?= json_encode($this->Url->build([
+    'controller' => 'MasterIcd9',
+    'action'     => 'search',
+])) ?>;
 
 function htmlEscape(s) {
     return String(s || '').replace(/[&<>"]/g, function(c) {
@@ -3677,8 +4111,23 @@ function nextIcdIndex(type) {
     return $('#' + type + '-body tr.' + type + '-row').length;
 }
 
-function addIcd10Row(kode, nama) {
-    $('#icd10-empty-row').remove();
+function addIcd10Row(kodeOrItem, namaMaybe) {
+    var isObj = kodeOrItem !== null && typeof kodeOrItem === 'object';
+    var kode  = $.trim(isObj ? (kodeOrItem.kode || kodeOrItem.code || '') : (kodeOrItem || ''));
+    var nama  = $.trim(isObj ? (kodeOrItem.nama || kodeOrItem.name || '') : (namaMaybe || ''));
+
+    if (!kode || !nama) return;
+
+    var dup = false;
+    $('#icd10-body tr.icd10-row').each(function () {
+        if ($.trim($(this).find('input[name^="icd10_code"]').val()) === kode) dup = true;
+    });
+    if (dup) { alert('Kode ICD-10 ' + kode + ' sudah ada.'); return; }
+
+    // Bersihkan SEMUA baris placeholder (bukan cuma yang ber-id icd10-empty-row),
+    // supaya tidak ada teks "Belum ada diagnosa..." yang tersisa dobel.
+    $('#icd10-body tr:not(.icd10-row)').remove();
+
     var i = nextIcdIndex('icd10');
     var checked = i === 0 ? 'checked' : '';
     var row = '' +
@@ -3694,8 +4143,21 @@ function addIcd10Row(kode, nama) {
     $('#icd10-body').append(row);
 }
 
-function addIcd9Row(kode, nama) {
-    $('#icd9-empty-row').remove();
+function addIcd9Row(kodeOrItem, namaMaybe) {
+    var isObj = kodeOrItem !== null && typeof kodeOrItem === 'object';
+    var kode  = $.trim(isObj ? (kodeOrItem.kode || kodeOrItem.code || '') : (kodeOrItem || ''));
+    var nama  = $.trim(isObj ? (kodeOrItem.nama || kodeOrItem.name || '') : (namaMaybe || ''));
+
+    if (!kode || !nama) return;
+
+    var dup = false;
+    $('#icd9-body tr.icd9-row').each(function () {
+        if ($.trim($(this).find('input[name^="icd9_code"]').val()) === kode) dup = true;
+    });
+    if (dup) { alert('Kode ICD-9 ' + kode + ' sudah ada.'); return; }
+
+    $('#icd9-body tr:not(.icd9-row)').remove();
+
     var i = nextIcdIndex('icd9');
     var checked = i === 0 ? 'checked' : '';
     var row = '' +
@@ -3793,188 +4255,295 @@ $(document).on('click', '.btn-remove-icd9', function() {
     $(this).closest('tr').remove();
 });
 
-/* =========================================================
-   FINAL FIX ICD MASTER EMR
-   - EMR mengambil ICD-10 dari master_icd10 lewat searchIcd10()
-   - EMR mengambil ICD-9 dari master_icd9 lewat searchIcd9()
-   - Yang disimpan ke outpatient_visits.icd10_items / icd9_items
-   - Tidak mengambil dari Diagnosa Utama / Diagnosa Sekunder / Tindakan Utama
-   ========================================================= */
-(function ($) {
-    var ICD10_URL = <?= json_encode($this->Url->build([
-        'controller' => 'MasterIcd10',
-        'action'     => 'search',
-    ])) ?>;
-    var ICD9_URL  = <?= json_encode($this->Url->build([
-        'controller' => 'MasterIcd9',
-        'action'     => 'search',
-    ])) ?>;
+$(function () {
+    function escHtml(str) { return $('<div>').text(String(str || '')).html(); }
 
-    function esc(v) {
-        return String(v || '').replace(/[&<>"']/g, function (c) {
-            return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c];
+    var i10Selected = {}, i10AllData = [], i10SearchTimer = null;
+    var i9Selected  = {}, i9AllData  = [], i9SearchTimer  = null;
+
+    function i10GetExistingCodes() {
+        var codes = {};
+        $('#icd10-body tr.icd10-row').each(function () {
+            var kode = $.trim($(this).find('input[name^="icd10_code"]').val());
+            if (kode) codes[kode] = true;
         });
+        return codes;
     }
 
-    function getNextIndex(type) {
-        var max = -1;
-        $('#' + type + '-body tr.' + type + '-row').each(function () {
-            var n = parseInt($(this).attr('data-idx'), 10);
-            if (!isNaN(n) && n > max) max = n;
+    function i9GetExistingCodes() {
+        var codes = {};
+        $('#icd9-body tr.icd9-row').each(function () {
+            var kode = $.trim($(this).find('input[name^="icd9_code"]').val());
+            if (kode) codes[kode] = true;
         });
-        return max + 1;
+        return codes;
     }
 
-    function showEmptyRow(type) {
-        var isIcd10 = type === 'icd10';
-        var body = $('#' + type + '-body');
-        if (body.find('tr.' + type + '-row').length) return;
-        var icon = isIcd10 ? 'fa-diagnoses' : 'fa-clipboard-list';
-        var text = isIcd10 ? 'Belum ada diagnosa ICD-10.' : 'Belum ada tindakan ICD-9.';
-        var btn  = isIcd10 ? 'Tambah ICD-10' : 'Tambah ICD-9';
-        body.html(
-            '<tr id="' + type + '-empty-row">' +
-            '<td colspan="4" style="text-align:center;color:#aaa;padding:10px;font-size:11px;">' +
-            '<i class="fa ' + icon + '"></i> ' + text + ' Klik <strong>' + btn + '</strong> untuk menambahkan.' +
-            '</td></tr>'
-        );
-    }
-
-    function addIcdRow(type, item) {
-        var kode = $.trim(item.kode || item.code || '');
-        var nama = $.trim(item.nama || item.name || '');
-        if (!kode || !nama) return;
-
-        var duplicate = false;
-        $('#' + type + '-body tr.' + type + '-row').each(function () {
-            var existing = $.trim($(this).find('input[name^="' + type + '_code"]').val());
-            if (existing.toLowerCase() === kode.toLowerCase()) duplicate = true;
+    function i10RenderList(data) {
+        var $body = $('#i10-list-body');
+        $body.empty();
+        data = (data || []).map(function (item) {
+            return { kode: item.kode || item.code || '', nama: item.nama || item.name || '' };
         });
-        if (duplicate) {
-            alert('Kode ' + kode + ' sudah ada.');
+        if (!data.length) {
+            $body.html('<tr><td colspan="3" style="text-align:center;color:#aaa;padding:14px;">Data tidak ditemukan</td></tr>');
             return;
         }
-
-        $('#' + type + '-empty-row').remove();
-        var idx = getNextIndex(type);
-        var isFirst = !$('#' + type + '-body tr.' + type + '-row').length;
-        var isIcd10 = type === 'icd10';
-        var nameNama = isIcd10 ? 'icd10_nama' : 'icd9_nama';
-        var kategori = isIcd10 ? '' : '<input type="hidden" name="icd9_kategori[' + idx + ']" value="tindakan">';
-        var removeClass = isIcd10 ? 'btn-remove-icd10' : 'btn-remove-icd9';
-
-        var html = '' +
-            '<tr class="' + type + '-row" data-idx="' + idx + '">' +
-            '<input type="hidden" name="' + type + '_selected[' + idx + ']" value="1">' +
-            kategori +
-            '<td class="text-center" style="vertical-align:middle;">' +
-                '<input type="radio" name="' + type + '_utama" value="' + idx + '" ' + (isFirst ? 'checked' : '') + '>' +
-            '</td>' +
-            '<td><input type="text" name="' + type + '_code[' + idx + ']" class="form-control input-sm" value="' + esc(kode) + '" readonly style="font-family:monospace;font-weight:700;"></td>' +
-            '<td><input type="text" name="' + nameNama + '[' + idx + ']" class="form-control input-sm" value="' + esc(nama) + '" readonly></td>' +
-            '<td class="text-center" style="vertical-align:middle;"><button type="button" class="btn btn-xs btn-danger ' + removeClass + '">&times;</button></td>' +
-            '</tr>';
-
-        $('#' + type + '-body').append(html);
-    }
-
-    function renderDropdown(type, rows, queryText) {
-        var drop = $('#' + type + '-dropdown');
-        if (!rows || !rows.length) {
-            drop.html('<div style="padding:10px;color:#999;text-align:center;">Data tidak ditemukan: <strong>' + esc(queryText) + '</strong></div>').show();
-            return;
-        }
-
-        var html = '';
-        $.each(rows, function (_, row) {
-            html += '<div class="icd-master-option" data-type="' + type + '" data-kode="' + esc(row.kode) + '" data-nama="' + esc(row.nama) + '" style="padding:7px 10px;cursor:pointer;border-bottom:1px solid #eee;">' +
-                '<span style="font-family:monospace;font-weight:700;background:#eef2ff;padding:1px 5px;border-radius:3px;margin-right:6px;">' + esc(row.kode) + '</span>' +
-                '<span>' + esc(row.nama) + '</span>' +
-                '</div>';
+        var existing = i10GetExistingCodes();
+        $.each(data, function (_, item) {
+            var isPicked     = !!i10Selected[item.kode];
+            var alreadyAdded = !!existing[item.kode];
+            var rowClass = 'i10-row';
+            var rowStyle = 'cursor:pointer;';
+            var note = '';
+            if (alreadyAdded) {
+                rowClass += ' i10-row-disabled';
+                rowStyle = 'cursor:not-allowed; opacity:0.5;';
+                note = ' <span style="color:#999; font-size:10px;">(sudah ditambahkan)</span>';
+            } else if (isPicked) {
+                rowClass += ' i10-row-selected';
+            }
+            var $tr = $(
+                '<tr class="' + rowClass + '" data-already-added="' + (alreadyAdded ? '1' : '0') + '" style="' + rowStyle + '">' +
+                '<td class="text-center"><input type="checkbox" style="pointer-events:none;" ' + (isPicked ? 'checked' : '') + (alreadyAdded ? ' disabled' : '') + '></td>' +
+                '<td style="font-family:monospace;font-weight:700;">' + escHtml(item.kode) + '</td>' +
+                '<td>' + escHtml(item.nama) + note + '</td>' +
+                '</tr>'
+            );
+            $tr.data('item', item);
+            $body.append($tr);
         });
-        drop.html(html).show();
     }
 
-    function searchMaster(type) {
-        var input = $('#' + type + '-search-input');
-        var q = $.trim(input.val());
-        if (q.length < 1) {
-            $('#' + type + '-dropdown').hide().empty();
+    function i10RenderSelected() {
+        var $body = $('#i10-selected-body');
+        $body.empty();
+        var keys = Object.keys(i10Selected);
+        if (!keys.length) {
+            $body.html('<tr id="i10-selected-empty"><td colspan="3" style="text-align:center;color:#aaa;padding:12px;font-size:11px;">Belum ada dipilih.</td></tr>');
             return;
         }
-        var url = type === 'icd10' ? ICD10_URL : ICD9_URL;
-        $.getJSON(url, {q: q})
-            .done(function (res) {
-                // Tangani baik respons array langsung maupun {results: [...]}
-                var rows = Array.isArray(res) ? res : (res && res.results ? res.results : []);
-                renderDropdown(type, rows, q);
-            })
-            .fail(function () {
-                $('#' + type + '-dropdown').html('<div style="padding:10px;color:#dc3545;">Gagal mengambil data master ICD ' + (type === 'icd10' ? '10' : '9') + '.</div>').show();
-            });
+        $.each(keys, function (_, kode) {
+            var item = i10Selected[kode];
+            $body.append(
+                '<tr><td>' + escHtml(item.kode) + '</td><td>' + escHtml(item.nama) + '</td>' +
+                '<td class="text-center"><button type="button" class="btn btn-xs btn-danger i10-remove" data-kode="' + escHtml(kode) + '">&times;</button></td></tr>'
+            );
+        });
     }
 
-    var t10 = null, t9 = null;
+    function i10FilterAndRender(q) {
+        q = $.trim(q || '').toLowerCase();
+        if (q === '') { i10RenderList(i10AllData); return; }
+        var scored = [];
+        $.each(i10AllData, function (_, item) {
+            var kode = String(item.kode || item.code || '').toLowerCase();
+            var nama = String(item.nama || item.name || '').toLowerCase();
+            var score = -1;
+            if (kode === q || nama === q) score = 0;
+            else if (kode.indexOf(q) === 0 || nama.indexOf(q) === 0) score = 1;
+            else if (kode.indexOf(q) !== -1 || nama.indexOf(q) !== -1) score = 2;
+            if (score !== -1) scored.push({ item: item, score: score });
+        });
+        scored.sort(function (a, b) {
+            if (a.score !== b.score) return a.score - b.score;
+            return String(a.item.nama || '').localeCompare(String(b.item.nama || ''));
+        });
+        i10RenderList($.map(scored, function (s) { return s.item; }));
+    }
 
-    // Matikan handler lama yang dobel, lalu pasang handler final.
+    function i10LoadAll() {
+        $('#i10-list-body').html('<tr><td colspan="3" style="text-align:center;color:#999;padding:14px;"><i class="fa fa-spinner fa-spin"></i> Memuat data...</td></tr>');
+        $.ajax({
+            url: ICD10_SEARCH_URL, method: 'GET', data: { q: '' },
+            dataType: 'json', timeout: 8000,
+            success: function (res) {
+                var rows = Array.isArray(res) ? res : (res && res.results ? res.results : (res && res.data ? res.data : []));
+                i10AllData = rows;
+                i10RenderList(i10AllData);
+            },
+            error: function () {
+                $('#i10-list-body').html('<tr><td colspan="3" style="text-align:center;color:#dc3545;padding:14px;">Gagal memuat data ICD-10.</td></tr>');
+            }
+        });
+    }
+
     $('#btn-add-icd10').off('click').on('click', function () {
-        $('#icd10-search-bar').show();
-        $('#icd10-search-input').val('').focus();
-        $('#icd10-dropdown').hide().empty();
+        i10Selected = {};
+        i10RenderSelected();
+        $('#i10-search-input').val('');
+        i10LoadAll();
+        $('#modal-pilih-icd10').modal('show');
     });
 
-    $('#btn-close-icd10-search').off('click').on('click', function () {
-        $('#icd10-search-bar, #icd10-dropdown').hide();
-        $('#icd10-search-input').val('');
+    $('#i10-search-input').on('input', function () {
+        clearTimeout(i10SearchTimer);
+        var q = $(this).val();
+        i10SearchTimer = setTimeout(function () { i10FilterAndRender(q); }, 120);
     });
+
+    $(document).on('click', '#i10-list-body tr.i10-row', function () {
+        if ($(this).attr('data-already-added') === '1') return;
+        var item = $(this).data('item');
+        if (!item) return;
+        var newlyChecked = !i10Selected[item.kode];
+        if (newlyChecked) i10Selected[item.kode] = item; else delete i10Selected[item.kode];
+        $(this).find('input[type="checkbox"]').prop('checked', newlyChecked);
+        $(this).toggleClass('i10-row-selected', newlyChecked);
+        i10RenderSelected();
+    });
+
+    $(document).on('click', '.i10-remove', function () {
+        var kode = $(this).data('kode');
+        delete i10Selected[kode];
+        i10RenderSelected();
+        $('#i10-list-body tr').each(function () {
+            var item = $(this).data('item');
+            if (item && item.kode === kode) $(this).find('input[type="checkbox"]').prop('checked', false);
+        });
+    });
+
+    $('#btn-ok-pilih-icd10').on('click', function () {
+        var keys = Object.keys(i10Selected);
+        if (!keys.length) { alert('Pilih minimal satu diagnosa ICD-10.'); return; }
+        $.each(keys, function (_, kode) {
+            addIcd10Row(i10Selected[kode]);
+        });
+        $('#modal-pilih-icd10').modal('hide');
+    });
+
+    // ══ ICD-9 (pola sama persis) ══
+    function i9RenderList(data) {
+        var $body = $('#i9-list-body');
+        $body.empty();
+        data = (data || []).map(function (item) {
+            return { kode: item.kode || item.code || '', nama: item.nama || item.name || '', kategori: item.kategori || '' };
+        });
+        if (!data.length) {
+            $body.html('<tr><td colspan="3" style="text-align:center;color:#aaa;padding:14px;">Data tidak ditemukan</td></tr>');
+            return;
+        }
+        var existing = i9GetExistingCodes();
+        $.each(data, function (_, item) {
+            var isPicked     = !!i9Selected[item.kode];
+            var alreadyAdded = !!existing[item.kode];
+            var rowClass = 'i9-row';
+            var rowStyle = 'cursor:pointer;';
+            var note = '';
+            if (alreadyAdded) {
+                rowClass += ' i9-row-disabled';
+                rowStyle = 'cursor:not-allowed; opacity:0.5;';
+                note = ' <span style="color:#999; font-size:10px;">(sudah ditambahkan)</span>';
+            } else if (isPicked) {
+                rowClass += ' i9-row-selected';
+            }
+            var $tr = $(
+                '<tr class="' + rowClass + '" data-already-added="' + (alreadyAdded ? '1' : '0') + '" style="' + rowStyle + '">' +
+                '<td class="text-center"><input type="checkbox" style="pointer-events:none;" ' + (isPicked ? 'checked' : '') + (alreadyAdded ? ' disabled' : '') + '></td>' +
+                '<td style="font-family:monospace;font-weight:700;">' + escHtml(item.kode) + '</td>' +
+                '<td>' + escHtml(item.nama) + note + '</td>' +
+                '</tr>'
+            );
+            $tr.data('item', item);
+            $body.append($tr);
+        });
+    }
+
+    function i9RenderSelected() {
+        var $body = $('#i9-selected-body');
+        $body.empty();
+        var keys = Object.keys(i9Selected);
+        if (!keys.length) {
+            $body.html('<tr id="i9-selected-empty"><td colspan="3" style="text-align:center;color:#aaa;padding:12px;font-size:11px;">Belum ada dipilih.</td></tr>');
+            return;
+        }
+        $.each(keys, function (_, kode) {
+            var item = i9Selected[kode];
+            $body.append(
+                '<tr><td>' + escHtml(item.kode) + '</td><td>' + escHtml(item.nama) + '</td>' +
+                '<td class="text-center"><button type="button" class="btn btn-xs btn-danger i9-remove" data-kode="' + escHtml(kode) + '">&times;</button></td></tr>'
+            );
+        });
+    }
+
+    function i9FilterAndRender(q) {
+        q = $.trim(q || '').toLowerCase();
+        if (q === '') { i9RenderList(i9AllData); return; }
+        var scored = [];
+        $.each(i9AllData, function (_, item) {
+            var kode = String(item.kode || item.code || '').toLowerCase();
+            var nama = String(item.nama || item.name || '').toLowerCase();
+            var score = -1;
+            if (kode === q || nama === q) score = 0;
+            else if (kode.indexOf(q) === 0 || nama.indexOf(q) === 0) score = 1;
+            else if (kode.indexOf(q) !== -1 || nama.indexOf(q) !== -1) score = 2;
+            if (score !== -1) scored.push({ item: item, score: score });
+        });
+        scored.sort(function (a, b) {
+            if (a.score !== b.score) return a.score - b.score;
+            return String(a.item.nama || '').localeCompare(String(b.item.nama || ''));
+        });
+        i9RenderList($.map(scored, function (s) { return s.item; }));
+    }
+
+    function i9LoadAll() {
+        $('#i9-list-body').html('<tr><td colspan="3" style="text-align:center;color:#999;padding:14px;"><i class="fa fa-spinner fa-spin"></i> Memuat data...</td></tr>');
+        $.ajax({
+            url: ICD9_SEARCH_URL, method: 'GET', data: { q: '' },
+            dataType: 'json', timeout: 8000,
+            success: function (res) {
+                var rows = Array.isArray(res) ? res : (res && res.results ? res.results : (res && res.data ? res.data : []));
+                i9AllData = rows;
+                i9RenderList(i9AllData);
+            },
+            error: function () {
+                $('#i9-list-body').html('<tr><td colspan="3" style="text-align:center;color:#dc3545;padding:14px;">Gagal memuat data ICD-9.</td></tr>');
+            }
+        });
+    }
 
     $('#btn-add-icd9').off('click').on('click', function () {
-        $('#icd9-search-bar').show();
-        $('#icd9-search-input').val('').focus();
-        $('#icd9-dropdown').hide().empty();
+        i9Selected = {};
+        i9RenderSelected();
+        $('#i9-search-input').val('');
+        i9LoadAll();
+        $('#modal-pilih-icd9').modal('show');
     });
 
-    $('#btn-close-icd9-search').off('click').on('click', function () {
-        $('#icd9-search-bar, #icd9-dropdown').hide();
-        $('#icd9-search-input').val('');
+    $('#i9-search-input').on('input', function () {
+        clearTimeout(i9SearchTimer);
+        var q = $(this).val();
+        i9SearchTimer = setTimeout(function () { i9FilterAndRender(q); }, 120);
     });
 
-    $('#icd10-search-input').off('keyup input').on('keyup input', function () {
-        clearTimeout(t10);
-        t10 = setTimeout(function () { searchMaster('icd10'); }, 250);
+    $(document).on('click', '#i9-list-body tr.i9-row', function () {
+        if ($(this).attr('data-already-added') === '1') return;
+        var item = $(this).data('item');
+        if (!item) return;
+        var newlyChecked = !i9Selected[item.kode];
+        if (newlyChecked) i9Selected[item.kode] = item; else delete i9Selected[item.kode];
+        $(this).find('input[type="checkbox"]').prop('checked', newlyChecked);
+        $(this).toggleClass('i9-row-selected', newlyChecked);
+        i9RenderSelected();
     });
 
-    $('#icd9-search-input').off('keyup input').on('keyup input', function () {
-        clearTimeout(t9);
-        t9 = setTimeout(function () { searchMaster('icd9'); }, 250);
-    });
-
-    $(document).off('mousedown', '.icd-master-option').on('mousedown', '.icd-master-option', function (e) {
-        e.preventDefault();
-        var type = $(this).data('type');
-        addIcdRow(type, {
-            kode: $(this).data('kode'),
-            nama: $(this).data('nama')
+    $(document).on('click', '.i9-remove', function () {
+        var kode = $(this).data('kode');
+        delete i9Selected[kode];
+        i9RenderSelected();
+        $('#i9-list-body tr').each(function () {
+            var item = $(this).data('item');
+            if (item && item.kode === kode) $(this).find('input[type="checkbox"]').prop('checked', false);
         });
-        $('#' + type + '-search-input').val('').focus();
-        $('#' + type + '-dropdown').hide().empty();
     });
 
-    $(document).off('click', '.btn-remove-icd10').on('click', '.btn-remove-icd10', function () {
-        $(this).closest('tr.icd10-row').remove();
-        showEmptyRow('icd10');
-        if (!$('#icd10-body input[name="icd10_utama"]:checked').length) {
-            $('#icd10-body tr.icd10-row:first input[name="icd10_utama"]').prop('checked', true);
-        }
+    $('#btn-ok-pilih-icd9').on('click', function () {
+        var keys = Object.keys(i9Selected);
+        if (!keys.length) { alert('Pilih minimal satu tindakan ICD-9.'); return; }
+        $.each(keys, function (_, kode) {
+            addIcd9Row(i9Selected[kode]);
+        });
+        $('#modal-pilih-icd9').modal('hide');
     });
-
-    $(document).off('click', '.btn-remove-icd9').on('click', '.btn-remove-icd9', function () {
-        $(this).closest('tr.icd9-row').remove();
-        showEmptyRow('icd9');
-        if (!$('#icd9-body input[name="icd9_utama"]:checked').length) {
-            $('#icd9-body tr.icd9-row:first input[name="icd9_utama"]').prop('checked', true);
-        }
-    });
-})(jQuery);
-
+});
 </script>

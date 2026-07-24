@@ -441,7 +441,7 @@
     }
 </style>
 
-<div class="doctorSchedules index content ds-page">
+<div class="doctorSchedules ds-page">
 
     <?php
     $q = $this->request->getQuery('q');

@@ -222,7 +222,7 @@
     }
 </style>
 
-<div class="doctorSchedules form content dsf-page">
+<div class="doctorSchedules dsf-page">
 
     <div class="dsf-header">
         <div class="dsf-header-left">

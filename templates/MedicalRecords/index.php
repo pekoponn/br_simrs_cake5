@@ -122,13 +122,52 @@ $getDiagnoses = function ($mr, string $type): array {
     return $rows;
 };
 
+$getServiceType = function ($registration): string {
+    $type = strtolower((string)($registration->service_type ?? ''));
+    if ($type === 'rawat_inap') {
+        return 'rawat-inap';
+    }
+    if (in_array($type, ['rawat_jalan', 'igd'], true)) {
+        return 'rawat-jalan-igd';
+    }
+    return 'rawat-jalan-igd';
+};
+
+$getServiceTypeLabel = function ($registration): string {
+    $type = strtolower((string)($registration->service_type ?? ''));
+    $labelMap = [
+        'rawat_jalan' => 'Rawat Jalan',
+        'igd'         => 'IGD',
+        'rawat_inap'  => 'Rawat Inap',
+    ];
+    return $labelMap[$type] ?? 'Rawat Jalan';
+};
+
+$getServiceTypeBadgeClass = function ($registration): string {
+    $type = strtolower((string)($registration->service_type ?? ''));
+    $classMap = [
+        'rawat_jalan' => 'badge-rawat-jalan',
+        'igd'         => 'badge-igd',
+        'rawat_inap'  => 'badge-rawat-inap',
+    ];
+    return $classMap[$type] ?? 'badge-rawat-jalan';
+};
+
+$getServiceTypeBadgeClass = function ($registration): string {
+    $type = strtolower((string)($registration->service_type ?? ''));
+    $classMap = [
+        'rawat_jalan' => 'badge-rawat-jalan',
+        'igd'         => 'badge-igd',
+        'rawat_inap'  => 'badge-rawat-inap',
+    ];
+    return $classMap[$type] ?? 'badge-rawat-jalan';
+};
+
 $firstRegistration = $registrations[0] ?? null;
 $firstRegistrationId = $firstRegistration->id ?? null;
 ?>
 
 <?= $this->Krs->breadcrumb('Medical Record', 'Rekam Medis Pasien') ?>
-
-<div class="medical-record-index emr content">
 
     <!-- ── Header ── -->
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -239,9 +278,12 @@ $firstRegistrationId = $firstRegistration->id ?? null;
                                 <?php foreach ($registrations as $i => $registration): ?>
                                     <tr class="mr-history-row <?= $i === 0 ? 'active' : '' ?>"
                                         data-history-id="<?= h($registration->id) ?>"
+                                        data-service-type="<?= h($getServiceType($registration)) ?>"
                                         style="cursor:pointer;">
                                         <td>
                                             <strong><?= h($getNoRekamMedis($registration)) ?></strong>
+                                            <br>
+                                            <span class="mr-service-type-badge <?= h($getServiceTypeBadgeClass($registration)) ?>"><?= h($getServiceTypeLabel($registration)) ?></span>
                                         </td>
                                         <td><?= $display($getRegDate($registration)) ?></td>
                                         <td><?= $display($registration->discharge_date ?? $registration->check_out ?? null) ?></td>
@@ -263,12 +305,12 @@ $firstRegistrationId = $firstRegistration->id ?? null;
             <div class="panel panel-default mr-tab-panel">
                 <div class="panel-heading" style="padding:0;">
                     <ul class="nav nav-tabs mr-tabs" id="mr-service-tabs" role="tablist" style="border-bottom:none; margin:0;">
-                        <li role="presentation" class="active">
+                        <li role="presentation" class="active" id="tab-li-rawat-inap">
                             <a href="#" data-tab="rawat-inap" style="font-size:11px; padding:9px 14px; font-weight:600;">
                                 <i class="fa fa-bed"></i> Rawat Inap
                             </a>
                         </li>
-                        <li role="presentation">
+                        <li role="presentation" id="tab-li-rawat-jalan-igd">
                             <a href="#" data-tab="rawat-jalan-igd" style="font-size:11px; padding:9px 14px; font-weight:600;">
                                 <i class="fa fa-walking"></i> Rawat Jalan &amp; IGD
                             </a>
@@ -291,7 +333,7 @@ $firstRegistrationId = $firstRegistration->id ?? null;
                         $icd10s = $getDiagnoses($mr, 'ICD10');
                         $icd9s = $getDiagnoses($mr, 'ICD9');
                         ?>
-                        <div class="mr-panel <?= $i === 0 ? 'active' : '' ?>" data-panel-history-id="<?= h($registration->id) ?>" style="<?= $i === 0 ? '' : 'display:none;' ?>">
+                        <div class="mr-panel <?= $i === 0 ? 'active' : '' ?>" data-panel-history-id="<?= h($registration->id) ?>" data-service-type="<?= h($getServiceType($registration)) ?>" style="<?= $i === 0 ? '' : 'display:none;' ?>">
 
                             <!-- ══ RAWAT INAP ══ -->
                             <div class="mr-tab-content <?= $i === 0 ? 'active' : '' ?>" data-tab-content="rawat-inap" style="<?= $i === 0 ? '' : 'display:none;' ?>">
@@ -342,8 +384,8 @@ $firstRegistrationId = $firstRegistration->id ?? null;
                                             <div style="font-size:10px; font-weight:700; color:#2b6cb0; margin-bottom:6px;">
                                                 <i class="fa fa-hospital"></i> DATA RUANG &amp; KELUAR
                                             </div>
-                                            <div class="mr-field"><label>Ruang</label><input class="form-control input-sm" readonly value="<?= h($inpatient->ruang ?? $registration->room_name ?? '') ?>"></div>
-                                            <div class="mr-field"><label>Pelayanan</label><input class="form-control input-sm" readonly value="<?= h($inpatient->pelayanan ?? $getPoli($registration)) ?>"></div>
+                                            <div class="mr-field"><label>Ruang</label><input class="form-control input-sm" readonly value="<?= h($inpatient->ruang ?? $registration->room->room_name ?? $registration->room_name ?? '') ?>"></div>
+                                            <div class="mr-field"><label>Bed / Kamar</label><input class="form-control input-sm" readonly value="<?= h($inpatient->bed ?? $registration->bed->name ?? $registration->bed->bed_no ?? '') ?>"></div>
                                             <div class="mr-field"><label>Kelas</label><input class="form-control input-sm" readonly value="<?= h($inpatient->kelas ?? $registration->class_name ?? '') ?>"></div>
                                             <div class="mr-field"><label>Prosedur Masuk</label><input class="form-control input-sm" readonly value="<?= h($inpatient->prosedur_masuk ?? $inpatient->cara_masuk ?? '') ?>"></div>
                                             <div class="mr-field"><label>Cara Masuk</label><input class="form-control input-sm" readonly value="<?= h($inpatient->cara_masuk ?? '') ?>"></div>
@@ -587,11 +629,13 @@ $firstRegistrationId = $firstRegistration->id ?? null;
 <div class="modal fade" id="modalCariPasien" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content" style="border-radius:4px;">
-            <div class="modal-header" style="background:#1e3a5f; color:#fff; padding:10px 15px;">
-                <button type="button" class="close" data-dismiss="modal" style="color:#fff; opacity:.9;"><span>&times;</span></button>
+            <div class="modal-header" style="background:#1e3a5f; color:#fff; padding:10px 15px; display:flex; align-items:center; justify-content:space-between;">
                 <h4 class="modal-title" style="font-size:14px; font-weight:700; margin:0;">
                     <i class="fa fa-search"></i> Cari Pasien
                 </h4>
+                <button type="button" class="close" data-dismiss="modal" style="color:#fff; opacity:.9; margin:0; float:none; background:none; border:none;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body" style="padding:12px;">
                 <div class="input-group input-group-sm" style="margin-bottom:10px;">
@@ -620,11 +664,6 @@ $firstRegistrationId = $firstRegistration->id ?? null;
                     </table>
                 </div>
             </div>
-            <div class="modal-footer" style="padding:8px 12px;">
-                <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">
-                    <i class="fa fa-times"></i> Tutup
-                </button>
-            </div>
         </div>
     </div>
 </div>
@@ -644,6 +683,39 @@ $firstRegistrationId = $firstRegistration->id ?? null;
 
 .mr-history-row:hover td { background: #eef4ff; }
 .mr-history-row.active td { background: #1e3a5f !important; color: #fff !important; font-weight: 600; }
+
+.mr-service-type-badge {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    border-radius: 3px;
+    padding: 1px 6px;
+    margin-top: 2px;
+}
+
+/* Rawat Jalan = hijau */
+.mr-service-type-badge.badge-rawat-jalan {
+    color: #198754;
+    background: #e6f7ec;
+}
+
+/* IGD = merah/oranye (darurat) */
+.mr-service-type-badge.badge-igd {
+    color: #dc3545;
+    background: #fdecea;
+}
+
+/* Rawat Inap = ungu */
+.mr-service-type-badge.badge-rawat-inap {
+    color: #6f42c1;
+    background: #f3e8ff;
+}
+
+/* Saat baris riwayat lagi aktif/dipilih (background biru tua) */
+.mr-history-row.active .mr-service-type-badge {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+}
 
 .mr-tab-panel { background: #fff; border: 1px solid #ddd; }
 .mr-tab-panel > .panel-heading { background: #f5f7fa !important; border-bottom: 1px solid #d9d9d9; min-height: 42px; }
@@ -669,19 +741,31 @@ $firstRegistrationId = $firstRegistration->id ?? null;
 <script>
 $(document).ready(function () {
 
+    // ── Toggle tab sesuai jenis pelayanan registrasi ──
+    function applyServiceTypeTabs(serviceType) {
+        if (serviceType === 'rawat-inap') {
+            $('#tab-li-rawat-inap').show();
+            $('#tab-li-rawat-jalan-igd').hide();
+            $('#mr-service-tabs a[data-tab="rawat-inap"]').trigger('click');
+        } else {
+            $('#tab-li-rawat-jalan-igd').show();
+            $('#tab-li-rawat-inap').hide();
+            $('#mr-service-tabs a[data-tab="rawat-jalan-igd"]').trigger('click');
+        }
+    }
+
     // ── Toggle riwayat kunjungan ──
     $(document).on('click', '.mr-history-row', function () {
         var historyId = $(this).data('history-id').toString();
+        var serviceType = $(this).data('service-type');
 
         $('.mr-history-row').removeClass('active');
         $(this).addClass('active');
 
         $('.mr-panel').hide().removeClass('active');
-        var $panel = $('.mr-panel[data-panel-history-id="' + historyId + '"]').show().addClass('active');
+        $('.mr-panel[data-panel-history-id="' + historyId + '"]').show().addClass('active');
 
-        var activeTab = $('#mr-service-tabs a.active-tab-link').data('tab') || 'rawat-inap';
-        $panel.find('.mr-tab-content').hide().removeClass('active');
-        $panel.find('.mr-tab-content[data-tab-content="' + activeTab + '"]').show().addClass('active');
+        applyServiceTypeTabs(serviceType);
     });
 
     // ── Toggle tab layanan (berlaku untuk panel riwayat yang sedang aktif) ──
@@ -700,6 +784,11 @@ $(document).ready(function () {
     });
     $('#mr-service-tabs a').first().addClass('active-tab-link');
 
+    var $firstHistoryRow = $('.mr-history-row').first();
+    if ($firstHistoryRow.length) {
+        applyServiceTypeTabs($firstHistoryRow.data('service-type'));
+    }
+
     // ── Cari pasien (AJAX) ──
     function escapeHtml(text) {
         return String(text || '')
@@ -709,10 +798,6 @@ $(document).ready(function () {
 
     function renderPatientRows(rows, term) {
         var $tbody = $('#patient-result-body');
-        if (!term) {
-            $tbody.html('<tr><td colspan="7" style="text-align:center;color:#aaa;padding:14px;">Ketik kata kunci pasien, hasil langsung muncul di bawah.</td></tr>');
-            return;
-        }
         if (!rows || rows.length === 0) {
             $tbody.html('<tr><td colspan="7" style="text-align:center;color:#aaa;padding:14px;">Data pasien tidak ditemukan.</td></tr>');
             return;
@@ -736,26 +821,48 @@ $(document).ready(function () {
 
     var searchTimer = null;
     var searchXhr = null;
+
+    function doSearchPatients(term) {
+        if (searchXhr && searchXhr.abort) { searchXhr.abort(); }
+        $('#patient-result-body').html('<tr><td colspan="7" style="text-align:center;color:#aaa;padding:14px;"><i class="fa fa-spinner fa-spin"></i> Memuat data pasien...</td></tr>');
+
+        var url = <?= json_encode($this->Url->build(['action' => 'searchPatients'])) ?> + '?term=' + encodeURIComponent(term) + '&limit=50';
+        searchXhr = $.ajax({
+            url: url,
+            dataType: 'json',
+            success: function (res) {
+                renderPatientRows(res && res.data ? res.data : [], term);
+            },
+            error: function (xhr, status) {
+                if (status !== 'abort') {
+                    console.error('searchPatients gagal:', status, xhr && xhr.responseText);
+                    renderPatientRows([], term);
+                }
+            }
+        });
+    }
+
+    // ── Trigger utama: saat modal Bootstrap selesai tampil ──
     $('#modalCariPasien').on('shown.bs.modal', function () {
         $('#patient-search-modal-input').val('').focus();
+        doSearchPatients(''); // tampilkan semua data begitu modal dibuka
+    });
+
+    // ── Trigger cadangan: langsung saat tombol "Cari Pasien" diklik ──
+    // Ini jaga-jaga kalau event shown.bs.modal tidak konsisten terpanggil
+    // (misal karena versi Bootstrap/plugin modal yang dipakai berbeda).
+    $(document).on('click', '#btn-cari-pasien', function () {
+        setTimeout(function () {
+            $('#patient-search-modal-input').val('').focus();
+            doSearchPatients('');
+        }, 150);
     });
 
     $('#patient-search-modal-input').on('input', function () {
         clearTimeout(searchTimer);
         var term = $.trim($(this).val());
-        if (!term) { renderPatientRows([], ''); return; }
-
-        $('#patient-result-body').html('<tr><td colspan="7" style="text-align:center;color:#aaa;padding:14px;"><i class="fa fa-spinner fa-spin"></i> Mencari pasien...</td></tr>');
-
         searchTimer = setTimeout(function () {
-            if (searchXhr && searchXhr.abort) { searchXhr.abort(); }
-            var url = <?= json_encode($this->Url->build(['action' => 'searchPatients'])) ?> + '?term=' + encodeURIComponent(term) + '&limit=50';
-            searchXhr = $.ajax({
-                url: url,
-                dataType: 'json',
-                success: function (res) { renderPatientRows(res && res.data ? res.data : [], term); },
-                error: function (xhr, status) { if (status !== 'abort') { renderPatientRows([], term); } }
-            });
+            doSearchPatients(term); // semakin banyak diketik, semakin spesifik hasilnya
         }, 250);
     });
 

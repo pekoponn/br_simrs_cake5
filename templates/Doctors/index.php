@@ -112,7 +112,8 @@
                     <tr class="text-center">
                         <th width="40">#</th>
                         <th width="90">Kode</th>
-                        <th>Nama Dokter</th>
+                        <th width="220">Nama Dokter</th>
+                        <th width="130">NIK</th>
                         <th width="140">Spesialis</th>
                         <th width="130">Poliklinik</th>
                         <th width="80">Gender</th>
@@ -142,32 +143,25 @@
                     <td>
                         <div style="display:flex; align-items:center; gap:7px;">
                             <span style="width:28px; height:28px; border-radius:50%;
-                                         background:<?= $isMale ? '#dbeafe' : '#fce7f3' ?>;
-                                         color:<?= $isMale ? '#1d4ed8' : '#be185d' ?>;
-                                         display:flex; align-items:center; justify-content:center;
-                                         font-size:13px; flex-shrink:0;">
+                                        background:<?= $isMale ? '#dbeafe' : '#fce7f3' ?>;
+                                        color:<?= $isMale ? '#1d4ed8' : '#be185d' ?>;
+                                        display:flex; align-items:center; justify-content:center;
+                                        font-size:13px; flex-shrink:0;">
                                 <?= $isMale ? '♂' : '♀' ?>
                             </span>
                             <span style="font-weight:600;"><?= h($doctor->doctor_name) ?></span>
                         </div>
-                        <?php if (!empty($doctor->nik)): ?>
-                        <small style="color:#888; font-size:10px; margin-left:35px;">
-                            NIK: <?= h($doctor->nik) ?>
-                        </small>
-                        <?php endif; ?>
+                    </td>
+
+                    <!-- NIK -->
+                    <td style="font-size:11px;">
+                        <?= !empty($doctor->nik) ? h($doctor->nik) : '<span style="color:#ccc;">—</span>' ?>
                     </td>
 
                     <!-- Spesialis -->
                     <td style="font-size:12px;">
-                        <?php
-                        $specialistLabel = '';
-                        if (!empty($doctor->specialist)) {
-                            $specialistOptions = $this->Krs->specialists();
-                            $specialistLabel = $specialistOptions[$doctor->specialist] ?? $doctor->specialist;
-                        }
-                        ?>
-                        <?= !empty($specialistLabel)
-                            ? '<span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">' . h($specialistLabel) . '</span>'
+                        <?= !empty($doctor->specialist)
+                            ? '<span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">' . h($doctor->specialist) . '</span>'
                             : '<span style="color:#ccc;">—</span>' ?>
                     </td>
 
@@ -182,12 +176,12 @@
                     <td class="text-center">
                         <?php if ($isMale): ?>
                             <span style="background:#dbeafe;color:#1d4ed8;padding:2px 9px;
-                                         border-radius:12px;font-size:11px;font-weight:600;">
+                                        border-radius:12px;font-size:11px;font-weight:600;">
                                 ♂ L
                             </span>
                         <?php else: ?>
                             <span style="background:#fce7f3;color:#be185d;padding:2px 9px;
-                                         border-radius:12px;font-size:11px;font-weight:600;">
+                                        border-radius:12px;font-size:11px;font-weight:600;">
                                 ♀ P
                             </span>
                         <?php endif; ?>
@@ -229,20 +223,20 @@
                                 '<i class="fa fa-eye"></i>',
                                 ['action' => 'view', $doctor->id],
                                 ['escape' => false, 'class' => 'btn btn-info btn-xs',
-                                 'data-toggle' => 'tooltip', 'title' => 'Detail']
+                                'data-toggle' => 'tooltip', 'title' => 'Detail']
                             ) ?>
                             <?= $this->Html->link(
                                 '<i class="fa fa-edit"></i>',
                                 ['action' => 'edit', $doctor->id],
                                 ['escape' => false, 'class' => 'btn btn-warning btn-xs',
-                                 'data-toggle' => 'tooltip', 'title' => 'Edit']
+                                'data-toggle' => 'tooltip', 'title' => 'Edit']
                             ) ?>
                             <?= $this->Form->postLink(
                                 '<i class="fa fa-trash"></i>',
                                 ['action' => 'delete', $doctor->id],
                                 ['escape' => false, 'class' => 'btn btn-danger btn-xs',
-                                 'confirm' => __('Yakin hapus dokter {0}?', $doctor->doctor_name),
-                                 'data-toggle' => 'tooltip', 'title' => 'Hapus']
+                                'confirm' => __('Yakin hapus dokter {0}?', $doctor->doctor_name),
+                                'data-toggle' => 'tooltip', 'title' => 'Hapus']
                             ) ?>
                         </div>
                     </td>

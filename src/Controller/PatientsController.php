@@ -61,7 +61,7 @@ class PatientsController extends AppController
     public function view($id = null)
     {
         $patient = $this->Patients->get($id, [
-            'contain' => ['PatientPics', 'Registrations'],
+            'contain' => ['Registrations.Doctors'],
         ]);
 
         $this->set(compact('patient'));

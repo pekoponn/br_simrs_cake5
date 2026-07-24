@@ -21,6 +21,16 @@ $statusCfg = [
     'cancelled'   => ['label' => 'Batal',      'bg' => '#f8d7da', 'color' => '#721c24',  'dot' => '#dc3545'],
 ];
 
+$medicalRecordsByRegistration = $medicalRecordsByRegistration ?? [];
+
+$getNoRekamMedis = function ($v) use ($medicalRecordsByRegistration) {
+    $mr = !empty($v->registration_id) ? ($medicalRecordsByRegistration[$v->registration_id] ?? null) : null;
+    if ($mr && !empty($mr->medical_record_no)) {
+        return $mr->medical_record_no;
+    }
+    return $v->registration_no ?? ($v->patient->code ?? '-');
+};
+
 // Helper: build URL dengan mempertahankan date_from & date_to
 $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $filterPoli, $filterDoctor, $filterStatus, $q) {
     return array_filter(array_merge([
@@ -49,21 +59,20 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
 
     <div class="panel-body">
 
-        <!-- ── SUMMARY CARDS ── -->
         <div class="row m-b-10">
             <?php
             $cards = [
-                ['label' => 'Total',       'val' => $summary['total'],       'bg' => '#1e3a5f', 'icon' => 'fa-users'],
-                ['label' => 'Menunggu',    'val' => $summary['waiting'],     'bg' => '#856404', 'icon' => 'fa-clock'],
-                ['label' => 'Dipanggil',   'val' => $summary['called'],      'bg' => '#0c5460', 'icon' => 'fa-bullhorn'],
-                ['label' => 'Diperiksa',   'val' => $summary['in_progress'], 'bg' => '#155724', 'icon' => 'fa-stethoscope'],
-                ['label' => 'Selesai',     'val' => $summary['done'],        'bg' => '#495057', 'icon' => 'fa-check-circle'],
+                ['key' => 'total',       'label' => 'Total',       'val' => $summary['total'],       'bg' => '#1e3a5f', 'icon' => 'fa-users'],
+                ['key' => 'waiting',     'label' => 'Menunggu',    'val' => $summary['waiting'],     'bg' => '#856404', 'icon' => 'fa-clock'],
+                ['key' => 'called',      'label' => 'Dipanggil',   'val' => $summary['called'],      'bg' => '#0c5460', 'icon' => 'fa-bullhorn'],
+                ['key' => 'in_progress', 'label' => 'Diperiksa',   'val' => $summary['in_progress'], 'bg' => '#155724', 'icon' => 'fa-stethoscope'],
+                ['key' => 'done',        'label' => 'Selesai',     'val' => $summary['done'],        'bg' => '#495057', 'icon' => 'fa-check-circle'],
             ];
             foreach ($cards as $card): ?>
                 <div class="col-md-2 col-xs-4" style="padding:0 5px; margin-bottom:8px;">
                     <div style="background:<?= $card['bg'] ?>; color:#fff; border-radius:8px;
                                 padding:12px 14px; text-align:center;">
-                        <div style="font-size:22px; font-weight:800;"><?= $card['val'] ?></div>
+                        <div id="summary-<?= $card['key'] ?>" style="font-size:22px; font-weight:800;"><?= $card['val'] ?></div>
                         <div style="font-size:11px; opacity:.85;">
                             <i class="fa <?= $card['icon'] ?>"></i> <?= $card['label'] ?>
                         </div>
@@ -319,7 +328,10 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
                     ?>
                     <tr style="background:<?= $rowBg ?>;"
                         data-visit-id="<?= $v->id ?>"
-                        data-status="<?= $v->status ?>">
+                        data-status="<?= $v->status ?>"
+                        data-queue="<?= h($v->queue_number ?? '') ?>"
+                        data-poli="<?= h($v->polyclinic_name ?? '') ?>"
+                        data-room="<?= h($roomName !== '-' ? $roomName : '') ?>">
 
                         <!-- No Antri -->
                         <td class="text-center" style="font-weight:800; font-size:16px; color:#1e3a5f;">
@@ -342,7 +354,7 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
 
                         <!-- ── AKSI ── -->
                         <td class="text-center">
-                            <div style="display:flex; gap:2px; justify-content:center; flex-wrap:wrap;">
+                            <div class="aksi-btn-group" style="display:flex; gap:2px; justify-content:center; flex-wrap:wrap;">
 
                                 <?php if (!$isDone): ?>
                                     <?= $this->Html->link(
@@ -382,14 +394,19 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
                                     </button>
                                 <?php endif; ?>
 
-                                <?php if (in_array($v->status, ['called', 'in_progress'])): ?>
-                                    <?= $this->Form->postLink(
-                                        '<i class="fa fa-check"></i> Selesai',
-                                        ['action' => 'selesai', $v->id],
-                                        ['escape' => false, 'class' => 'btn btn-xs btn-success',
-                                         'confirm' => 'Tandai kunjungan ' . h($pName) . ' selesai?',
-                                         'data-toggle' => 'tooltip', 'title' => 'Selesaikan']
-                                    ) ?>
+                                <?php if ($v->status === 'called'): ?>
+                                    <button type="button"
+                                            class="btn btn-xs btn-primary btn-panggil"
+                                            data-id="<?= $v->id ?>"
+                                            data-toggle="tooltip" title="Panggil Lagi">
+                                        <i class="fa fa-bullhorn"></i> Panggil Lagi
+                                    </button>
+                                    <button type="button"
+                                            class="btn btn-xs btn-teal btn-datang"
+                                            data-id="<?= $v->id ?>"
+                                            data-toggle="tooltip" title="Pasien Sudah Datang">
+                                        <i class="fa fa-user-check"></i> Sudah Datang
+                                    </button>
                                 <?php endif; ?>
 
                                 <?php if (!$isDone): ?>
@@ -434,45 +451,23 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
                                     <?php endif; ?>
                                 <?php endif; ?>
 
-                                <?php if (!$isDone): ?>
-                                    <?= $this->Html->link(
-                                        '<i class="fa fa-edit"></i>',
-                                        ['action' => 'edit', $v->id],
-                                        ['escape' => false, 'class' => 'btn btn-xs btn-secondary',
-                                         'data-toggle' => 'tooltip', 'title' => 'Edit']
-                                    ) ?>
-                                <?php endif; ?>
-
                             </div>
                         </td>
 
-                        <!-- No Rekam Medis -->
                         <td class="text-center" style="font-size:11px; color:#6c757d;">
-                            <?= h($pCode) ?>
+                            <?= h($getNoRekamMedis($v)) ?>
                         </td>
 
-                        <!-- Dokter -->
                         <td style="font-size:11px; color:#495057; white-space:normal; min-width:165px;" title="<?= h($dName) ?>">
                             <div style="font-weight:700; color:#1f2937; line-height:1.25;">
                                 <?= h($dName) ?>
                             </div>
-                            <?php if ($dName !== '-'): ?>
-                                <button type="button"
-                                        class="btn btn-xs btn-default"
-                                        style="margin-top:3px; padding:2px 6px;"
-                                        data-toggle="tooltip"
-                                        title="<?= h($dName) ?>">
-                                    <i class="fa fa-eye"></i> View
-                                </button>
-                            <?php endif; ?>
                         </td>
 
-                        <!-- No Registrasi -->
                         <td class="text-center" style="font-size:11px; color:#6c757d;">
                             <?= h($v->registration_no ?? '-') ?>
                         </td>
 
-                        <!-- Nama Pasien -->
                         <td>
                             <div style="font-weight:700; color:#1f2937;"><?= h($pName) ?></div>
                             <?php if (!empty($v->polyclinic_name)): ?>
@@ -487,7 +482,6 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
                             <?php endif; ?>
                         </td>
 
-                        <!-- Tgl Masuk -->
                         <td class="text-center" style="font-size:11px;">
                             <?php
                             $vd = $v->visit_date;
@@ -503,7 +497,6 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
                             <?php endif; ?>
                         </td>
 
-                        <!-- Poli -->
                         <td class="text-center" style="font-size:11px;">
                             <?php if (!empty($v->polyclinic_name)): ?>
                                 <span style="background:#e0f2fe; color:#0369a1;
@@ -516,7 +509,6 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
                             <?php endif; ?>
                         </td>
 
-                        <!-- Ruang -->
                         <td class="text-center" style="font-size:11px; white-space:normal; min-width:110px;">
                             <?php if (!empty($roomName) && $roomName !== '-'): ?>
                                 <span style="background:#f3f4f6; color:#374151;
@@ -531,7 +523,7 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
 
                         <!-- Status -->
                         <td class="text-center">
-                            <span style="background:<?= $sc['bg'] ?>; color:<?= $sc['color'] ?>;
+                            <span class="status-badge" style="background:<?= $sc['bg'] ?>; color:<?= $sc['color'] ?>;
                                          border-radius:20px; padding:3px 10px;
                                          font-size:11px; font-weight:700;
                                          display:inline-flex; align-items:center; gap:4px;">
@@ -628,6 +620,92 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
 
 <script>
 var PANGGIL_URL = '<?= $this->Url->build(['action' => 'panggil']) ?>';
+var DATANG_URL  = '<?= $this->Url->build(['action' => 'datang']) ?>';
+
+// ── Update kartu ringkasan (Total/Menunggu/Dipanggil/Diperiksa/Selesai) ──────
+function bumpSummary(fromKey, toKey) {
+    if (fromKey) {
+        var $from = $('#summary-' + fromKey);
+        var v = parseInt($from.text(), 10) || 0;
+        $from.text(Math.max(0, v - 1));
+    }
+    if (toKey) {
+        var $to = $('#summary-' + toKey);
+        var v2 = parseInt($to.text(), 10) || 0;
+        $to.text(v2 + 1);
+    }
+}
+
+// ── Suara notifikasi panggilan pasien (chime + Text-to-Speech) ───────────────
+function playCallChime() {
+    try {
+        var ctx = new (window.AudioContext || window.webkitAudioContext)();
+        var notes = [880, 1108.73]; // dua nada pendek, mirip nada panggilan
+        notes.forEach(function(freq, i) {
+            var osc  = ctx.createOscillator();
+            var gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            var start = ctx.currentTime + i * 0.22;
+            gain.gain.setValueAtTime(0.0001, start);
+            gain.gain.exponentialRampToValueAtTime(0.3, start + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.2);
+            osc.connect(gain).connect(ctx.destination);
+            osc.start(start);
+            osc.stop(start + 0.22);
+        });
+    } catch (e) {
+        // Web Audio tidak didukung / diblokir browser — abaikan saja
+    }
+}
+
+// ── Cari suara Bahasa Indonesia yang tersedia di browser ─────────────────────
+var idVoice = null;
+function loadIndonesianVoice() {
+    if (!('speechSynthesis' in window)) return;
+    var voices = window.speechSynthesis.getVoices();
+    idVoice = voices.find(function(v) { return v.lang === 'id-ID'; })
+           || voices.find(function(v) { return v.lang && v.lang.toLowerCase().indexOf('id') === 0; })
+           || null;
+}
+if ('speechSynthesis' in window) {
+    loadIndonesianVoice();
+    window.speechSynthesis.onvoiceschanged = loadIndonesianVoice;
+}
+
+// ── Ucapkan teks lewat Text-to-Speech ─────────────────────────────────────────
+function speakText(text) {
+    if (!('speechSynthesis' in window) || !text) return;
+    try {
+        window.speechSynthesis.cancel(); // hentikan antrian suara sebelumnya
+        var utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'id-ID';
+        if (idVoice) utter.voice = idVoice;
+        utter.rate = 0.9;
+        utter.pitch = 1;
+        window.speechSynthesis.speak(utter);
+    } catch (e) {
+        // Text-to-Speech tidak didukung — abaikan saja
+    }
+}
+
+// ── Gabungan: chime lalu ucapkan nomor antrian + poli + ruang ────────────────
+function announceQueueCall(queue, poli, room) {
+    playCallChime();
+
+    var parts = [];
+    parts.push(queue ? ('Nomor antrian ' + queue) : 'Pasien berikutnya');
+    if (poli)  parts.push('silakan menuju ' + poli);
+    if (room)  parts.push('ruang ' + room);
+
+    var text = parts.join(', ') + '.';
+
+    // Tunggu chime selesai dulu (~0.6 detik) baru suara bicara mulai,
+    // biar tidak numpuk sama efek bunyi.
+    setTimeout(function() {
+        speakText(text);
+    }, 600);
+}
 
 function getCsrfToken() {
     var m = $('meta[name="csrfToken"]').attr('content');
@@ -663,10 +741,24 @@ $('input[name="date_from"], input[name="date_to"]').on('change', function() {
     }
 });
 
-// ── Tombol Panggil ──────────────────────────────────────────
+function renderCalledButtons(id) {
+    return '<button type="button" class="btn btn-xs btn-primary btn-panggil" data-id="' + id + '" data-toggle="tooltip" title="Panggil Lagi">'
+         + '<i class="fa fa-bullhorn"></i> Panggil Lagi</button>'
+         + '<button type="button" class="btn btn-xs btn-teal btn-datang" data-id="' + id + '" data-toggle="tooltip" title="Pasien Sudah Datang">'
+         + '<i class="fa fa-user-check"></i> Sudah Datang</button>';
+}
+
+// ── Tombol Panggil / Panggil Lagi ────────────────────────────
 $(document).on('click', '.btn-panggil', function() {
-    var $btn = $(this);
-    var id   = $btn.data('id');
+    var $btn  = $(this);
+    var id    = $btn.data('id');
+    var $row  = $btn.closest('tr');
+    var $group = $btn.closest('.aksi-btn-group');
+    var originalHtml = $btn.html();
+
+    // Simpan status baris SEBELUM di-overwrite, supaya kita tahu ini klik
+    // "Panggil" pertama kali (dari waiting) atau "Panggil Lagi" (sudah called).
+    var wasWaiting = $row.attr('data-status') === 'waiting';
 
     $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i>');
 
@@ -677,20 +769,76 @@ $(document).on('click', '.btn-panggil', function() {
         dataType: 'json',
         success: function(res) {
             if (res.success) {
-                var $row = $btn.closest('tr');
-                $row.css('background', '#fffde7');
-                $btn.closest('td').find('.btn-panggil').remove();
-                $row.find('span[style*="border-radius:20px"]').last()
-                    .css({'background':'#cff4fc','color':'#0c5460'})
+
+                announceQueueCall(
+                    $row.data('queue'),
+                    $row.data('poli'),
+                    $row.data('room')
+                );
+
+                $row.css('background', '#fffde7').attr('data-status', 'called');
+                $row.find('.status-badge').css({'background':'#cff4fc','color':'#0c5460'})
                     .html('<span style="width:7px;height:7px;border-radius:50%;background:#0dcaf0;display:inline-block;animation:blink 1s infinite;"></span> Dipanggil');
+
+                // Kartu ringkasan hanya digeser sekali saat transisi waiting → called.
+                // Kalau ini "Panggil Lagi" (status sudah called sebelumnya), tidak usah digeser lagi.
+                if (wasWaiting) {
+                    bumpSummary('waiting', 'called');
+                }
+
+                // Normalisasi tombol: selalu jadi "Panggil Lagi" + "Sudah Datang"
+                $group.find('.btn-panggil, .btn-datang').remove();
+                $group.prepend(renderCalledButtons(id));
             } else {
                 alert(res.message || 'Gagal memanggil pasien.');
-                $btn.prop('disabled', false).html('<i class="fa fa-bullhorn"></i> Panggil');
+                $btn.prop('disabled', false).html(originalHtml);
             }
         },
         error: function() {
             alert('Gagal memanggil pasien. Coba lagi.');
-            $btn.prop('disabled', false).html('<i class="fa fa-bullhorn"></i> Panggil');
+            $btn.prop('disabled', false).html(originalHtml);
+        }
+    });
+});
+
+// ── Tombol Pasien Sudah Datang ───────────────────────────────
+$(document).on('click', '.btn-datang', function() {
+    var $btn   = $(this);
+    var id     = $btn.data('id');
+    var $row   = $btn.closest('tr');
+    var $group = $btn.closest('.aksi-btn-group');
+
+    $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i>');
+    $group.find('.btn-panggil').prop('disabled', true);
+
+    $.ajax({
+        url:      DATANG_URL + '/' + id,
+        method:   'POST',
+        data:     { '_csrfToken': getCsrfToken() },
+        dataType: 'json',
+        success: function(res) {
+            if (res.success) {
+                $row.css('background', '#e8f4fd').attr('data-status', 'in_progress');
+
+                $row.find('.status-badge').css({'background':'#d1ecf1','color':'#0c5460'})
+                    .html('<span style="width:7px;height:7px;border-radius:50%;background:#17a2b8;display:inline-block;"></span> Diperiksa');
+
+                // Kartu ringkasan: satu pasien pindah dari "Dipanggil" ke "Diperiksa"
+                bumpSummary('called', 'in_progress');
+
+                // Pasien sudah diperiksa: tombol panggil & sudah-datang tidak diperlukan lagi
+                $group.find('.btn-panggil').remove();
+                $group.find('.btn-datang').remove();
+            } else {
+                alert(res.message || 'Gagal memperbarui status pasien.');
+                $btn.prop('disabled', false).html('<i class="fa fa-user-check"></i> Sudah Datang');
+                $group.find('.btn-panggil').prop('disabled', false);
+            }
+        },
+        error: function() {
+            alert('Gagal memperbarui status pasien. Coba lagi.');
+            $btn.prop('disabled', false).html('<i class="fa fa-user-check"></i> Sudah Datang');
+            $group.find('.btn-panggil').prop('disabled', false);
         }
     });
 });

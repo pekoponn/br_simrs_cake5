@@ -5,252 +5,371 @@
  * @var string[]|\Cake\Collection\CollectionInterface $doctors
  */
 
-$dataChild = $this->Html->link(
-    'Doctor Schedule',
-    ['action' => 'index'],
-    ['full_base' => true]
-);
+function fmtDsTimeForInput($val) {
+    if (empty($val)) return '';
+    if ($val instanceof \Cake\I18n\FrozenTime || $val instanceof \Cake\I18n\Time) {
+        return $val->format('H:i');
+    }
+    $ts = strtotime((string)$val);
+    return $ts ? date('H:i', $ts) : '';
+}
+
+$days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
 ?>
 
-<?= $this->Krs->breadcrumb('Master', $dataChild, 'Edit') ?>
+<style>
+    .ds-page {
+        background: #f4f7fb;
+        padding: 18px;
+        border-radius: 16px;
+        font-family: "Open Sans", "Segoe UI", Arial, sans-serif;
+    }
 
-<div class="panel panel-inverse">
+    .ds-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+        max-width: 680px;
+    }
 
-    <div class="panel-heading">
+    .ds-header-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
 
-        <h4 class="panel-title">
-            Perincian
-        </h4>
+    .ds-header-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: linear-gradient(145deg, #2563eb, #1d4ed8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: #ffffff;
+        box-shadow: 0 6px 14px rgba(37, 99, 235, .30);
+    }
 
-        <div class="panel-heading-btn">
+    .ds-title {
+        margin: 0;
+        font-weight: 800;
+        color: #1f2d3d;
+        font-size: 19px;
+    }
 
-            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default" data-click="panel-expand">
+    .ds-subtitle {
+        color: #64748b;
+        font-size: 12.5px;
+        font-weight: 600;
+        margin-top: 2px;
+    }
 
-                <i class="fa fa-expand"></i>
+    .ds-btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #fff;
+        border: 1px solid #d7dee8;
+        color: #334155 !important;
+        font-weight: 700;
+        font-size: 13.5px;
+        border-radius: 10px;
+        padding: 10px 16px;
+        transition: background .15s ease;
+    }
 
-            </a>
+    .ds-btn-back:hover {
+        background: #f1f5f9;
+        color: #334155;
+    }
 
+    .ds-card {
+        background: #ffffff;
+        border: 1px solid #e3e8ef;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(31, 45, 61, .06);
+        padding: 24px;
+        margin-bottom: 18px;
+    }
+
+    .ds-form-section-title {
+        font-size: 13px;
+        font-weight: 800;
+        color: #1f2d3d;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+        margin-bottom: 14px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eef2f7;
+    }
+
+    .ds-form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .ds-form-grid.ds-grid-3 {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .ds-form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .ds-form-group.full {
+        grid-column: 1 / -1;
+    }
+
+    .ds-form-label {
+        font-size: 12.5px;
+        font-weight: 700;
+        color: #475569;
+        margin-bottom: 6px;
+    }
+
+    .ds-form-label .req {
+        color: #dc2626;
+    }
+
+    .ds-form-control {
+        height: 40px;
+        border-radius: 10px !important;
+        border: 1px solid #d7dee8 !important;
+        font-size: 13.5px !important;
+        padding: 0 12px !important;
+    }
+
+    textarea.ds-form-control {
+        height: auto;
+        padding: 10px 12px !important;
+        min-height: 90px;
+    }
+
+    .ds-form-control:focus {
+        border-color: #93b4fb !important;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+        outline: none;
+    }
+
+    .ds-toggle-wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        background: #f8fafc;
+        border: 1px solid #eef2f7;
+        border-radius: 10px;
+        width: fit-content;
+    }
+
+    .ds-form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding-top: 18px;
+        border-top: 1px solid #eef2f7;
+    }
+
+    .ds-btn-cancel {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #fff;
+        border: 1px solid #d7dee8;
+        color: #334155 !important;
+        font-weight: 700;
+        font-size: 13.5px;
+        border-radius: 10px;
+        padding: 10px 20px;
+    }
+
+    .ds-btn-cancel:hover {
+        background: #f1f5f9;
+        color: #334155;
+    }
+
+    .ds-btn-submit {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #2563eb;
+        border: none;
+        color: #fff !important;
+        font-weight: 700;
+        font-size: 13.5px;
+        border-radius: 10px;
+        padding: 10px 22px;
+        box-shadow: 0 6px 14px rgba(37, 99, 235, .35);
+        cursor: pointer;
+    }
+
+    .ds-btn-submit:hover {
+        background: #1d4ed8;
+    }
+
+    @media (max-width: 700px) {
+        .ds-form-grid,
+        .ds-form-grid.ds-grid-3 {
+            grid-template-columns: 1fr;
+        }
+        .ds-header {
+            max-width: 100%;
+        }
+    }
+</style>
+
+<div class="ds-page">
+
+    <div class="ds-header">
+        <div class="ds-header-left">
+            <div class="ds-header-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+                </svg>
+            </div>
+            <div>
+                <h3 class="ds-title">Edit Jadwal Dokter</h3>
+                <div class="ds-subtitle">Perbarui jadwal praktik dokter</div>
+            </div>
         </div>
 
+        <?= $this->Html->link(
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg> Kembali',
+            ['action' => 'index'],
+            ['class' => 'ds-btn-back', 'escape' => false]
+        ) ?>
     </div>
 
-    <?= $this->Form->create(
-        $doctorSchedule,
-        [
-            'data-parsley-validate' => 'true'
-        ]
-    ) ?>
+    <div class="ds-card">
 
-    <div class="panel-body">
+        <?= $this->Form->create($doctorSchedule) ?>
 
-        <!-- ROW 1 -->
-        <div class="form-group row m-b-15">
+        <div class="ds-form-section-title">Informasi Jadwal</div>
 
-            <label class="col-form-label col-md-1">
-                Kode
-            </label>
-
-            <div class="col-md-3">
-
-                <?php
-                echo $this->Form->control('code', [
+        <div class="ds-form-grid ds-grid-3">
+            <div class="ds-form-group">
+                <label class="ds-form-label">Kode</label>
+                <?= $this->Form->control('code', [
                     'label' => false,
-                    'class' => 'form-control',
-                    'placeholder' => 'Kode...',
-                    'required' => true,
-                    'value' => $doctorSchedule->code
-                ]);
-                ?>
-
+                    'class' => 'form-control ds-form-control',
+                    'templates' => ['inputContainer' => '{{content}}'],
+                ]) ?>
             </div>
 
-            <label class="col-form-label col-md-1">
-                Dokter
-            </label>
-
-            <div class="col-md-7">
-
-                <?php
-                echo $this->Form->control('doctor_id', [
+            <div class="ds-form-group">
+                <label class="ds-form-label">Dokter <span class="req">*</span></label>
+                <?= $this->Form->control('doctor_id', [
                     'label' => false,
-                    'class' => 'form-control select2Form',
                     'options' => $doctors,
+                    'class' => 'form-control ds-form-control select2Form',
                     'empty' => '-- Pilih Dokter --',
-                    'default' => $doctorSchedule->doctor_id
-                ]);
-                ?>
-
+                    'templates' => ['inputContainer' => '{{content}}'],
+                ]) ?>
             </div>
 
-        </div>
-
-        <!-- ROW 2 -->
-        <div class="form-group row m-b-15">
-
-            <label class="col-form-label col-md-1">
-                Hari
-            </label>
-
-            <div class="col-md-3">
-
-                <?php
-                echo $this->Form->control('day', [
+            <div class="ds-form-group">
+                <label class="ds-form-label">Hari <span class="req">*</span></label>
+                <?= $this->Form->control('day', [
+                    'type' => 'select',
                     'label' => false,
-                    'class' => 'form-control select2Form',
-                    'options' => [
-                        'Monday' => 'Senin',
-                        'Tuesday' => 'Selasa',
-                        'Wednesday' => 'Rabu',
-                        'Thursday' => 'Kamis',
-                        'Friday' => 'Jumat',
-                        'Saturday' => 'Sabtu',
-                        'Sunday' => 'Minggu'
-                    ],
+                    'options' => array_combine($days, $days),
+                    'class' => 'form-control ds-form-control select2Form',
                     'empty' => '-- Pilih Hari --',
-                    'default' => $doctorSchedule->day
-                ]);
-                ?>
-
+                    'templates' => ['inputContainer' => '{{content}}'],
+                ]) ?>
             </div>
-
-            <label class="col-form-label col-md-1">
-                Mulai
-            </label>
-
-            <div class="col-md-2">
-
-                <?php
-                echo $this->Form->control('start_time', [
-                    'type' => 'time',
-                    'label' => false,
-                    'class' => 'form-control',
-                    'value' => !empty($doctorSchedule->start_time)
-                        ? date('H:i', strtotime($doctorSchedule->start_time))
-                        : ''
-                ]);
-                ?>
-
-            </div>
-
-            <label class="col-form-label col-md-1">
-                Selesai
-            </label>
-
-            <div class="col-md-2">
-
-                <?php
-                echo $this->Form->control('end_time', [
-                    'type' => 'time',
-                    'label' => false,
-                    'class' => 'form-control',
-                    'value' => !empty($doctorSchedule->end_time)
-                        ? date('H:i', strtotime($doctorSchedule->end_time))
-                        : ''
-                ]);
-                ?>
-
-            </div>
-
-            <label class="col-form-label col-md-1">
-                Kuota
-            </label>
-
-            <div class="col-md-1">
-
-                <?php
-                echo $this->Form->control('quota', [
-                    'label' => false,
-                    'class' => 'form-control',
-                    'placeholder' => '0',
-                    'value' => $doctorSchedule->quota
-                ]);
-                ?>
-
-            </div>
-
         </div>
 
-        <!-- ROW 3 -->
-        <div class="form-group row m-b-15">
+        <div class="ds-form-grid ds-grid-3">
+            <div class="ds-form-group">
+                <label class="ds-form-label">Jam Mulai <span class="req">*</span></label>
+                <?= $this->Form->control('start_time', [
+                    'type' => 'time',
+                    'label' => false,
+                    'value' => fmtDsTimeForInput($doctorSchedule->start_time),
+                    'class' => 'form-control ds-form-control',
+                    'templates' => ['inputContainer' => '{{content}}'],
+                ]) ?>
+            </div>
 
-            <label class="col-form-label col-md-1">
-                Catatan
-            </label>
+            <div class="ds-form-group">
+                <label class="ds-form-label">Jam Selesai <span class="req">*</span></label>
+                <?= $this->Form->control('end_time', [
+                    'type' => 'time',
+                    'label' => false,
+                    'value' => fmtDsTimeForInput($doctorSchedule->end_time),
+                    'class' => 'form-control ds-form-control',
+                    'templates' => ['inputContainer' => '{{content}}'],
+                ]) ?>
+            </div>
 
-            <div class="col-md-11">
+            <div class="ds-form-group">
+                <label class="ds-form-label">Kuota</label>
+                <?= $this->Form->control('quota', [
+                    'label' => false,
+                    'type' => 'number',
+                    'min' => 0,
+                    'class' => 'form-control ds-form-control',
+                    'placeholder' => 'Jumlah kuota pasien',
+                    'templates' => ['inputContainer' => '{{content}}'],
+                ]) ?>
+            </div>
+        </div>
 
-                <?php
-                echo $this->Form->control('note', [
+        <div class="ds-form-grid">
+            <div class="ds-form-group full">
+                <label class="ds-form-label">Catatan</label>
+                <?= $this->Form->control('note', [
                     'type' => 'textarea',
                     'label' => false,
-                    'class' => 'form-control',
-                    'placeholder' => 'Catatan...',
+                    'class' => 'form-control ds-form-control',
+                    'placeholder' => 'Catatan tambahan (opsional)...',
                     'rows' => 3,
-                    'value' => $doctorSchedule->note
-                ]);
-                ?>
-
+                    'templates' => ['inputContainer' => '{{content}}'],
+                ]) ?>
             </div>
-
         </div>
 
-        <!-- HIDDEN -->
-        <?php
-        echo $this->Form->hidden('is_create', [
-            'value' => $doctorSchedule->is_create
-        ]);
+        <div class="ds-form-section-title">Status</div>
 
-        echo $this->Form->hidden('is_update', [
-            'value' => 1
-        ]);
+        <div class="ds-toggle-wrap" style="margin-bottom:20px;">
+            <?= $this->Form->control('is_active', [
+                'type' => 'checkbox',
+                'label' => 'Jadwal Aktif',
+                'checked' => ($doctorSchedule->is_active === 'Y' || $doctorSchedule->is_active === 1 || $doctorSchedule->is_active === '1'),
+                'value' => 1,
+                'hiddenField' => true,
+            ]) ?>
+        </div>
 
-        echo $this->Form->hidden('is_delete', [
-            'value' => $doctorSchedule->is_delete
-        ]);
+        <?= $this->Form->hidden('is_update', ['value' => 1]) ?>
 
-        echo $this->Form->hidden('is_active', [
-            'value' => $doctorSchedule->is_active
-        ]);
-        ?>
+        <div class="ds-form-actions">
+            <?= $this->Html->link('Batal', ['action' => 'index'], ['class' => 'ds-btn-cancel']) ?>
+            <?= $this->Form->button('Simpan Perubahan', [
+                'class' => 'ds-btn-submit',
+                'escape' => false,
+            ]) ?>
+        </div>
+
+        <?= $this->Form->end() ?>
 
     </div>
-
-    <?= $this->Krs->btnSave(); ?>
-
-    <?= $this->Form->end() ?>
 
 </div>
 
-<script type="text/javascript">
-
+<script>
     $(document).ready(function () {
-
-        $(".select2Form").select2();
-
-        // FIX jquery validate error input type=time
-        $('input[type="time"]').removeAttr('step');
-
-        var confirmTitle =
-            "Apakah anda ingin menyimpan data tersebut ?";
-
-        var formAction = "<?= $this->Url->build(
-            [
-                'controller' => 'DoctorSchedules',
-                'action' => 'edit',
-                $doctorSchedule->id
-            ],
-            [
-                'fullBase' => true
-            ]
-        ); ?>";
-
-        handleFormConfirmSubmitValid(
-            'DoctorScheduleEditForm',
-            'btn-add',
-            confirmTitle,
-            formAction
-        );
-
+        if ($.fn.select2) {
+            $(".select2Form").select2();
+        }
     });
-
 </script>

@@ -121,79 +121,82 @@ class MedicalRecordsController extends AppController
         $this->set(compact('q', 'patient', 'registrations', 'medicalRecordsByRegistration', 'notFound'));
     }
 
-    public function searchPatients()
+     public function searchPatients()
     {
-        $this->request->allowMethod(['get']);
-        $this->loadModel('Patients');
+    $this->request->allowMethod(['get']);
+    $this->loadModel('Patients');
 
-        $term = trim((string)$this->request->getQuery('term', ''));
-        $limit = (int)$this->request->getQuery('limit', 50);
-        if ($limit < 1 || $limit > 100) {
-            $limit = 50;
+    $term = trim((string)$this->request->getQuery('term', ''));
+    $limit = (int)$this->request->getQuery('limit', 50);
+    if ($limit < 1 || $limit > 100) {
+        $limit = 50;
+    }
+
+    $query = $this->Patients->find()
+        ->select([
+            'id',
+            'code',
+            'full_name',
+            'birth_date',
+            'gender',
+            'address',
+            'phone_number',
+            'identity_number',
+            'blood_type',
+        ])
+        ->where([
+            'OR' => [
+                ['Patients.is_delete !=' => 1],
+                ['Patients.is_delete IS' => null],
+            ],
+        ]);
+
+    if ($term !== '') {
+        $query->where([
+            'OR' => [
+                'Patients.code LIKE' => '%' . $term . '%',
+                'Patients.full_name LIKE' => '%' . $term . '%',
+                'Patients.identity_number LIKE' => '%' . $term . '%',
+                'Patients.phone_number LIKE' => '%' . $term . '%',
+                'Patients.address LIKE' => '%' . $term . '%',
+            ],
+        ]);
+    }
+
+    $patients = $query
+        ->order(['Patients.full_name' => 'ASC'])
+        ->limit($limit);
+
+    $rows = [];
+    foreach ($patients as $p) {
+        $birthDate = '';
+        if (!empty($p->birth_date) && is_object($p->birth_date) && method_exists($p->birth_date, 'format')) {
+            $birthDate = $p->birth_date->format('d-m-Y');
+        } elseif (!empty($p->birth_date)) {
+            $birthDate = date('d-m-Y', strtotime((string)$p->birth_date));
         }
 
-        $rows = [];
-        if ($term !== '') {
-            $patients = $this->Patients->find()
-                ->select([
-                    'id',
-                    'code',
-                    'full_name',
-                    'birth_date',
-                    'gender',
-                    'address',
-                    'phone_number',
-                    'identity_number',
-                    'blood_type',
-                ])
-                ->where([
-                    'OR' => [
-                        ['Patients.is_delete !=' => 1],
-                        ['Patients.is_delete IS' => null],
-                    ],
-                ])
-                ->where([
-                    'OR' => [
-                        'Patients.code LIKE' => '%' . $term . '%',
-                        'Patients.full_name LIKE' => '%' . $term . '%',
-                        'Patients.identity_number LIKE' => '%' . $term . '%',
-                        'Patients.phone_number LIKE' => '%' . $term . '%',
-                        'Patients.address LIKE' => '%' . $term . '%',
-                    ],
-                ])
-                ->order(['Patients.full_name' => 'ASC'])
-                ->limit($limit);
+        $gender = strtolower((string)($p->gender ?? ''));
+        $genderText = in_array($gender, ['female', 'f', 'p', 'perempuan', 'wanita'], true) ? 'W' : 'P';
 
-            foreach ($patients as $p) {
-                $birthDate = '';
-                if (!empty($p->birth_date) && is_object($p->birth_date) && method_exists($p->birth_date, 'format')) {
-                    $birthDate = $p->birth_date->format('d-m-Y');
-                } elseif (!empty($p->birth_date)) {
-                    $birthDate = date('d-m-Y', strtotime((string)$p->birth_date));
-                }
+        $rows[] = [
+            'id' => $p->id,
+            'code' => (string)($p->code ?? ''),
+            'full_name' => (string)($p->full_name ?? ''),
+            'birth_date' => $birthDate,
+            'gender' => $genderText,
+            'address' => (string)($p->address ?? ''),
+            'phone_number' => (string)($p->phone_number ?? ''),
+            'identity_number' => (string)($p->identity_number ?? ''),
+            'blood_type' => (string)($p->blood_type ?? ''),
+            'card_no' => '',
+        ];
+    }
 
-                $gender = strtolower((string)($p->gender ?? ''));
-                $genderText = in_array($gender, ['female', 'f', 'p', 'perempuan', 'wanita'], true) ? 'W' : 'P';
-
-                $rows[] = [
-                    'id' => $p->id,
-                    'code' => (string)($p->code ?? ''),
-                    'full_name' => (string)($p->full_name ?? ''),
-                    'birth_date' => $birthDate,
-                    'gender' => $genderText,
-                    'address' => (string)($p->address ?? ''),
-                    'phone_number' => (string)($p->phone_number ?? ''),
-                    'identity_number' => (string)($p->identity_number ?? ''),
-                    'blood_type' => (string)($p->blood_type ?? ''),
-                    'card_no' => '',
-                ];
-            }
-        }
-
-        $this->autoRender = false;
-        return $this->response
-            ->withType('application/json')
-            ->withStringBody(json_encode(['success' => true, 'data' => $rows], JSON_UNESCAPED_UNICODE));
+    $this->autoRender = false;
+    return $this->response
+        ->withType('application/json')
+        ->withStringBody(json_encode(['success' => true, 'data' => $rows], JSON_UNESCAPED_UNICODE));
     }
 
 /**

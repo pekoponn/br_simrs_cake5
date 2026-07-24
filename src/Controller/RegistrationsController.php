@@ -853,6 +853,50 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
         if ($this->request->is(['patch', 'post', 'put'])) {
             $data = $this->request->getData();
 
+            // ── Update data pasien terkait (kalau ada perubahan dari form) ──────────
+            $this->loadModel('Patients');
+            if (!empty($data['patient']) && is_array($data['patient']) && !empty($registration->patient_id)) {
+                try {
+                    $patient = $this->Patients->get((int)$registration->patient_id);
+                    $patientSchema = $this->Patients->getSchema();
+
+                    $title = trim($data['patient_title'] ?? '');
+                    $fullName = trim($data['patient']['full_name'] ?? $patient->full_name);
+                    if ($patientSchema->hasColumn('title')) {
+                        $patient->title = $title;
+                    }
+                    $patient->full_name = $title !== '' ? $title . ' ' . $fullName : $fullName;
+
+                    $patientFields = [
+                        'identity_type', 'identity_number', 'gender', 'blood_type', 'birth_date',
+                        'address', 'father_name', 'mother_name', 'phone_number', 'nationality',
+                        'citizenship', 'occupation', 'religion', 'education', 'ethnic_group', 'marital_status',
+                    ];
+                    foreach ($patientFields as $field) {
+                        if ($patientSchema->hasColumn($field) && array_key_exists($field, $data['patient'])) {
+                            $value = $data['patient'][$field];
+                            $patient->{$field} = ($value === '') ? null : $value;
+                        }
+                    }
+
+                    $regionNameMap = ['province' => 'id_prov', 'city' => 'id_kab', 'district' => 'id_kec', 'subdistrict' => 'id_kel'];
+                    foreach ($regionNameMap as $nameField => $idField) {
+                        if ($patientSchema->hasColumn($nameField) && !empty($data['patient'][$idField])) {
+                            $patient->{$nameField} = $data['patient'][$idField];
+                        }
+                    }
+
+                    $this->Patients->save($patient);
+                } catch (\Throwable $e) {
+                    $this->log('Gagal update pasien saat edit registrasi: ' . $e->getMessage(), 'warning');
+                }
+            }
+
+            // WAJIB: hapus dari $data supaya tidak ikut patchEntity ke Registration
+            unset($data['patient'], $data['patient_title']);
+
+            // Ambil data penanggung jawab saat edit.
+
             // Ambil data penanggung jawab saat edit.
             // Disimpan/update ke tabel person_responsibles berdasarkan registration_id.
             $personResponsibleData = [];
@@ -975,6 +1019,15 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
                 $data['person_responsible'],
                 $data['poly_name']
             );
+
+              // Buang field liar yang bukan kolom tabel registrations,
+            // supaya patchEntity tidak diam-diam gagal karena field asing.
+            $regFieldsToKeepManually = array_intersect_key($data, [
+                'queue_no' => true, 'queue_number' => true, 'room_name' => true,
+                'polyclinic_name' => true, 'doctor_schedule_id' => true, 'skdp_no' => true,
+            ]);
+            $registrationColumnsForEdit = array_flip($this->Registrations->getSchema()->columns());
+            $data = array_intersect_key($data, $registrationColumnsForEdit) + $regFieldsToKeepManually;
 
             $newBedId = !empty($data['bed_id']) ? (int)$data['bed_id'] : null;
             $newServiceType = $data['service_type'] ?? '';

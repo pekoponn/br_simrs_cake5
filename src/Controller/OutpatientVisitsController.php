@@ -86,18 +86,43 @@ class OutpatientVisitsController extends AppController
             ]);
 
         $summary = [
-            'waiting'     => (clone $base)->where(['status' => 'waiting'])->count(),
-            'called'      => (clone $base)->where(['status' => 'called'])->count(),
-            'in_progress' => (clone $base)->where(['status' => 'in_progress'])->count(),
-            'done'        => (clone $base)->where(['status' => 'done'])->count(),
-            'total'       => (clone $base)->count(),
-        ];
+    'waiting'     => (clone $base)->where(['status' => 'waiting'])->count(),
+    'called'      => (clone $base)->where(['status' => 'called'])->count(),
+    'in_progress' => (clone $base)->where(['status' => 'in_progress'])->count(),
+    'done'        => (clone $base)->where(['status' => 'done'])->count(),
+    'total'       => (clone $base)->count(),
+];
 
-        $this->set(compact(
-            'visits', 'summary', 'poliList', 'doctors',
-            'filterDateFrom', 'filterDateTo',
-            'filterPoli', 'filterDoctor', 'filterStatus', 'q'
-        ));
+// ── No Rekam Medis: ambil dari tabel MedicalRecords berdasarkan registration_id ──
+$medicalRecordsByRegistration = [];
+$registrationIds = [];
+foreach ($visits as $v) {
+    if (!empty($v->registration_id)) {
+        $registrationIds[] = $v->registration_id;
+    }
+}
+$registrationIds = array_unique($registrationIds);
+
+if (!empty($registrationIds)) {
+    try {
+        $this->loadModel('MedicalRecords');
+        $mrRows = $this->MedicalRecords->find()
+            ->where(['registration_id IN' => $registrationIds])
+            ->all();
+        foreach ($mrRows as $mr) {
+            $medicalRecordsByRegistration[$mr->registration_id] = $mr;
+        }
+    } catch (\Throwable $e) {
+        $medicalRecordsByRegistration = [];
+    }
+}
+
+$this->set(compact(
+    'visits', 'summary', 'poliList', 'doctors',
+    'filterDateFrom', 'filterDateTo',
+    'filterPoli', 'filterDoctor', 'filterStatus', 'q',
+    'medicalRecordsByRegistration'
+));
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -453,7 +478,7 @@ class OutpatientVisitsController extends AppController
 
         $visit = $this->OutpatientVisits->get($id);
 
-        if ($visit->status !== 'waiting') {
+        if (!in_array($visit->status, ['waiting', 'called'])) {
             if ($this->request->is('ajax')) {
                 $this->autoRender = false;
                 return $this->response->withType('application/json')
@@ -487,6 +512,52 @@ class OutpatientVisitsController extends AppController
 
         return $this->redirect(['action' => 'index']);
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+// DATANG — Tandai pasien sudah datang setelah dipanggil (status → in_progress)
+// ─────────────────────────────────────────────────────────────────────────
+public function datang($id = null)
+{
+    $this->request->allowMethod(['post']);
+
+    $visit = $this->OutpatientVisits->get($id);
+
+    if (!in_array($visit->status, ['called', 'waiting'])) {
+        if ($this->request->is('ajax')) {
+            $this->autoRender = false;
+            return $this->response->withType('application/json')
+                ->withStringBody(json_encode(['success' => false, 'message' => 'Status tidak valid untuk ditandai datang']));
+        }
+        $this->Flash->error(__('Status pasien tidak valid.'));
+        return $this->redirect(['action' => 'index']);
+    }
+
+    $visit->status = 'in_progress';
+    if (empty($visit->start_time)) {
+        $visit->start_time = date('Y-m-d H:i:s');
+    }
+
+    $saved = $this->OutpatientVisits->save($visit);
+
+    if ($this->request->is('ajax')) {
+        $this->autoRender = false;
+        return $this->response->withType('application/json')
+            ->withStringBody(json_encode([
+                'success'  => (bool)$saved,
+                'message'  => $saved ? 'Pasien sudah datang, status diperbarui' : 'Gagal memperbarui status pasien',
+                'visit_id' => $visit->id,
+                'status'   => $visit->status,
+            ]));
+    }
+
+    if ($saved) {
+        $this->Flash->success(__('Status pasien diperbarui.'));
+    } else {
+        $this->Flash->error(__('Gagal memperbarui status pasien.'));
+    }
+
+    return $this->redirect(['action' => 'index']);
+}
 
     // ─────────────────────────────────────────────────────────────────────────
     // BATAL — Batalkan kunjungan
