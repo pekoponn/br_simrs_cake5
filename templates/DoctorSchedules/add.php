@@ -314,8 +314,8 @@
                     'label' => 'Status',
                     'type' => 'select',
                     'options' => [
-                        1 => 'Aktif',
-                        0 => 'Tidak Aktif'
+                        'Y' => 'Aktif',
+                        'N' => 'Tidak Aktif'
                     ],
                     'class' => 'input',
                     'templates' => [

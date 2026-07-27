@@ -84,9 +84,10 @@ class RegistrationsTable extends Table
             'foreignKey' => 'registration_id',
             'joinType' => 'LEFT',
         ]);
-        //     $this->hasMany('PersonResponsible', [
-        //         'foreignKey' => 'registration_id',
-        //     ]);
+        $this->hasMany('PersonResponsible', [
+            'className' => 'PersonResponsibles',
+            'foreignKey' => 'registration_id',
+        ]);
     }
 
     public function beforeMarshal(EventInterface $event, ArrayObject $data, ArrayObject $options): void

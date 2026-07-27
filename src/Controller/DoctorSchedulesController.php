@@ -22,7 +22,17 @@ class DoctorSchedulesController extends AppController
             'contain' => ['Doctors'],
         ]);
 
-        $this->set(compact('doctorSchedule'));
+        $currentCycleDate = $this->getDoctorScheduleCycleDate((string)$doctorSchedule->day);
+        $currentQuotaUsed = $this->getEffectiveQuotaUsed($doctorSchedule);
+
+        $this->loadModel('DoctorScheduleQuotaHistories');
+        $quotaHistories = $this->DoctorScheduleQuotaHistories->find()
+            ->where(['doctor_schedule_id' => $doctorSchedule->id])
+            ->order(['cycle_date' => 'DESC'])
+            ->limit(30)
+            ->all();
+
+        $this->set(compact('doctorSchedule', 'currentCycleDate', 'currentQuotaUsed', 'quotaHistories'));
     }
 
     public function add()

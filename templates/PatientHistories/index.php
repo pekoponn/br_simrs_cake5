@@ -688,8 +688,10 @@ foreach ($historyGroups as $group) {
 .integrasi-cell-scroll::-webkit-scrollbar-track{background:#eef2f6;}
 .patient-modal .modal-dialog{width:1120px;max-width:96%;}
 .patient-modal .modal-content{border:2px solid #1e3a5f;border-radius:0;background:#d7e2f6;}
-.patient-modal .modal-header{padding:6px 10px;background:#1e3a5f;color:#fff;border-bottom:1px solid #10283f;}
-.patient-modal .modal-title{font-size:13px;font-weight:700;}
+.patient-modal .modal-header{position:relative;padding:8px 40px 8px 12px;background:#1e3a5f;color:#fff;border-bottom:1px solid #10283f;}
+.patient-modal .modal-header .modal-title{margin:0;}
+.patient-modal .modal-header .close{position:absolute;top:50%;right:10px;transform:translateY(-50%);margin:0;color:#fff;opacity:.85;font-size:20px;line-height:1;}
+.patient-modal .modal-header .close:hover{opacity:1;}
 .patient-modal .modal-body{padding:10px;background:#dce6f8;}
 .patient-modal .modal-footer{padding:8px 10px;background:#1e3a5f;border-top:1px solid #10283f;}
 .patient-modal-filter{display:grid;grid-template-columns:95px 1fr;gap:6px;align-items:center;margin-bottom:8px;}
@@ -699,7 +701,14 @@ foreach ($historyGroups as $group) {
 .patient-modal-table th,.patient-modal-table td{border:1px solid #9eaac0!important;padding:4px 6px!important;font-size:12px!important;white-space:nowrap;}
 .patient-modal-table th{background:#c7d2e7;color:#1d2f57;text-align:center;}
 .patient-modal-table tr:hover td{background:#dbeafe!important;}
+.patient-modal-table .row-female td{background:#fde3ec!important;}
+.patient-modal-table .row-female:hover td{background:#fbd2e0!important;}
+.patient-modal-table .row-male td{background:#e2f0fd!important;}
+.patient-modal-table .row-male:hover td{background:#cfe6fb!important;}
 .patient-modal-table .selected-row td{background:#2f6fd4!important;color:#fff!important;}
+.patient-modal-table .selected-row.row-female td,
+.patient-modal-table .selected-row.row-male td{background:#2f6fd4!important;color:#fff!important;}
+.patient-modal-row{cursor:pointer;}
 .patient-pilih-link{display:block;color:inherit;text-decoration:none;}
 .patient-pilih-link:hover{text-decoration:none;color:inherit;}
 @media(max-width:1200px){.mr-layout{grid-template-columns:1fr;}.mr-tabs .panel-body{margin:0;}}
@@ -947,7 +956,7 @@ foreach ($historyGroups as $group) {
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color:#fff;opacity:1;">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
         <h4 class="modal-title" id="modalCariPasienLabel"><i class="fa fa-search"></i> Cari Pasien</h4>
@@ -962,7 +971,7 @@ foreach ($historyGroups as $group) {
           <table class="table table-condensed patient-modal-table">
             <thead>
             <tr>
-                <th width="60">Pilih</th>
+                <!-- <th width="60">Pilih</th> -->
                 <th>Kode</th><th>Nama</th><th>Tgl Lahir</th><th>JK</th>
                 <th>No Identitas</th><th>Telepon</th><th>Alamat</th>
             </tr>
@@ -989,18 +998,24 @@ $(function () {
 
     function esc(v) { return $('<div>').text(v == null ? '' : v).html(); }
 
+    function genderRowClass(gender) {
+        var g = (gender == null ? '' : String(gender)).trim().toLowerCase();
+        var female = ['p', 'f', 'female', 'perempuan', 'wanita', 'w'];
+        var male = ['l', 'm', 'male', 'laki-laki', 'pria'];
+        if (female.indexOf(g) !== -1) return 'row-female';
+        if (male.indexOf(g) !== -1) return 'row-male';
+        return '';
+    }
+
     function renderRows(rows) {
         if (!rows || !rows.length) {
-            $body.html('<tr><td colspan="8" style="text-align:center;color:#888;">Tidak ada pasien ditemukan</td></tr>');
+            $body.html('<tr><td colspan="7" style="text-align:center;color:#888;">Tidak ada pasien ditemukan</td></tr>');
             return;
         }
         var html = '';
         rows.forEach(function (p) {
-            html += '<tr class="patient-modal-row">'
-                + '<td style="text-align:center;">'
-                    + '<button type="button" class="btn btn-primary btn-xs btn-pilih-pasien" '
-                    + 'data-code="' + esc(p.code) + '">Pilih</button>'
-                + '</td>'
+             var rowClass = genderRowClass(p.gender);
+            html += '<tr class="patient-modal-row ' + rowClass + '" data-code="' + esc(p.code) + '">'
                 + '<td>' + esc(p.code) + '</td>'
                 + '<td>' + esc(p.full_name) + '</td>'
                 + '<td>' + esc(p.birth_date) + '</td>'
@@ -1014,7 +1029,7 @@ $(function () {
     }
 
     function doSearch(term) {
-        $body.html('<tr><td colspan="8" style="text-align:center;color:#888;">Memuat data...</td></tr>');
+        $body.html('<tr><td colspan="7" style="text-align:center;color:#888;">Memuat data...</td></tr>');
         $.ajax({
             url: '<?= $this->Url->build(['action' => 'searchPatients']) ?>',
             data: { term: term },
@@ -1022,12 +1037,12 @@ $(function () {
         }).done(function (resp) {
             renderRows(resp && resp.data ? resp.data : []);
         }).fail(function () {
-            $body.html('<tr><td colspan="8" style="text-align:center;color:#c00;">Gagal memuat data</td></tr>');
+            $body.html('<tr><td colspan="7" style="text-align:center;color:#c00;">Gagal memuat data</td></tr>');
         });
     }
 
-    // Klik tombol "Pilih" -> reload halaman dengan patient terpilih
-    $body.on('click', '.btn-pilih-pasien', function () {
+     // Klik baris -> reload halaman dengan patient terpilih
+    $body.on('click', '.patient-modal-row', function () {
         var code = $(this).data('code');
         window.location.href = '?q=' + encodeURIComponent(code);
     });

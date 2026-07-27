@@ -614,10 +614,10 @@
                     <?php foreach ($doctorSchedules as $ds): ?>
                         <?php
                         $isToday = ($ds->day === $todayName);
-                        $isActive = (int)($ds->is_active ?? 0) === 1;
+                        $isActive = in_array($ds->is_active ?? null, ['Y', 1, '1', true], true);
 
                         $quotaTotal = (int)($ds->quota ?? 0);
-                        $quotaUsed = (int)($ds->quota_used ?? 0);
+                        $quotaUsed = (int)($ds->effective_quota_used ?? $ds->quota_used ?? 0);
                         $quotaLeft = max(0, $quotaTotal - $quotaUsed);
                         $pct = $quotaTotal > 0 ? min(100, round($quotaUsed / $quotaTotal * 100)) : 0;
 

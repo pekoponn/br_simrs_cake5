@@ -153,15 +153,15 @@ $getServiceTypeBadgeClass = function ($registration): string {
     return $classMap[$type] ?? 'badge-rawat-jalan';
 };
 
-$getServiceTypeBadgeClass = function ($registration): string {
-    $type = strtolower((string)($registration->service_type ?? ''));
-    $classMap = [
-        'rawat_jalan' => 'badge-rawat-jalan',
-        'igd'         => 'badge-igd',
-        'rawat_inap'  => 'badge-rawat-inap',
-    ];
-    return $classMap[$type] ?? 'badge-rawat-jalan';
-};
+// $getServiceTypeBadgeClass = function ($registration): string {
+//     $type = strtolower((string)($registration->service_type ?? ''));
+//     $classMap = [
+//         'rawat_jalan' => 'badge-rawat-jalan',
+//         'igd'         => 'badge-igd',
+//         'rawat_inap'  => 'badge-rawat-inap',
+//     ];
+//     return $classMap[$type] ?? 'badge-rawat-jalan';
+// };
 
 $firstRegistration = $registrations[0] ?? null;
 $firstRegistrationId = $firstRegistration->id ?? null;
@@ -659,7 +659,7 @@ $firstRegistrationId = $firstRegistration->id ?? null;
                             </tr>
                         </thead>
                         <tbody id="patient-result-body">
-                            <tr><td colspan="7" style="text-align:center; color:#aaa; padding:14px;">Ketik kata kunci pasien, hasil langsung muncul di bawah.</td></tr>
+                            <tr><td colspan="6" style="text-align:center; color:#aaa; padding:14px;">Ketik kata kunci pasien, hasil langsung muncul di bawah.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -736,6 +736,13 @@ $firstRegistrationId = $firstRegistration->id ?? null;
 .mr-tab-body { border-top: 0; min-height: 300px; }
 
 .panel-heading strong { font-size: 12px; }
+/* Modal Cari Pasien - baris klik langsung + warna gender */
+.patient-modal-row { cursor: pointer; }
+.patient-modal-row:hover td { background: #eef4ff; }
+.patient-modal-row.row-female td { background: #fde3ec; }
+.patient-modal-row.row-female:hover td { background: #fbd2e0; }
+.patient-modal-row.row-male td { background: #e2f0fd; }
+.patient-modal-row.row-male:hover td { background: #cfe6fb; }
 </style>
 
 <script>
@@ -796,35 +803,48 @@ $(document).ready(function () {
             .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
+    function genderRowClass(gender) {
+        var g = String(gender || '').trim().toLowerCase();
+        var female = ['w', 'f', 'female', 'perempuan', 'wanita'];
+        var male = ['p', 'l', 'm', 'male', 'laki-laki', 'pria'];
+        if (female.indexOf(g) !== -1) return 'row-female';
+        if (male.indexOf(g) !== -1) return 'row-male';
+        return '';
+    }
+
     function renderPatientRows(rows, term) {
         var $tbody = $('#patient-result-body');
         if (!rows || rows.length === 0) {
-            $tbody.html('<tr><td colspan="7" style="text-align:center;color:#aaa;padding:14px;">Data pasien tidak ditemukan.</td></tr>');
+            $tbody.html('<tr><td colspan="6" style="text-align:center;color:#aaa;padding:14px;">Data pasien tidak ditemukan.</td></tr>');
             return;
         }
         var html = '';
         $.each(rows, function (_, p) {
             var code = p.code || '';
             var url = <?= json_encode($this->Url->build(['action' => 'index'])) ?> + '?q=' + encodeURIComponent(code);
-            html += '<tr>'
-                + '<td><a href="' + escapeHtml(url) + '"><strong>' + escapeHtml(code || '-') + '</strong></a></td>'
-                + '<td><a href="' + escapeHtml(url) + '">' + escapeHtml(p.full_name || '-') + '</a></td>'
-                + '<td><a href="' + escapeHtml(url) + '">' + escapeHtml(p.birth_date || '-') + '</a></td>'
-                + '<td><a href="' + escapeHtml(url) + '">' + escapeHtml(p.gender || '-') + '</a></td>'
-                + '<td><a href="' + escapeHtml(url) + '">' + escapeHtml(p.address || '-') + '</a></td>'
-                + '<td><a href="' + escapeHtml(url) + '">' + escapeHtml(p.phone_number || '-') + '</a></td>'
-                + '<td class="text-center"><a href="' + escapeHtml(url) + '" class="btn btn-primary btn-xs"><i class="fa fa-check"></i></a></td>'
+            var rowClass = genderRowClass(p.gender);
+            html += '<tr class="patient-modal-row ' + rowClass + '" data-url="' + escapeHtml(url) + '">'
+                + '<td><strong>' + escapeHtml(code || '-') + '</strong></td>'
+                + '<td>' + escapeHtml(p.full_name || '-') + '</td>'
+                + '<td>' + escapeHtml(p.birth_date || '-') + '</td>'
+                + '<td>' + escapeHtml(p.gender || '-') + '</td>'
+                + '<td>' + escapeHtml(p.address || '-') + '</td>'
+                + '<td>' + escapeHtml(p.phone_number || '-') + '</td>'
                 + '</tr>';
         });
         $tbody.html(html);
     }
+    // ── Klik baris hasil pencarian -> pilih pasien ──
+    $(document).on('click', '.patient-modal-row', function () {
+        window.location.href = $(this).data('url');
+    });
 
     var searchTimer = null;
     var searchXhr = null;
 
     function doSearchPatients(term) {
         if (searchXhr && searchXhr.abort) { searchXhr.abort(); }
-        $('#patient-result-body').html('<tr><td colspan="7" style="text-align:center;color:#aaa;padding:14px;"><i class="fa fa-spinner fa-spin"></i> Memuat data pasien...</td></tr>');
+        $('#patient-result-body').html('<tr><td colspan="6" style="text-align:center;color:#aaa;padding:14px;"><i class="fa fa-spinner fa-spin"></i> Memuat data pasien...</td></tr>');
 
         var url = <?= json_encode($this->Url->build(['action' => 'searchPatients'])) ?> + '?term=' + encodeURIComponent(term) + '&limit=50';
         searchXhr = $.ajax({

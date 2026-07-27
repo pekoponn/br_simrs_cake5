@@ -303,6 +303,28 @@ $patient = $registration->patient ?? null;
 <div class="registrations-wrapper">
     <div class="registrations form content">
 
+            <?php
+            $flashMessages = $this->request->getSession()->read('Flash.flash') ?? [];
+            if (!empty($flashMessages)):
+            ?>
+                <div style="margin-bottom:20px;">
+                    <?php foreach ($flashMessages as $flashMessage): ?>
+                        <?php
+                            $isError = strpos((string)($flashMessage['element'] ?? ''), 'error') !== false;
+                            $isWarning = strpos((string)($flashMessage['element'] ?? ''), 'warning') !== false;
+                            $bg = $isError ? '#fdecea' : ($isWarning ? '#fff7ed' : '#eafaf1');
+                            $border = $isError ? '#f5c6cb' : ($isWarning ? '#fed7aa' : '#b7e4c7');
+                            $color = $isError ? '#611a15' : ($isWarning ? '#7c2d12' : '#1e4620');
+                        ?>
+                        <div style="padding:14px 18px;border-radius:8px;margin-bottom:10px;
+                                    font-size:14px;font-weight:600;white-space:pre-wrap;word-break:break-word;
+                                    background:<?= $bg ?>;border:1px solid <?= $border ?>;color:<?= $color ?>;">
+                            <?= h($flashMessage['message'] ?? '') ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+
             <?= $this->Form->create($registration) ?>
 
             <fieldset>
@@ -541,12 +563,11 @@ $patient = $registration->patient ?? null;
                             </div>
                         </div>
 
-                        <div class="form-card">
+                        <div class="form-card rawat-inap-field" style="<?= ($registration->service_type ?? '') === 'rawat_inap' ? '' : 'display:none;' ?>">
                             <div class="form-card-header">
                                 <i class="fa fa-users"></i> Penanggung Jawab Pasien
                             </div>
 
-                            <!-- <?php $pr = $registration->person_responsible ?? null; ?> -->
                             <?php
                                 $personResponsibleList = $registration->person_responsibles ?? [];
                                 $pr = !empty($personResponsibleList) ? $personResponsibleList[0] : null;
@@ -639,17 +660,17 @@ $patient = $registration->patient ?? null;
                                         <input type="text" name="registration_date" class="form-control datepicker-autoclose" autocomplete="off"
                                             placeholder="Pilih tanggal masuk"
                                             value="<?= $registration->registration_date
-                                                       ? $registration->registration_date->format('Y-m-d')
-                                                       : date('Y-m-d') ?>">
+                                                    ? $registration->registration_date->format('Y-m-d')
+                                                    : date('Y-m-d') ?>">
                                     </div>
 
                                     <div class="col-md-4">
                                         <label>Jam Masuk</label>
-                                        <input type="time" name="admission_time" id="admission-time" class="form-control" autocomplete="off" step="60" onclick="if (this.showPicker) this.showPicker();" onfocus="if (this.showPicker) this.showPicker();"
+                                        <input type="time" name="admission_time" id="admission-time" class="form-control" autocomplete="off" step="60"
+                                            onclick="if (this.showPicker) this.showPicker();" onfocus="if (this.showPicker) this.showPicker();"
                                             placeholder="Pilih jam masuk"
                                             value="<?= h($registration->admission_time ?? date('H:i')) ?>">
                                     </div>
-
                                     <div class="col-md-12">
                                         <label>Pelayanan</label><br>
                                         <?php foreach (['rawat_jalan' => 'Rawat Jalan', 'igd' => 'IGD', 'rawat_inap' => 'Rawat Inap'] as $val => $label): ?>
@@ -743,25 +764,21 @@ $patient = $registration->patient ?? null;
                                             value="<?= h($registration->class_name ?? '') ?>"
                                             placeholder="Otomatis terisi saat pilih bed">
                                     </div>
-
                                     <div class="col-md-4">
                                         <label>Proses Masuk</label>
-                                        <select name="entry_process" class="form-control select2Form">
-                                            <option value="">-- Pilih Proses Masuk --</option>
-                                            <?php foreach (['Melalui Unit Rawat Jalan', 'Melalui IGD', 'Langsung Rawat Inap'] as $ep): ?>
-                                                <option value="<?= $ep ?>" <?= ($registration->entry_process ?? '') === $ep ? 'selected' : '' ?>><?= $ep ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
+                                        <?= $this->Form->select('entry_process', $this->Krs->entryProcessOptions(), [
+                                            'empty' => '-- Pilih Proses Masuk --',
+                                            'class' => 'form-control select2Form',
+                                            'value' => $this->request->getData('entry_process') ?? ($registration->entry_process ?? ''),
+                                        ]) ?>
                                     </div>
-
                                     <div class="col-md-4">
                                         <label>Cara Masuk</label>
-                                        <select name="entry_method" class="form-control select2Form">
-                                            <option value="">-- Pilih Cara Masuk --</option>
-                                            <?php foreach (['Datang Sendiri', 'Puskesmas', 'Rujukan RS'] as $em): ?>
-                                                <option value="<?= $em ?>" <?= ($registration->entry_method ?? '') === $em ? 'selected' : '' ?>><?= $em ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
+                                        <?= $this->Form->select('entry_method', $this->Krs->entryMethodOptions(), [
+                                            'empty' => '-- Pilih Cara Masuk --',
+                                            'class' => 'form-control select2Form',
+                                            'value' => $this->request->getData('entry_method') ?? ($registration->entry_method ?? ''),
+                                        ]) ?>
                                     </div>
                                 </div>
                             </div>
@@ -785,21 +802,11 @@ $patient = $registration->patient ?? null;
                                     </div>
 
                                     <div class="col-md-4 payment-detail-field">
-                                        <label>Penjamin</label>
+                                        <label>Jenis Asuransi</label>
                                         <select name="insurance_type" id="insurance-type" class="form-control select2Form">
-                                            <option value="">-- Pilih Penjamin --</option>
+                                            <option value="">-- Pilih Jenis Asuransi --</option>
                                             <?php foreach (($masterPenjamins ?? []) as $value => $label): ?>
                                                 <option value="<?= h($value) ?>" <?= ($registration->insurance_type ?? '') === (string)$value ? 'selected' : '' ?>><?= h($label) ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
-
-                                    <div class="col-md-4 payment-detail-field">
-                                        <label>Kategori Asuransi</label>
-                                        <select name="insurance_category" id="insurance-category" class="form-control select2Form">
-                                            <option value="">-- Pilih Kategori Asuransi --</option>
-                                            <?php foreach (['PBI', 'NON PBI', 'KARYAWAN', 'PERUSAHAAN'] as $ic): ?>
-                                                <option value="<?= $ic ?>" <?= ($registration->insurance_category ?? '') === $ic ? 'selected' : '' ?>><?= $ic ?></option>
                                             <?php endforeach; ?>
                                         </select>
                                     </div>

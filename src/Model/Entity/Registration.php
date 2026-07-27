@@ -84,7 +84,6 @@ class Registration extends Entity
         'entry_method' => true,
         'payment_method' => true,
         'insurance_type' => true,
-        'insurance_category' => true,
         'insurance_card_no' => true,
         'refferal_no' => true,
         'skdp_no' => true,

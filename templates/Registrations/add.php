@@ -30,6 +30,8 @@ $queueNumber = $queueNumber ?? null;
 $queueCode = $queueCode ?? null;
 $polyclinicName = $polyclinicName ?? null;
 $queuePatientId = $queuePatientId ?? null;
+$queueDoctorId = $queueDoctorId ?? null;
+$queueDoctorScheduleId = $queueDoctorScheduleId ?? null;
 $queuePatientData = $queuePatientData ?? [];
 $queuePatientName = $queuePatientName ?? '';
 $queuePhoneNumber = $queuePhoneNumber ?? '';
@@ -52,8 +54,8 @@ $currentQueueNumber = $this->request->getData('queue_number')
 $currentRoomId = $this->request->getData('room_id') ?? ($registration->room_id ?? '');
 $currentBedId = $this->request->getData('bed_id') ?? ($registration->bed_id ?? '');
 $currentClassName = $this->request->getData('class_name') ?? ($registration->class_name ?? '');
-$currentDoctorId = $this->request->getData('doctor_id') ?? ($registration->doctor_id ?? '');
-$currentDoctorScheduleId = $this->request->getData('doctor_schedule_id') ?? ($registration->doctor_schedule_id ?? '');
+$currentDoctorId = $this->request->getData('doctor_id') ?? ($registration->doctor_id ?? ($queueDoctorId ?? ''));
+$currentDoctorScheduleId = $this->request->getData('doctor_schedule_id') ?? ($registration->doctor_schedule_id ?? ($queueDoctorScheduleId ?? ''));
 
 $currentPersonResponsible = $this->request->getData('person_responsible') ?? null;
 if ($currentPersonResponsible === null) {
@@ -713,7 +715,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                                 </div>
                             </div>
                         </div>
-                        <div class="form-card">
+                        <div class="form-card rawat-inap-field" style="<?= $currentServiceType === 'rawat_inap' ? '' : 'display:none;' ?>">
                             <div class="form-card-header">
                                 <i class="fa fa-users"></i> Penanggung Jawab Pasien
                             </div>
@@ -821,15 +823,28 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                                     </div>
 
                                     <div class="col-md-12">
-                                        <label>Pelayanan</label><br>
-                                        <label style="margin-right:20px;">
-                                            <input type="radio" name="service_type" value="rawat_jalan" <?= $currentServiceType === 'rawat_jalan' ? 'checked' : '' ?>> Rawat Jalan
-                                        </label>
-                                        <label style="margin-right:20px;">
-                                            <input type="radio" name="service_type" value="igd" <?= $currentServiceType === 'igd' ? 'checked' : '' ?>> IGD
-                                        </label>
                                         <label>
-                                            <input type="radio" name="service_type" value="rawat_inap" <?= $currentServiceType === 'rawat_inap' ? 'checked' : '' ?>> Rawat Inap
+                                            Pelayanan
+                                            <?php if ($fromQueue): ?>
+                                                <small style="color:#888;">(otomatis Rawat Jalan dari antrian)</small>
+                                            <?php endif; ?>
+                                        </label><br>
+                                        <label style="margin-right:20px;">
+                                            <input type="radio" name="service_type" value="rawat_jalan"
+                                                <?= ($fromQueue || $currentServiceType === 'rawat_jalan') ? 'checked' : '' ?>>
+                                            Rawat Jalan
+                                        </label>
+                                        <label style="margin-right:20px; <?= $fromQueue ? 'color:#adb5bd;' : '' ?>">
+                                            <input type="radio" name="service_type" value="igd"
+                                                <?= $currentServiceType === 'igd' ? 'checked' : '' ?>
+                                                <?= $fromQueue ? 'disabled' : '' ?>>
+                                            IGD
+                                        </label>
+                                        <label style="<?= $fromQueue ? 'color:#adb5bd;' : '' ?>">
+                                            <input type="radio" name="service_type" value="rawat_inap"
+                                                <?= $currentServiceType === 'rawat_inap' ? 'checked' : '' ?>
+                                                <?= $fromQueue ? 'disabled' : '' ?>>
+                                            Rawat Inap
                                         </label>
                                     </div>
 
@@ -903,21 +918,34 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                                         <?php endif; ?>
                                     </div>
 
-                                    <div class="col-md-4">
-                                        <label>Dokter</label>
+                                   <div class="col-md-4">
+                                        <label>
+                                            Dokter
+                                            <?php if ($fromQueue && !empty($currentDoctorId)): ?>
+                                                <small style="color:#888;">(dari jadwal)</small>
+                                            <?php endif; ?>
+                                        </label>
                                         <?= $this->Form->select('doctor_id', $doctors ?? [], [
                                             'empty' => '-- Pilih Dokter --',
                                             'id'    => 'doctor-id',
                                             'value' => $currentDoctorId,
-                                            'class' => 'form-control select2Form'
+                                            'class' => 'form-control select2Form',
+                                            'disabled' => ($fromQueue && !empty($currentDoctorId)),
                                         ]) ?>
+                                        <?php if ($fromQueue && !empty($currentDoctorId)): ?>
+                                            <input type="hidden" name="doctor_id" value="<?= h($currentDoctorId) ?>">
+                                        <?php endif; ?>
                                     </div>
 
                                     <div class="col-md-4">
                                         <label>Jadwal Dokter</label>
-                                        <select name="doctor_schedule_id" id="doctor-schedule-id" class="form-control select2Form">
+                                        <select id="doctor-schedule-id" class="form-control select2Form" <?= ($fromQueue && !empty($currentDoctorId)) ? 'disabled' : 'name="doctor_schedule_id"' ?>>
                                             <option value="">-- Pilih Jadwal Dokter --</option>
                                         </select>
+                                        <small id="schedule-quota-info" style="display:block;margin-top:4px;color:#888;"></small>
+                                        <?php if ($fromQueue && !empty($currentDoctorId)): ?>
+                                            <input type="hidden" name="doctor_schedule_id" id="doctor-schedule-id-hidden" value="<?= h($currentDoctorScheduleId) ?>">
+                                        <?php endif; ?>
                                     </div>
 
                                     <div class="col-md-4 rawat-inap-field" style="display:none;">
@@ -981,24 +1009,19 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
 
                                     <div class="col-md-4">
                                         <label>Proses Masuk</label>
-                                        <?php $currentEntryProcess = $this->request->getData('entry_process') ?? ''; ?>
-                                        <select name="entry_process" class="form-control select2Form">
-                                            <option value="">-- Pilih Proses Masuk --</option>
-                                            <option value="Melalui Unit Rawat Jalan" <?= $currentEntryProcess === 'Melalui Unit Rawat Jalan' ? 'selected' : '' ?>>Melalui Unit Rawat Jalan</option>
-                                            <option value="Melalui IGD" <?= $currentEntryProcess === 'Melalui IGD' ? 'selected' : '' ?>>Melalui IGD</option>
-                                            <option value="Langsung Rawat Inap" <?= $currentEntryProcess === 'Langsung Rawat Inap' ? 'selected' : '' ?>>Langsung Rawat Inap</option>
-                                        </select>
+                                        <?= $this->Form->select('entry_process', $this->Krs->entryProcessOptions(), [
+                                            'empty' => '-- Pilih Proses Masuk --',
+                                            'class' => 'form-control select2Form',
+                                            'value' => $registration->entry_process ?? '',
+                                        ]) ?>
                                     </div>
-
                                     <div class="col-md-4">
                                         <label>Cara Masuk</label>
-                                        <?php $currentEntryMethod = $this->request->getData('entry_method') ?? ''; ?>
-                                        <select name="entry_method" class="form-control select2Form">
-                                            <option value="">-- Pilih Cara Masuk --</option>
-                                            <option value="Datang Sendiri" <?= $currentEntryMethod === 'Datang Sendiri' ? 'selected' : '' ?>>Datang Sendiri</option>
-                                            <option value="Puskesmas" <?= $currentEntryMethod === 'Puskesmas' ? 'selected' : '' ?>>Puskesmas</option>
-                                            <option value="Rujukan RS" <?= $currentEntryMethod === 'Rujukan RS' ? 'selected' : '' ?>>Rujukan RS</option>
-                                        </select>
+                                        <?= $this->Form->select('entry_method', $this->Krs->entryMethodOptions(), [
+                                            'empty' => '-- Pilih Cara Masuk --',
+                                            'class' => 'form-control select2Form',
+                                            'value' => $registration->entry_method ?? '',
+                                        ]) ?>
                                     </div>
                                 </div>
                             </div>
@@ -1027,24 +1050,13 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                                     </div>
 
                                     <div class="col-md-4 payment-detail-field" style="display:none;">
-                                        <label>Penjamin</label>
+                                        <label>Jenis Asuransi</label>
                                         <?php $selectedInsuranceType = $this->request->getData('insurance_type') ?? ''; ?>
                                         <select name="insurance_type" id="insurance-type" class="form-control select2Form">
-                                            <option value="">-- Pilih Penjamin --</option>
+                                            <option value="">-- Pilih Jenis Asuransi --</option>
                                             <?php foreach (($masterPenjamins ?? []) as $value => $label): ?>
                                                 <option value="<?= h($value) ?>" <?= $selectedInsuranceType === (string)$value ? 'selected' : '' ?>><?= h($label) ?></option>
                                             <?php endforeach; ?>
-                                        </select>
-                                    </div>
-
-                                    <div class="col-md-4 payment-detail-field" style="display:none;">
-                                        <label>Kategori Asuransi</label>
-                                        <select name="insurance_category" id="insurance-category" class="form-control select2Form">
-                                            <option value="">-- Pilih Kategori Asuransi --</option>
-                                            <option value="PBI" <?= $this->request->getData('insurance_category') === 'PBI' ? 'selected' : '' ?>>PBI</option>
-                                            <option value="NON PBI" <?= $this->request->getData('insurance_category') === 'NON PBI' ? 'selected' : '' ?>>NON PBI</option>
-                                            <option value="KARYAWAN" <?= $this->request->getData('insurance_category') === 'KARYAWAN' ? 'selected' : '' ?>>KARYAWAN</option>
-                                            <option value="PERUSAHAAN" <?= $this->request->getData('insurance_category') === 'PERUSAHAAN' ? 'selected' : '' ?>>PERUSAHAAN</option>
                                         </select>
                                     </div>
 
@@ -1856,7 +1868,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                 }
             );
         }
-        
+
         setServiceForm('<?= h($currentServiceType) ?>');
         $('input[name="service_type"]').on('change', function() {
             setServiceForm($(this).val());
@@ -1989,40 +2001,69 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
         togglePackageField();
 
         $('#doctor-id').on('change', function() {
-            var doctorId = $(this).val();
-            $('#doctor-schedule-id').html('<option value="">-- Pilih Jadwal Dokter --</option>');
-            if (!doctorId) return;
-            $('#doctor-schedule-id').html('<option value="">Memuat jadwal...</option>');
-            $.getJSON(
-                "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'getDoctorSchedules']) ?>", {
-                    doctor_id: doctorId
-                },
-                function(data) {
-                    var options = '<option value="">-- Pilih Jadwal Dokter --</option>';
+    var doctorId = $(this).val();
+    $('#doctor-schedule-id').html('<option value="">-- Pilih Jadwal Dokter --</option>');
+    $('#schedule-quota-info').text('');
+    if (!doctorId) return;
 
-                    if (!data.length) {
-                        $('#doctor-schedule-id').html('<option value="">-- Jadwal dokter belum tersedia --</option>');
-                        return;
-                    }
+    $('#doctor-schedule-id').html('<option value="">Memuat jadwal...</option>');
 
-                    data.forEach(function(item) {
-                        options +=
-                            '<option value="' + item.id + '">' +
-                            item.day + ' | ' + item.start_time + ' - ' + item.end_time +
-                            ' (Kuota: ' + item.quota + ')' +
-                            '</option>';
-                    });
+    $.getJSON(
+        "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'getDoctorSchedules']) ?>", {
+            doctor_id: doctorId
+        },
+        function(data) {
+            var options = '<option value="">-- Pilih Jadwal Dokter --</option>';
 
-                    $('#doctor-schedule-id').html(options);
-                    var currentScheduleId = '<?= h($currentDoctorScheduleId) ?>';
-                    if (currentScheduleId) {
-                        $('#doctor-schedule-id').val(currentScheduleId).trigger('change');
-                    }
-                }
-            ).fail(function() {
-                $('#doctor-schedule-id').html('<option value="">-- Gagal memuat jadwal --</option>');
-            });
-        });
+            if (!data || data.length === 0) {
+                options = '<option value="">-- Tidak ada jadwal aktif --</option>';
+            } else {
+                data.forEach(function(schedule) {
+                    var quotaTotal = parseInt(schedule.quota || 0, 10);
+                    var quotaUsed = parseInt(schedule.quota_used || 0, 10);
+                    var quotaLeft = Math.max(0, quotaTotal - quotaUsed);
+
+                    var label = (schedule.day || '') + ', ' +
+                        (schedule.start_time || '') + '-' + (schedule.end_time || '');
+
+                    options += '<option value="' + schedule.id + '"' +
+                        ' data-quota-total="' + quotaTotal + '"' +
+                        ' data-quota-used="' + quotaUsed + '"' +
+                        ' data-quota-left="' + quotaLeft + '">' +
+                        label + '</option>';
+                });
+            }
+
+            $('#doctor-schedule-id').html(options).trigger('change.select2');
+
+            var currentScheduleId = '<?= h($currentDoctorScheduleId) ?>';
+            if (currentScheduleId) {
+                $('#doctor-schedule-id').val(currentScheduleId).trigger('change');
+                $('#doctor-schedule-id-hidden').val(currentScheduleId);
+            }
+        }
+    ).fail(function() {
+        $('#doctor-schedule-id').html('<option value="">-- Gagal memuat jadwal --</option>');
+    });
+});
+
+// ── Tampilkan sisa kuota di bawah select saat jadwal dipilih ──────────────
+$('#doctor-schedule-id').on('change', function() {
+    var $selected = $(this).find('option:selected');
+    var quotaLeft = $selected.data('quota-left');
+    var quotaTotal = $selected.data('quota-total');
+
+    if (quotaLeft === undefined || quotaTotal === undefined || $(this).val() === '') {
+        $('#schedule-quota-info').text('');
+        return;
+    }
+
+    if (quotaLeft <= 0) {
+        $('#schedule-quota-info').html('<span style="color:#c0392b;">&#9888; Kuota penuh (0 dari ' + quotaTotal + ')</span>');
+    } else {
+        $('#schedule-quota-info').html('<span style="color:#27ae60;">Sisa kuota: ' + quotaLeft + ' dari ' + quotaTotal + '</span>');
+    }
+});
 
         if ($('#doctor-id').val()) {
             $('#doctor-id').trigger('change');

@@ -53,9 +53,15 @@ class PolyclinicQueuesController extends AppController
             ]);
         }
 
+        // Urutan ascending berdasarkan nomor antrian, supaya siapa yang
+        // daftar/ambil nomor duluan tampil paling atas (nomor 1, 2, 3, ...).
+        // Ini juga otomatis berlaku untuk antrian yang diambil untuk "besok":
+        // begitu tanggalnya jadi hari ini, dia akan muncul di sini dan
+        // urutannya tetap mengikuti nomor antriannya, bukan urutan dibuatnya.
         $this->paginate = [
             'order' => [
-                'PolyclinicQueues.id' => 'DESC'
+                'PolyclinicQueues.queue_number' => 'ASC',
+                'PolyclinicQueues.id' => 'ASC',
             ]
         ];
 
@@ -419,42 +425,44 @@ class PolyclinicQueuesController extends AppController
             $queueSession = (string)($data['queue_session'] ?? '');
 
             if ($patientId !== null) {
-                $this->loadModel('Patients');
-                $patient = $this->Patients->find()
-                    ->select([
-                        'id',
-                        'code',
-                        'full_name',
-                        'identity_number',
-                        'phone_number',
-                    ])
-                    ->where(['Patients.id' => $patientId])
-                    ->first();
+            $this->loadModel('Patients');
+            $patient = $this->Patients->find()
+                ->select([
+                    'id',
+                    'code',
+                    'full_name',
+                    'identity_number',
+                    'phone_number',
+                ])
+                ->where(['Patients.id' => $patientId])
+                ->first();
 
-                if ($patient) {
-                    $patientName = trim((string)$patient->full_name) !== ''
-                        ? trim((string)$patient->full_name)
-                        : $patientName;
-                    $phoneNumber = trim((string)$patient->phone_number) !== ''
-                        ? trim((string)$patient->phone_number)
-                        : $phoneNumber;
-                }
+            if ($patient) {
+                $patientName = trim((string)$patient->full_name) !== ''
+                    ? trim((string)$patient->full_name)
+                    : $patientName;
+                $phoneNumber = trim((string)$patient->phone_number) !== ''
+                    ? trim((string)$patient->phone_number)
+                    : $phoneNumber;
+            } else {
+                $patientId = null;
             }
+        }
 
-            if ($polyName === '') {
-                $this->Flash->error(__('Poli tujuan belum dipilih.'));
-                return $this->redirect(['action' => 'add']);
-            }
+        if ($polyName === '') {
+            $this->Flash->error(__('Poli tujuan belum dipilih.'));
+            return $this->redirect(['action' => 'add']);
+        }
 
-            if ($patientName === '') {
-                $this->Flash->error(__('Nama pasien wajib diisi.'));
-                return $this->redirect(['action' => 'add']);
-            }
+        if ($patientName === '') {
+            $this->Flash->error(__('Nama pasien wajib diisi.'));
+            return $this->redirect(['action' => 'add']);
+        }
 
-            if ($phoneNumber === '') {
-                $this->Flash->error(__('No HP / WhatsApp wajib diisi.'));
-                return $this->redirect(['action' => 'add']);
-            }
+        if ($phoneNumber === '') {
+            $this->Flash->error(__('No HP / WhatsApp wajib diisi.'));
+            return $this->redirect(['action' => 'add']);
+        }
 
             if (!$this->isAllowedQueueVisitDate($visitDate)) {
                 $this->Flash->error(__('Tanggal kunjungan hanya boleh hari ini atau besok.'));
@@ -483,7 +491,7 @@ class PolyclinicQueuesController extends AppController
             $data['call_count'] = 0;
             $data['is_create'] = 1;
             $data['is_update'] = 0;
-            $data['is_delete'] = 0;
+            $data['is_delete'] = 0; 
             $data['is_active'] = 'Y';
 
             if (!$this->PolyclinicQueues->getSchema()->hasColumn('patient_id')) {
@@ -510,6 +518,26 @@ class PolyclinicQueuesController extends AppController
         $polyclinicButtonData = $this->getPolyclinicButtonData();
 
         $this->set(compact('polyclinicQueue', 'polyclinicButtonData'));
+    }
+
+    public function getPolyclinicSchedule()
+    {
+        $this->request->allowMethod(['get']);
+        $this->autoRender = false;
+
+        $visitDate = $this->normalizeQueueVisitDate(
+            (string)$this->request->getQuery('visit_date', date('Y-m-d'))
+        );
+
+        if (!$this->isAllowedQueueVisitDate($visitDate)) {
+            $visitDate = date('Y-m-d');
+        }
+
+        $data = array_values($this->getPolyclinicButtonData($visitDate));
+
+        return $this->response
+            ->withType('application/json')
+            ->withStringBody(json_encode($data));
     }
 
     public function searchPatients()
@@ -797,9 +825,12 @@ class PolyclinicQueuesController extends AppController
         ));
     }
 
-    private function getPolyclinicButtonData(): array
-    {
-        $polyclinics = $this->getPolyclinicOptions();
+private function getPolyclinicButtonData(?string $visitDate = null): array
+{
+    $visitDate = $visitDate ?: date('Y-m-d');
+    $isToday = $visitDate === date('Y-m-d');
+
+    $polyclinics = $this->getPolyclinicOptions();
         $queueTotals = [];
         $doctorNames = [];
 
@@ -808,7 +839,7 @@ class PolyclinicQueuesController extends AppController
                 'poly_name',
                 'total' => $this->PolyclinicQueues->find()->func()->count('*'),
             ]);
-        $queueRows = $this->applyQueueVisitDateFilter($queueRows, date('Y-m-d'))
+        $queueRows = $this->applyQueueVisitDateFilter($queueRows, $visitDate)
             ->group(['poly_name'])
             ->enableHydration(false)
             ->toArray();
@@ -823,8 +854,7 @@ class PolyclinicQueuesController extends AppController
                 'Doctors',
             ])
             ->where([
-                'DoctorSchedules.day IN' => $this->getTodayDayLabels(),
-                'DoctorSchedules.is_active' => 'Y',
+                'DoctorSchedules.day IN' => $this->getDayLabelsForDate($visitDate),
             ])
             ->order([
                 'DoctorSchedules.start_time' => 'ASC',
@@ -832,36 +862,122 @@ class PolyclinicQueuesController extends AppController
             ])
             ->all();
 
-        foreach ($scheduleRows as $schedule) {
-            $doctor = $schedule->doctor ?? null;
-            $polyName = $doctor ? (string)($doctor->polyclinic_name ?? '') : '';
-            $doctorName = $doctor ? (string)$doctor->doctor_name : '';
+        $normalizePolyName = static function (string $value): string {
+            return mb_strtolower(trim($value));
+        };
 
-            if ($polyName === '' || $doctorName === '') {
+        $polyHasScheduleNow = [];
+        $polySessionData = [];        
+        $polySessionAvailableNow = []; 
+
+        foreach ($scheduleRows as $schedule) {
+            $isScheduleActive = in_array($schedule->is_active ?? null, ['Y', 1, '1', true], true);
+
+            if (!$isScheduleActive) {
                 continue;
             }
 
-            if (!isset($doctorNames[$polyName])) {
-                $doctorNames[$polyName] = [];
+            $doctor = $schedule->doctor ?? null;
+            $rawPolyName = $doctor ? (string)($doctor->polyclinic_name ?? '') : '';
+            $doctorName = $doctor ? (string)$doctor->doctor_name : '';
+
+            if (trim($rawPolyName) === '' || $doctorName === '') {
+                continue;
             }
 
-            if (!in_array($doctorName, $doctorNames[$polyName], true)) {
-                $doctorNames[$polyName][] = $doctorName;
+            $polyKey = $normalizePolyName($rawPolyName);
+
+            if (!isset($doctorNames[$polyKey])) {
+                $doctorNames[$polyKey] = [];
             }
+
+            if (!in_array($doctorName, $doctorNames[$polyKey], true)) {
+                $doctorNames[$polyKey][] = $doctorName;
+            }
+
+            $startTime = $this->formatScheduleTime($schedule->start_time ?? null);
+            $endTime = $this->formatScheduleTime($schedule->end_time ?? null);
+
+            if ($startTime === null || $endTime === null) {
+                continue;
+            }
+
+            // Tentukan sesi: jadwal yang MULAI sebelum jam 12 siang dianggap sesi Pagi,
+            // sisanya dianggap sesi Sore. Ubah batas ini (mis. jadi 13:00) kalau
+            // kebiasaan RS beda dari asumsi ini.
+            $session = ($startTime < '12:00') ? 'morning' : 'afternoon';
+
+            if (!isset($polySessionData[$polyKey])) {
+                $polySessionData[$polyKey] = ['morning' => [], 'afternoon' => []];
+            }
+
+            $polySessionData[$polyKey][$session][] = [
+                'doctor_name' => $doctorName,
+                'start_time' => $startTime,
+                'end_time' => $endTime,
+            ];
+        }
+       $currentTime = date('H:i');
+        $kioskOpenTime = '07:00';       
+        $defaultMorningClose = '14:00'; 
+        $defaultAfternoonClose = '20:00'; 
+
+        foreach ($polySessionData as $polyKey => $sessionsForPoly) {
+            $polySessionAvailableNow[$polyKey] = ['morning' => false, 'afternoon' => false];
+
+           if (!empty($sessionsForPoly['morning'])) {
+    $morningClose = null;
+
+    foreach ($sessionsForPoly['morning'] as $sch) {
+        if ($morningClose === null || $sch['end_time'] > $morningClose) {
+            $morningClose = $sch['end_time'];
+        }
+    }
+
+    $morningClose = $morningClose ?? $defaultMorningClose;
+
+    $polySessionAvailableNow[$polyKey]['morning'] = $isToday
+        ? ($currentTime >= $kioskOpenTime && $currentTime <= $morningClose)
+        : true;
+}
+
+if (!empty($sessionsForPoly['afternoon'])) {
+    $afternoonClose = null;
+
+    foreach ($sessionsForPoly['afternoon'] as $sch) {
+        if ($afternoonClose === null || $sch['end_time'] > $afternoonClose) {
+            $afternoonClose = $sch['end_time'];
+        }
+    }
+
+    $afternoonClose = $afternoonClose ?? $defaultAfternoonClose;
+
+    $polySessionAvailableNow[$polyKey]['afternoon'] = $isToday
+        ? ($currentTime >= $kioskOpenTime && $currentTime <= $afternoonClose)
+        : true;
+}
+
+            $polyHasScheduleNow[$polyKey] = !empty($sessionsForPoly['morning']) || !empty($sessionsForPoly['afternoon']);
         }
 
         $buttonData = [];
 
-        foreach ($polyclinics as $value => $label) {
+            foreach ($polyclinics as $value => $label) {
             $polyName = (string)$value;
+            $polyKey = $normalizePolyName($polyName);
+
             $buttonData[$polyName] = [
                 'value' => $polyName,
                 'label' => (string)$label,
-                'doctor' => !empty($doctorNames[$polyName])
-                    ? implode(', ', $doctorNames[$polyName])
+                'doctor' => !empty($doctorNames[$polyKey])
+                    ? implode(', ', $doctorNames[$polyKey])
                     : 'Dokter belum tersedia',
                 'total' => $queueTotals[$polyName] ?? 0,
                 'is_featured' => strtolower($polyName) === 'poli umum',
+                'has_schedule' => !empty($polyHasScheduleNow[$polyKey]),
+                'sessions' => $polySessionData[$polyKey] ?? ['morning' => [], 'afternoon' => []],
+                'morning_available' => !empty($polySessionAvailableNow[$polyKey]['morning']),
+                'afternoon_available' => !empty($polySessionAvailableNow[$polyKey]['afternoon']),
             ];
         }
 
@@ -883,6 +999,31 @@ class PolyclinicQueuesController extends AppController
             'Poli Kulit' => 'Poli Kulit',
             'Poli Jantung' => 'Poli Jantung',
         ];
+    }
+
+    private function getDayLabelsForDate(string $date): array
+    {
+        $timestamp = strtotime($date);
+        $englishDay = $timestamp ? date('l', $timestamp) : date('l');
+
+        $map = [
+            'Monday' => 'Senin',
+            'Tuesday' => 'Selasa',
+            'Wednesday' => 'Rabu',
+            'Thursday' => 'Kamis',
+            'Friday' => 'Jumat',
+            'Saturday' => 'Sabtu',
+            'Sunday' => 'Minggu',
+        ];
+
+        $indonesianDay = $map[$englishDay] ?? $englishDay;
+
+        return array_values(array_unique([
+            $englishDay,
+            strtolower($englishDay),
+            $indonesianDay,
+            strtolower($indonesianDay),
+        ]));
     }
 
     private function getTodayDayLabels(): array
@@ -1333,49 +1474,4 @@ class PolyclinicQueuesController extends AppController
             ->withType('application/json')
             ->withStringBody(json_encode(array_values($data)));
     }
-
-    // public function wa()
-    // {
-    //     $polyclinicQueue = $this->PolyclinicQueues->newEmptyEntity();
-
-    //     if ($this->request->is('post')) {
-    //         $data = $this->request->getData();
-
-    //         $polyclinicName = $data['polyclinic_name'];
-
-    //         $lastQueue = $this->PolyclinicQueues
-    //             ->find()
-    //             ->order([
-    //                 'queue_number' => 'DESC'
-    //             ])
-    //             ->first();
-
-    //         $nextNumber = $lastQueue ? $lastQueue->queue_number + 1 : 1;
-
-    //         $nextNumber = $lastQueue ? $lastQueue->queue_number + 1 : 1;
-
-    //         $data['code'] = 'A-' . str_pad((string) $nextNumber, 3, '0', STR_PAD_LEFT);
-    //         $data['source'] = 'WA';
-    //         $data['queue_number'] = $nextNumber;
-    //         $data['is_create'] = 1;
-    //         $data['is_update'] = 0;
-    //         $data['is_delete'] = 0;
-    //         $data['is_active'] = 'Y';
-
-    //         $polyclinicQueue = $this->PolyclinicQueues->patchEntity(
-    //             $polyclinicQueue,
-    //             $data
-    //         );
-
-    //         if ($this->PolyclinicQueues->save($polyclinicQueue)) {
-    //             $this->Flash->success(__('Pendaftaran antrean via WA berhasil.'));
-
-    //             return $this->redirect(['action' => 'index']);
-    //         }
-
-    //         $this->Flash->error(__('Pendaftaran antrean via WA gagal.'));
-    //     }
-
-    //     $this->set(compact('polyclinicQueue'));
-    // }
 }

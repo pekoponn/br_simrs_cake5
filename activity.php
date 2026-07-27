@@ -1562,3 +1562,19 @@ CREATE TABLE IF NOT EXISTS `outpatient_initial_medical_assessments` (
 ALTER TABLE outpatient_letters
 ADD COLUMN notes LONGTEXT NULL AFTER diagnosis,
 ADD COLUMN consultation_answer LONGTEXT NULL AFTER notes;
+
+ALTER TABLE `registrations` DROP COLUMN `insurance_category`;
+
+ALTER TABLE doctor_schedules
+ADD COLUMN quota_reset_at DATE NULL DEFAULT NULL AFTER quota_used;
+
+CREATE TABLE doctor_schedule_quota_histories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    doctor_schedule_id INT NOT NULL,
+    cycle_date DATE NOT NULL COMMENT 'Tanggal praktik pada minggu tsb (mis. Senin 20-07-2026)',
+    quota INT NOT NULL DEFAULT 0,
+    quota_used INT NOT NULL DEFAULT 0,
+    created DATETIME NOT NULL,
+    modified DATETIME NULL,
+    INDEX idx_schedule_cycle (doctor_schedule_id, cycle_date)
+);

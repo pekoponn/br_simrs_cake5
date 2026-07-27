@@ -157,21 +157,30 @@
                                             ) ?>
                                         <?php endif; ?>
 
-                                        <?php if ($queue->is_active == 'Y'): ?>
-                                            <?= $this->Form->postLink(
-                                                '<i class="fa fa-volume-up"></i>',
-                                                ['action' => 'callQueue', $queue->id],
-                                                [
-                                                    'class' => 'btn btn-warning btn-sm btn-panggil-queue',
-                                                    'escape' => false,
-                                                    'data-toggle' => 'tooltip',
-                                                    'title' => 'Panggil pasien ke loket/poli',
-                                                    'data-queue-code' => h($queue->code ?: '-'),
-                                                    'data-queue-number' => h($queue->queue_number ?: ''),
-                                                    'data-poli' => h($queue->poly_name ?: '')
-                                                ]
-                                            ) ?>
-                                        <?php endif; ?>
+                                        <?php
+                                            $queueCallCount = (int)($queue->call_count ?? 0);
+                                            $canCallQueue = $queue->is_active == 'Y' && $queueCallCount < 3;
+                                            $panggilFormId = 'form-panggil-queue-' . $queue->id;
+                                            ?>
+                                            <?php if ($canCallQueue): ?>
+                                                <?= $this->Form->create(null, [
+                                                    'id' => $panggilFormId,
+                                                    'url' => ['action' => 'callQueue', $queue->id],
+                                                    'style' => 'display:none;'
+                                                ]) ?>
+                                                <?= $this->Form->end() ?>
+
+                                                <button type="button"
+                                                    class="btn btn-warning btn-sm btn-panggil-queue"
+                                                    data-toggle="tooltip"
+                                                    title="Panggil pasien ke loket/poli"
+                                                    data-queue-code="<?= h($queue->code ?: '-') ?>"
+                                                    data-queue-number="<?= h($queue->queue_number ?: '') ?>"
+                                                    data-poli="<?= h($queue->poly_name ?: '') ?>"
+                                                    data-form-id="<?= $panggilFormId ?>">
+                                                    <i class="fa fa-volume-up"></i>
+                                                </button>
+                                            <?php endif; ?>
 
                                         <?php if ($isMobileJkn && $queue->is_active == 'Y'): ?>
                                             <?php if (in_array((string)$queue->checkin_status, ['Batal', 'Selesai'], true)): ?>

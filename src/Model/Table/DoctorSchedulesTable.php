@@ -51,6 +51,11 @@ class DoctorSchedulesTable extends Table
             'foreignKey' => 'doctor_id',
             'joinType' => 'INNER',
         ]);
+
+        $this->hasMany('DoctorScheduleQuotaHistories', [
+        'foreignKey' => 'doctor_schedule_id',
+        'sort' => ['DoctorScheduleQuotaHistories.cycle_date' => 'DESC'],
+        ]);
     }
 
     /**

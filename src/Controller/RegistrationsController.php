@@ -118,6 +118,8 @@ $conditions['DATE(Registrations.registration_date) <='] = $filterDateTo;
     $queueSource = '';
     $queuePatientId = null;
     $queuePatientData = [];
+    $queueDoctorId = null;
+    $queueDoctorScheduleId = null;
 
     if (empty($polyclinicName)) {
         $polyclinicName = $this->request->getQuery('poly_name');
@@ -141,7 +143,37 @@ $conditions['DATE(Registrations.registration_date) <='] = $filterDateTo;
             $queueBpjsNumber = $queue->bpjs_number ?? '';
             $queueSource = $queue->source ?? '';
 
-            if ($this->PolyclinicQueues->getSchema()->hasColumn('patient_id') && !empty($queue->patient_id)) {
+        if (!empty($polyclinicName)) {
+            $this->loadModel('DoctorSchedules');
+
+            $todayName = [
+                'Monday'    => 'Senin',
+                'Tuesday'   => 'Selasa',
+                'Wednesday' => 'Rabu',
+                'Thursday'  => 'Kamis',
+                'Friday'    => 'Jumat',
+                'Saturday'  => 'Sabtu',
+                'Sunday'    => 'Minggu',
+            ][date('l')] ?? '';
+
+            $todaySchedule = $this->DoctorSchedules->find()
+                ->contain(['Doctors'])
+                ->where([
+                    'DoctorSchedules.day' => $todayName,
+                    'DoctorSchedules.is_active' => 'Y',
+                    'Doctors.polyclinic_name' => $polyclinicName,
+                ])
+                ->first();
+
+            if ($todaySchedule) {
+                $queueDoctorId = $todaySchedule->doctor_id;
+                $queueDoctorScheduleId = $todaySchedule->id;
+            }
+        }
+
+        
+
+        if ($this->PolyclinicQueues->getSchema()->hasColumn('patient_id') && !empty($queue->patient_id)) {
                 $queuePatientId = (int)$queue->patient_id;
 
                 $this->loadModel('Patients');
@@ -168,6 +200,8 @@ $conditions['DATE(Registrations.registration_date) <='] = $filterDateTo;
                     'marital_status',
                 ];
 
+                
+
                 foreach (['title', 'province', 'city', 'district', 'subdistrict', 'id_prov', 'id_kab', 'id_kec', 'id_kel'] as $optionalField) {
                     if ($patientSchema->hasColumn($optionalField)) {
                         $queuePatientFields[] = $optionalField;
@@ -191,9 +225,55 @@ $conditions['DATE(Registrations.registration_date) <='] = $filterDateTo;
                             : (string)$value;
                     }
                 }
-            }
-        }
+            }   
 
+            if (empty($queuePatientData) && ($queuePhoneNumber !== '' || $queueIdentityNumber !== '')) {
+                $this->loadModel('Patients');
+                $patientSchema = $this->Patients->getSchema();
+
+                $fallbackConditions = ['OR' => []];
+                if ($queuePhoneNumber !== '') {
+                    $fallbackConditions['OR'][] = ['Patients.phone_number' => $queuePhoneNumber];
+                }
+                if ($queueIdentityNumber !== '' && $queueIdentityNumber !== '-') {
+                    $fallbackConditions['OR'][] = ['Patients.identity_number' => $queueIdentityNumber];
+                }
+
+                $queuePatientFieldsFallback = [
+                    'id', 'code', 'title', 'full_name', 'identity_type', 'identity_number',
+                    'gender', 'blood_type', 'birth_date', 'address', 'father_name', 'mother_name',
+                    'phone_number', 'nationality', 'citizenship', 'occupation', 'religion',
+                    'education', 'ethnic_group', 'marital_status',
+                    'province', 'city', 'district', 'subdistrict', 
+                    'id_prov', 'id_kab', 'id_kec', 'id_kel',
+                ];
+                $queuePatientFieldsFallback = array_values(array_filter(
+                    $queuePatientFieldsFallback,
+                    fn ($f) => $patientSchema->hasColumn($f)
+                ));
+
+                $fallbackPatient = !empty($fallbackConditions['OR'])
+                    ? $this->Patients->find()
+                        ->select($queuePatientFieldsFallback)
+                        ->where($fallbackConditions)
+                        ->order(['Patients.id' => 'DESC'])
+                        ->first()
+                    : null;
+
+                if ($fallbackPatient) {
+                    $queuePatientId = (int)$fallbackPatient->id;
+                    $queuePatientName = $fallbackPatient->full_name ?: $queuePatientName;
+                    $queuePhoneNumber = $fallbackPatient->phone_number ?: $queuePhoneNumber;
+                    $queueIdentityNumber = $fallbackPatient->identity_number ?: $queueIdentityNumber;
+
+                    foreach ($queuePatientFieldsFallback as $field) {
+                        $value = $fallbackPatient->{$field} ?? '';
+                        $value = is_object($value) && method_exists($value, 'format') ? $value->format('Y-m-d') : (string)$value;
+                        $queuePatientData[$field] = ($value === '-') ? '' : $value;
+                    }
+                }
+            }
+        } 
         $fromQueue = true;
     }
 
@@ -214,13 +294,12 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
             $data['service_type'] = 'rawat_jalan';
         }
 
-        // Nomor registrasi SELALU dihitung ulang di server sesuai jenis pelayanan
-        // yang dipilih, supaya kodenya (RJ/IGD/RI) pasti benar walau field
-        // registration_no di form telat ter-update oleh JS.
+        if (!empty($data['polyclinic_queue_id'])) {
+            $data['service_type'] = 'rawat_jalan';
+        }
+
         $data['registration_no'] = $this->_generateRegistrationNo($data['service_type']);
 
-        // Normalisasi Cara Bayar sesuai permintaan client:
-        // hanya 4 jenis pasien: PERORANGAN, ASURANSI, PERUSAHAAN_AFILIASI, KARYAWAN.
         $allowedPaymentMethods = ['PERORANGAN', 'ASURANSI', 'PERUSAHAAN_AFILIASI', 'KARYAWAN'];
         if (!in_array(($data['payment_method'] ?? ''), $allowedPaymentMethods, true)) {
             $data['payment_method'] = null;
@@ -543,7 +622,7 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
         $registration->person_responsible_id = $data['person_responsible_id'] ?? null;
 
         // Paksa field penting masuk ke entity walau $_accessible Entity belum lengkap.
-        foreach (['queue_no', 'queue_number', 'room_name', 'polyclinic_name', 'doctor_schedule_id', 'skdp_no'] as $forceField) {
+        foreach (['queue_no', 'queue_number', 'room_name', 'polyclinic_name', 'doctor_schedule_id', 'skdp_no', 'admission_time'] as $forceField) {
             if (array_key_exists($forceField, $data)) {
                 $registration->{$forceField} = $data[$forceField];
             }
@@ -566,7 +645,7 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
             $patientInputForMerge,
             $patientFields
         ) {
-            // ── Simpan / update pasien DI DALAM transaction ───────────────
+
             if ($isNewPatient) {
                 $newPatientData['code'] = $this->Patients->generateCode();
                 $patient = $this->Patients->newEmptyEntity();
@@ -599,18 +678,16 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
 
                 $patientSchema = $this->Patients->getSchema();
 
-                foreach ($patientFields as $field) {
+               foreach ($patientFields as $field) {
                     if (
                         $patientSchema->hasColumn($field) &&
-                        empty($patient->{$field}) &&
+                        $this->isBlankPatientValue($patient->{$field} ?? null) &&
                         !empty($patientInputForMerge[$field] ?? null)
                     ) {
                         $patient->{$field} = $patientInputForMerge[$field];
                     }
                 }
 
-                // FIX yang sama: pasien lama yang belum punya province/city/district/
-                // subdistrict juga dilengkapi dari id_prov/id_kab/id_kec/id_kel.
                 $regionNameMapExisting = [
                     'province'    => 'id_prov',
                     'city'        => 'id_kab',
@@ -620,7 +697,7 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
                 foreach ($regionNameMapExisting as $nameField => $idField) {
                     if (
                         $patientSchema->hasColumn($nameField) &&
-                        empty($patient->{$nameField}) &&
+                        $this->isBlankPatientValue($patient->{$nameField} ?? null) &&
                         !empty($patientInputForMerge[$idField] ?? null)
                     ) {
                         $patient->{$nameField} = $patientInputForMerge[$idField];
@@ -635,15 +712,14 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
                 $registration->patient_id = (int)$patient->id;
             }
 
-            // ── Simpan registrasi ──────────────────────────────────────────
             if (!$this->Registrations->save($registration)) {
                 return false;
             }
 
-            // Setiap registrasi berhasil dibuat, otomatis buatkan
-            // (atau pastikan sudah ada) rekam medis dengan No Rekam Medis auto-generate.
-
             $this->_createMedicalRecordForRegistration($registration);
+            if (!empty($registration->doctor_schedule_id)) {
+                $this->_incrementScheduleQuota((int)$registration->doctor_schedule_id);
+            }
 
             if (!empty($personResponsibleData)) {
                 $this->loadModel('PersonResponsibles');
@@ -837,18 +913,33 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
         'queueSource',
         'queuePatientId',
         'queuePatientData',
+        'queueDoctorId',
+        'queueDoctorScheduleId',
         'masterPenjamins',
         'masterTreatmentPackages',
         'masterPatientReferrers'
     ));
 }
 
+    protected function isBlankPatientValue($value): bool
+    {
+        if ($value === null) {
+            return true;
+        }
+
+        if (is_string($value)) {
+            $trimmed = trim($value);
+            return $trimmed === '' || $trimmed === '-';
+        }
+
+        return empty($value);
+    }
 
     public function edit($id = null)
-    {
-        $registration = $this->Registrations->get($id, [
-            'contain' => ['Patients', 'PersonResponsibles', 'Beds'],
-        ]);
+{
+    $registration = $this->Registrations->get($id, [
+        'contain' => ['Patients', 'PersonResponsibles', 'PersonResponsible', 'Beds'],
+    ]);
 
         if ($this->request->is(['patch', 'post', 'put'])) {
             $data = $this->request->getData();
@@ -954,6 +1045,7 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
 
             $oldBedId = !empty($registration->bed_id) ? (int)$registration->bed_id : null;
             $oldServiceType = $registration->service_type;
+            $oldDoctorScheduleId = !empty($registration->doctor_schedule_id) ? (int)$registration->doctor_schedule_id : null;
 
             if (empty($data['polyclinic_name']) && !empty($data['poly_name'])) {
                 $data['polyclinic_name'] = $data['poly_name'];
@@ -1020,7 +1112,7 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
                 $data['poly_name']
             );
 
-              // Buang field liar yang bukan kolom tabel registrations,
+            // Buang field liar yang bukan kolom tabel registrations,
             // supaya patchEntity tidak diam-diam gagal karena field asing.
             $regFieldsToKeepManually = array_intersect_key($data, [
                 'queue_no' => true, 'queue_number' => true, 'room_name' => true,
@@ -1030,6 +1122,7 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
             $data = array_intersect_key($data, $registrationColumnsForEdit) + $regFieldsToKeepManually;
 
             $newBedId = !empty($data['bed_id']) ? (int)$data['bed_id'] : null;
+            $newDoctorScheduleId = !empty($data['doctor_schedule_id']) ? (int)$data['doctor_schedule_id'] : null;
             $newServiceType = $data['service_type'] ?? '';
             $patientId = !empty($data['patient_id'])
                 ? (int)$data['patient_id']
@@ -1051,7 +1144,7 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
             $registration->class_name = $data['class_name'] ?? null;
             $registration->person_responsible_id = $data['person_responsible_id'] ?? null;
 
-            foreach (['queue_no', 'queue_number', 'room_name', 'polyclinic_name', 'doctor_schedule_id', 'skdp_no'] as $forceField) {
+            foreach (['queue_no', 'queue_number', 'room_name', 'polyclinic_name', 'doctor_schedule_id', 'skdp_no', 'admission_time'] as $forceField) {
                 if (array_key_exists($forceField, $data)) {
                     $registration->{$forceField} = $data[$forceField];
                 }
@@ -1354,6 +1447,91 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
             ]);
         }
     }
+
+    protected function _incrementScheduleQuota(int $doctorScheduleId): void
+{
+    $this->loadModel('DoctorSchedules');
+
+    try {
+        $schedule = $this->DoctorSchedules->find()
+            ->select(['id', 'day', 'quota', 'quota_used', 'quota_reset_at'])
+            ->where(['id' => $doctorScheduleId])
+            ->first();
+
+        if (!$schedule) {
+            return;
+        }
+
+        $cycleDate = $this->getDoctorScheduleCycleDate((string)$schedule->day);
+        $storedResetDate = !empty($schedule->quota_reset_at)
+            ? (is_object($schedule->quota_reset_at) ? $schedule->quota_reset_at->format('Y-m-d') : (string)$schedule->quota_reset_at)
+            : null;
+
+        if ($storedResetDate !== $cycleDate) {
+            // Minggu praktik berganti: simpan dulu histori kuota MINGGU SEBELUMNYA
+            // (kalau memang sudah pernah ada siklus sebelumnya), baru reset quota_used.
+            if ($storedResetDate !== null) {
+                $this->_saveDoctorScheduleQuotaHistory(
+                    $doctorScheduleId,
+                    $storedResetDate,
+                    (int)$schedule->quota,
+                    (int)$schedule->quota_used
+                );
+            }
+
+            $this->DoctorSchedules->updateAll(
+                ['quota_used' => 1, 'quota_reset_at' => $cycleDate],
+                ['id' => $doctorScheduleId]
+            );
+            return;
+        }
+
+        $this->DoctorSchedules->updateAll(
+            ['quota_used = quota_used + 1'],
+            ['id' => $doctorScheduleId]
+        );
+    } catch (\Throwable $e) {
+        $this->log('Gagal menambah quota_used jadwal dokter #' . $doctorScheduleId . ': ' . $e->getMessage(), 'warning');
+    }
+}
+
+/**
+ * Simpan/update snapshot kuota jadwal dokter untuk satu minggu (cycle_date) tertentu.
+ * Dipanggil tepat sebelum quota_used direset ke minggu berikutnya, supaya angka
+ * kuota terakhir minggu itu tidak hilang.
+ */
+private function _saveDoctorScheduleQuotaHistory(int $scheduleId, string $cycleDate, int $quota, int $quotaUsed): void
+{
+    try {
+        $this->loadModel('DoctorScheduleQuotaHistories');
+
+        $existing = $this->DoctorScheduleQuotaHistories->find()
+            ->where([
+                'doctor_schedule_id' => $scheduleId,
+                'cycle_date' => $cycleDate,
+            ])
+            ->first();
+
+        if ($existing) {
+            $existing->quota = $quota;
+            $existing->quota_used = $quotaUsed;
+            $existing->modified = date('Y-m-d H:i:s');
+            $this->DoctorScheduleQuotaHistories->save($existing);
+            return;
+        }
+
+        $history = $this->DoctorScheduleQuotaHistories->newEmptyEntity();
+        $history->doctor_schedule_id = $scheduleId;
+        $history->cycle_date = $cycleDate;
+        $history->quota = $quota;
+        $history->quota_used = $quotaUsed;
+        $history->created = date('Y-m-d H:i:s');
+
+        $this->DoctorScheduleQuotaHistories->save($history);
+    } catch (\Throwable $e) {
+        $this->log('Gagal menyimpan histori kuota jadwal dokter #' . $scheduleId . ': ' . $e->getMessage(), 'warning');
+    }
+}
 
     protected function _releaseBed(int $bedId, string $registrationNo): void
     {
@@ -2056,46 +2234,56 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
 }
 
     public function getDoctorSchedules()
-    {
-        $this->request->allowMethod(['get']);
+{
+    $this->request->allowMethod(['get']);
 
-        $doctorId = $this->request->getQuery('doctor_id');
+    $doctorId = $this->request->getQuery('doctor_id');
 
-        $this->loadModel('DoctorSchedules');
+    $this->loadModel('DoctorSchedules');
 
-        $schedules = $this->DoctorSchedules->find()
-            ->select([
-                'id',
-                'code',
-                'day',
-                'start_time',
-                'end_time',
-                'quota',
-                'is_active',
-            ])
-            ->where([
-                'DoctorSchedules.doctor_id' => $doctorId,
-                'DoctorSchedules.is_active' => 'Y',
-            ])
-            ->order(['DoctorSchedules.day' => 'ASC'])
-            ->enableHydration(false)
-            ->toArray();
+    $schedules = $this->DoctorSchedules->find()
+        ->select([
+            'id',
+            'code',
+            'day',
+            'start_time',
+            'end_time',
+            'quota',
+            'quota_used',
+            'quota_reset_at',   // <-- tambahkan ini
+            'is_active',
+        ])
+        ->where([
+            'DoctorSchedules.doctor_id' => $doctorId,
+            'DoctorSchedules.is_active' => 'Y',
+        ])
+        ->order(['DoctorSchedules.day' => 'ASC'])
+        ->all();
 
-        foreach ($schedules as &$schedule) {
-            $schedule['start_time'] = !empty($schedule['start_time'])
-                ? (is_object($schedule['start_time']) ? $schedule['start_time']->format('H:i') : substr((string)$schedule['start_time'], 0, 5))
-                : '';
-            $schedule['end_time'] = !empty($schedule['end_time'])
-                ? (is_object($schedule['end_time']) ? $schedule['end_time']->format('H:i') : substr((string)$schedule['end_time'], 0, 5))
-                : '';
-        }
-        unset($schedule);
+    $result = [];
 
-        $this->autoRender = false;
-
-        return $this->response
-            ->withType('application/json')
-            ->withStringBody(json_encode($schedules));
+    foreach ($schedules as $schedule) {
+        $result[] = [
+            'id' => $schedule->id,
+            'code' => $schedule->code,
+            'day' => $schedule->day,
+            'start_time' => !empty($schedule->start_time)
+                ? (is_object($schedule->start_time) ? $schedule->start_time->format('H:i') : substr((string)$schedule->start_time, 0, 5))
+                : '',
+            'end_time' => !empty($schedule->end_time)
+                ? (is_object($schedule->end_time) ? $schedule->end_time->format('H:i') : substr((string)$schedule->end_time, 0, 5))
+                : '',
+            'quota' => (int)$schedule->quota,
+            'quota_used' => $this->getEffectiveQuotaUsed($schedule), // <-- kuota efektif, bukan raw
+            'is_active' => $schedule->is_active,
+        ];
     }
+
+    $this->autoRender = false;
+
+    return $this->response
+        ->withType('application/json')
+        ->withStringBody(json_encode($result));
+}
 
 }

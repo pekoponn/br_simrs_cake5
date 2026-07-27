@@ -251,6 +251,15 @@ foreach ($allQueues as $queue) {
         color: #fff;
     }
 
+    /* Tombol Panggil dikunci sementara setelah diklik, supaya tidak bisa
+       di-spam dan suara panggilan sempat terdengar penuh. */
+    .btn-panggil-queue.is-calling,
+    .btn-panggil-queue:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
     .queue-pagination {
         padding-top: 12px;
     }
@@ -446,20 +455,38 @@ $(function () {
         window.speechSynthesis.onvoiceschanged = loadIndonesianVoice;
     }
 
-    function speakText(text) {
-        if (!('speechSynthesis' in window) || !text) return;
-        try {
-            window.speechSynthesis.cancel();
-            var utter = new SpeechSynthesisUtterance(text);
-            utter.lang = 'id-ID';
-            if (idVoice) utter.voice = idVoice;
-            utter.rate = 0.9;
-            utter.pitch = 1;
-            window.speechSynthesis.speak(utter);
-        } catch (e) {}
+function speakText(text, onDone) {
+    if (!('speechSynthesis' in window) || !text) {
+        if (onDone) onDone();
+        return;
     }
+    try {
+        window.speechSynthesis.cancel();
+        var utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'id-ID';
+        if (idVoice) utter.voice = idVoice;
+        utter.rate = 0.9;
+        utter.pitch = 1;
+        utter.onend = function () { if (onDone) onDone(); };
+        utter.onerror = function () { if (onDone) onDone(); };
+        window.speechSynthesis.speak(utter);
+    } catch (e) {
+        if (onDone) onDone();
+    }
+}
 
-    // ── Chime "ting-tong" sebelum suara bicara ────────────────────────────────
+function announceQueueCall(queueCode, onDone) {
+    playCallChime();
+
+    var text = queueCode
+        ? ('Nomor ' + queueCode + ', silakan menuju ' + ADMISSION_DESTINATION + '.')
+        : ('Pasien berikutnya, silakan menuju ' + ADMISSION_DESTINATION + '.');
+
+    setTimeout(function () {
+        speakText(text, onDone);
+    }, 600);
+}
+
     function playCallChime() {
         try {
             var ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -481,44 +508,56 @@ $(function () {
     }
 
     var ADMISSION_DESTINATION = 'admisi satu';
+    var CALL_LOCK_DURATION = 7000; 
+    var isQueueCallLocked = false;
 
-    function announceQueueCall(queueCode) {
-        playCallChime();
-
-        var text = queueCode
-            ? ('Nomor ' + queueCode + ', silakan menuju ' + ADMISSION_DESTINATION + '.')
-            : ('Pasien berikutnya, silakan menuju ' + ADMISSION_DESTINATION + '.');
-
-        setTimeout(function () {
-            speakText(text);
-        }, 600);
+    function lockQueueCallButtons() {
+        isQueueCallLocked = true;
+        $('.btn-panggil-queue')
+            .addClass('is-calling')
+            .prop('disabled', true)
+            .attr('aria-disabled', 'true');
     }
 
-    // ── Cegat klik tombol Panggil: konfirmasi → suara → baru submit form ─────
+    function unlockQueueCallButtons() {
+        isQueueCallLocked = false;
+        $('.btn-panggil-queue')
+            .removeClass('is-calling')
+            .prop('disabled', false)
+            .removeAttr('aria-disabled');
+    }
+
     $(document).on('click', '.btn-panggil-queue', function (e) {
         e.preventDefault();
 
+        if (isQueueCallLocked) {
+            return;
+        }
+
         var $btn = $(this);
-        var queueCode   = $btn.data('queue-code');
-        var queueNumber = $btn.data('queue-number');
-        var poli        = $btn.data('poli');
+        var queueCode = $btn.data('queue-code');
 
         if (!confirm('Panggil nomor antrian ' + queueCode + '?')) {
             return;
         }
 
-        announceQueueCall(queueCode, queueNumber, poli);
+        lockQueueCallButtons();
 
-        // Beri jeda supaya suara sempat terdengar sebelum halaman redirect.
-        // postLink CakePHP membuat <form> tersembunyi tepat setelah elemen link ini.
-        var $form = $btn.next('form');
-        setTimeout(function () {
+        var $form = $('#' + $btn.data('form-id'));
+        var hasSubmitted = false;
+
+        function submitOnce() {
+            if (hasSubmitted) return;
+            hasSubmitted = true;
             if ($form.length) {
                 $form.trigger('submit');
-            } else {
-                window.location.href = $btn.attr('href');
             }
-        }, 2500);
+        }
+
+        announceQueueCall(queueCode, submitOnce);
+        setTimeout(submitOnce, 6000);
+
+        setTimeout(unlockQueueCallButtons, CALL_LOCK_DURATION);
     });
 
 });

@@ -1008,7 +1008,7 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 							if (!empty($masterRadiologies['index'])) {
 							?>
 								<li <?= $menuMasterRadiologiesIndex ?>>
-									<?= $this->Html->link('Master Radiologies', ['controller' => 'MasterRadiologies', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+									<?= $this->Html->link('Radiologi', ['controller' => 'MasterRadiologies', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
 							<?php
 							}
@@ -1016,7 +1016,7 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 							if (!empty($masterLaboratories['index'])) {
 							?>
 								<li <?= $menuMasterLaboratoriesIndex ?>>
-									<?= $this->Html->link('Master Laboratories', ['controller' => 'MasterLaboratories', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+									<?= $this->Html->link('Laboratory', ['controller' => 'MasterLaboratories', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
 							<?php
 							}
@@ -1024,7 +1024,7 @@ $invoiceProcessor = (isset($checkUrl['invoiceprocessors'])) ? $checkUrl['invoice
 							if (!empty($masterPenjamins['index'])) {
 							?>
 								<li <?= $menuMasterPenjaminsIndex ?>>
-									<?= $this->Html->link('Master Penjamin', ['controller' => 'MasterPenjamins', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+									<?= $this->Html->link('Jenis Asuransi', ['controller' => 'MasterPenjamins', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
 							<?php
 							}

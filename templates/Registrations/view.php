@@ -283,6 +283,28 @@ $isAktif = $statusLower === 'aktif' || $statusLower === '';
 <div class="registrations-wrapper">
     <div class="registrations view content">
 
+        <?php
+        $flashMessages = $this->request->getSession()->read('Flash.flash') ?? [];
+        if (!empty($flashMessages)):
+        ?>
+            <div style="margin-bottom:20px;">
+                <?php foreach ($flashMessages as $flashMessage): ?>
+                    <?php
+                        $isError = strpos((string)($flashMessage['element'] ?? ''), 'error') !== false;
+                        $isWarning = strpos((string)($flashMessage['element'] ?? ''), 'warning') !== false;
+                        $bg = $isError ? '#fdecea' : ($isWarning ? '#fff7ed' : '#eafaf1');
+                        $border = $isError ? '#f5c6cb' : ($isWarning ? '#fed7aa' : '#b7e4c7');
+                        $color = $isError ? '#611a15' : ($isWarning ? '#7c2d12' : '#1e4620');
+                    ?>
+                    <div style="padding:14px 18px;border-radius:8px;margin-bottom:10px;
+                                font-size:14px;font-weight:600;white-space:pre-wrap;word-break:break-word;
+                                background:<?= $bg ?>;border:1px solid <?= $border ?>;color:<?= $color ?>;">
+                        <?= h($flashMessage['message'] ?? '') ?>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
         <div class="registration-header-card">
             <div>
                 <h3><?= h($registration->registration_no ?: ('Registrasi #' . $registration->id)) ?></h3>
@@ -380,7 +402,7 @@ $isAktif = $statusLower === 'aktif' || $statusLower === '';
                     </div>
 
                     <!-- Penanggung Jawab -->
-                    <div class="form-card">
+                    <div class="form-card rawat-inap-field" style="<?= ($registration->service_type ?? '') === 'rawat_inap' ? '' : 'display:none;' ?>">
                         <div class="form-card-header">
                             <i class="fa fa-users"></i> Penanggung Jawab Pasien
                         </div>

@@ -1385,4 +1385,28 @@ class KrsHelper extends Helper
 		return $value !== null ? ($data[$value] ?? $value) : $data;
 	}
 
+	public function entryProcessOptions(): array
+	{
+		return [
+			'Melalui Unit Rawat Jalan' => 'Melalui Unit Rawat Jalan',
+			'Melalui Unit Darurat' => 'Melalui Unit Darurat',
+			'Langsung Ke Radiologi' => 'Langsung Ke Radiologi',
+			'Langsung Ke Laboratorium' => 'Langsung Ke Laboratorium',
+			'Melalui Instansi Gawat Kebidanan' => 'Melalui Instansi Gawat Kebidanan',
+		];
+	}
+
+	public function entryMethodOptions(): array
+	{
+		return [
+			'RSU/RSK/RB' => 'RSU/RSK/RB',
+			'PUSKESMAS' => 'PUSKESMAS',
+			'DR/DR G' => 'DR/DR G',
+			'TENAGA KESEHATAN' => 'TENAGA KESEHATAN',
+			'KASUS POLISI' => 'KASUS POLISI',
+			'DATANG SENDIRI' => 'DATANG SENDIRI',
+			'KECELAKAAN LALU LINTAS' => 'KECELAKAAN LALU LINTAS',
+		];
+	}
+
 }

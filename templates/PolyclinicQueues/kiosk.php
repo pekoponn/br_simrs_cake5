@@ -221,6 +221,71 @@ $todayLabel = date('d F Y');
         gap: 8px;
     }
 
+    .poli-card-sessions {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-top: 4px;
+}
+
+.poli-session-line {
+    font-size: 11px;
+    font-weight: 700;
+    color: #475569;
+    line-height: 1.3;
+}
+
+.poli-session-tag {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-right: 5px;
+}
+
+.poli-session-tag.morning {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.poli-session-tag.afternoon {
+    background: #dbeafe;
+    color: #1e3a8a;
+}
+
+.poli-card-buttons {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.poli-session-btn {
+    flex: 1;
+    height: 32px;
+    border: 0;
+    border-radius: 8px;
+    font-size: 11.5px;
+    font-weight: 800;
+    color: #fff;
+    cursor: pointer;
+}
+
+.poli-session-btn.morning-btn {
+    background: #149966;
+}
+
+.poli-session-btn.afternoon-btn {
+    background: #1d4ed8;
+}
+
+.poli-session-btn:disabled {
+    background: #cbd5e1;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
     .poli-card {
         min-height: 66px;
         width: 100%;
@@ -298,6 +363,23 @@ $todayLabel = date('d F Y');
         color: #667085;
         font-size: 11px;
         font-weight: 800;
+    }
+
+    .poli-card:disabled,
+    .poli-card.is-disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+        background: #f1f3f5;
+        border-color: #dce6ef;
+        color: #98a2b3;
+    }
+    .poli-card:disabled:hover,
+    .poli-card:disabled:focus,
+    .poli-card.is-disabled:hover,
+    .poli-card.is-disabled:focus {
+        border-color: #dce6ef;
+        box-shadow: none;
+        transform: none;
     }
 
     .kiosk-actions {
@@ -599,56 +681,76 @@ $todayLabel = date('d F Y');
                         Pilih Poli Tujuan
                     </div>
 
-                    <div class="poli-grid" role="listbox" aria-label="Pilihan poli tujuan">
-                        <?php foreach ($polyclinics as $poly): ?>
-                            <?php
-                            $polyValue = (string)$poly['value'];
-                            $polyLabel = (string)$poly['label'];
-                            $doctorName = (string)$poly['doctor'];
-                            $queueTotal = (int)$poly['total'];
-                            $isFeatured = !empty($poly['is_featured']);
-                            $isActive = $selectedPoly !== '' && $selectedPoly === $polyValue;
-                            ?>
-                            <button
-                                type="button"
-                                class="poli-card<?= $isActive ? ' is-active' : '' ?><?= $isFeatured ? ' is-featured' : '' ?>"
-                                data-poly-value="<?= h($polyValue) ?>"
-                                aria-pressed="<?= $isActive ? 'true' : 'false' ?>">
-                                <span class="poli-card-name">
-                                    <?= h($polyLabel) ?>
-                                    <i class="fa fa-check-circle"></i>
-                                </span>
-                                <span class="poli-card-doctor"><?= h($doctorName) ?></span>
-                                <span class="poli-card-help">
-                                    <i class="fa fa-users"></i>
-                                    Total Antrian: <?= h($queueTotal) ?>
-                                </span>
-                            </button>
-                        <?php endforeach; ?>
-                    </div>
+            <div class="poli-grid" role="listbox" aria-label="Pilihan poli tujuan">
+                <?php foreach ($polyclinics as $poly): ?>
+                    <?php
+                    $polyValue = (string)$poly['value'];
+                    $polyLabel = (string)$poly['label'];
+                    $queueTotal = (int)$poly['total'];
+                    $isFeatured = !empty($poly['is_featured']);
+                    $isActive = $selectedPoly !== '' && $selectedPoly === $polyValue;
+                    $sessions = $poly['sessions'] ?? ['morning' => [], 'afternoon' => []];
+                    $hasMorningSchedule = !empty($sessions['morning']);
+                    $hasAfternoonSchedule = !empty($sessions['afternoon']);
+                    $morningAvailable = !empty($poly['morning_available']);
+                    $afternoonAvailable = !empty($poly['afternoon_available']);
+                    $isCardDisabled = !$morningAvailable && !$afternoonAvailable;
+                    ?>
+                    <button
+                        type="button"
+                        class="poli-card<?= $isActive ? ' is-active' : '' ?><?= $isFeatured ? ' is-featured' : '' ?><?= $isCardDisabled ? ' is-disabled' : '' ?>"
+                        data-poly-value="<?= h($polyValue) ?>"
+                        data-has-morning="<?= ($hasMorningSchedule && $morningAvailable) ? '1' : '0' ?>"
+                        data-has-afternoon="<?= ($hasAfternoonSchedule && $afternoonAvailable) ? '1' : '0' ?>"
+                        aria-pressed="<?= $isActive ? 'true' : 'false' ?>"
+                        <?= $isCardDisabled ? 'disabled' : '' ?>>
+                        <span class="poli-card-name">
+                            <?= h($polyLabel) ?>
+                            <i class="fa fa-check-circle"></i>
+                        </span>
 
-                    <div class="kiosk-actions">
-                        <div class="help-text">
-                            <i class="fa fa-info-circle"></i>
-                            Jika mengalami kesulitan, hubungi petugas loket.
-                        </div>
+                        <?php if (empty($sessions['morning']) && empty($sessions['afternoon'])): ?>
+                            <span class="poli-card-doctor">Dokter belum tersedia</span>
+                        <?php else: ?>
+                            <div class="poli-card-sessions">
+                                <?php foreach ($sessions['morning'] as $sch): ?>
+                                    <div class="poli-session-line">
+                                        <span class="poli-session-tag morning">Pagi</span>
+                                        <?= h($sch['doctor_name']) ?> (<?= h($sch['start_time']) ?>&ndash;<?= h($sch['end_time']) ?>)
+                                    </div>
+                                <?php endforeach; ?>
+                                <?php foreach ($sessions['afternoon'] as $sch): ?>
+                                    <div class="poli-session-line">
+                                        <span class="poli-session-tag afternoon">Sore</span>
+                                        <?= h($sch['doctor_name']) ?> (<?= h($sch['start_time']) ?>&ndash;<?= h($sch['end_time']) ?>)
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
 
-                        <div class="queue-buttons">
-                            <?= $this->Form->button('Antrian Pagi (A)', [
-                                'class' => 'btn-queue',
-                                'name' => 'queue_session',
-                                'value' => 'morning',
-                                'disabled' => $selectedPoly === '',
-                            ]) ?>
+                        <span class="poli-card-help">
+                            <i class="fa fa-users"></i>
+                            Total Antrian: <?= h($queueTotal) ?>
+                        </span>
+                    </button>
+                <?php endforeach; ?>
+            </div>
 
-                            <?= $this->Form->button('Antrian Sore (B)', [
-                                'class' => 'btn-queue btn-queue-afternoon',
-                                'name' => 'queue_session',
-                                'value' => 'afternoon',
-                                'disabled' => $selectedPoly === '',
-                            ]) ?>
-                        </div>
-                    </div>
+            <div class="kiosk-actions">
+                <div class="help-text">
+                    <i class="fa fa-info-circle"></i>
+                    Jika mengalami kesulitan, hubungi petugas loket.
+                </div>
+
+                <div class="queue-buttons">
+                    <button type="submit" class="btn-queue" id="btn-queue-morning" name="queue_session" value="morning" disabled>
+                        Antrian Pagi (A)
+                    </button>
+                    <button type="submit" class="btn-queue btn-queue-afternoon" id="btn-queue-afternoon" name="queue_session" value="afternoon" disabled>
+                        Antrian Sore (B)
+                    </button>
+                </div>
+            </div>
                 <?= $this->Form->end() ?>
             </div>
         </div>
@@ -697,6 +799,20 @@ $todayLabel = date('d F Y');
             });
         }
 
+        var morningBtn = document.getElementById('btn-queue-morning');
+        var afternoonBtn = document.getElementById('btn-queue-afternoon');
+
+        function updateQueueButtons(card) {
+            if (!card) {
+                morningBtn.disabled = true;
+                afternoonBtn.disabled = true;
+                return;
+            }
+
+            morningBtn.disabled = card.getAttribute('data-has-morning') !== '1';
+            afternoonBtn.disabled = card.getAttribute('data-has-afternoon') !== '1';
+        }
+
         function selectPoly(card) {
             poliCards.forEach(function(item) {
                 item.classList.remove('is-active');
@@ -706,13 +822,7 @@ $todayLabel = date('d F Y');
             card.classList.add('is-active');
             card.setAttribute('aria-pressed', 'true');
             selectedPolyInput.value = card.getAttribute('data-poly-value') || '';
-            setSubmitButtonsDisabled(selectedPolyInput.value === '');
-        }
-
-        function setSubmitButtonsDisabled(isDisabled) {
-            submitButtons.forEach(function(button) {
-                button.disabled = isDisabled;
-            });
+            updateQueueButtons(card);
         }
 
         function resetSelection() {
@@ -723,16 +833,16 @@ $todayLabel = date('d F Y');
                 item.setAttribute('aria-pressed', 'false');
             });
 
-            if (defaultCard) {
+            if (defaultCard && !defaultCard.disabled) {
                 defaultCard.classList.add('is-active');
                 defaultCard.setAttribute('aria-pressed', 'true');
                 selectedPolyInput.value = 'Poli Umum';
-                setSubmitButtonsDisabled(false);
+                updateQueueButtons(defaultCard);
                 return;
             }
 
             selectedPolyInput.value = '';
-            setSubmitButtonsDisabled(true);
+            updateQueueButtons(null);
         }
 
         function closeQueueModal() {
@@ -748,10 +858,20 @@ $todayLabel = date('d F Y');
         }
 
         poliCards.forEach(function(card) {
+            if (card.disabled) {
+                return;
+            }
             card.addEventListener('click', function() {
                 selectPoly(card);
             });
         });
+
+        var activeCard = document.querySelector('.poli-card.is-active');
+        if (activeCard) {
+            updateQueueButtons(activeCard);
+        } else {
+            updateQueueButtons(null);
+        }
 
         updateClock();
         setInterval(updateClock, 1000);

@@ -462,4 +462,47 @@ class AppController extends Controller
 
         return null;
     }
+
+    /**
+ * Cari tanggal kejadian TERAKHIR (boleh hari ini) yang jatuh pada $dayName.
+ * Dipakai sebagai penanda "minggu praktik berjalan" untuk kuota jadwal dokter.
+ * Misal hari ini Rabu, $dayName = 'Senin' -> hasilnya tanggal Senin kemarin.
+ * Kalau hari ini Senin, $dayName = 'Senin' -> hasilnya hari ini juga.
+ */
+    protected function getDoctorScheduleCycleDate(string $dayName): string
+    {
+        $dayIsoMap = [
+            'senin' => 1, 'monday' => 1,
+            'selasa' => 2, 'tuesday' => 2,
+            'rabu' => 3, 'wednesday' => 3,
+            'kamis' => 4, 'thursday' => 4,
+            'jumat' => 5, 'friday' => 5,
+            'sabtu' => 6, 'saturday' => 6,
+            'minggu' => 7, 'sunday' => 7,
+        ];
+
+        $targetIso = $dayIsoMap[mb_strtolower(trim($dayName))] ?? (int)date('N');
+        $todayIso = (int)date('N');
+
+        $diff = $todayIso - $targetIso;
+        if ($diff < 0) {
+            $diff += 7;
+        }
+
+        return date('Y-m-d', strtotime("-{$diff} days"));
+    }
+
+    /**
+     * Kuota yang seharusnya ditampilkan sekarang: kalau quota_reset_at jadwal
+     * bukan siklus berjalan (minggu sudah lewat), anggap quota_used = 0.
+     */
+    protected function getEffectiveQuotaUsed($schedule): int
+    {
+        $cycleDate = $this->getDoctorScheduleCycleDate((string)($schedule->day ?? ''));
+        $storedResetDate = !empty($schedule->quota_reset_at)
+            ? (is_object($schedule->quota_reset_at) ? $schedule->quota_reset_at->format('Y-m-d') : (string)$schedule->quota_reset_at)
+            : null;
+
+        return $storedResetDate === $cycleDate ? (int)($schedule->quota_used ?? 0) : 0;
+    }
 }

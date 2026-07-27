@@ -180,7 +180,7 @@ $summaryUrl = $this->Url->build(['action' => 'getSummary']);
                         <th width="110">Poli / Unit</th>
                         <th width="140">Dokter</th>
                         <th width="85"><?= $this->Paginator->sort('payment_method', 'Cara Bayar') ?></th>
-                        <th width="90">Penjamin</th>
+                        <th width="90">Asuransi</th>
                         <th width="80"><?= $this->Paginator->sort('status', 'Status') ?></th>
                         <th width="90">Aksi</th>
                     </tr>
