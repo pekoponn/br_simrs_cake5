@@ -25,6 +25,8 @@ use Cake\ORM\Entity;
  * @property \Cake\I18n\FrozenDate|null $leave_from
  * @property \Cake\I18n\FrozenDate|null $leave_to
  * @property string|null $diagnosis
+ * @property string|null $notes
+ * @property string|null $consultation_answer
  * @property bool|null $is_normal
  * @property \Cake\I18n\FrozenDate|null $examined_at
  * @property \Cake\I18n\FrozenTime|null $created
@@ -63,6 +65,8 @@ class OutpatientLetter extends Entity
         'leave_from' => true,
         'leave_to' => true,
         'diagnosis' => true,
+        'notes' => true,
+        'consultation_answer' => true,
         'is_normal' => true,
         'examined_at' => true,
         'created' => true,

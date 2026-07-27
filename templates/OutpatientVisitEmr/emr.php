@@ -332,9 +332,9 @@ $orderRegistrationNo = $visit->registration_no
                     <?php endif; ?>
                 </div>
                 <div class="col-xs-4">
-                    <button type="button" class="btn btn-sm btn-block"
+                    <button type="button" class="btn btn-sm btn-block" id="btn-kajian-awal"
                             style="background:#6f42c1; color:#fff; font-size:11px;">
-                        <i class="fa fa-nurse"></i> LEMBAR PERAWAT
+                        <i class="fa fa-file-medical" style="color:#fff;"></i> KAJIAN MEDIS <br> AWAL
                     </button>
                 </div>
                 <div class="col-xs-4">
@@ -422,18 +422,6 @@ $orderRegistrationNo = $visit->registration_no
                                         <i class="fa fa-file-medical" style="color:#1e3a5f;"></i>
                                         Surat Konsultasi Pasien
                                     </button>
-                                    <button type="button" class="btn btn-xs btn-default btn-block m-b-5 btn-surat-jawaban-konsultasi"
-                                            style="text-align:left; font-size:11px;"
-                                            data-noreg="<?= h($visit->registration_no ?? '-') ?>"
-                                            data-rekmed="<?= h($p->code ?? '-') ?>"
-                                            data-nama="<?= h($p->full_name ?? '-') ?>"
-                                            data-alamat="<?= h($p->address ?? '-') ?>"
-                                            data-dokter="<?= h($d->doctor_name ?? '-') ?>"
-                                            data-tglperiksa="<?= is_object($visit->visit_date) ? $visit->visit_date->format('d-m-Y') : h($visit->visit_date ?? '-') ?>"
-                                            data-umur="<?= h($umurLengkap) ?>">
-                                        <i class="fa fa-file-medical" style="color:#1e3a5f;"></i>
-                                        Jawaban Konsultasi Pasien
-                                    </button>
                                     <button type="button" class="btn btn-xs btn-default btn-block m-b-5 btn-surat-sehat"
                                             style="text-align:left; font-size:11px;"
                                             data-noreg="<?= h($visit->registration_no ?? '-') ?>"
@@ -451,7 +439,7 @@ $orderRegistrationNo = $visit->registration_no
                                             data-umur="<?= h($umurLengkap) ?>">
                                         <i class="fa fa-file-medical" style="color:#1e3a5f;"></i>
                                         Surat Keterangan Sehat
-                                    </button>
+                                    <!-- </button>
                                         <button type="button" class="btn btn-xs btn-default btn-block m-b-5 btn-protokol-terapi"
                                                 style="text-align:left; font-size:11px;"
                                                 data-noreg="<?= h($visit->registration_no ?? '-') ?>"
@@ -470,7 +458,7 @@ $orderRegistrationNo = $visit->registration_no
                                                 data-umur="<?= h($umurLengkap) ?>">
                                             <i class="fa fa-file-medical" style="color:#1e3a5f;"></i>
                                             Protokol Terapi
-                                        </button>
+                                        </button> -->
                                     <button type="button" class="btn btn-xs btn-default btn-block m-b-5"
                                             style="text-align:left; font-size:11px;">
                                         <i class="fa fa-file-medical" style="color:#1e3a5f;"></i>
@@ -631,14 +619,14 @@ $orderRegistrationNo = $visit->registration_no
                 </div>
             </div>
 
-            <div style="margin-top:10px;">
+            <!-- <div style="margin-top:10px;">
                 <label>
                     <input type="checkbox"
                            name="praktek2"
                            value="1">
                     Praktek 2
                 </label>
-            </div>
+            </div> -->
 
             <div style="margin-top:10px;">
 
@@ -800,20 +788,20 @@ $orderRegistrationNo = $visit->registration_no
                                     <div class="col-md-8">
 
                                         <button type="button"
-                                                class="btn btn-success btn-sm">
+                                                class="btn btn-primary btn-sm mb-3">
                                             <i class="fa fa-save"></i>
                                             BUAT SKDP
                                         </button>
 
                                         <button type="button"
-                                                class="btn btn-default btn-sm">
+                                                class="btn btn-success btn-sm">
                                             <i class="fa fa-print"></i>
                                             CETAK SKDP
                                         </button>
 
                                     </div>
 
-                                    <div class="col-md-4 text-right">
+                                    <!-- <div class="col-md-4 text-right">
 
                                         <label style="margin-top:6px;">
                                             <input type="checkbox"
@@ -822,7 +810,7 @@ $orderRegistrationNo = $visit->registration_no
                                             Print Classic
                                         </label>
 
-                                    </div>
+                                    </div> -->
 
                                 </div>
 
@@ -1259,13 +1247,13 @@ $orderRegistrationNo = $visit->registration_no
 
                 <div class="col-md-2 col-xs-6" style="margin-bottom:5px;">
                     <button type="button" class="btn btn-default btn-sm btn-block">
-                        <i class="fa fa-id-card"></i> ICARE-JKN
+                        <i class="fa fa-id-card"></i> <br> ICARE-JKN
                     </button>
                 </div>
 
                 <div class="col-md-2 col-xs-6" style="margin-bottom:5px;">
                     <button type="button" class="btn btn-info btn-sm btn-block">
-                        <i class="fa fa-book-medical"></i> REKAM MEDIS
+                        <i class="fa fa-book-medical"></i> <br> REKAM MEDIS
                     </button>
                 </div>
 
@@ -1278,7 +1266,7 @@ $orderRegistrationNo = $visit->registration_no
                             data-dokter="<?= h($d->doctor_name ?? '-') ?>"
                             data-tanggal="<?= !empty($visit->visit_date) && is_object($visit->visit_date) ? $visit->visit_date->format('d-m-Y') : h($visit->visit_date ?? '-') ?>"
                             data-hasil="<?= h(trim((string)($emr->illness_history ?? $emr->doctor_notes ?? $visit->diagnosis_primary ?? '')) ?: '-') ?>">
-                        <i class="fa fa-stethoscope"></i> HASIL PEMERIKSAAN
+                        <i class="fa fa-stethoscope"></i> <br> HASIL PEMERIKSAAN
                     </button>
                 </div>
 
@@ -1291,13 +1279,13 @@ $orderRegistrationNo = $visit->registration_no
                                 'action' => 'selesaiPeriksa',
                                 $visit->id
                             ]) ?>">
-                        <i class="fa fa-check-circle"></i> SELESAI PERIKSA
+                        <i class="fa fa-check-circle"></i> <br> SELESAI PERIKSA
                     </button>
                 </div>
 
                 <div class="col-md-2 col-xs-6" style="margin-bottom:5px;">
                     <button type="submit" class="btn btn-primary btn-sm btn-block">
-                        <i class="fa fa-save"></i> SIMPAN
+                        <i class="fa fa-save"></i> <br> SIMPAN
                     </button>
                 </div>
 
@@ -1305,7 +1293,7 @@ $orderRegistrationNo = $visit->registration_no
                     <button type="button"
                             onclick="window.print();"
                             class="btn btn-default btn-sm btn-block">
-                        <i class="fa fa-print"></i> CETAK
+                        <i class="fa fa-print"></i> <br> CETAK
                     </button>
                 </div>
 
@@ -1314,6 +1302,142 @@ $orderRegistrationNo = $visit->registration_no
     </div>
 
     <?= $this->Form->end() ?>
+
+<div class="modal fade" id="modal-kajian-awal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-kajian-dialog" role="document">
+        <div class="modal-content hasil-window kajian-window">
+            <div class="hasil-title">
+                <span><i class="fa fa-file-medical"></i> Kajian Medis Awal</span>
+                <button type="button" class="hasil-close" data-dismiss="modal" aria-label="Close">&times;</button>
+            </div>
+            <form id="form-kajian-awal">
+                <input type="hidden" name="_csrfToken" value="<?= h($this->request->getAttribute('csrfToken')) ?>">
+                <div class="kajian-header">
+                    <div class="row">
+                        <div class="col-sm-3"><label>No Registrasi</label><input type="text" class="form-control input-sm" id="kma-registration-no" value="<?= h($visit->registration_no ?? '-') ?>" readonly></div>
+                        <div class="col-sm-3"><label>No Rek. Med</label><input type="text" class="form-control input-sm" id="kma-medical-record-no" value="<?= h($p->code ?? '-') ?>" readonly></div>
+                        <div class="col-sm-3"><label>Nama Pasien</label><input type="text" class="form-control input-sm" id="kma-patient-name" value="<?= h($p->full_name ?? '-') ?>" readonly></div>
+                        <div class="col-sm-3"><label>No Kajian</label><input type="text" class="form-control input-sm" id="kma-assessment-no" value="AUTO" readonly></div>
+                    </div>
+                    <div class="row" style="margin-top:6px;">
+                        <div class="col-sm-3"><label>Tanggal</label><input type="date" class="form-control input-sm" name="assessment_date" id="kma-assessment-date" value="<?= date('Y-m-d') ?>"></div>
+                        <div class="col-sm-2"><label>Jam</label><input type="time" class="form-control input-sm" name="assessment_time" id="kma-assessment-time" value="<?= date('H:i') ?>"></div>
+                        <div class="col-sm-4"><label>Dokter</label><input type="text" class="form-control input-sm" id="kma-doctor-name" value="<?= h($d->doctor_name ?? '-') ?>" readonly></div>
+                        <div class="col-sm-3"><label>Status Simpan</label><input type="text" class="form-control input-sm" id="kma-save-state" value="Belum dimuat" readonly></div>
+                    </div>
+                </div>
+
+                <ul class="nav nav-tabs kajian-tabs" role="tablist">
+                    <li role="presentation" class="active"><a href="#kma-tab-data-dasar" data-toggle="tab">Data Dasar</a></li>
+                    <li role="presentation"><a href="#kma-tab-subjektif" data-toggle="tab">Subjektif</a></li>
+                    <li role="presentation"><a href="#kma-tab-observasi" data-toggle="tab">Observasi</a></li>
+                </ul>
+
+                <div class="tab-content kajian-body">
+                    <div id="kma-tab-data-dasar" class="tab-pane active">
+                        <div class="row">
+                            <div class="col-md-7">
+                                <div class="kajian-section-title">Rujukan & Triase</div>
+                                <div class="kajian-line"><label>Rujukan</label><label><input type="radio" name="data_dasar[rujukan]" value="Datang sendiri"> Datang sendiri</label><label><input type="radio" name="data_dasar[rujukan]" value="Rujukan"> Rujukan</label><label><input type="radio" name="data_dasar[rujukan]" value="Lain-lain"> Lain-lain</label></div>
+                                <div class="kajian-line"><label>Triase</label><label><input type="radio" name="data_dasar[triase]" value="Emergency"> Emergency</label><label><input type="radio" name="data_dasar[triase]" value="Ya"> Ya</label><label><input type="radio" name="data_dasar[triase]" value="Tidak"> Tidak</label></div>
+                                <div class="kajian-line"><label>Level</label><?php foreach (['I', 'II', 'III', 'IV'] as $level): ?><label><input type="radio" name="data_dasar[level]" value="<?= $level ?>"> <?= $level ?></label><?php endforeach; ?></div>
+                                <div class="kajian-line kajian-tags-line">
+                                    <label>Tags</label>
+                                    <?php foreach (['merah' => '#e51f35', 'kuning' => '#f6e23a', 'hijau' => '#16c45b', 'hitam' => '#111111'] as $tag => $color): ?>
+                                        <label class="kajian-tag-option">
+                                            <input type="radio" name="data_dasar[tags]" value="<?= h($tag) ?>">
+                                            <span class="kajian-tag-swatch" style="background:<?= h($color) ?>;"></span>
+                                        </label>
+                                    <?php endforeach; ?>
+                                </div>
+                                <div class="kajian-line"><label>Kasus</label><?php foreach (['Trauma', 'DOA', 'KLL', 'KLL tunggal', 'Self abuse', 'Kecelakaan lain'] as $case): ?><label><input type="checkbox" name="data_dasar[kasus][]" value="<?= h($case) ?>"> <?= h($case) ?></label><?php endforeach; ?></div>
+                                <div class="kajian-line"><label>Pembayaran</label><?php foreach (['Pribadi', 'BPJS', 'COB', 'Lain-lain'] as $pay): ?><label><input type="radio" name="data_dasar[pembayaran]" value="<?= h($pay) ?>"> <?= h($pay) ?></label><?php endforeach; ?></div>
+                                <div class="kajian-section-title">Survei Primer</div>
+                                <div class="kajian-grid-2">
+                                    <div><label>C: Nadi carotis</label><label><input type="radio" name="data_dasar[nadi_carotis]" value="Ya"> Ya</label><label><input type="radio" name="data_dasar[nadi_carotis]" value="Tidak"> Tidak</label></div>
+                                    <div><label>A: Airway</label><?php foreach (['Bicara/Menangis', 'Suara tambahan', 'Diam'] as $v): ?><label><input type="radio" name="data_dasar[airway]" value="<?= h($v) ?>"> <?= h($v) ?></label><?php endforeach; ?></div>
+                                    <div><label>B: Breathing</label><?php foreach (['Spontan', 'Takipneu', 'Dyspneu', 'Retraksi intercostal', 'Retraksi epigastrial', 'Lambat/tidak adekuat', 'Retraksi suprasternal'] as $v): ?><label><input type="checkbox" name="data_dasar[breathing][]" value="<?= h($v) ?>"> <?= h($v) ?></label><?php endforeach; ?></div>
+                                    <div><label>D: Keadaan Umum</label><?php foreach (['Composmentis', 'Apatis', 'Somnolen', 'Soporus', 'Comatous'] as $v): ?><label><input type="radio" name="data_dasar[keadaan_umum]" value="<?= h($v) ?>"> <?= h($v) ?></label><?php endforeach; ?></div>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="kajian-section-title">Non Trauma</div>
+                                <div class="kajian-check-columns"><?php foreach (['Bedah Syaraf', 'Bedah Umum', 'Bedah Orthopedi', 'Bedah Urologi', 'Bedah Digestif', 'Peny. Dalam', 'Kesehatan Anak', 'Obgyn', 'Kulit & Kelamin', 'THT', 'Saraf', 'Mata', 'Jiwa'] as $nt): ?><label><input type="checkbox" name="data_dasar[non_trauma][]" value="<?= h($nt) ?>"> <?= h($nt) ?></label><?php endforeach; ?></div>
+                                <div class="kajian-section-title">Polisi & VER</div>
+                                <div class="kajian-line"><label>Kasus Polisi</label><label><input type="radio" name="data_dasar[kasus_polisi]" value="Ya"> Ya</label><label><input type="radio" name="data_dasar[kasus_polisi]" value="Tidak"> Tidak</label></div>
+                                <div class="kajian-line"><label>VER</label><label><input type="radio" name="data_dasar[ver]" value="Ya"> Ya</label><label><input type="radio" name="data_dasar[ver]" value="Tidak"> Tidak</label><label><input type="checkbox" name="data_dasar[ver_belum_diminta]" value="1"> Belum ada permintaan</label></div>
+                                <div class="kajian-section-title">Vital Sign</div>
+                                <div class="kajian-vitals">
+                                    <label>TD <input type="text" name="data_dasar[tekanan_darah]" class="form-control input-sm" value="<?= h($emr->blood_pressure ?? '') ?>"></label>
+                                    <label>Nadi <input type="number" name="data_dasar[nadi]" class="form-control input-sm" value="<?= h($emr->pulse ?? '') ?>"></label>
+                                    <label>Napas <input type="number" name="data_dasar[napas]" class="form-control input-sm" value="<?= h($emr->respiratory_rate ?? '') ?>"></label>
+                                    <label>Suhu <input type="text" name="data_dasar[suhu]" class="form-control input-sm" value="<?= h($emr->temperature ?? '') ?>"></label>
+                                    <label>BB <input type="text" name="data_dasar[bb]" class="form-control input-sm" value="<?= h($emr->weight ?? '') ?>"></label>
+                                    <label>TB <input type="text" name="data_dasar[tb]" class="form-control input-sm" value="<?= h($emr->height ?? '') ?>"></label>
+                                    <label>LLA <input type="text" name="data_dasar[lla]" class="form-control input-sm"></label>
+                                    <label>Skala Nyeri <input type="text" name="data_dasar[skala_nyeri]" class="form-control input-sm" value="<?= h($emr->pain_scale ?? '') ?>"></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="kma-tab-subjektif" class="tab-pane">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="kajian-section-title">Data Subjektif</div>
+                                <label>Keluhan Utama</label><textarea name="subjektif[keluhan_utama]" class="form-control kajian-textarea"><?= h($emr->chief_complaint ?? '') ?></textarea>
+                                <label>Riwayat Penyakit Sekarang</label><textarea name="subjektif[riwayat_penyakit_sekarang]" class="form-control kajian-textarea"><?= h($emr->illness_history ?? '') ?></textarea>
+                                <label>Riwayat Penyakit Dahulu / Operasi</label><textarea name="subjektif[riwayat_penyakit_dahulu]" class="form-control kajian-textarea"></textarea>
+                                <label>Riwayat Penyakit Dalam Keluarga</label><textarea name="subjektif[riwayat_keluarga]" class="form-control kajian-textarea"></textarea>
+                                <label>Obat Yang Diminum</label><textarea name="subjektif[obat_diminum]" class="form-control kajian-textarea"></textarea>
+                                <label>Kebiasaan Hidup</label>
+                                <div class="kajian-line"><label><input type="checkbox" name="subjektif[kebiasaan][]" value="Merokok"> Merokok</label><label><input type="checkbox" name="subjektif[kebiasaan][]" value="Minuman beralkohol"> Minuman beralkohol</label><label><input type="checkbox" name="subjektif[kebiasaan][]" value="Kontak dengan bahan berbahaya"> Kontak bahan berbahaya</label></div>
+                                <input type="text" name="subjektif[kebiasaan_lain]" class="form-control input-sm" placeholder="Lain-lain...">
+                            </div>
+                            <div class="col-md-6">
+                                <div class="kajian-section-title">Data Objektif</div>
+                                <div class="row"><div class="col-xs-4"><label>GCS E</label><input type="number" name="subjektif[gcs_e]" class="form-control input-sm"></div><div class="col-xs-4"><label>M</label><input type="number" name="subjektif[gcs_m]" class="form-control input-sm"></div><div class="col-xs-4"><label>V</label><input type="number" name="subjektif[gcs_v]" class="form-control input-sm"></div></div>
+                                <?php foreach (['kepala' => 'Kepala', 'leher' => 'Leher', 'thorax' => 'Thorax', 'abdomen' => 'Abdomen', 'genital' => 'Genital', 'ekstremitas' => 'Ekstremitas'] as $key => $label): ?>
+                                    <label><?= h($label) ?></label><input type="text" name="subjektif[pemeriksaan_fisik][<?= h($key) ?>]" class="form-control input-sm">
+                                <?php endforeach; ?>
+                                <div class="kajian-section-title">Pemeriksaan Penunjang</div>
+                                <div class="kajian-line"><?php foreach (['GDS', 'EKG', 'USG', 'X-FOTO', 'C SCAN', 'MRI', 'LABORAT', 'Lain-lain'] as $support): ?><label><input type="checkbox" name="subjektif[pemeriksaan_penunjang][]" value="<?= h($support) ?>"> <?= h($support) ?></label><?php endforeach; ?></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="kma-tab-observasi" class="tab-pane">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="kajian-section-title">Observasi</div>
+                                <label>Waktu</label><input type="time" name="observasi[waktu]" class="form-control input-sm">
+                                <label>Keluhan / Keadaan</label><textarea name="observasi[keluhan_keadaan]" class="form-control kajian-observasi-text"></textarea>
+                                <label>Tanda Vital</label><textarea name="observasi[tanda_vital]" class="form-control kajian-observasi-text"></textarea>
+                                <label>Penatalaksanaan</label><textarea name="observasi[penatalaksanaan]" class="form-control kajian-observasi-text"></textarea>
+                                <div class="kajian-section-title">Alat Yang Terpasang</div>
+                                <?php foreach (['iv_line' => 'IV Line', 'kateter' => 'Kateter (DC)', 'cvc' => 'CVC', 'ngt' => 'NGT', 'ett' => 'ETT', 'lain' => 'Lain-lain'] as $key => $label): ?>
+                                    <div class="row kajian-device-row"><div class="col-xs-3"><label><input type="checkbox" name="observasi[alat][<?= h($key) ?>][checked]" value="1"> <?= h($label) ?></label></div><div class="col-xs-4"><input type="text" name="observasi[alat][<?= h($key) ?>][lokasi]" class="form-control input-sm" placeholder="Lokasi / ukuran"></div><div class="col-xs-5"><input type="text" name="observasi[alat][<?= h($key) ?>][keterangan]" class="form-control input-sm" placeholder="Keterangan"></div></div>
+                                <?php endforeach; ?>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="kajian-section-title">Hasil Akhir</div>
+                                <div class="kajian-line vertical"><label><input type="checkbox" name="observasi[hasil_akhir][]" value="Dipulangkan"> Dipulangkan</label><label><input type="checkbox" name="observasi[hasil_akhir][]" value="Dirawat"> Dirawat, ruangan</label><input type="text" name="observasi[ruangan]" class="form-control input-sm" placeholder="Nama ruangan..."><label><input type="checkbox" name="observasi[hasil_akhir][]" value="Dirujuk untuk tindakan"> Dirujuk untuk tindakan</label></div>
+                                <div class="kajian-line vertical" style="margin-left:18px;"><?php foreach (['Kamar Bedah', 'Hemodialisa', 'Poli Bedah', 'Angiografi / Endoskopi', 'Kemoterapi', 'THC'] as $target): ?><label><input type="radio" name="observasi[target_tindakan]" value="<?= h($target) ?>"> <?= h($target) ?></label><?php endforeach; ?><input type="text" name="observasi[target_tindakan_lain]" class="form-control input-sm" placeholder="Lain-lain..."></div>
+                                <div class="kajian-line vertical"><label><input type="checkbox" name="observasi[dirujuk_rs]" value="1"> Dirujuk ke Rumah Sakit</label><input type="text" name="observasi[rumah_sakit_tujuan]" class="form-control input-sm" placeholder="Rumah sakit tujuan..."><input type="text" name="observasi[alasan_rujuk]" class="form-control input-sm" placeholder="Alasan rujuk..."><label><input type="checkbox" name="observasi[meninggal]" value="1"> Meninggal, pukul</label><input type="time" name="observasi[jam_meninggal]" class="form-control input-sm"><input type="text" name="observasi[penyebab_meninggal]" class="form-control input-sm" placeholder="Penyebab..."></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="kajian-footer">
+                    <span id="kma-message"></span>
+                    <div>
+                        <button type="button" class="btn btn-primary btn-sm" id="btn-save-kajian-awal"><i class="fa fa-save"></i> Simpan</button>
+                        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 </div>
 
@@ -1498,7 +1622,7 @@ $orderRegistrationNo = $visit->registration_no
 </div>
 
 <div class="modal fade" id="modal-surat-konsultasi" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" style="width:640px; max-width:95%;" role="document">
+    <div class="modal-dialog" style="width:900px; max-width:95%;" role="document">
         <div class="modal-content hasil-window">
             <div class="hasil-title">
                 <span><i class="fa fa-file-medical"></i> Surat Konsultasi Dokter</span>
@@ -1534,9 +1658,22 @@ $orderRegistrationNo = $visit->registration_no
                     </div>
                 </div>
                 <div class="row hasil-row">
-                    <label class="col-xs-3">Catatan</label>
-                    <div class="col-xs-9"><textarea id="ksl-catatan" class="form-control" rows="4"
-                                                      placeholder="Catatan konsultasi..."></textarea></div>
+                    <div class="col-sm-6">
+                        <label>Keterangan Konsultasi</label>
+                        <textarea id="ksl-catatan" class="form-control" rows="7"
+                                  placeholder="Keterangan konsultasi..."></textarea>
+                        <div id="ksl-catatan-status" class="text-muted" style="font-size:11px; margin-top:4px;">
+                            Belum disimpan
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label>Saran / Jawaban Konsultasi</label>
+                        <textarea id="ksl-jawaban" class="form-control" rows="7"
+                                  placeholder="Saran atau jawaban konsultasi..."></textarea>
+                        <div id="ksl-jawaban-status" class="text-muted" style="font-size:11px; margin-top:4px;">
+                            Isi setelah keterangan konsultasi disimpan
+                        </div>
+                    </div>
                 </div>
                 <div class="row hasil-row">
                     <label class="col-xs-3">Dokter</label>
@@ -1547,7 +1684,13 @@ $orderRegistrationNo = $visit->registration_no
                 <div class="row" style="margin-top:10px;">
                     <div class="col-xs-12 text-right">
                         <button type="button" class="btn btn-primary btn-sm" id="btn-simpan-ksl">
-                            <i class="fa fa-save"></i> Simpan
+                            <i class="fa fa-save"></i> Simpan Keterangan
+                        </button>
+                        <button type="button" class="btn btn-success btn-sm" id="btn-simpan-jkl">
+                            <i class="fa fa-save"></i> Simpan Jawaban
+                        </button>
+                        <button type="button" class="btn btn-default btn-sm" id="btn-cetak-ksl" disabled>
+                            <i class="fa fa-print"></i> Cetak Surat Konsultasi
                         </button>
                         <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button>
                     </div>
@@ -1556,66 +1699,6 @@ $orderRegistrationNo = $visit->registration_no
         </div>
     </div>
 </div>
-</div>
-
-<div class="modal fade" id="modal-surat-jawaban-konsultasi" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" style="width:640px; max-width:95%;" role="document">
-        <div class="modal-content hasil-window">
-            <div class="hasil-title">
-                <span><i class="fa fa-file-medical"></i> Surat Jawaban Konsultasi Dokter</span>
-                <button type="button" class="hasil-close" data-dismiss="modal">&times;</button>
-            </div>
-            <div class="hasil-body" style="max-height:75vh; overflow-y:auto;">
-                <div class="row hasil-row">
-                    <label class="col-xs-3">No Surat</label>
-                    <div class="col-xs-9"><input type="text" id="jkl-noSurat" class="form-control input-sm" value="AUTO" readonly></div>
-                </div>
-                <div class="row hasil-row">
-                    <label class="col-xs-3">No Rekam Medis</label>
-                    <div class="col-xs-9"><input type="text" id="jkl-rekmed" class="form-control input-sm" readonly></div>
-                </div>
-                <div class="row hasil-row">
-                    <label class="col-xs-3">Nama</label>
-                    <div class="col-xs-9"><input type="text" id="jkl-nama" class="form-control input-sm" readonly></div>
-                </div>
-                <div class="row hasil-row">
-                    <label class="col-xs-3">Alamat</label>
-                    <div class="col-xs-9"><textarea id="jkl-alamat" class="form-control input-sm" rows="2" readonly></textarea></div>
-                </div>
-                <div class="row hasil-row">
-                    <label class="col-xs-3">Umur</label>
-                    <div class="col-xs-9"><input type="text" id="jkl-umur" class="form-control input-sm" readonly></div>
-                </div>
-               <div class="row hasil-row" style="position:relative;">
-                    <label class="col-xs-3">Diagnosa ICD X</label>
-                    <div class="col-xs-9">
-                        <textarea id="jkl-diagnosa" class="form-control input-sm" rows="3"
-                                placeholder="Otomatis dari ICD-10 EMR" readonly
-                                style="resize:none; font-family:monospace; font-size:12px;"></textarea>
-                    </div>
-                </div>
-                <div class="row hasil-row">
-                    <label class="col-xs-3">Saran</label>
-                    <div class="col-xs-9"><textarea id="jkl-saran" class="form-control" rows="4"
-                                                      placeholder="Saran untuk dokter perujuk..."></textarea></div>
-                </div>
-                <div class="row hasil-row">
-                    <label class="col-xs-3">Dokter</label>
-                    <div class="col-xs-6"><input type="text" id="jkl-dokter" class="form-control input-sm" readonly></div>
-                    <label class="col-xs-1">Tgl</label>
-                    <div class="col-xs-2"><input type="text" id="jkl-tglperiksa" class="form-control input-sm" readonly></div>
-                </div>
-                <div class="row" style="margin-top:10px;">
-                    <div class="col-xs-12 text-right">
-                        <button type="button" class="btn btn-primary btn-sm" id="btn-simpan-jkl">
-                            <i class="fa fa-save"></i> Simpan
-                        </button>
-                        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <div class="modal fade" id="modal-surat-sehat" tabindex="-1" role="dialog" aria-hidden="true">
@@ -2287,6 +2370,173 @@ input.action-unit-price-display:focus {
 #i10-list-body tr.i10-row:hover, #i9-list-body tr.i9-row:hover { background:#eef3ff; }
 #i10-list-body tr.i10-row-selected, #i9-list-body tr.i9-row-selected { background:#dbe6fb; }
 #i10-list-body tr.i10-row-disabled, #i9-list-body tr.i9-row-disabled { background:#f5f5f5 !important; }
+.modal-kajian-dialog {
+    width: 1080px;
+    max-width: 97%;
+    margin-top: 28px;
+}
+.kajian-window {
+    background: #dfe8f7;
+}
+.kajian-header {
+    padding: 8px 10px;
+    border-bottom: 1px solid #9eb2d1;
+    font-size: 11px;
+}
+.kajian-header label,
+.kajian-body label {
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+.kajian-tabs {
+    display: flex;
+    padding: 0;
+    border-bottom: 1px solid #9eb2d1;
+    background: #d7e2f2;
+}
+.kajian-tabs > li {
+    flex: 1 1 0;
+    text-align: center;
+    margin-bottom: 0;
+}
+.kajian-tabs > li > a {
+    display: block;
+    margin-right: 0;
+    border-radius: 0;
+    border: 1px solid #9eb2d1;
+    border-left: 0;
+    border-bottom: 0;
+    font-size: 12px;
+    padding: 7px 14px;
+    font-weight: 700;
+    color: #1e3a5f;
+    background: #c8d8f0;
+    text-decoration: none;
+}
+.kajian-tabs > li:first-child > a {
+    border-left: 1px solid #9eb2d1;
+}
+.kajian-tabs > li.active > a,
+.kajian-tabs > li.active > a:focus,
+.kajian-tabs > li.active > a:hover,
+.kajian-tabs > li > a.active,
+.kajian-tabs > li > a.active:focus,
+.kajian-tabs > li > a.active:hover {
+    background: #ffffff !important;
+    color: #0f2f5f !important;
+    border-top: 3px solid #2c64b7 !important;
+    border-bottom: 1px solid #ffffff !important;
+    font-weight: 800;
+    text-decoration: none;
+    box-shadow: inset 0 1px 0 #ffffff;
+}
+.kajian-tabs > li:not(.active) > a:hover {
+    background: #dbe7f7;
+    color: #0f2f5f;
+    text-decoration: none;
+}
+.kajian-body {
+    padding: 10px;
+    min-height: 455px;
+    max-height: 62vh;
+    overflow-y: auto;
+    font-size: 11px;
+}
+.kajian-section-title {
+    background: #c8d8f0;
+    border: 1px solid #9eb2d1;
+    color: #1e3a5f;
+    font-weight: 700;
+    font-size: 11px;
+    padding: 4px 7px;
+    margin: 6px 0;
+}
+.kajian-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    align-items: center;
+    margin-bottom: 6px;
+}
+.kajian-line > label:first-child {
+    min-width: 82px;
+    color: #1f2937;
+}
+.kajian-line.vertical {
+    display: block;
+}
+.kajian-line.vertical label {
+    display: block;
+    margin-bottom: 5px;
+}
+.kajian-tags-line {
+    gap: 10px;
+}
+.kajian-tag-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-right: 6px;
+}
+.kajian-tag-swatch {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 1px solid #7f8da3;
+    vertical-align: middle;
+}
+.kajian-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 14px;
+}
+.kajian-grid-2 label,
+.kajian-check-columns label {
+    display: block;
+    font-weight: 500;
+}
+.kajian-check-columns {
+    columns: 2;
+}
+.kajian-vitals {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+}
+.kajian-vitals label {
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    gap: 5px;
+    align-items: center;
+}
+.kajian-textarea {
+    height: 46px !important;
+    resize: vertical;
+    margin-bottom: 5px;
+    font-size: 11px;
+}
+.kajian-observasi-text {
+    height: 66px !important;
+    resize: vertical;
+    margin-bottom: 6px;
+    font-size: 11px;
+}
+.kajian-device-row {
+    margin-bottom: 5px;
+}
+.kajian-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-top: 1px solid #9eb2d1;
+}
+#kma-message {
+    font-size: 12px;
+    font-weight: 600;
+}
 </style>
 
 <script>
@@ -2306,6 +2556,160 @@ var GET_SKS_URL = <?= json_encode($this->Url->build([
     'action'     => 'getSuratSakit',
     $visit->id,
 ])) ?>;
+var GET_KAJIAN_AWAL_URL = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientVisitEmr',
+    'action'     => 'kajianAwal',
+    $visit->id,
+])) ?>;
+var SIMPAN_KAJIAN_AWAL_URL = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientVisitEmr',
+    'action'     => 'simpanKajianAwal',
+    $visit->id,
+])) ?>;
+
+function kmaFindByName(name) {
+    return $('#form-kajian-awal').find('[name]').filter(function () {
+        return this.name === name;
+    });
+}
+
+function kmaSetField(name, value) {
+    var $fields = kmaFindByName(name);
+    if (!$fields.length && $.isArray(value)) {
+        $fields = kmaFindByName(name + '[]');
+    }
+
+    if (!$fields.length) {
+        return;
+    }
+
+    var type = ($fields.first().attr('type') || '').toLowerCase();
+    if (type === 'radio') {
+        $fields.prop('checked', false).filter(function () {
+            return String($(this).val()) === String(value);
+        }).prop('checked', true);
+        return;
+    }
+
+    if (type === 'checkbox') {
+        $fields.prop('checked', false);
+        if ($.isArray(value)) {
+            $fields.each(function () {
+                $(this).prop('checked', value.map(String).indexOf(String($(this).val())) !== -1);
+            });
+        } else {
+            $fields.each(function () {
+                var checked = String($(this).val()) === String(value) || String(value) === '1' || value === true;
+                $(this).prop('checked', checked);
+            });
+        }
+        return;
+    }
+
+    $fields.val(value == null ? '' : value);
+}
+
+function kmaFillSection(prefix, data) {
+    if (!data) {
+        return;
+    }
+
+    $.each(data, function (key, value) {
+        var name = prefix + '[' + key + ']';
+        if ($.isPlainObject(value)) {
+            kmaFillSection(name, value);
+        } else {
+            kmaSetField(name, value);
+        }
+    });
+}
+
+function kmaActivateTab(selector) {
+    var $tab = $('#modal-kajian-awal .kajian-tabs a[href="' + selector + '"]');
+    $('#modal-kajian-awal .kajian-tabs li').removeClass('active');
+    $('#modal-kajian-awal .kajian-tabs a').removeClass('active');
+    $('#modal-kajian-awal .tab-pane').removeClass('active in');
+    $tab.addClass('active').closest('li').addClass('active');
+    $(selector).addClass('active in');
+}
+
+function kmaResetForm() {
+    var form = document.getElementById('form-kajian-awal');
+    if (form) {
+        form.reset();
+    }
+    $('#kma-message').text('').css('color', '');
+    $('#kma-save-state').val('Memuat...');
+    kmaActivateTab('#kma-tab-data-dasar');
+}
+
+$('#modal-kajian-awal .kajian-tabs a[data-toggle="tab"]').on('click', function (e) {
+    e.preventDefault();
+    kmaActivateTab($(this).attr('href'));
+});
+
+$('#btn-kajian-awal').on('click', function () {
+    kmaResetForm();
+    $('#modal-kajian-awal').modal('show');
+
+    $.getJSON(GET_KAJIAN_AWAL_URL)
+        .done(function (res) {
+            if (!res || !res.success) {
+                $('#kma-save-state').val('Gagal dimuat');
+                $('#kma-message').text('Gagal memuat kajian medis awal.').css('color', '#b91c1c');
+                return;
+            }
+
+            var data = res.data || {};
+            $('#kma-assessment-no').val(data.assessment_no || 'AUTO');
+            $('#kma-assessment-date').val(data.assessment_date || <?= json_encode(date('Y-m-d')) ?>);
+            $('#kma-assessment-time').val((data.assessment_time || <?= json_encode(date('H:i')) ?>).substring(0, 5));
+
+            if (res.patient) {
+                $('#kma-registration-no').val(res.patient.registration_no || '-');
+                $('#kma-medical-record-no').val(res.patient.medical_record_no || '-');
+                $('#kma-patient-name').val(res.patient.name || '-');
+                $('#kma-doctor-name').val(res.patient.doctor || '-');
+            }
+
+            kmaFillSection('data_dasar', data.data_dasar || {});
+            kmaFillSection('subjektif', data.subjektif || {});
+            kmaFillSection('observasi', data.observasi || {});
+            $('#kma-save-state').val(data.id ? 'Sudah tersimpan' : 'Baru');
+        })
+        .fail(function (xhr) {
+            $('#kma-save-state').val('Gagal dimuat');
+            $('#kma-message').text('Gagal memuat data (' + xhr.status + ').').css('color', '#b91c1c');
+        });
+});
+
+$('#btn-save-kajian-awal').on('click', function () {
+    var $btn = $(this);
+    var csrf = $('#form-kajian-awal input[name="_csrfToken"]').val();
+
+    $('#kma-message').text('Menyimpan...').css('color', '#1e3a5f');
+    $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Menyimpan');
+
+    $.ajax({
+        url: SIMPAN_KAJIAN_AWAL_URL,
+        method: 'POST',
+        data: $('#form-kajian-awal').serialize(),
+        dataType: 'json',
+        headers: csrf ? {'X-CSRF-Token': csrf} : {}
+    }).done(function (res) {
+        if (res && res.success) {
+            $('#kma-assessment-no').val(res.assessment_no || $('#kma-assessment-no').val());
+            $('#kma-save-state').val('Sudah tersimpan');
+            $('#kma-message').text(res.message || 'Kajian medis awal berhasil disimpan.').css('color', '#047857');
+        } else {
+            $('#kma-message').text((res && res.message) || 'Gagal menyimpan kajian medis awal.').css('color', '#b91c1c');
+        }
+    }).fail(function (xhr) {
+        $('#kma-message').text('Gagal menyimpan (' + xhr.status + ').').css('color', '#b91c1c');
+    }).always(function () {
+        $btn.prop('disabled', false).html('<i class="fa fa-save"></i> Simpan');
+    });
+});
 
 $(document).on('click', '.btn-surat-sakit', function () {
     var $b = $(this);
@@ -2432,6 +2836,21 @@ var KSL_ICD_SEARCH_URL = <?= json_encode($this->Url->build([
     'controller' => 'OutpatientVisits',
     'action'     => 'searchIcd10',
 ])) ?>;
+var GET_JKL_URL = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'getSuratJawabanKonsultasi',
+    $visit->id,
+])) ?>;
+var SIMPAN_JKL_URL = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'simpanSuratJawabanKonsultasi',
+    $visit->id,
+])) ?>;
+var CETAK_KSL_URL_BASE = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'cetakSuratKonsultasi',
+])) ?>;
+var currentKslLetterId = null;
 
 function getIcd10SemuaText() {
     var lines = [];
@@ -2449,6 +2868,33 @@ function getIcd10SemuaText() {
     return lines.join('\n');
 }
 
+function setKonsultasiReadonlyState(konsultasiLocked, jawabanLocked) {
+    $('#ksl-catatan')
+        .prop('readonly', konsultasiLocked)
+        .css({
+            background: konsultasiLocked ? '#f5f5f5' : '',
+            cursor: konsultasiLocked ? 'default' : ''
+        });
+    $('#btn-simpan-ksl').prop('disabled', konsultasiLocked);
+    $('#ksl-catatan-status')
+        .text(konsultasiLocked ? 'Keterangan sudah disimpan dan terkunci' : 'Belum disimpan')
+        .toggleClass('text-success', konsultasiLocked)
+        .toggleClass('text-muted', !konsultasiLocked);
+
+    $('#ksl-jawaban')
+        .prop('readonly', !konsultasiLocked || jawabanLocked)
+        .css({
+            background: (!konsultasiLocked || jawabanLocked) ? '#f5f5f5' : '',
+            cursor: (!konsultasiLocked || jawabanLocked) ? 'default' : ''
+        });
+    $('#btn-simpan-jkl').prop('disabled', !konsultasiLocked || jawabanLocked);
+    $('#btn-cetak-ksl').prop('disabled', !konsultasiLocked);
+    $('#ksl-jawaban-status')
+        .text(!konsultasiLocked ? 'Isi setelah keterangan konsultasi disimpan' : (jawabanLocked ? 'Jawaban sudah disimpan dan terkunci' : 'Siap diisi'))
+        .toggleClass('text-success', konsultasiLocked && jawabanLocked)
+        .toggleClass('text-muted', !konsultasiLocked || !jawabanLocked);
+}
+
 $(document).on('click', '.btn-surat-konsultasi', function () {
     var $b = $(this);
 
@@ -2460,7 +2906,10 @@ $(document).on('click', '.btn-surat-konsultasi', function () {
     $('#ksl-tglperiksa').val($b.data('tglperiksa'));
     $('#ksl-diagnosa').val(getIcd10SemuaText());
     $('#ksl-catatan').val('');
+    $('#ksl-jawaban').val('');
     $('#ksl-noSurat').val('AUTO');
+    currentKslLetterId = null;
+    setKonsultasiReadonlyState(false, false);
 
     $.ajax({
         url: GET_KSL_URL,
@@ -2470,7 +2919,10 @@ $(document).on('click', '.btn-surat-konsultasi', function () {
             if (res && res.success && res.data) {
                 var d = res.data;
                 $('#ksl-noSurat').val(d.letter_no || 'AUTO');
+                currentKslLetterId = d.letter_id || null;
                 if (d.notes !== null) $('#ksl-catatan').val(d.notes);
+                if (d.consultation_answer !== null) $('#ksl-jawaban').val(d.consultation_answer);
+                setKonsultasiReadonlyState(!!d.is_consultation_locked, !!d.is_answer_locked);
                 // Diagnosa sengaja tidak ditimpa dari data tersimpan —
                 // selalu ikut ICD-10 EMR terbaru saat modal dibuka.
             }
@@ -2495,7 +2947,9 @@ $('#btn-simpan-ksl').on('click', function () {
         success: function (res) {
             if (res.success) {
                 $('#ksl-noSurat').val(res.letter_no);
-                alert('Surat konsultasi berhasil disimpan: ' + res.letter_no);
+                currentKslLetterId = res.letter_id || currentKslLetterId;
+                setKonsultasiReadonlyState(!!res.is_consultation_locked, !!res.is_answer_locked);
+                alert('Keterangan konsultasi berhasil disimpan: ' + res.letter_no);
             } else {
                 alert(res.message || 'Gagal menyimpan surat konsultasi.');
             }
@@ -2506,18 +2960,7 @@ $('#btn-simpan-ksl').on('click', function () {
     });
 });
 
-var GET_JKL_URL = <?= json_encode($this->Url->build([
-    'controller' => 'OutpatientLetters',
-    'action'     => 'getSuratJawabanKonsultasi',
-    $visit->id,
-])) ?>;
-var SIMPAN_JKL_URL = <?= json_encode($this->Url->build([
-    'controller' => 'OutpatientLetters',
-    'action'     => 'simpanSuratJawabanKonsultasi',
-    $visit->id,
-])) ?>;
-
-$(document).on('click', '.btn-surat-jawaban-konsultasi', function () {
+$(document).on('click', '.btn-surat-jawaban-konsultasi-legacy-disabled', function () {
     var $b = $(this);
 
     $('#jkl-rekmed').val($b.data('rekmed'));
@@ -2554,14 +2997,16 @@ $('#btn-simpan-jkl').on('click', function () {
         method: 'POST',
         data: {
             _csrfToken: csrf,
-            diagnosis: $('#jkl-diagnosa').val(),
-            saran: $('#jkl-saran').val(),
+            diagnosis: $('#ksl-diagnosa').val(),
+            saran: $('#ksl-jawaban').val(),
         },
         dataType: 'json',
         success: function (res) {
             if (res.success) {
-                $('#jkl-noSurat').val(res.letter_no);
-                alert('Surat jawaban konsultasi berhasil disimpan: ' + res.letter_no);
+                $('#ksl-noSurat').val(res.letter_no);
+                currentKslLetterId = res.letter_id || currentKslLetterId;
+                setKonsultasiReadonlyState(!!res.is_consultation_locked, !!res.is_answer_locked);
+                alert('Jawaban konsultasi berhasil disimpan: ' + res.letter_no);
             } else {
                 alert(res.message || 'Gagal menyimpan surat.');
             }
@@ -2570,6 +3015,11 @@ $('#btn-simpan-jkl').on('click', function () {
             alert('Gagal menghubungi server.');
         }
     });
+});
+
+$('#btn-cetak-ksl').on('click', function () {
+    if (!currentKslLetterId) return;
+    window.open(CETAK_KSL_URL_BASE + '/' + currentKslLetterId, '_blank');
 });
 
 var GET_SKH_URL = <?= json_encode($this->Url->build([

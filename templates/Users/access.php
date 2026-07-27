@@ -3770,6 +3770,9 @@ $offerXls = ($offers['xls']==1) ? 'checked' : '';*/
                             'simpanSuratSakit' => 'Simpan Surat Sakit',
                             'getSuratKonsultasi' => 'Ambil Surat Konsultasi',
                             'simpanSuratKonsultasi' => 'Simpan Surat Konsultasi',
+                            'getSuratJawabanKonsultasi' => 'Ambil Jawaban Konsultasi',
+                            'simpanSuratJawabanKonsultasi' => 'Simpan Jawaban Konsultasi',
+                            'cetakSuratKonsultasi' => 'Cetak Surat Konsultasi',
                             'cetakSuratSakit' => 'Cetak Surat Sakit',
                         ]) ?>
                         <tr>

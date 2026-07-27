@@ -248,4 +248,267 @@ class OutpatientVisitEmrController extends AppController
 
         $this->set(compact('visit', 'emr'));
     }
+
+    public function createReferralQueue()
+    {
+        $this->request->allowMethod(['post']);
+        $this->autoRender = false;
+
+        $this->loadModel('PolyclinicQueues');
+
+        $polyName    = trim((string)$this->request->getData('poly_name'));
+        $patientName = trim((string)$this->request->getData('patient_name'));
+        $phoneNumber = trim((string)$this->request->getData('phone_number'));
+        $visitDate   = $this->request->getData('visit_date') ?: date('Y-m-d');
+
+        if (empty($polyName) || empty($patientName)) {
+            return $this->response
+                ->withType('application/json')
+                ->withStringBody(json_encode([
+                    'success' => false,
+                    'message' => 'Data pasien atau poli tidak lengkap.'
+                ]));
+        }
+
+        $existingQueue = $this->PolyclinicQueues->find()
+        ->where([
+                'visit_date' => $visitDate,
+                'patients_name' => $patientName,
+                'poly_name' => $polyName,
+                'call_status !=' => 'Selesai',
+                'is_delete' => 0,
+        ])
+        ->first();
+
+        if ($existingQueue) {
+            return $this->response
+                ->withType('application/json')
+                ->withStringBody(json_encode([
+                    'success' => false,
+                    'message' => 'Pasien sudah memiliki antrian pada poli tersebut.'
+                ]));
+        }
+
+        $connection = $this->PolyclinicQueues->getConnection();
+
+        try {
+
+            $result = $connection->transactional(function () use (
+                $visitDate,
+                $polyName,
+                $patientName,
+                $phoneNumber
+            ) {
+
+                $lastQueue = $this->PolyclinicQueues->find()
+                    ->where([
+                        'visit_date' => $visitDate,
+                        'is_delete' => 0
+                    ])
+                    ->order([
+                        'queue_number' => 'DESC',
+                        'id' => 'DESC'
+                    ])
+                    ->first();
+
+                $queueNumber = $lastQueue
+                    ? ((int)$lastQueue->queue_number + 1)
+                    : 1;
+
+                $queueCode = 'A-' . str_pad((string)$queueNumber, 3, '0', STR_PAD_LEFT);
+
+                $queue = $this->PolyclinicQueues->newEmptyEntity();
+
+                $queue->code            = $queueCode;
+                $queue->source          = 'Rujukan';
+
+                $queue->visit_date      = $visitDate;
+
+                $queue->poly_name       = $polyName;
+                $queue->patients_name   = $patientName;
+                $queue->no_telp         = $phoneNumber;
+
+                $queue->queue_number    = $queueNumber;
+
+                $queue->checkin_status  = 'Belum Check-in';
+                $queue->call_status     = 'Menunggu';
+                $queue->call_count      = 0;
+
+                $queue->is_create       = 1;
+                $queue->is_update       = 0;
+                $queue->is_delete       = 0;
+                $queue->is_active       = 'Y';
+
+                if (!$this->PolyclinicQueues->save($queue)) {
+                    throw new \Exception(json_encode($queue->getErrors()));
+                }
+
+                return [
+                    'code' => $queueCode,
+                    'queue_number' => $queueNumber
+                ];
+            });
+
+            return $this->response
+                ->withType('application/json')
+                ->withStringBody(json_encode([
+                    'success' => true,
+                    'code' => $result['code'],
+                    'queue_number' => $result['queue_number']
+                ]));
+
+        } catch (\Throwable $e) {
+
+            return $this->response
+                ->withType('application/json')
+                ->withStringBody(json_encode([
+                    'success' => false,
+                    'message' => 'Gagal membuat nomor antrian.',
+                    'error' => $e->getMessage()
+                ]));
+        }
+    }
+
+    public function kajianAwal($visitId = null)
+    {
+        $this->request->allowMethod(['get']);
+        $this->autoRender = false;
+
+        $this->loadModel('OutpatientVisits');
+        $this->loadModel('OutpatientInitialMedicalAssessments');
+
+        $visit = $this->OutpatientVisits->get($visitId, [
+            'contain' => ['Patients', 'Doctors', 'Registrations'],
+        ]);
+
+        $assessment = $this->OutpatientInitialMedicalAssessments->find()
+            ->where(['outpatient_visit_id' => $visit->id])
+            ->first();
+
+        return $this->jsonResponse([
+            'success' => true,
+            'data' => [
+                'id' => $assessment->id ?? null,
+                'assessment_no' => $assessment->assessment_no ?? $this->buildKajianAwalNo((int)$visit->id),
+                'assessment_date' => $this->formatAssessmentDate($assessment->assessment_date ?? null),
+                'assessment_time' => $this->formatAssessmentTime($assessment->assessment_time ?? null),
+                'data_dasar' => $this->decodeAssessmentSection($assessment->data_dasar ?? null),
+                'subjektif' => $this->decodeAssessmentSection($assessment->subjektif ?? null),
+                'observasi' => $this->decodeAssessmentSection($assessment->observasi ?? null),
+            ],
+            'patient' => [
+                'registration_no' => $visit->registration_no ?? ($visit->registration->registration_no ?? '-'),
+                'medical_record_no' => $visit->patient->code ?? '-',
+                'name' => $visit->patient->full_name ?? '-',
+                'doctor' => $visit->doctor->doctor_name ?? '-',
+            ],
+        ]);
+    }
+
+    public function simpanKajianAwal($visitId = null)
+    {
+        $this->request->allowMethod(['post']);
+        $this->autoRender = false;
+
+        $this->loadModel('OutpatientVisits');
+        $this->loadModel('OutpatientInitialMedicalAssessments');
+
+        $visit = $this->OutpatientVisits->get($visitId);
+        $data = $this->request->getData();
+
+        $assessment = $this->OutpatientInitialMedicalAssessments->find()
+            ->where(['outpatient_visit_id' => $visit->id])
+            ->first();
+
+        if (!$assessment) {
+            $assessment = $this->OutpatientInitialMedicalAssessments->newEmptyEntity();
+            $assessment->outpatient_visit_id = $visit->id;
+            $assessment->registration_id = $visit->registration_id ?? null;
+            $assessment->patient_id = $visit->patient_id ?? null;
+            $assessment->doctor_id = $visit->doctor_id ?? null;
+            $assessment->assessment_no = $this->buildKajianAwalNo((int)$visit->id);
+            $assessment->created_by_user_id = $this->getCurrentUserId();
+        }
+
+        $assessment->modified_by_user_id = $this->getCurrentUserId();
+        $assessment->assessment_date = !empty($data['assessment_date']) ? $data['assessment_date'] : date('Y-m-d');
+        $assessment->assessment_time = !empty($data['assessment_time']) ? $data['assessment_time'] : date('H:i:s');
+        $assessment->data_dasar = $this->encodeAssessmentSection($data['data_dasar'] ?? []);
+        $assessment->subjektif = $this->encodeAssessmentSection($data['subjektif'] ?? []);
+        $assessment->observasi = $this->encodeAssessmentSection($data['observasi'] ?? []);
+
+        if ($this->OutpatientInitialMedicalAssessments->save($assessment, ['checkRules' => false])) {
+            return $this->jsonResponse([
+                'success' => true,
+                'message' => 'Kajian medis awal berhasil disimpan.',
+                'id' => $assessment->id,
+                'assessment_no' => $assessment->assessment_no,
+            ]);
+        }
+
+        return $this->jsonResponse([
+            'success' => false,
+            'message' => 'Gagal menyimpan kajian medis awal.',
+            'errors' => $assessment->getErrors(),
+        ], 422);
+    }
+
+    private function buildKajianAwalNo(int $visitId): string
+    {
+        return 'KMA-' . date('Ymd') . '-' . str_pad((string)$visitId, 5, '0', STR_PAD_LEFT);
+    }
+
+    private function encodeAssessmentSection($section): ?string
+    {
+        if (!is_array($section) || empty($section)) {
+            return null;
+        }
+
+        return json_encode($section, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    private function decodeAssessmentSection($section): array
+    {
+        if (empty($section)) {
+            return [];
+        }
+
+        $decoded = json_decode((string)$section, true);
+
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    private function formatAssessmentDate($value): string
+    {
+        if (empty($value)) {
+            return date('Y-m-d');
+        }
+
+        if (is_object($value) && method_exists($value, 'format')) {
+            return $value->format('Y-m-d');
+        }
+
+        return substr((string)$value, 0, 10);
+    }
+
+    private function formatAssessmentTime($value): string
+    {
+        if (empty($value)) {
+            return date('H:i');
+        }
+
+        if (is_object($value) && method_exists($value, 'format')) {
+            return $value->format('H:i');
+        }
+
+        return substr((string)$value, 0, 5);
+    }
+
+    private function jsonResponse(array $payload, int $status = 200): \Cake\Http\Response
+    {
+        return $this->response
+            ->withStatus($status)
+            ->withType('application/json')
+            ->withStringBody(json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+    }
 }

@@ -105,6 +105,9 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
             if ($controller === 'Beds' && in_array($action, ['updateStatus', 'searchPatients'], true)) {
                 return true;
             }
+            if ($controller === 'OutpatientVisitEmr' && $action === 'simpanKajianAwal') {
+                return true;
+            }
             return false;
         });
         

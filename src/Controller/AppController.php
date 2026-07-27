@@ -221,11 +221,26 @@ class AppController extends Controller
               || !empty($checkUrl['outpatientvisits']['emr'])
             );
 
+          $outpatientVisitEmrAjaxActions = [
+            'kajianAwal',
+            'simpanKajianAwal',
+          ];
+
+          $canAccessOutpatientVisitEmrAjax = $getController === 'outpatientvisitemr'
+            && in_array($getAction, $outpatientVisitEmrAjaxActions, true)
+            && (
+              !empty($resultCheck['emr'])
+              || !empty($checkUrl['outpatientvisits']['emr'])
+            );
+
           $outpatientLetterHelperActions = [
             'getSuratSakit',
             'simpanSuratSakit',
             'getSuratKonsultasi',
             'simpanSuratKonsultasi',
+            'getSuratJawabanKonsultasi',
+            'simpanSuratJawabanKonsultasi',
+            'cetakSuratKonsultasi',
             'cetakSuratSakit',
           ];
 
@@ -362,6 +377,7 @@ class AppController extends Controller
             || $canAccessOutpatientVisitCppt
             || $canAccessOutpatientVisitEmrHelper
             || $canAccessOutpatientVisitEmrPage
+            || $canAccessOutpatientVisitEmrAjax
             || $canAccessOutpatientLetterHelper
             || $canAccessMedicalRecordHelper
             || $canAccessPatientHistoryHelper
@@ -396,7 +412,8 @@ class AppController extends Controller
               'invoices' => ['cariBapb'],
               'kartustok' => ['searchMedicine'],
               'medicinestocks' => ['toggleValid'],
-              'outpatientletters' => ['getSuratSakit', 'simpanSuratSakit', 'getSuratKonsultasi', 'simpanSuratKonsultasi', 'cetakSuratSakit'],
+              'outpatientletters' => ['getSuratSakit', 'simpanSuratSakit', 'getSuratKonsultasi', 'simpanSuratKonsultasi', 'getSuratJawabanKonsultasi', 'simpanSuratJawabanKonsultasi', 'cetakSuratKonsultasi', 'cetakSuratSakit'],
+              'outpatientvisitemr' => ['kajianAwal', 'simpanKajianAwal'],
               'outpatientvisits' => ['getSummary', 'liveData', 'addCppt', 'deleteCppt', 'panggil', 'searchIcd10', 'searchIcd9', 'hasilPemeriksaan'],
               'patienthistories' => ['searchPatients'],
               'polyclinicqueues' => ['searchPoly', 'searchPolyQueue', 'callQueue', 'createReferralQueue', 'searchPatients'],

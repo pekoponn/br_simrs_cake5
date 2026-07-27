@@ -186,7 +186,7 @@ class UsersController extends AppController
                 'patienthistories=index:0,searchPatients:0,periksa:0,history:0',
                 'outpatientvisits=index:0,view:0,add:0,edit:0,cppt:0,emr:0,resumeMedis:0,selesai:0,panggil:0,batal:0,getSummary:0,liveData:0,searchIcd10:0,searchIcd9:0,selesaiPeriksa:0,hasilPemeriksaan:0,delete:0',
                 'outpatientvisitemr=emr:0',
-                'outpatientletters=index:0,view:0,add:0,edit:0,delete:0,getSuratSakit:0,simpanSuratSakit:0,getSuratKonsultasi:0,simpanSuratKonsultasi:0,cetakSuratSakit:0',
+                'outpatientletters=index:0,view:0,add:0,edit:0,delete:0,getSuratSakit:0,simpanSuratSakit:0,getSuratKonsultasi:0,simpanSuratKonsultasi:0,getSuratJawabanKonsultasi:0,simpanSuratJawabanKonsultasi:0,cetakSuratKonsultasi:0,cetakSuratSakit:0',
                 'outpatientcpptnotes=index:0,view:0,add:0,edit:0,delete:0',
                 'inpatiententries=index:0,view:0,add:0,edit:0,delete:0',
                 'orders=index:0,view:0,antrianFarmasi:0,proses:0,form:0,detail:0,cariPasien:0,cariObat:0,cariLaboratorium:0,cariRadiologi:0,cariPenunjang:0,cariNutritionCombine:0,cariJenisMcu:0,cariJenisOperasi:0,historyPasien:0,historyOrderDetail:0',

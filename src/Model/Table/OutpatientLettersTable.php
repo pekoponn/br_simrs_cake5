@@ -131,6 +131,14 @@ class OutpatientLettersTable extends Table
             ->allowEmptyString('diagnosis');
 
         $validator
+            ->scalar('notes')
+            ->allowEmptyString('notes');
+
+        $validator
+            ->scalar('consultation_answer')
+            ->allowEmptyString('consultation_answer');
+
+        $validator
             ->boolean('is_normal')
             ->allowEmptyString('is_normal');
 

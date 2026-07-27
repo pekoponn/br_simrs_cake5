@@ -238,6 +238,9 @@ class OutpatientLettersController extends AppController
                 'letter_no' => $letter->letter_no,
                 'diagnosis' => $letter->diagnosis,
                 'notes'     => $letter->notes,
+                'consultation_answer' => $letter->consultation_answer,
+                'is_consultation_locked' => trim((string)$letter->notes) !== '',
+                'is_answer_locked' => trim((string)$letter->consultation_answer) !== '',
             ] : null,
         ]));
     }
@@ -247,6 +250,7 @@ class OutpatientLettersController extends AppController
         $this->request->allowMethod(['post']);
         $this->autoRender = false;
  
+        $this->loadModel('OutpatientVisits');
         $visit = $this->OutpatientVisits->get($id);
         $data  = $this->request->getData();
  
@@ -271,9 +275,14 @@ class OutpatientLettersController extends AppController
             $entity->letter_no           = 'KSL-' . date('Ymd') . '-' . str_pad((string)$visit->id, 5, '0', STR_PAD_LEFT);
         }
  
+        $notes = $data['notes'] ?? null;
+        if (!$isNew && trim((string)$entity->notes) !== '') {
+            $notes = $entity->notes;
+        }
+
         $fields = [
             'diagnosis' => $data['diagnosis'] ?? null,
-            'notes'     => $data['notes'] ?? null,
+            'notes'     => $notes,
         ];
  
         $entity = $this->OutpatientLetters->patchEntity($entity, $fields, [
@@ -286,12 +295,91 @@ class OutpatientLettersController extends AppController
                 'is_new'    => $isNew,
                 'letter_id' => $entity->id,
                 'letter_no' => $entity->letter_no,
+                'is_consultation_locked' => trim((string)$entity->notes) !== '',
+                'is_answer_locked' => trim((string)$entity->consultation_answer) !== '',
             ]));
         }
  
         return $this->response->withType('application/json')->withStringBody(json_encode([
             'success' => false,
             'message' => 'Gagal menyimpan surat konsultasi.',
+            'errors'  => $entity->getErrors(),
+        ]));
+    }
+
+    public function getSuratJawabanKonsultasi($id = null)
+    {
+        $this->request->allowMethod(['get']);
+        $this->autoRender = false;
+
+        $letter = $this->OutpatientLetters->find()
+            ->where([
+                'outpatient_visit_id' => (int)$id,
+                'letter_type' => 'konsultasi',
+            ])
+            ->first();
+
+        return $this->response->withType('application/json')->withStringBody(json_encode([
+            'success' => true,
+            'data'    => $letter ? [
+                'letter_id' => $letter->id,
+                'letter_no' => $letter->letter_no,
+                'diagnosis' => $letter->diagnosis,
+                'saran'     => $letter->consultation_answer,
+                'is_consultation_locked' => trim((string)$letter->notes) !== '',
+                'is_answer_locked' => trim((string)$letter->consultation_answer) !== '',
+            ] : null,
+        ]));
+    }
+
+    public function simpanSuratJawabanKonsultasi($id = null)
+    {
+        $this->request->allowMethod(['post']);
+        $this->autoRender = false;
+
+        $this->loadModel('OutpatientVisits');
+        $visit = $this->OutpatientVisits->get($id);
+        $data  = $this->request->getData();
+
+        $entity = $this->OutpatientLetters->find()
+            ->where([
+                'outpatient_visit_id' => $visit->id,
+                'letter_type' => 'konsultasi',
+            ])
+            ->first();
+
+        if (!$entity || trim((string)$entity->notes) === '') {
+            return $this->response->withType('application/json')->withStringBody(json_encode([
+                'success' => false,
+                'message' => 'Keterangan konsultasi harus disimpan terlebih dahulu.',
+            ]));
+        }
+
+        $answer = $data['saran'] ?? null;
+        if (trim((string)$entity->consultation_answer) !== '') {
+            $answer = $entity->consultation_answer;
+        }
+
+        $entity = $this->OutpatientLetters->patchEntity($entity, [
+            'diagnosis' => $data['diagnosis'] ?? $entity->diagnosis,
+            'consultation_answer' => $answer,
+        ], [
+            'validate' => false,
+        ]);
+
+        if ($this->OutpatientLetters->save($entity)) {
+            return $this->response->withType('application/json')->withStringBody(json_encode([
+                'success'   => true,
+                'letter_id' => $entity->id,
+                'letter_no' => $entity->letter_no,
+                'is_consultation_locked' => trim((string)$entity->notes) !== '',
+                'is_answer_locked' => trim((string)$entity->consultation_answer) !== '',
+            ]));
+        }
+
+        return $this->response->withType('application/json')->withStringBody(json_encode([
+            'success' => false,
+            'message' => 'Gagal menyimpan jawaban konsultasi.',
             'errors'  => $entity->getErrors(),
         ]));
     }
@@ -310,9 +398,18 @@ class OutpatientLettersController extends AppController
         $this->set(compact('letter'));
     }
 
-    public function beforeFilter(\Cake\Event\EventInterface $event)
+    public function cetakSuratKonsultasi($letterId = null)
     {
-        parent::beforeFilter($event);
-        $this->FormProtection->setConfig('unlockedActions', ['simpanSuratSakit', 'getSuratSakit']);
+        $letter = $this->OutpatientLetters->get($letterId, [
+            'contain' => ['Patients', 'Doctors', 'OutpatientVisits'],
+        ]);
+
+        if ($letter->letter_type !== 'konsultasi') {
+            throw new \Cake\Http\Exception\NotFoundException('Surat konsultasi tidak ditemukan.');
+        }
+
+        $this->viewBuilder()->setLayout('print');
+        $this->set(compact('letter'));
     }
+
 }

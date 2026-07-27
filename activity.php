@@ -1534,3 +1534,31 @@ CREATE TABLE invoice_details (
     CONSTRAINT fk_invd_invoice FOREIGN KEY (invoice_id)
         REFERENCES invoices (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `outpatient_initial_medical_assessments` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `outpatient_visit_id` int(11) NOT NULL,
+  `registration_id` int(11) DEFAULT NULL,
+  `patient_id` int(11) DEFAULT NULL,
+  `doctor_id` int(11) DEFAULT NULL,
+  `assessment_no` varchar(50) DEFAULT NULL,
+  `assessment_date` date DEFAULT NULL,
+  `assessment_time` time DEFAULT NULL,
+  `data_dasar` longtext DEFAULT NULL,
+  `subjektif` longtext DEFAULT NULL,
+  `observasi` longtext DEFAULT NULL,
+  `created_by_user_id` int(11) DEFAULT NULL,
+  `modified_by_user_id` int(11) DEFAULT NULL,
+  `created` datetime DEFAULT NULL,
+  `modified` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_oima_outpatient_visit_id` (`outpatient_visit_id`),
+  KEY `idx_oima_registration_id` (`registration_id`),
+  KEY `idx_oima_patient_id` (`patient_id`),
+  KEY `idx_oima_doctor_id` (`doctor_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+ALTER TABLE outpatient_letters
+ADD COLUMN notes LONGTEXT NULL AFTER diagnosis,
+ADD COLUMN consultation_answer LONGTEXT NULL AFTER notes;
