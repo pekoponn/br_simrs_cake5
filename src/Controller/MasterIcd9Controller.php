@@ -163,30 +163,36 @@ class MasterIcd9Controller extends AppController
         $this->autoRender = false;
 
         $q     = trim((string)$this->request->getQuery('q', ''));
-        $limit = min((int)$this->request->getQuery('limit', 30), 100);
-
-        if (strlen($q) < 1) {
-            return $this->_json([]);
-        }
+        $limit = min((int)$this->request->getQuery('limit', $q === '' ? 500 : 30), 500);
 
         try {
-            $results = $this->MasterIcd9->find()
+            $conditions = [
+                'MasterIcd9.is_active' => 1,
+            ];
+
+            if ($q !== '') {
+                $conditions['OR'] = [
+                    'MasterIcd9.kode LIKE' => '%' . $q . '%',
+                    'MasterIcd9.nama LIKE' => '%' . $q . '%',
+                ];
+            }
+
+            $query = $this->MasterIcd9->find()
                 ->select(['id', 'kode', 'nama'])
-                ->where([
-                    'MasterIcd9.is_active' => 1,
-                    'OR' => [
-                        'MasterIcd9.kode LIKE' => '%' . $q . '%',
-                        'MasterIcd9.nama LIKE' => '%' . $q . '%',
-                    ],
-                ])
-                ->order([
-                    'CASE WHEN MasterIcd9.kode LIKE \'' . addslashes($q) . '%\' THEN 0 ELSE 1 END' => 'ASC',
-                    'CASE WHEN MasterIcd9.nama LIKE \'' . addslashes($q) . '%\' THEN 0 ELSE 1 END' => 'ASC',
-                    'MasterIcd9.kode' => 'ASC',
-                ])
+                ->where($conditions)
+                ->order(['MasterIcd9.kode' => 'ASC'])
                 ->limit($limit)
-                ->enableHydration(false)
-                ->toArray();
+                ->enableHydration(false);
+
+            if ($q !== '') {
+                $safeQ = addslashes($q);
+                $query->order([
+                    'CASE WHEN MasterIcd9.kode LIKE \'' . $safeQ . '%\' THEN 0 ELSE 1 END' => 'ASC',
+                    'CASE WHEN MasterIcd9.nama LIKE \'' . $safeQ . '%\' THEN 0 ELSE 1 END' => 'ASC',
+                ], true);
+            }
+
+            $results = $query->toArray();
 
             return $this->_json($results);
 

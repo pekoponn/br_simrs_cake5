@@ -187,27 +187,32 @@ class MasterTindakanController extends AppController
 
         $q        = trim((string)$this->request->getQuery('q', ''));
         $kategori = trim((string)$this->request->getQuery('kategori', ''));
-        $limit    = min((int)$this->request->getQuery('limit', 30), 100);
 
-        // Kembalikan array kosong jika query terlalu pendek
-        if (strlen($q) < 1) {
-            return $this->_jsonResponse([]);
-        }
+        // Default limit dibedakan:
+        // - kalau q kosong (modal minta load semua data), kasih limit lebih besar
+        // - kalau q ada (autocomplete inline per-baris), tetap limit kecil biar ringan
+        $defaultLimit = ($q === '') ? 500 : 30;
+        $limit        = min((int)$this->request->getQuery('limit', $defaultLimit), 500);
 
         try {
             $conditions = [
                 'MasterTindakan.is_active' => 1,
-                'OR' => [
-                    'MasterTindakan.nama LIKE'  => '%' . $q . '%',
-                    'MasterTindakan.kode LIKE'  => '%' . $q . '%',
-                ],
             ];
+
+            // Hanya tambahkan filter pencarian kalau q tidak kosong.
+            // Kalau q kosong, kembalikan semua tindakan aktif (dibatasi $limit).
+            if ($q !== '') {
+                $conditions['OR'] = [
+                    'MasterTindakan.nama LIKE' => '%' . $q . '%',
+                    'MasterTindakan.kode LIKE' => '%' . $q . '%',
+                ];
+            }
 
             if (!empty($kategori)) {
                 $conditions['MasterTindakan.kategori'] = $kategori;
             }
 
-            $results = $this->MasterTindakan->find()
+            $query = $this->MasterTindakan->find()
                 ->select([
                     'id',
                     'kode',
@@ -219,20 +224,26 @@ class MasterTindakanController extends AppController
                 ])
                 ->where($conditions)
                 ->order([
-                    // Prioritaskan yang namanya dimulai dengan query
-                    'CASE WHEN MasterTindakan.nama LIKE \'' . $q . '%\' THEN 0 ELSE 1 END' => 'ASC',
                     'MasterTindakan.nama' => 'ASC',
                 ])
                 ->limit($limit)
-                ->enableHydration(false)
-                ->toArray();
+                ->enableHydration(false);
+
+            // Prioritaskan yang namanya dimulai dengan query — hanya relevan kalau q ada.
+            if ($q !== '') {
+                $query->order([
+                    'CASE WHEN MasterTindakan.nama LIKE \'' . $q . '%\' THEN 0 ELSE 1 END' => 'ASC',
+                ], true); // true = prepend, jadi urutan prioritas ini didahulukan sebelum nama ASC
+            }
+
+            $results = $query->toArray();
 
             // Pastikan harga selalu numerik (bukan string null)
             foreach ($results as &$row) {
-                $row['harga']    = $row['harga'] !== null ? (float)$row['harga'] : 0;
-                $row['kode']     = $row['kode']     ?? '';
-                $row['satuan']   = $row['satuan']   ?? 'Kali';
-                $row['kategori'] = $row['kategori'] ?? 'Lainnya';
+                $row['harga']      = $row['harga'] !== null ? (float)$row['harga'] : 0;
+                $row['kode']       = $row['kode']       ?? '';
+                $row['satuan']     = $row['satuan']     ?? 'Kali';
+                $row['kategori']   = $row['kategori']   ?? 'Lainnya';
                 $row['keterangan'] = $row['keterangan'] ?? '';
             }
             unset($row);

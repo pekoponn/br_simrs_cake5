@@ -146,28 +146,38 @@ class MasterIcd10Controller extends AppController
         $this->request->allowMethod(['get']);
         $this->autoRender = false;
 
-        $q = trim((string)$this->request->getQuery('q', ''));
-        $limit = min((int)$this->request->getQuery('limit', 50), 100);
+        $q     = trim((string)$this->request->getQuery('q'));
+        $limit = min((int)$this->request->getQuery('limit', $q === '' ? 500 : 50), 500);
 
-        if (strlen($q) < 1) {
-            return $this->_json([]);
-        }
+        $query = $this->MasterIcd10->find()
+            ->select(['kode', 'nama'])
+            ->where(['MasterIcd10.is_active' => 1]);
 
-        $results = $this->MasterIcd10->find()
-            ->select(['id', 'kode', 'nama'])
-            ->where([
-                'MasterIcd10.is_active' => 1,
+        if ($q !== '') {
+            $query->where([
                 'OR' => [
-                    'MasterIcd10.kode LIKE' => $q . '%',
+                    'MasterIcd10.kode LIKE' => '%' . $q . '%',
                     'MasterIcd10.nama LIKE' => '%' . $q . '%',
                 ],
-            ])
+            ]);
+        }
+
+        $results = $query
             ->order(['MasterIcd10.kode' => 'ASC'])
             ->limit($limit)
             ->enableHydration(false)
             ->toArray();
 
-        return $this->_json($results);
+        $data = array_map(function ($row) {
+            return [
+                'kode' => $row['kode'],
+                'nama' => $row['nama'],
+            ];
+        }, $results);
+
+        return $this->response
+            ->withType('application/json')
+            ->withStringBody(json_encode($data));
     }
 
     private function _normalizeData(array $data): array
