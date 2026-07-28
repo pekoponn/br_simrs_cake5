@@ -369,6 +369,122 @@ class OutpatientVisitEmrController extends AppController
         }
     }
 
+    /**
+     * Simpan gambar anatomi pasien dari canvas Fabric.js.
+     *
+     * @param int|null $visitId ID kunjungan rawat jalan.
+     * @return \Cake\Http\Response
+     */
+    public function saveAnatomy($visitId = null): \Cake\Http\Response
+    {
+        $this->request->allowMethod(['post']);
+        $this->autoRender = false;
+
+        $side = (string)$this->request->getData('side');
+        $imageData = (string)$this->request->getData('image');
+        $allowedSides = ['front' => 'anatomy_front', 'back' => 'anatomy_back'];
+
+        // Validasi sisi anatomi agar hanya field yang disiapkan yang bisa diubah.
+        if (empty($visitId) || !array_key_exists($side, $allowedSides)) {
+            return $this->jsonResponse([
+                'success' => false,
+                'message' => 'Data anatomi tidak valid.',
+            ], 422);
+        }
+
+        // Pastikan kolom database sudah ditambahkan sebelum mencoba menyimpan nama file.
+        $schema = $this->OutpatientVisitEmr->getSchema();
+        $field = $allowedSides[$side];
+        if (!$schema->hasColumn($field)) {
+            return $this->jsonResponse([
+                'success' => false,
+                'message' => 'Kolom database anatomi belum tersedia. Jalankan SQL ALTER TABLE terlebih dahulu.',
+            ], 422);
+        }
+
+        // Terima hanya PNG data URL dari canvas.toDataURL().
+        if (!preg_match('/^data:image\/png;base64,/', $imageData)) {
+            return $this->jsonResponse([
+                'success' => false,
+                'message' => 'Format gambar anatomi harus PNG base64.',
+            ], 422);
+        }
+
+        $binary = base64_decode((string)preg_replace('/^data:image\/png;base64,/', '', $imageData), true);
+        if ($binary === false || $binary === '') {
+            return $this->jsonResponse([
+                'success' => false,
+                'message' => 'Gambar anatomi tidak dapat dibaca.',
+            ], 422);
+        }
+
+        $emr = $this->OutpatientVisitEmr->find()
+            ->where(['outpatient_visit_id' => $visitId])
+            ->first();
+
+        // Jika dokter menyimpan anatomi sebelum form EMR utama disimpan, buat row EMR minimal.
+        if (!$emr) {
+            $emr = $this->OutpatientVisitEmr->newEmptyEntity();
+            $emr->outpatient_visit_id = (int)$visitId;
+            $emr->created_by_user_id = $this->getCurrentUserId();
+            $emr->total_fee = 0;
+            $emr->paid = false;
+        }
+
+        $directory = WWW_ROOT . 'uploads' . DS . 'anatomy' . DS;
+        if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
+            return $this->jsonResponse([
+                'success' => false,
+                'message' => 'Folder upload anatomi tidak dapat dibuat.',
+            ], 500);
+        }
+
+        // Nama file dibuat unik agar cache browser tidak menampilkan gambar lama setelah edit ulang.
+        $fileName = sprintf(
+            'visit_%s_%s_%s.png',
+            (int)$visitId,
+            $side,
+            date('YmdHis')
+        );
+        $filePath = $directory . $fileName;
+
+        if (file_put_contents($filePath, $binary) === false) {
+            return $this->jsonResponse([
+                'success' => false,
+                'message' => 'File gambar anatomi gagal disimpan.',
+            ], 500);
+        }
+
+        $oldFileName = (string)($emr->{$field} ?? '');
+        $emr->{$field} = $fileName;
+        $emr->modified_by_user_id = $this->getCurrentUserId();
+
+        if (!$this->OutpatientVisitEmr->save($emr, ['validate' => false])) {
+            @unlink($filePath);
+
+            return $this->jsonResponse([
+                'success' => false,
+                'message' => 'Nama file anatomi gagal disimpan ke database.',
+                'errors' => $emr->getErrors(),
+            ], 422);
+        }
+
+        // Hapus file versi lama setelah database berhasil diarahkan ke file baru.
+        if ($oldFileName !== '' && $oldFileName !== $fileName) {
+            $oldFilePath = $directory . basename($oldFileName);
+            if (is_file($oldFilePath)) {
+                @unlink($oldFilePath);
+            }
+        }
+
+        return $this->jsonResponse([
+            'success' => true,
+            'message' => 'Gambar anatomi berhasil disimpan.',
+            'file_name' => $fileName,
+            'file_url' => $this->request->getAttribute('webroot') . 'uploads/anatomy/' . $fileName,
+        ]);
+    }
+
     public function kajianAwal($visitId = null)
     {
         $this->request->allowMethod(['get']);

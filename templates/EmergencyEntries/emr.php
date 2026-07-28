@@ -651,31 +651,12 @@ $orderRegistrationNo = $registration->registration_no
                     <strong style="font-size:12px;"><i class="fa fa-diagnoses"></i> Diagnosa & ICD</strong>
                 </div>
                 <div class="panel-body" style="padding:8px 12px;">
-                    <div class="row">
-                        <div class="col-xs-6">
-                            <label style="font-size:11px; color:#555;">Diagnosa Utama</label>
-                            <input type="text" name="diagnosis_primary" class="form-control input-sm"
-                                   value="<?= h($registration->diagnosis_primary ?? '') ?>"
-                                   placeholder="Diagnosa utama..."
-                                   <?= $isDone ? 'readonly' : '' ?>>
-                        </div>
-                        <div class="col-xs-6">
-                            <label style="font-size:11px; color:#555;">Tindakan Utama</label>
-                            <input type="text" name="action_notes" class="form-control input-sm"
-                                   value="<?= h($registration->action_notes ?? '') ?>"
-                                   placeholder="Tindakan utama..."
-                                   <?= $isDone ? 'readonly' : '' ?>>
-                        </div>
-                    </div>
-                    <div class="row" style="margin-top:6px;">
-                        <div class="col-xs-12">
-                            <label style="font-size:11px; color:#555;">Diagnosa Sekunder</label>
-                            <input type="text" name="diagnosis_secondary" class="form-control input-sm"
-                                   value="<?= h($registration->diagnosis_secondary ?? '') ?>"
-                                   placeholder="Diagnosa sekunder (pisahkan koma)..."
-                                   <?= $isDone ? 'readonly' : '' ?>>
-                        </div>
-                    </div>
+                    <input type="hidden" name="diagnosis_primary" id="diagnosis_primary_hidden"
+                        value="<?= h($emr->diagnosis_primary ?? '') ?>">
+                    <input type="hidden" name="diagnosis_secondary" id="diagnosis_secondary_hidden"
+                        value="<?= h($emr->diagnosis_secondary ?? '') ?>">
+                    <input type="hidden" name="action_notes" id="action_notes_hidden"
+                        value="<?= h($emr->action_notes ?? '') ?>">
 
                     <!-- ICD-10 -->
                     <div style="margin-top:10px;">

@@ -27,6 +27,8 @@ class OutpatientVisitEmr extends Entity
         'diagnosis_desc' => true,
         'icd10_items' => true,
         'icd9_items' => true,
+        'anatomy_front' => true,
+        'anatomy_back' => true,
         'action_notes' => true,
         'doctor_notes' => true,
         'prescription_notes' => true,

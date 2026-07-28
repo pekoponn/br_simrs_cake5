@@ -80,6 +80,11 @@ $routes->scope('/', function (RouteBuilder $builder) {
         ['controller' => 'PolyclinicQueues', 'action' => 'createReferralQueue'],
         ['_method' => 'POST']
     );
+    $builder->connect(
+        '/outpatient-visit-emr/save-anatomy/:visit_id',
+        ['controller' => 'OutpatientVisitEmr', 'action' => 'saveAnatomy'],
+        ['_method' => 'POST', 'pass' => ['visit_id'], 'visit_id' => '\d+']
+    );
 
     /*
      * Connect catchall routes for all controllers.

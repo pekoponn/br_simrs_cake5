@@ -147,6 +147,16 @@ class OutpatientVisitEmrTable extends Table
             ->allowEmptyString('icd9_items');
 
         $validator
+            ->scalar('anatomy_front')
+            ->maxLength('anatomy_front', 255)
+            ->allowEmptyString('anatomy_front');
+
+        $validator
+            ->scalar('anatomy_back')
+            ->maxLength('anatomy_back', 255)
+            ->allowEmptyString('anatomy_back');
+
+        $validator
             ->scalar('action_notes')
             ->allowEmptyString('action_notes');
 

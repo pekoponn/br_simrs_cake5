@@ -1578,3 +1578,11 @@ CREATE TABLE doctor_schedule_quota_histories (
     modified DATETIME NULL,
     INDEX idx_schedule_cycle (doctor_schedule_id, cycle_date)
 );
+
+
+ALTER TABLE outpatient_visit_emr
+ADD COLUMN action_notes_secondary TEXT NULL AFTER action_notes;
+
+ALTER TABLE `outpatient_visit_emr`
+    ADD COLUMN `anatomy_front` VARCHAR(255) NULL AFTER `icd9_items`,
+    ADD COLUMN `anatomy_back` VARCHAR(255) NULL AFTER `anatomy_front`;

@@ -223,6 +223,7 @@ class AppController extends Controller
 
           $outpatientVisitEmrAjaxActions = [
             'kajianAwal',
+            'saveAnatomy',
             'simpanKajianAwal',
           ];
 
@@ -413,7 +414,7 @@ class AppController extends Controller
               'kartustok' => ['searchMedicine'],
               'medicinestocks' => ['toggleValid'],
               'outpatientletters' => ['getSuratSakit', 'simpanSuratSakit', 'getSuratKonsultasi', 'simpanSuratKonsultasi', 'getSuratJawabanKonsultasi', 'simpanSuratJawabanKonsultasi', 'cetakSuratKonsultasi', 'cetakSuratSakit'],
-              'outpatientvisitemr' => ['kajianAwal', 'simpanKajianAwal'],
+              'outpatientvisitemr' => ['kajianAwal', 'saveAnatomy', 'simpanKajianAwal'],
               'outpatientvisits' => ['getSummary', 'liveData', 'addCppt', 'deleteCppt', 'panggil', 'searchIcd10', 'searchIcd9', 'hasilPemeriksaan'],
               'patienthistories' => ['searchPatients'],
               'polyclinicqueues' => ['searchPoly', 'searchPolyQueue', 'callQueue', 'createReferralQueue', 'searchPatients'],

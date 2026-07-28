@@ -33,6 +33,20 @@ $orderRegistrationId = $visit->registration_id
 $orderRegistrationNo = $visit->registration_no
     ?? ($visit->registration->registration_no ?? null)
     ?? ($visit->registration->registration_number ?? null);
+
+// Konfigurasi gambar anatomi depan dan belakang untuk thumbnail serta canvas editor.
+$anatomyDefaultFrontUrl = $this->Url->build('/img/anatomy/anatomy-front.jpg');
+$anatomyDefaultBackUrl = $this->Url->build('/img/anatomy/anatomy-back.jpg');
+$anatomyFrontFile = (string)($emr->anatomy_front ?? '');
+$anatomyBackFile = (string)($emr->anatomy_back ?? '');
+$anatomyFrontExists = $anatomyFrontFile !== '' && is_file(WWW_ROOT . 'uploads' . DS . 'anatomy' . DS . $anatomyFrontFile);
+$anatomyBackExists = $anatomyBackFile !== '' && is_file(WWW_ROOT . 'uploads' . DS . 'anatomy' . DS . $anatomyBackFile);
+$anatomyFrontUrl = $anatomyFrontExists
+    ? $this->Url->build('/uploads/anatomy/' . rawurlencode($anatomyFrontFile))
+    : $anatomyDefaultFrontUrl;
+$anatomyBackUrl = $anatomyBackExists
+    ? $this->Url->build('/uploads/anatomy/' . rawurlencode($anatomyBackFile))
+    : $anatomyDefaultBackUrl;
 ?>
 
 <?= $this->Krs->breadcrumb('Outpatient Visits', 'EMR — Pemeriksaan Pasien') ?>
@@ -333,8 +347,8 @@ $orderRegistrationNo = $visit->registration_no
                 </div>
                 <div class="col-xs-4">
                     <button type="button" class="btn btn-sm btn-block" id="btn-kajian-awal"
-                            style="background:#6f42c1; color:#fff; font-size:11px;">
-                        <i class="fa fa-file-medical" style="color:#fff;"></i> KAJIAN MEDIS <br> AWAL
+                            style="background:#6f42c1; color:#fff; font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                        <i class="fa fa-file-medical" style="color:#fff;"></i> KAJIAN MEDIS AWAL
                     </button>
                 </div>
                 <div class="col-xs-4">
@@ -476,35 +490,35 @@ $orderRegistrationNo = $visit->registration_no
                                     </div>
                                 </div>
 
-                                <!-- Body Chart disatukan di tab Surat seperti layout client -->
+                                <!-- Anatomi pasien ditempatkan di area Body Chart tab Surat. -->
                                 <div class="col-xs-8">
-                                    <div style="display:flex; gap:10px; align-items:flex-start;">
-                                        <div style="flex:0 0 130px; text-align:center;">
-                                            <div style="border:1px solid #dee2e6; border-radius:6px; padding:10px;
-                                                        background:#f8f9fa; height:150px;
-                                                        display:flex; align-items:center; justify-content:center;">
-                                                <i class="fa fa-male" style="font-size:58px; color:#ccc;"></i>
-                                            </div>
-                                            <div style="display:flex; gap:4px; margin-top:6px;">
-                                                <button type="button" class="btn btn-xs btn-default btn-block"
-                                                        style="font-size:10px; margin-top:0;">Reset Gambar</button>
-                                                <button type="button" class="btn btn-xs btn-default btn-block"
-                                                        style="font-size:10px; margin-top:0;">Pilih Gambar</button>
-                                            </div>
-                                        </div>
-                                        <div style="flex:0 0 130px; text-align:center;">
-                                            <div style="border:1px solid #dee2e6; border-radius:6px; padding:10px;
-                                                        background:#f8f9fa; height:150px;
-                                                        display:flex; align-items:center; justify-content:center;">
-                                                <i class="fa fa-male" style="font-size:58px; color:#ccc;"></i>
-                                            </div>
-                                            <div style="display:flex; gap:4px; margin-top:6px;">
-                                                <button type="button" class="btn btn-xs btn-default btn-block"
-                                                        style="font-size:10px; margin-top:0;">Reset Gambar</button>
-                                                <button type="button" class="btn btn-xs btn-default btn-block"
-                                                        style="font-size:10px; margin-top:0;">Image Viewer</button>
-                                            </div>
-                                        </div>
+                                    <div class="anatomy-tab-chart">
+                                        <button type="button"
+                                                class="anatomy-thumb js-open-anatomy"
+                                                data-side="front"
+                                                data-title="Anatomi Depan"
+                                                data-image-url="<?= h($anatomyFrontUrl) ?>"
+                                                data-default-url="<?= h($anatomyDefaultFrontUrl) ?>"
+                                                data-field="anatomy_front">
+                                            <span class="anatomy-thumb-title">Anatomi Depan</span>
+                                            <img src="<?= h($anatomyFrontUrl) ?>" alt="Anatomi Depan">
+                                            <span class="anatomy-thumb-status">
+                                                <?= $anatomyFrontExists ? 'Sudah disimpan' : 'Default' ?>
+                                            </span>
+                                        </button>
+                                        <button type="button"
+                                                class="anatomy-thumb js-open-anatomy"
+                                                data-side="back"
+                                                data-title="Anatomi Belakang"
+                                                data-image-url="<?= h($anatomyBackUrl) ?>"
+                                                data-default-url="<?= h($anatomyDefaultBackUrl) ?>"
+                                                data-field="anatomy_back">
+                                            <span class="anatomy-thumb-title">Anatomi Belakang</span>
+                                            <img src="<?= h($anatomyBackUrl) ?>" alt="Anatomi Belakang">
+                                            <span class="anatomy-thumb-status">
+                                                <?= $anatomyBackExists ? 'Sudah disimpan' : 'Default' ?>
+                                            </span>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -831,38 +845,7 @@ $orderRegistrationNo = $visit->registration_no
                 <div class="panel-heading" style="padding:8px 12px;">
                     <strong style="font-size:12px;"><i class="fa fa-diagnoses"></i> Diagnosa & ICD</strong>
                 </div>
-                <div class="panel-body" style="padding:8px 12px;">
-                    <div class="row">
-                        <div class="col-xs-6">
-                            <label style="font-size:11px; color:#555;">Diagnosa Utama</label>
-                            <input type="text" name="diagnosis_primary" class="form-control input-sm"
-                                   value="<?= h($emr->diagnosis_primary ?? '') ?>"
-                                   placeholder="Diagnosa utama..."
-                                   <?= $isDone ? 'readonly' : '' ?>>
-                        </div>
-                        <div class="col-xs-6">
-                            <label style="font-size:11px; color:#555;">Tindakan Utama</label>
-                            <input type="text" name="action_notes" class="form-control input-sm"
-                                   value="<?= h($emr->action_notes ?? '') ?>"
-                                   placeholder="Tindakan utama..."
-                                   <?= $isDone ? 'readonly' : '' ?>>
-                        </div>
-                    </div>
-                    <div class="row" style="margin-top:6px;">
-                        <div class="col-xs-12">
-                            <label style="font-size:11px; color:#555;">Diagnosa Sekunder</label>
-                            <input type="text" name="diagnosis_secondary" class="form-control input-sm"
-                                   value="<?= h($emr->diagnosis_secondary ?? '') ?>"
-                                   placeholder="Diagnosa sekunder (pisahkan koma)..."
-                                   <?= $isDone ? 'readonly' : '' ?>>
-                        </div>
-                    </div>
-
-                    <!-- ══════════════════════════════════════════════════════════
-                         ICD-10
-                         Kolom: Kode + Nama Diagnosa saja (tanpa kategori/centang)
-                         icd10_selected dikirim via hidden input
-                         ══════════════════════════════════════════════════════════ -->
+            <div class="panel-body" style="padding:8px 12px;">
                     <div style="margin-top:10px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                             <label style="font-size:11px; font-weight:700; color:#1e3a5f; margin:0;">
@@ -1302,6 +1285,38 @@ $orderRegistrationNo = $visit->registration_no
     </div>
 
     <?= $this->Form->end() ?>
+
+<div class="modal fade" id="modal-anatomy-editor" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog anatomy-modal-dialog" role="document">
+        <div class="modal-content hasil-window">
+            <div class="hasil-title">
+                <span><i class="fa fa-pencil-alt"></i> <span id="anatomy-modal-title">Anatomi Tubuh Pasien</span></span>
+                <button type="button" class="hasil-close" data-dismiss="modal" aria-label="Close">&times;</button>
+            </div>
+            <div class="anatomy-toolbar">
+                <button type="button" class="btn btn-sm btn-primary" id="btn-anatomy-pen">
+                    <i class="fa fa-pen"></i> Pena
+                </button>
+                <button type="button" class="btn btn-sm btn-default" id="btn-anatomy-undo">
+                    <i class="fa fa-undo"></i> Undo
+                </button>
+                <button type="button" class="btn btn-sm btn-warning" id="btn-anatomy-clear">
+                    <i class="fa fa-trash"></i> Reset/Clear
+                </button>
+                <button type="button" class="btn btn-sm btn-success" id="btn-anatomy-save">
+                    <i class="fa fa-save"></i> Simpan
+                </button>
+                <button type="button" class="btn btn-sm btn-default" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Batal
+                </button>
+                <span id="anatomy-save-message" class="anatomy-save-message"></span>
+            </div>
+            <div class="anatomy-canvas-wrap">
+                <canvas id="anatomy-canvas" width="620" height="780"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="modal fade" id="modal-kajian-awal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-kajian-dialog" role="document">
@@ -2149,6 +2164,81 @@ $orderRegistrationNo = $visit->registration_no
 .input-group-addon { font-size: 11px; padding: 4px 6px; }
 .panel-heading strong { font-size: 12px; }
 
+/* Thumbnail anatomi pasien di area Body Chart tab Surat. */
+.anatomy-tab-chart {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+.anatomy-thumb {
+    flex: 0 0 150px;
+    width: 100%;
+    border: 1px solid #d7dde5;
+    background: #fff;
+    padding: 8px;
+    text-align: center;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.anatomy-thumb:hover {
+    border-color: #2d8cff;
+    box-shadow: 0 2px 8px rgba(45, 140, 255, .18);
+}
+.anatomy-thumb-title {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: #1e3a5f;
+}
+.anatomy-thumb img {
+    width: 100%;
+    height: 150px;
+    object-fit: contain;
+    background: #f8f9fa;
+    border: 1px solid #eef1f4;
+}
+.anatomy-thumb-status {
+    display: block;
+    margin-top: 6px;
+    font-size: 11px;
+    color: #6c757d;
+}
+
+/* Modal dan kanvas editor anatomi. */
+.anatomy-modal-dialog {
+    width: 760px;
+    max-width: 96%;
+}
+.anatomy-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 10px;
+    border-bottom: 1px solid #dce3ea;
+    background: #f8f9fa;
+}
+.anatomy-save-message {
+    margin-left: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.anatomy-canvas-wrap {
+    padding: 10px;
+    text-align: center;
+    overflow: auto;
+}
+.anatomy-canvas-wrap canvas {
+    border: 1px solid #ccd5df;
+}
+.anatomy-canvas-wrap .lower-canvas {
+    background: #fff;
+}
+.anatomy-canvas-wrap .upper-canvas {
+    background: transparent !important;
+}
+
 /* Tab styling - aktif mengikuti tab yang dipilih */
 .emr-tab-panel {
     background:#fff;
@@ -2538,6 +2628,20 @@ input.action-unit-price-display:focus {
     font-weight: 600;
 }
 </style>
+
+<script>
+// Konfigurasi anatomi dibaca oleh webroot/js/outpatient_visit_emr_anatomy.js.
+window.OUTPATIENT_ANATOMY_CONFIG = {
+    saveUrl: <?= json_encode($this->Url->build([
+        'controller' => 'OutpatientVisitEmr',
+        'action' => 'saveAnatomy',
+        $visit->id,
+    ])) ?>,
+    csrfToken: <?= json_encode($this->request->getAttribute('csrfToken')) ?>
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+<script src="<?= h($this->Url->build('/js/outpatient_visit_emr_anatomy.js')) ?>?v=<?= (int)filemtime(WWW_ROOT . 'js' . DS . 'outpatient_visit_emr_anatomy.js') ?>"></script>
 
 <script>
 $(document).ready(function () {
@@ -4996,4 +5100,49 @@ $(function () {
         $('#modal-pilih-icd9').modal('hide');
     });
 });
+
+function updateDiagnosisSummary() {
+    var primary10 = '', secondary10 = [];
+    $('#icd10-body tr.icd10-row').each(function () {
+        var kode = $.trim($(this).find('input[name^="icd10_code"]').val());
+        var nama = $.trim($(this).find('input[name^="icd10_nama"]').val());
+        if (!kode && !nama) return;
+        var label = (kode ? kode + ' - ' : '') + nama;
+        if ($(this).find('input[name="icd10_utama"]').is(':checked')) {
+            primary10 = label;
+        } else {
+            secondary10.push(label);
+        }
+    });
+    $('#diagnosis_primary_hidden').val(primary10);
+    $('#diagnosis_secondary_hidden').val(secondary10.join(', '));
+
+    var primary9 = '';
+    $('#icd9-body tr.icd9-row').each(function () {
+        var kode = $.trim($(this).find('input[name^="icd9_code"]').val());
+        var nama = $.trim($(this).find('input[name^="icd9_nama"]').val());
+        if (!kode && !nama) return;
+        var label = (kode ? kode + ' - ' : '') + nama;
+        if ($(this).find('input[name="icd9_utama"]').is(':checked')) {
+            primary9 = label;
+        }
+    });
+    $('#action_notes_hidden').val(primary9);
+}
+
+// Update tiap kali radio "utama" berubah, teks kode/nama diedit, atau baris ditambah/dihapus
+$(document).on('change', 'input[name="icd10_utama"], input[name="icd9_utama"]', updateDiagnosisSummary);
+$(document).on('input', '#icd10-body input, #icd9-body input', updateDiagnosisSummary);
+
+if (document.getElementById('icd10-body')) {
+    new MutationObserver(updateDiagnosisSummary)
+        .observe(document.getElementById('icd10-body'), { childList: true });
+}
+if (document.getElementById('icd9-body')) {
+    new MutationObserver(updateDiagnosisSummary)
+        .observe(document.getElementById('icd9-body'), { childList: true });
+}
+
+// Sinkronkan sekali saat halaman dibuka (kalau sudah ada data ICD tersimpan)
+updateDiagnosisSummary();
 </script>
