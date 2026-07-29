@@ -2,7 +2,29 @@
 /**
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Patient $patient
+ * @var array $provinces
+ * @var array $queuePatientData
  */
+?>
+
+<?php  
+$provinces = $provinces ?? [];
+$queuePatientData = $queuePatientData ?? [];
+
+$patientFieldValue = function (string $field, $fallback = '') use ($patient) {
+
+    $posted = $this->request->getData($field);
+    if ($posted !== null && $posted !== '') {
+        return $posted;
+    }
+
+    $posted = $this->request->getData('patient.' . $field);
+    if ($posted !== null && $posted !== '') {
+        return $posted;
+    }
+
+    return $patient->{$field} ?? $fallback;
+};
 ?>
 
 <?= $this->Krs->breadcrumb('Pasien', 'Edit') ?>
@@ -284,29 +306,42 @@
                     ]) ?>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="form-group">
-                    <label>Kelurahan</label>
-                    <?= $this->Form->control('subdistrict', ['label' => false, 'class' => 'form-control']) ?>
-                </div>
+            <div class="col-md-4">
+                <label>Provinsi</label>
+                <?php $vIdProv = $patientFieldValue('id_prov'); ?>
+                <select id="ui-prov" class="form-control select2Form">
+                    <option value="">-- Pilih Provinsi --</option>
+                    <?php foreach ($provinces as $prov): ?>
+                        <option value="<?= h($prov['id_prov']) ?>" <?= (string)$vIdProv === (string)$prov['id_prov'] ? 'selected' : '' ?>><?= h($prov['nama']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <input type="hidden" name="id_prov" id="hidden-province" value="<?= h($vIdProv) ?>">
+                <input type="hidden" name="province" id="hidden-province-name" value="<?= h($patientFieldValue('province')) ?>">
             </div>
-            <div class="col-md-3">
-                <div class="form-group">
-                    <label>Kecamatan</label>
-                    <?= $this->Form->control('district', ['label' => false, 'class' => 'form-control']) ?>
-                </div>
+            <div class="col-md-4">
+                <label>Kabupaten/Kota</label>
+                <select id="ui-kab" class="form-control select2Form" disabled>
+                    <option value="">-- Pilih Kabupaten/Kota --</option>
+                </select>
+                <input type="hidden" name="id_kab" id="hidden-city" value="<?= h($patientFieldValue('id_kab')) ?>">
+                <input type="hidden" name="city" id="hidden-city-name" value="<?= h($patientFieldValue('city')) ?>">
             </div>
-            <div class="col-md-3">
-                <div class="form-group">
-                    <label>Kota / Kabupaten</label>
-                    <?= $this->Form->control('city', ['label' => false, 'class' => 'form-control']) ?>
-                </div>
+            <div class="col-md-4">
+                <label>Kecamatan</label>
+                <select id="ui-kec" class="form-control select2Form" disabled>
+                    <option value="">-- Pilih Kecamatan --</option>
+                </select>
+                <input type="hidden" name="id_kec" id="hidden-district" value="<?= h($patientFieldValue('id_kec')) ?>">
+                <input type="hidden" name="district" id="hidden-district-name" value="<?= h($patientFieldValue('district')) ?>">
             </div>
-            <div class="col-md-3">
-                <div class="form-group">
-                    <label>Provinsi</label>
-                    <?= $this->Form->control('province', ['label' => false, 'class' => 'form-control']) ?>
-                </div>
+
+            <div class="col-md-4">
+                <label>Kelurahan</label>
+                <select id="ui-kel" class="form-control select2Form" disabled>
+                    <option value="">-- Pilih Kelurahan --</option>
+                </select>
+                <input type="hidden" name="id_kel" id="hidden-subdistrict" value="<?= h($patientFieldValue('id_kel')) ?>">
+                <input type="hidden" name="subdistrict" id="hidden-subdistrict-name" value="<?= h($patientFieldValue('subdistrict')) ?>">
             </div>
         </div>
 
@@ -328,3 +363,223 @@
 
     </div>
 </div>
+
+<script>
+$(function() {
+    var regionUrls = {
+        kabupatens: [
+            "<?= $this->Url->build(['controller' => 'Patients', 'action' => 'getKabupatens']) ?>",
+            "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'getKabupatens']) ?>"
+        ],
+        kecamatans: [
+            "<?= $this->Url->build(['controller' => 'Patients', 'action' => 'getKecamatans']) ?>",
+            "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'getKecamatans']) ?>"
+        ],
+        kelurahans: [
+            "<?= $this->Url->build(['controller' => 'Patients', 'action' => 'getKelurahans']) ?>",
+            "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'getKelurahans']) ?>"
+        ]
+    };
+
+    function refreshSelect2($select) {
+        $select.trigger('change.select2');
+    }
+
+    function fetchRegion(urls, params, done) {
+        var index = 0;
+        function request() {
+            $.ajax({
+                url: urls[index],
+                data: params,
+                dataType: 'json',
+                method: 'GET'
+            }).done(function(data) {
+                if ($.isArray(data)) {
+                    done(data);
+                    return;
+                }
+                if (data && $.isArray(data.data)) {
+                    done(data.data);
+                    return;
+                }
+                index++;
+                if (index < urls.length) {
+                    request();
+                    return;
+                }
+                done([]);
+            }).fail(function() {
+                index++;
+                if (index < urls.length) {
+                    request();
+                    return;
+                }
+                done([]);
+            });
+        }
+        request();
+    }
+
+    function fillSelect($select, data, idKey, placeholder, selectedValue) {
+        var html = '<option value="">' + placeholder + '</option>';
+        var found = false;
+
+        data.forEach(function(item) {
+            var value = item[idKey];
+            var selected = selectedValue !== null &&
+                           selectedValue !== undefined &&
+                           String(selectedValue) === String(value);
+
+            if (selected) {
+                found = true;
+            }
+
+            html += '<option value="' + value + '"' +
+                (selected ? ' selected' : '') +
+                '>' + item.nama + '</option>';
+        });
+
+        $select.html(html).prop('disabled', data.length === 0);
+
+        if (found) {
+            $select.val(String(selectedValue));
+        }
+
+        refreshSelect2($select);
+        return found;
+    }
+
+    function clearLowerLevels(level) {
+        if (level === 'prov' || level === 'kab' || level === 'kec') {
+            $('#ui-kel').html('<option value="">-- Pilih Kelurahan --</option>').prop('disabled', true);
+            $('#hidden-subdistrict, #hidden-subdistrict-name').val('');
+        }
+        if (level === 'prov' || level === 'kab') {
+            $('#ui-kec').html('<option value="">-- Pilih Kecamatan --</option>').prop('disabled', true);
+            $('#hidden-district, #hidden-district-name, #hidden-subdistrict, #hidden-subdistrict-name').val('');
+        }
+        if (level === 'prov') {
+            $('#ui-kab').html('<option value="">-- Pilih Kabupaten/Kota --</option>').prop('disabled', true);
+            $('#hidden-city, #hidden-city-name, #hidden-district, #hidden-district-name, #hidden-subdistrict, #hidden-subdistrict-name').val('');
+        }
+        refreshSelect2($('#ui-kab, #ui-kec, #ui-kel'));
+    }
+
+    function loadKabupaten(idProv, selectedKab, callback) {
+        fetchRegion(regionUrls.kabupatens, { id_prov: idProv }, function(data) {
+            fillSelect($('#ui-kab'), data, 'id_kab', '-- Pilih Kabupaten/Kota --', selectedKab);
+            $('#ui-kab').prop('disabled', data.length === 0);
+            if (data.length && selectedKab) {
+                $('#ui-kab').val(String(selectedKab));
+                refreshSelect2($('#ui-kab'));
+                $('#ui-kab').trigger('change');
+            }
+            if (typeof callback === 'function') {
+                callback();
+            }
+        });
+    }
+
+    function loadKecamatan(idKab, selectedKec, callback) {
+        fetchRegion(regionUrls.kecamatans, { id_kab: idKab }, function(data) {
+            fillSelect($('#ui-kec'), data, 'id_kec', '-- Pilih Kecamatan --', selectedKec);
+            $('#ui-kec').prop('disabled', data.length === 0);
+            if (data.length && selectedKec) {
+                $('#ui-kec').val(String(selectedKec));
+                refreshSelect2($('#ui-kec'));
+                $('#ui-kec').trigger('change');
+            }
+            if (typeof callback === 'function') {
+                callback();
+            }
+        });
+    }
+
+    function loadKelurahan(idKec, selectedKel) {
+        fetchRegion(regionUrls.kelurahans, { id_kec: idKec }, function(data) {
+            fillSelect($('#ui-kel'), data, 'id_kel', '-- Pilih Kelurahan --', selectedKel);
+            $('#ui-kel').prop('disabled', data.length === 0);
+            if (data.length && selectedKel) {
+                $('#ui-kel').val(String(selectedKel));
+                refreshSelect2($('#ui-kel'));
+            }
+        });
+    }
+
+    $(document).on('change.patientsRegion select2:select.patientsRegion', '#ui-prov', function() {
+        var selectedText = $(this).find('option:selected').text();
+        var idProv = $(this).val();
+
+        $('#hidden-province').val(idProv || '');
+        $('#hidden-province-name').val(idProv ? selectedText : '');
+        clearLowerLevels('prov');
+
+        if (!idProv) {
+            return;
+        }
+
+        loadKabupaten(idProv, null);
+    });
+
+    $(document).on('change.patientsRegion select2:select.patientsRegion', '#ui-kab', function() {
+        var selectedText = $(this).find('option:selected').text();
+        var idKab = $(this).val();
+
+        $('#hidden-city').val(idKab || '');
+        $('#hidden-city-name').val(idKab ? selectedText : '');
+        clearLowerLevels('kab');
+
+        if (!idKab) {
+            return;
+        }
+
+        loadKecamatan(idKab, null);
+    });
+
+    $(document).on('change.patientsRegion select2:select.patientsRegion', '#ui-kec', function() {
+        var selectedText = $(this).find('option:selected').text();
+        var idKec = $(this).val();
+
+        $('#hidden-district').val(idKec || '');
+        $('#hidden-district-name').val(idKec ? selectedText : '');
+        clearLowerLevels('kec');
+
+        if (!idKec) {
+            return;
+        }
+
+        loadKelurahan(idKec, null);
+    });
+
+    $(document).on('change.patientsRegion select2:select.patientsRegion', '#ui-kel', function() {
+        var selectedText = $(this).find('option:selected').text();
+        var idKel = $(this).val();
+
+        $('#hidden-subdistrict').val(idKel || '');
+        $('#hidden-subdistrict-name').val(idKel ? selectedText : '');
+    });
+
+    var initialRegion = {
+        prov: <?= json_encode((string)$patientFieldValue('id_prov')) ?>,
+        kab: <?= json_encode((string)$patientFieldValue('id_kab')) ?>,
+        kec: <?= json_encode((string)$patientFieldValue('id_kec')) ?>,
+        kel: <?= json_encode((string)$patientFieldValue('id_kel')) ?>
+    };
+
+    if (initialRegion.prov) {
+        $('#ui-prov').val(String(initialRegion.prov));
+        refreshSelect2($('#ui-prov'));
+        loadKabupaten(initialRegion.prov, initialRegion.kab, function() {
+            if (!initialRegion.kab) {
+                return;
+            }
+            loadKecamatan(initialRegion.kab, initialRegion.kec, function() {
+                if (!initialRegion.kec) {
+                    return;
+                }
+                loadKelurahan(initialRegion.kec, initialRegion.kel);
+            });
+        });
+    }
+});
+</script>

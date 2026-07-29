@@ -78,9 +78,20 @@ class PatientsController extends AppController
         // Kode pasien ini hanya untuk master pasien, bukan nomor rekam medis.
         $previewCode = $this->generatePatientCode();
         $patient->code = $previewCode;
+        $this->loadModel('DaerahProvinsis');
+
+        $provinces = $this->DaerahProvinsis->find()
+        ->select(['id_prov', 'nama'])
+        ->order(['nama' => 'ASC'])
+        ->enableHydration(false)
+        ->toArray();
 
         if ($this->request->is('post')) {
             $data = $this->request->getData();
+            if (!empty($data['patient']) && is_array($data['patient'])) {
+                $data = array_replace($data, $data['patient']);
+                unset($data['patient']);
+            }
 
             // Kode pasien dibuat otomatis agar tidak tersimpan 0/kosong.
             $data['code'] = $this->generatePatientCode();
@@ -107,7 +118,7 @@ class PatientsController extends AppController
             }
         }
 
-        $this->set(compact('patient', 'previewCode'));
+        $this->set(compact('patient', 'previewCode', 'provinces'));
     }
 
     /**
@@ -115,6 +126,13 @@ class PatientsController extends AppController
      */
     public function edit($id = null)
     {
+        $this->loadModel('DaerahProvinsis');
+
+        $provinces = $this->DaerahProvinsis->find()
+        ->select(['id_prov', 'nama'])
+        ->order(['nama' => 'ASC'])
+        ->enableHydration(false)
+        ->toArray();
         $patient = $this->Patients->get($id, ['contain' => []]);
 
         if ($this->request->is(['patch', 'post', 'put'])) {
@@ -140,7 +158,7 @@ class PatientsController extends AppController
             $this->Flash->error(__('Data pasien gagal diupdate.'));
         }
 
-        $this->set(compact('patient'));
+        $this->set(compact('patient', 'provinces'));
     }
 
     /**
@@ -193,5 +211,70 @@ class PatientsController extends AppController
         } while ($exists);
 
         return $code;
+    }
+    public function getKabupatens()
+    {
+        $this->request->allowMethod(['get']);
+
+        $idProv = $this->request->getQuery('id_prov');
+
+        $this->loadModel('DaerahKabupatens');
+
+        $kabupatens = $this->DaerahKabupatens->find()
+            ->select(['id_kab', 'nama'])
+            ->where(['id_prov' => $idProv])
+            ->order(['nama' => 'ASC'])
+            ->enableHydration(false)
+            ->toArray();
+
+        $this->autoRender = false;
+
+        return $this->response
+            ->withType('application/json')
+            ->withStringBody(json_encode($kabupatens));
+    }
+
+    public function getKecamatans()
+    {
+        $this->request->allowMethod(['get']);
+
+        $idKab = $this->request->getQuery('id_kab');
+
+        $this->loadModel('DaerahKecamatans');
+
+        $kecamatans = $this->DaerahKecamatans->find()
+            ->select(['id_kec', 'nama'])
+            ->where(['id_kab' => $idKab])
+            ->order(['nama' => 'ASC'])
+            ->enableHydration(false)
+            ->toArray();
+
+        $this->autoRender = false;
+
+        return $this->response
+            ->withType('application/json')
+            ->withStringBody(json_encode($kecamatans));
+    }
+
+    public function getKelurahans()
+    {
+        $this->request->allowMethod(['get']);
+
+        $idKec = $this->request->getQuery('id_kec');
+
+        $this->loadModel('DaerahKelurahans');
+
+        $kelurahans = $this->DaerahKelurahans->find()
+            ->select(['id_kel', 'nama'])
+            ->where(['id_kec' => $idKec])
+            ->order(['nama' => 'ASC'])
+            ->enableHydration(false)
+            ->toArray();
+
+        $this->autoRender = false;
+
+        return $this->response
+            ->withType('application/json')
+            ->withStringBody(json_encode($kelurahans));
     }
 }

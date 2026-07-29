@@ -56,6 +56,18 @@ foreach (($patient->registrations ?? []) as $registration) {
         $personResponsibles[$registration->person_responsible->id] = $registration->person_responsible;
     }
 }
+
+function fmtPatientDate($val, $fmt = 'd-m-Y') {
+    if (empty($val)) return '—';
+    if ($val instanceof \Cake\I18n\FrozenDate || $val instanceof \Cake\I18n\Date) {
+        return $val->format($fmt);
+    }
+    if ($val instanceof \Cake\I18n\FrozenTime || $val instanceof \Cake\I18n\Time) {
+        return $val->format($fmt);
+    }
+    $ts = strtotime((string)$val);
+    return $ts ? date($fmt, $ts) : '—';
+}
 ?>
 
 <?= $this->Krs->breadcrumb('Master', $dataChild, 'Detail') ?>

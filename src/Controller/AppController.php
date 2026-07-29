@@ -134,6 +134,22 @@ class AppController extends Controller
             && $getAction === 'getSummary'
             && !empty($resultCheck['index']);
 
+          $patientRegionActions = [
+            'getKabupatens',
+            'getKecamatans',
+            'getKelurahans',
+            'get-kabupatens',
+            'get-kecamatans',
+            'get-kelurahans',
+          ];
+
+          $canAccessPatientRegionHelper = $getController === 'patients'
+            && in_array($getAction, $patientRegionActions, true)
+            && (
+              !empty($resultCheck['add'])
+              || !empty($resultCheck['edit'])
+            );
+
           $bedHelperActions = [
             'monitoring',
             'view',
@@ -370,6 +386,7 @@ class AppController extends Controller
           $hasRelatedAccess = $canAccessRegistrationHelper
             || $canAccessRegistrationView
             || $canAccessRegistrationSummary
+            || $canAccessPatientRegionHelper
             || $canAccessBedHelper
             || $canAccessPolyclinicQueueHelper
             || $canAccessPolyclinicQueueEntry
@@ -417,6 +434,7 @@ class AppController extends Controller
               'outpatientvisitemr' => ['kajianAwal', 'saveAnatomy', 'simpanKajianAwal'],
               'outpatientvisits' => ['getSummary', 'liveData', 'addCppt', 'deleteCppt', 'panggil', 'searchIcd10', 'searchIcd9', 'hasilPemeriksaan'],
               'patienthistories' => ['searchPatients'],
+              'patients' => ['getKabupatens', 'getKecamatans', 'getKelurahans', 'get-kabupatens', 'get-kecamatans', 'get-kelurahans'],
               'polyclinicqueues' => ['searchPoly', 'searchPolyQueue', 'callQueue', 'createReferralQueue', 'searchPatients'],
               'rencanapembelians' => ['ambilDetail'],
               'registrations' => ['getSummary', 'searchPatients', 'getKabupatens', 'getKecamatans', 'getKelurahans', 'getBedClass', 'getAvailableBeds', 'getDoctorSchedules'],

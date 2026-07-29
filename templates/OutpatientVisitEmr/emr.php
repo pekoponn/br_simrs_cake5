@@ -351,6 +351,7 @@ $anatomyBackUrl = $anatomyBackExists
                         <i class="fa fa-file-medical" style="color:#fff;"></i><br> KAJIAN MEDIS AWAL
                     </button>
                 </div>
+                <div class="col-xs-4">
                 <button type="button" class="btn btn-sm btn-block btn-inverse btn-surat-bukti-rajal"
                             style="font-size:11px;"
                             data-noreg="<?= h($visit->registration_no ?? '-') ?>"

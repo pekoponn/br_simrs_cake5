@@ -25,7 +25,7 @@ function hitungUmur($birthDate) {
 }
 ?>
 
-<?= $this->Krs->breadcrumb('Pasien', 'Tambah', null, true) ?>
+<!-- <?= $this->Krs->breadcrumb('Pasien', 'Tambah', null, true) ?> -->
 
 <div class="panel panel-inverse">
 

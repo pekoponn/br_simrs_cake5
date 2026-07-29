@@ -180,7 +180,7 @@ class UsersController extends AppController
                 'medicalrecordinpatients=index:0,view:0,add:0,edit:0,delete:0',
                 'medicalrecordoutpatientigds=index:0,view:0,add:0,edit:0,delete:0',
                 'medicalresumes=index:0,view:0,add:0,edit:0,delete:0',
-                'patients=index:0,add:0,edit:0,view:0,delete:0',
+                'patients=index:0,add:0,edit:0,view:0,delete:0,getKabupatens:0,getKecamatans:0,getKelurahans:0',
                 'registrations=index:0,getSummary:0,view:0,add:0,edit:0,delete:0,searchPatients:0,getKabupatens:0,getKecamatans:0,getKelurahans:0,getBedClass:0,getAvailableBeds:0,getDoctorSchedules:0',
                 'patientadmissions=index:0',
                 'patienthistories=index:0,searchPatients:0,periksa:0,history:0',
