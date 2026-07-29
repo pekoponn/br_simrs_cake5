@@ -484,13 +484,9 @@ class AppController extends Controller
 
         $targetIso = $dayIsoMap[mb_strtolower(trim($dayName))] ?? (int)date('N');
         $todayIso = (int)date('N');
+        $diff = ($targetIso - $todayIso + 7) % 7;
 
-        $diff = $todayIso - $targetIso;
-        if ($diff < 0) {
-            $diff += 7;
-        }
-
-        return date('Y-m-d', strtotime("-{$diff} days"));
+        return date('Y-m-d', strtotime("+{$diff} days"));
     }
 
     /**
@@ -505,5 +501,47 @@ class AppController extends Controller
             : null;
 
         return $storedResetDate === $cycleDate ? (int)($schedule->quota_used ?? 0) : 0;
+    }
+
+    protected function archiveExpiredDoctorScheduleCycle($schedule): void
+    {
+        $activeCycleDate = $this->getDoctorScheduleCycleDate((string)($schedule->day ?? ''));
+
+        $storedResetDate = !empty($schedule->quota_reset_at)
+            ? (is_object($schedule->quota_reset_at) ? $schedule->quota_reset_at->format('Y-m-d') : (string)$schedule->quota_reset_at)
+            : null;
+
+        if ($storedResetDate === null || $storedResetDate === $activeCycleDate) {
+            return;
+        }
+
+        if ((int)($schedule->quota_used ?? 0) > 0) {
+            $this->loadModel('DoctorScheduleQuotaHistories');
+
+            $exists = $this->DoctorScheduleQuotaHistories->exists([
+                'doctor_schedule_id' => $schedule->id,
+                'cycle_date' => $storedResetDate,
+            ]);
+
+            if (!$exists) {
+                $now = date('Y-m-d H:i:s');
+
+                $history = $this->DoctorScheduleQuotaHistories->newEntity([
+                    'doctor_schedule_id' => $schedule->id,
+                    'cycle_date' => $storedResetDate,
+                    'quota' => $schedule->quota,
+                    'quota_used' => $schedule->quota_used,
+                    'created' => $now,   // <-- fix: isi manual, kolom NOT NULL tanpa default
+                    'modified' => $now,  // <-- jaga-jaga kalau kolom ini juga NOT NULL
+                ]);
+
+                $this->DoctorScheduleQuotaHistories->save($history);
+            }
+        }
+
+        $schedule->quota_used = 0;
+        $schedule->quota_reset_at = $activeCycleDate;
+
+        $this->DoctorSchedules->save($schedule);
     }
 }

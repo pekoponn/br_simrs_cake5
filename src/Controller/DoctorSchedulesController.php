@@ -13,6 +13,10 @@ class DoctorSchedulesController extends AppController
 
         $doctorSchedules = $this->paginate($this->DoctorSchedules);
 
+        foreach ($doctorSchedules as $ds) {
+            $ds->effective_quota_used = $this->getEffectiveQuotaUsed($ds);
+        }
+
         $this->set(compact('doctorSchedules'));
     }
 
@@ -22,8 +26,10 @@ class DoctorSchedulesController extends AppController
             'contain' => ['Doctors'],
         ]);
 
+        $this->archiveExpiredDoctorScheduleCycle($doctorSchedule);
+
         $currentCycleDate = $this->getDoctorScheduleCycleDate((string)$doctorSchedule->day);
-        $currentQuotaUsed = $this->getEffectiveQuotaUsed($doctorSchedule);
+        $currentQuotaUsed = (int)($doctorSchedule->quota_used ?? 0);
 
         $this->loadModel('DoctorScheduleQuotaHistories');
         $quotaHistories = $this->DoctorScheduleQuotaHistories->find()

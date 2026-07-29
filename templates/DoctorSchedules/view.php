@@ -352,11 +352,14 @@ $currentCycleLabel = !empty($currentCycleDate)
         display: inline-block;
         vertical-align: middle;
         margin-right: 8px;
+        line-height: 0;
     }
 
     .ds-history-mini-fill {
+        display: inline-block;
         height: 100%;
         border-radius: 999px;
+        vertical-align: top;
     }
 
     .ds-history-empty {
