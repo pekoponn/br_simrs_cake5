@@ -1,243 +1,239 @@
 /* global $, fabric, OUTPATIENT_ANATOMY_CONFIG */
 
 /**
- * Editor anatomi pasien untuk halaman EMR rawat jalan.
- * Canvas memakai Fabric.js dan hasil akhirnya disimpan sebagai PNG base64.
+ * Editor anatomi untuk EMR dan Kajian Medis Awal.
+ * Keduanya memakai canvas Fabric terpisah, tetapi menyimpan file anatomi yang sama.
  */
 (function () {
     'use strict';
 
-    var canvas = null;
-    var activeSide = null;
-    var activeDefaultUrl = null;
-    var undoStack = [];
     var config = window.OUTPATIENT_ANATOMY_CONFIG || {};
-    var loadRequestId = 0;
-    var backgroundObject = null;
+    var editors = {
+        emr: createEditor({
+            modal: '#modal-anatomy-editor',
+            canvas: 'anatomy-canvas',
+            title: '#anatomy-modal-title',
+            message: '#anatomy-save-message',
+            pen: '#btn-anatomy-pen',
+            undo: '#btn-anatomy-undo',
+            clear: '#btn-anatomy-clear',
+            save: '#btn-anatomy-save'
+        }),
+        kma: createEditor({
+            modal: '#modal-kma-anatomy-editor',
+            canvas: 'kma-anatomy-canvas',
+            title: '#kma-anatomy-modal-title',
+            message: '#kma-anatomy-save-message',
+            pen: '#btn-kma-anatomy-pen',
+            undo: '#btn-kma-anatomy-undo',
+            clear: '#btn-kma-anatomy-clear',
+            save: '#btn-kma-anatomy-save'
+        })
+    };
 
-    /**
-     * Tampilkan pesan status singkat pada toolbar modal.
-     */
-    function setMessage(message, type) {
-        var color = type === 'error' ? '#dc3545' : (type === 'success' ? '#28a745' : '#6c757d');
-        $('#anatomy-save-message').css('color', color).text(message || '');
+    /** Buat state independen untuk setiap modal anatomi. */
+    function createEditor(options) {
+        return {
+            options: options,
+            canvas: null,
+            side: null,
+            defaultUrl: null,
+            undoStack: [],
+            loadRequestId: 0,
+            returnToKajian: false
+        };
     }
 
-    /**
-     * Tambahkan cache buster agar browser mengambil gambar versi terbaru.
-     */
+    function setMessage(editor, message, type) {
+        var color = type === 'error' ? '#dc3545' : (type === 'success' ? '#28a745' : '#6c757d');
+        $(editor.options.message).css('color', color).text(message || '');
+    }
+
     function withCacheBuster(url) {
         var separator = url.indexOf('?') === -1 ? '?' : '&';
         return url + separator + 't=' + new Date().getTime();
     }
 
-    /**
-     * Buat instance Fabric.js sekali saja dan aktifkan mode gambar bebas.
-     */
-    function initCanvas() {
-        if (canvas) {
-            return canvas;
+    function initCanvas(editor) {
+        if (editor.canvas) {
+            return editor.canvas;
         }
 
-        canvas = new fabric.Canvas('anatomy-canvas', {
+        editor.canvas = new fabric.Canvas(editor.options.canvas, {
             isDrawingMode: false,
             selection: false
         });
-
-        canvas.freeDrawingBrush.color = '#00b050';
-        canvas.freeDrawingBrush.width = 4;
-
-        // Fabric memakai canvas atas untuk input mouse; layer ini harus transparan agar gambar anatomi terlihat.
-        $(canvas.upperCanvasEl).css('background', 'transparent');
-        $(canvas.lowerCanvasEl).css('background', '#ffffff');
-
-        // Simpan object path terbaru untuk kebutuhan undo.
-        canvas.on('path:created', function (event) {
+        editor.canvas.freeDrawingBrush.color = '#0057ff';
+        editor.canvas.freeDrawingBrush.width = 4;
+        $(editor.canvas.upperCanvasEl).css('background', 'transparent');
+        $(editor.canvas.lowerCanvasEl).css('background', '#ffffff');
+        editor.canvas.on('path:created', function (event) {
             if (event.path) {
-                undoStack.push(event.path);
+                editor.undoStack.push(event.path);
             }
         });
 
-        return canvas;
+        return editor.canvas;
     }
 
-    /**
-     * Muat gambar anatomi sebagai background sehingga dokter bisa menggambar di atasnya.
-     */
-    function loadBackground(imageUrl) {
-        var editor = initCanvas();
-        var currentLoadId = ++loadRequestId;
+    /** Muat gambar anatomi sebagai object paling bawah pada canvas yang sesuai. */
+    function loadBackground(editor, imageUrl) {
+        var canvas = initCanvas(editor);
+        var currentLoadId = ++editor.loadRequestId;
 
-        undoStack = [];
-        backgroundObject = null;
-        editor.isDrawingMode = false;
-        editor.clear();
-        editor.setBackgroundColor('#ffffff', editor.renderAll.bind(editor));
-        setMessage('Memuat gambar anatomi...', 'info');
+        editor.undoStack = [];
+        canvas.isDrawingMode = false;
+        canvas.clear();
+        canvas.setBackgroundColor('#ffffff', canvas.renderAll.bind(canvas));
+        setMessage(editor, 'Memuat gambar anatomi...', 'info');
 
         var image = new Image();
         image.onload = function () {
-            if (currentLoadId !== loadRequestId) {
+            if (currentLoadId !== editor.loadRequestId) {
                 return;
             }
 
-            var img = new fabric.Image(image);
-            var canvasWidth = editor.getWidth();
-            var canvasHeight = editor.getHeight();
-            var scale = Math.min(canvasWidth / img.width, canvasHeight / img.height);
-            var left = (canvasWidth - (img.width * scale)) / 2;
-            var top = (canvasHeight - (img.height * scale)) / 2;
-
-            // Gambar anatomi dijadikan object paling bawah agar stabil di Fabric.js dan ikut export PNG.
-            img.set({
+            var anatomyImage = new fabric.Image(image);
+            var scale = Math.min(canvas.getWidth() / anatomyImage.width, canvas.getHeight() / anatomyImage.height);
+            anatomyImage.set({
                 scaleX: scale,
                 scaleY: scale,
-                left: left,
-                top: top,
+                left: (canvas.getWidth() - (anatomyImage.width * scale)) / 2,
+                top: (canvas.getHeight() - (anatomyImage.height * scale)) / 2,
                 originX: 'left',
                 originY: 'top',
                 selectable: false,
                 evented: false,
                 hasControls: false,
-                hasBorders: false,
-                lockMovementX: true,
-                lockMovementY: true,
-                lockRotation: true,
-                lockScalingX: true,
-                lockScalingY: true
+                hasBorders: false
             });
-
-            backgroundObject = img;
-            editor.add(backgroundObject);
-            editor.sendToBack(backgroundObject);
-            editor.isDrawingMode = true;
-            editor.requestRenderAll();
-            setMessage('Siap digambar.', 'success');
+            canvas.add(anatomyImage);
+            canvas.sendToBack(anatomyImage);
+            canvas.isDrawingMode = true;
+            canvas.requestRenderAll();
+            setMessage(editor, 'Siap digambar.', 'success');
         };
         image.onerror = function () {
-            if (currentLoadId !== loadRequestId) {
-                return;
+            if (currentLoadId === editor.loadRequestId) {
+                setMessage(editor, 'Gambar anatomi gagal dimuat.', 'error');
             }
-
-            editor.isDrawingMode = false;
-            setMessage('Gambar anatomi gagal dimuat. Cek file gambar di folder webroot/img/anatomy.', 'error');
         };
         image.src = withCacheBuster(imageUrl);
     }
 
-    /**
-     * Buka modal editor berdasarkan thumbnail anatomi yang diklik.
-     */
-    function openEditor($button) {
+    function openEditor(editor, $button) {
         if (typeof fabric === 'undefined') {
-            alert('Library Fabric.js belum termuat. Periksa koneksi atau asset Fabric.js.');
+            alert('Library Fabric.js belum termuat.');
             return;
         }
 
-        activeSide = $button.data('side');
-        activeDefaultUrl = $button.data('default-url');
+        editor.side = $button.data('side');
+        editor.defaultUrl = $button.data('default-url');
+        $(editor.options.title).text($button.data('title') || 'Anatomi Tubuh Pasien');
 
-        $('#anatomy-modal-title').text($button.data('title') || 'Anatomi Tubuh Pasien');
-        setMessage('Memuat gambar anatomi...', 'info');
-
-        // Jika modal sudah terbuka, muat ulang langsung; jika belum, tunggu sampai terlihat.
-        if ($('#modal-anatomy-editor').hasClass('in') || $('#modal-anatomy-editor').is(':visible')) {
-            loadBackground($button.data('image-url'));
-        } else {
-            $('#modal-anatomy-editor').one('shown.bs.modal', function () {
-                loadBackground($button.data('image-url'));
-            });
-            $('#modal-anatomy-editor').modal('show');
+        function showAnatomyModal() {
+            $(editor.options.modal).one('shown.bs.modal', function () {
+                loadBackground(editor, $button.data('image-url'));
+            }).modal('show');
         }
+
+        // Hindari dua Bootstrap modal aktif bersamaan agar backdrop dan input mouse tetap benar.
+        if (editor === editors.kma && (
+            $('#modal-kajian-awal').hasClass('in') ||
+            $('#modal-kajian-awal').hasClass('show') ||
+            $('#modal-kajian-awal').is(':visible')
+        )) {
+            editor.returnToKajian = true;
+            $('#modal-kajian-awal').one('hidden.bs.modal', showAnatomyModal).modal('hide');
+            return;
+        }
+
+        showAnatomyModal();
     }
 
-    /**
-     * Kirim PNG base64 ke controller CakePHP melalui AJAX.
-     */
-    function saveImage() {
-        if (!canvas || !activeSide) {
+    /** Simpan PNG lalu perbarui seluruh thumbnail EMR dan Kajian Medis Awal. */
+    function saveImage(editor) {
+        if (!editor.canvas || !editor.side) {
             return;
         }
 
-        var imageData = canvas.toDataURL({
-            format: 'png'
-        });
-
-        $('#btn-anatomy-save').prop('disabled', true);
-        setMessage('Menyimpan gambar...', 'info');
-
+        $(editor.options.save).prop('disabled', true);
+        setMessage(editor, 'Menyimpan gambar...', 'info');
         $.ajax({
             url: config.saveUrl,
             method: 'POST',
             dataType: 'json',
             data: {
-                side: activeSide,
-                image: imageData,
+                side: editor.side,
+                image: editor.canvas.toDataURL({ format: 'png' }),
                 _csrfToken: config.csrfToken
             },
-            headers: config.csrfToken ? {
-                'X-CSRF-Token': config.csrfToken
-            } : {},
+            headers: config.csrfToken ? { 'X-CSRF-Token': config.csrfToken } : {},
             success: function (response) {
                 if (!response || !response.success) {
-                    setMessage((response && response.message) || 'Gagal menyimpan gambar.', 'error');
+                    setMessage(editor, (response && response.message) || 'Gagal menyimpan gambar.', 'error');
                     return;
                 }
 
                 var freshUrl = withCacheBuster(response.file_url);
-                var $thumb = $('.js-open-anatomy[data-side="' + activeSide + '"]');
-
-                // Update thumbnail dan data modal agar edit berikutnya memakai PNG terbaru.
-                $thumb.data('image-url', freshUrl);
-                $thumb.find('img').attr('src', freshUrl);
-                $thumb.find('.anatomy-thumb-status').text('Sudah disimpan');
-
-                setMessage(response.message || 'Gambar anatomi berhasil disimpan.', 'success');
+                var selector = '[data-side="' + editor.side + '"]';
+                $('.js-open-anatomy' + selector + ', .js-open-kma-anatomy' + selector).each(function () {
+                    $(this).data('image-url', freshUrl).find('img').attr('src', freshUrl);
+                });
+                $('.js-open-anatomy' + selector).find('.anatomy-thumb-status').text('Sudah disimpan');
+                setMessage(editor, response.message || 'Gambar anatomi berhasil disimpan.', 'success');
                 setTimeout(function () {
-                    $('#modal-anatomy-editor').modal('hide');
-                }, 600);
+                    $(editor.options.modal).modal('hide');
+                }, 450);
             },
             error: function (xhr) {
-                var response = xhr.responseJSON || {};
-                setMessage(response.message || 'Gagal menyimpan gambar anatomi.', 'error');
+                setMessage(editor, (xhr.responseJSON || {}).message || 'Gagal menyimpan gambar anatomi.', 'error');
             },
             complete: function () {
-                $('#btn-anatomy-save').prop('disabled', false);
+                $(editor.options.save).prop('disabled', false);
+            }
+        });
+    }
+
+    function bindEditor(editor) {
+        $(editor.options.pen).on('click', function () {
+            if (editor.canvas) {
+                editor.canvas.isDrawingMode = true;
+                setMessage(editor, 'Mode pena aktif.', 'info');
+            }
+        });
+        $(editor.options.undo).on('click', function () {
+            var lastPath = editor.undoStack.pop();
+            if (editor.canvas && lastPath) {
+                editor.canvas.remove(lastPath);
+                editor.canvas.requestRenderAll();
+            }
+        });
+        $(editor.options.clear).on('click', function () {
+            if (editor.defaultUrl) {
+                loadBackground(editor, editor.defaultUrl);
+            }
+        });
+        $(editor.options.save).on('click', function () {
+            saveImage(editor);
+        });
+
+        $(editor.options.modal).on('hidden.bs.modal', function () {
+            if (editor.returnToKajian) {
+                editor.returnToKajian = false;
+                $('#modal-kajian-awal').modal('show');
             }
         });
     }
 
     $(function () {
-        // Klik thumbnail membuka modal Fabric editor.
+        bindEditor(editors.emr);
+        bindEditor(editors.kma);
         $(document).on('click', '.js-open-anatomy', function () {
-            openEditor($(this));
+            openEditor(editors.emr, $(this));
         });
-
-        // Tombol Pena memastikan mode gambar aktif.
-        $('#btn-anatomy-pen').on('click', function () {
-            if (canvas) {
-                canvas.isDrawingMode = true;
-                setMessage('Mode pena aktif.', 'info');
-            }
+        $(document).on('click', '.js-open-kma-anatomy', function () {
+            openEditor(editors.kma, $(this));
         });
-
-        // Tombol Undo menghapus coretan terakhir pada sesi edit saat ini.
-        $('#btn-anatomy-undo').on('click', function () {
-            var lastPath = undoStack.pop();
-            if (canvas && lastPath) {
-                canvas.remove(lastPath);
-                canvas.requestRenderAll();
-            }
-        });
-
-        // Tombol Reset/Clear mengembalikan anatomi ke gambar default sisi tersebut.
-        $('#btn-anatomy-clear').on('click', function () {
-            if (activeDefaultUrl) {
-                loadBackground(activeDefaultUrl);
-            }
-        });
-
-        // Tombol Simpan mengekspor canvas sebagai PNG.
-        $('#btn-anatomy-save').on('click', saveImage);
     });
 }());

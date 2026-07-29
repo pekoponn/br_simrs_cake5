@@ -347,8 +347,8 @@ $anatomyBackUrl = $anatomyBackExists
                 </div>
                 <div class="col-xs-4">
                     <button type="button" class="btn btn-sm btn-block" id="btn-kajian-awal"
-                            style="background:#6f42c1; color:#fff; font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                        <i class="fa fa-file-medical" style="color:#fff;"></i> KAJIAN MEDIS AWAL
+                            style="background:#6f42c1; color:#fff; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                        <i class="fa fa-file-medical" style="color:#fff;"></i><br> KAJIAN MEDIS AWAL
                     </button>
                 </div>
                 <div class="col-xs-4">
@@ -496,6 +496,7 @@ $anatomyBackUrl = $anatomyBackExists
                                         <button type="button"
                                                 class="anatomy-thumb js-open-anatomy"
                                                 data-side="front"
+                                                data-source="emr"
                                                 data-title="Anatomi Depan"
                                                 data-image-url="<?= h($anatomyFrontUrl) ?>"
                                                 data-default-url="<?= h($anatomyDefaultFrontUrl) ?>"
@@ -509,6 +510,7 @@ $anatomyBackUrl = $anatomyBackExists
                                         <button type="button"
                                                 class="anatomy-thumb js-open-anatomy"
                                                 data-side="back"
+                                                data-source="emr"
                                                 data-title="Anatomi Belakang"
                                                 data-image-url="<?= h($anatomyBackUrl) ?>"
                                                 data-default-url="<?= h($anatomyDefaultBackUrl) ?>"
@@ -1318,6 +1320,29 @@ $anatomyBackUrl = $anatomyBackExists
     </div>
 </div>
 
+<!-- Editor khusus anatomi dari modal Kajian Medis Awal. -->
+<div class="modal fade" id="modal-kma-anatomy-editor" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog anatomy-modal-dialog" role="document">
+        <div class="modal-content hasil-window">
+            <div class="hasil-title">
+                <span><i class="fa fa-pencil-alt"></i> <span id="kma-anatomy-modal-title">Anatomi Tubuh Pasien</span></span>
+                <button type="button" class="hasil-close" data-dismiss="modal" aria-label="Close">&times;</button>
+            </div>
+            <div class="anatomy-toolbar">
+                <button type="button" class="btn btn-sm btn-primary" id="btn-kma-anatomy-pen"><i class="fa fa-pen"></i> Pena</button>
+                <button type="button" class="btn btn-sm btn-default" id="btn-kma-anatomy-undo"><i class="fa fa-undo"></i> Undo</button>
+                <button type="button" class="btn btn-sm btn-warning" id="btn-kma-anatomy-clear"><i class="fa fa-trash"></i> Reset/Clear</button>
+                <button type="button" class="btn btn-sm btn-success" id="btn-kma-anatomy-save"><i class="fa fa-save"></i> Simpan</button>
+                <button type="button" class="btn btn-sm btn-default" data-dismiss="modal"><i class="fa fa-times"></i> Batal</button>
+                <span id="kma-anatomy-save-message" class="anatomy-save-message"></span>
+            </div>
+            <div class="anatomy-canvas-wrap">
+                <canvas id="kma-anatomy-canvas" width="620" height="780"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="modal-kajian-awal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-kajian-dialog" role="document">
         <div class="modal-content hasil-window kajian-window">
@@ -1340,11 +1365,17 @@ $anatomyBackUrl = $anatomyBackExists
                         <div class="col-sm-4"><label>Dokter</label><input type="text" class="form-control input-sm" id="kma-doctor-name" value="<?= h($d->doctor_name ?? '-') ?>" readonly></div>
                         <div class="col-sm-3"><label>Status Simpan</label><input type="text" class="form-control input-sm" id="kma-save-state" value="Belum dimuat" readonly></div>
                     </div>
+                    <div class="kma-top-actions">
+                        <button type="button" class="btn btn-xs btn-default" id="btn-new-kajian-awal"><i class="fa fa-plus-square"></i> Tambah</button>
+                        <button type="button" class="btn btn-xs btn-default" onclick="window.print();"><i class="fa fa-print"></i> Cetak</button>
+                        <button type="button" class="btn btn-xs btn-primary" id="btn-save-kajian-awal-top"><i class="fa fa-save"></i> Simpan</button>
+                        <button type="button" class="btn btn-xs btn-default" data-dismiss="modal"><i class="fa fa-sign-out-alt"></i> Tutup</button>
+                    </div>
                 </div>
 
                 <ul class="nav nav-tabs kajian-tabs" role="tablist">
                     <li role="presentation" class="active"><a href="#kma-tab-data-dasar" data-toggle="tab">Data Dasar</a></li>
-                    <li role="presentation"><a href="#kma-tab-subjektif" data-toggle="tab">Subjektif</a></li>
+                    <li role="presentation"><a href="#kma-tab-subjektif" data-toggle="tab">Data Subjektif</a></li>
                     <li role="presentation"><a href="#kma-tab-observasi" data-toggle="tab">Observasi</a></li>
                 </ul>
 
@@ -1396,26 +1427,108 @@ $anatomyBackUrl = $anatomyBackExists
                         </div>
                     </div>
                     <div id="kma-tab-subjektif" class="tab-pane">
-                        <div class="row">
-                            <div class="col-md-6">
+                        <div class="kma-classic-layout">
+                            <div class="kma-left">
                                 <div class="kajian-section-title">Data Subjektif</div>
-                                <label>Keluhan Utama</label><textarea name="subjektif[keluhan_utama]" class="form-control kajian-textarea"><?= h($emr->chief_complaint ?? '') ?></textarea>
-                                <label>Riwayat Penyakit Sekarang</label><textarea name="subjektif[riwayat_penyakit_sekarang]" class="form-control kajian-textarea"><?= h($emr->illness_history ?? '') ?></textarea>
-                                <label>Riwayat Penyakit Dahulu / Operasi</label><textarea name="subjektif[riwayat_penyakit_dahulu]" class="form-control kajian-textarea"></textarea>
-                                <label>Riwayat Penyakit Dalam Keluarga</label><textarea name="subjektif[riwayat_keluarga]" class="form-control kajian-textarea"></textarea>
-                                <label>Obat Yang Diminum</label><textarea name="subjektif[obat_diminum]" class="form-control kajian-textarea"></textarea>
-                                <label>Kebiasaan Hidup</label>
-                                <div class="kajian-line"><label><input type="checkbox" name="subjektif[kebiasaan][]" value="Merokok"> Merokok</label><label><input type="checkbox" name="subjektif[kebiasaan][]" value="Minuman beralkohol"> Minuman beralkohol</label><label><input type="checkbox" name="subjektif[kebiasaan][]" value="Kontak dengan bahan berbahaya"> Kontak bahan berbahaya</label></div>
-                                <input type="text" name="subjektif[kebiasaan_lain]" class="form-control input-sm" placeholder="Lain-lain...">
-                            </div>
-                            <div class="col-md-6">
+                                <div class="kma-form-row"><label>Keluhan Utama</label><input type="text" name="subjektif[keluhan_utama]" class="form-control input-sm" value="<?= h($emr->chief_complaint ?? '') ?>"></div>
+                                <div class="kma-form-row"><label>Riwayat Penyakit Sekarang</label><textarea name="subjektif[riwayat_penyakit_sekarang]" class="form-control input-sm"><?= h($emr->illness_history ?? '') ?></textarea></div>
+                                <div class="kma-form-row"><label>Riwayat Penyakit Dahulu / Operasi</label><textarea name="subjektif[riwayat_penyakit_dahulu]" class="form-control input-sm"></textarea></div>
+                                <div class="kma-form-row"><label>Riwayat Penyakit Dalam Keluarga</label><input type="text" name="subjektif[riwayat_keluarga]" class="form-control input-sm"></div>
+                                <div class="kma-form-row"><label>Obat Yang Diminum</label><input type="text" name="subjektif[obat_diminum]" class="form-control input-sm"></div>
+                                <div class="kma-form-row kma-check-row">
+                                    <label>Kebiasaan Hidup</label>
+                                    <span><input type="checkbox" name="subjektif[kebiasaan][]" value="Merokok"> Merokok</span>
+                                    <span><input type="checkbox" name="subjektif[kebiasaan][]" value="Minuman beralkohol"> Minuman beralkohol</span>
+                                    <span><input type="checkbox" name="subjektif[kebiasaan][]" value="Kontak dengan bahan berbahaya"> Kontak dengan bahan berbahaya</span>
+                                </div>
+                                <div class="kma-form-row"><label></label><input type="text" name="subjektif[kebiasaan_lain]" class="form-control input-sm" placeholder="Lain-lain"></div>
+
                                 <div class="kajian-section-title">Data Objektif</div>
-                                <div class="row"><div class="col-xs-4"><label>GCS E</label><input type="number" name="subjektif[gcs_e]" class="form-control input-sm"></div><div class="col-xs-4"><label>M</label><input type="number" name="subjektif[gcs_m]" class="form-control input-sm"></div><div class="col-xs-4"><label>V</label><input type="number" name="subjektif[gcs_v]" class="form-control input-sm"></div></div>
-                                <?php foreach (['kepala' => 'Kepala', 'leher' => 'Leher', 'thorax' => 'Thorax', 'abdomen' => 'Abdomen', 'genital' => 'Genital', 'ekstremitas' => 'Ekstremitas'] as $key => $label): ?>
-                                    <label><?= h($label) ?></label><input type="text" name="subjektif[pemeriksaan_fisik][<?= h($key) ?>]" class="form-control input-sm">
-                                <?php endforeach; ?>
+                                <div class="kma-objective-grid">
+                                    <div>
+                                        <label>Pemeriksaan Fisik</label>
+                                        <div class="kma-anatomy-strip">
+                                            <button type="button"
+                                                    class="kma-anatomy-thumb js-open-kma-anatomy"
+                                                    data-side="front"
+                                                    data-source="kajian"
+                                                    data-title="Anatomi Depan"
+                                                    data-image-url="<?= h($anatomyFrontUrl) ?>"
+                                                    data-default-url="<?= h($anatomyDefaultFrontUrl) ?>">
+                                                <img src="<?= h($anatomyFrontUrl) ?>" alt="Anatomi Depan">
+                                            </button>
+                                            <button type="button"
+                                                    class="kma-anatomy-thumb js-open-kma-anatomy"
+                                                    data-side="back"
+                                                    data-source="kajian"
+                                                    data-title="Anatomi Belakang"
+                                                    data-image-url="<?= h($anatomyBackUrl) ?>"
+                                                    data-default-url="<?= h($anatomyDefaultBackUrl) ?>">
+                                                <img src="<?= h($anatomyBackUrl) ?>" alt="Anatomi Belakang">
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="kma-gcs-row">
+                                            <label>GCS</label>
+                                            <span>E</span><input type="number" name="subjektif[gcs_e]" class="form-control input-sm" min="0">
+                                            <span>M</span><input type="number" name="subjektif[gcs_m]" class="form-control input-sm" min="0">
+                                            <span>V</span><input type="number" name="subjektif[gcs_v]" class="form-control input-sm" min="0">
+                                        </div>
+                                        <?php foreach (['kepala' => 'Kepala', 'leher' => 'Leher', 'thorax' => 'Thorax', 'abdomen' => 'Abdomen', 'genital' => 'Genital', 'ekstremitas' => 'Ekstremitas'] as $key => $label): ?>
+                                            <div class="kma-form-row kma-physical-row"><label><?= h($label) ?></label><input type="text" name="subjektif[pemeriksaan_fisik][<?= h($key) ?>]" class="form-control input-sm"></div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
                                 <div class="kajian-section-title">Pemeriksaan Penunjang</div>
-                                <div class="kajian-line"><?php foreach (['GDS', 'EKG', 'USG', 'X-FOTO', 'C SCAN', 'MRI', 'LABORAT', 'Lain-lain'] as $support): ?><label><input type="checkbox" name="subjektif[pemeriksaan_penunjang][]" value="<?= h($support) ?>"> <?= h($support) ?></label><?php endforeach; ?></div>
+                                <div class="kma-support-grid">
+                                    <?php foreach (['GDS', 'EKG', 'USG', 'X-FOTO', 'C SCAN', 'MRI', 'LABORAT', 'Lain-lain'] as $support): ?>
+                                        <label><input type="checkbox" name="subjektif[pemeriksaan_penunjang][]" value="<?= h($support) ?>"> <?= h($support) ?></label>
+                                    <?php endforeach; ?>
+                                    <input type="text" name="subjektif[pemeriksaan_penunjang_lain]" class="form-control input-sm" placeholder="Lain-lain">
+                                </div>
+                            </div>
+                            <div class="kma-right">
+                                <div class="kajian-section-title">Asesmen</div>
+                                <div class="kma-diagnosis-row"><label>Diagnosa Utama</label><input type="text" name="subjektif[asesmen][diagnosa_utama]" class="form-control input-sm" value="<?= h($emr->diagnosis_primary ?? '') ?>"><span>Kode ICD</span><input type="text" name="subjektif[asesmen][kode_icd_utama]" class="form-control input-sm"><button type="button" class="btn btn-xs btn-default"><i class="fa fa-search"></i></button></div>
+                                <?php for ($i = 1; $i <= 3; $i++): ?>
+                                    <div class="kma-diagnosis-row"><label>Diagnosa Tambahan <?= $i ?></label><input type="text" name="subjektif[asesmen][diagnosa_tambahan][<?= $i ?>]" class="form-control input-sm"><span>Kode ICD</span><input type="text" name="subjektif[asesmen][kode_icd_tambahan][<?= $i ?>]" class="form-control input-sm"><button type="button" class="btn btn-xs btn-default"><i class="fa fa-search"></i></button></div>
+                                <?php endfor; ?>
+
+                                <div class="kma-two-columns">
+                                    <div>
+                                        <div class="kajian-section-title">Rencana Pelayanan/Tindakan</div>
+                                        <textarea name="subjektif[asesmen][rencana_pelayanan]" class="form-control input-sm kma-long-text"></textarea>
+                                    </div>
+                                    <div>
+                                        <div class="kajian-section-title">Instruksi Medis</div>
+                                        <textarea name="subjektif[asesmen][instruksi_medis]" class="form-control input-sm kma-long-text"><?= h($emr->doctor_notes ?? '') ?></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="kajian-section-title">Edukasi</div>
+                                <div class="kma-education-grid">
+                                    <textarea name="subjektif[asesmen][edukasi]" class="form-control input-sm"></textarea>
+                                    <label>Yang Memberi</label><input type="text" name="subjektif[asesmen][edukasi_pemberi]" class="form-control input-sm">
+                                    <label>Yang Menerima</label><input type="text" name="subjektif[asesmen][edukasi_penerima]" class="form-control input-sm">
+                                </div>
+
+                                <div class="kajian-section-title">Hasil Akhir</div>
+                                <div class="kma-result-area">
+                                    <label><input type="radio" name="subjektif[asesmen][hasil_akhir]" value="Dipulangkan"> Dipulangkan</label>
+                                    <label><input type="radio" name="subjektif[asesmen][hasil_akhir]" value="Pulang paksa"> Pulang paksa</label>
+                                    <label><input type="checkbox" name="subjektif[asesmen][dirawat_oleh_dr]" value="1"> Dirawat, oleh dr</label><input type="text" name="subjektif[asesmen][dirawat_dokter]" class="form-control input-sm">
+                                    <label>Di ruang</label><input type="text" name="subjektif[asesmen][ruangan]" class="form-control input-sm">
+                                    <label>Dirujuk untuk tindakan di</label><input type="text" name="subjektif[asesmen][rujuk_tindakan]" class="form-control input-sm">
+                                    <label><input type="checkbox" name="subjektif[asesmen][dirujuk_rs]" value="1"> Dirujuk ke RS</label><input type="text" name="subjektif[asesmen][rumah_sakit_tujuan]" class="form-control input-sm">
+                                    <label>Alasan</label><input type="text" name="subjektif[asesmen][alasan_rujuk]" class="form-control input-sm">
+                                    <label>IV line lokasi</label><input type="text" name="subjektif[asesmen][iv_line_lokasi]" class="form-control input-sm">
+                                    <label>DC No</label><input type="text" name="subjektif[asesmen][dc_no]" class="form-control input-sm">
+                                    <label>NGT</label><input type="text" name="subjektif[asesmen][ngt]" class="form-control input-sm">
+                                    <label>Lain2</label><input type="text" name="subjektif[asesmen][lain2]" class="form-control input-sm">
+                                    <label><input type="checkbox" name="subjektif[asesmen][meninggal]" value="1"> Meninggal, pukul</label><input type="time" name="subjektif[asesmen][jam_meninggal]" class="form-control input-sm">
+                                    <label>WIB, Penyebab</label><input type="text" name="subjektif[asesmen][penyebab_meninggal]" class="form-control input-sm">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2238,6 +2351,24 @@ $anatomyBackUrl = $anatomyBackExists
 .anatomy-canvas-wrap .upper-canvas {
     background: transparent !important;
 }
+/* Editor dari Kajian selalu berada di atas modal Kajian dan bisa di-scroll di layar pendek. */
+#modal-kma-anatomy-editor {
+    z-index: 1070;
+    overflow-y: auto;
+}
+#modal-kma-anatomy-editor .modal-dialog {
+    margin: 15px auto;
+}
+#modal-kma-anatomy-editor .modal-content {
+    max-height: calc(100vh - 30px);
+    display: flex;
+    flex-direction: column;
+}
+#modal-kma-anatomy-editor .anatomy-canvas-wrap {
+    flex: 1 1 auto;
+    max-height: calc(100vh - 135px);
+    overflow: auto;
+}
 
 /* Tab styling - aktif mengikuti tab yang dipilih */
 .emr-tab-panel {
@@ -2472,6 +2603,7 @@ input.action-unit-price-display:focus {
     padding: 8px 10px;
     border-bottom: 1px solid #9eb2d1;
     font-size: 11px;
+    position: relative;
 }
 .kajian-header label,
 .kajian-body label {
@@ -2533,6 +2665,16 @@ input.action-unit-price-display:focus {
     overflow-y: auto;
     font-size: 11px;
 }
+.kajian-body .form-control {
+    height: 24px;
+    min-height: 24px;
+    padding: 2px 6px;
+    font-size: 11px;
+}
+.kajian-body textarea.form-control {
+    height: 46px;
+    resize: vertical;
+}
 .kajian-section-title {
     background: #c8d8f0;
     border: 1px solid #9eb2d1;
@@ -2541,6 +2683,131 @@ input.action-unit-price-display:focus {
     font-size: 11px;
     padding: 4px 7px;
     margin: 6px 0;
+}
+.kma-top-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 8px;
+}
+.kma-top-actions .btn {
+    min-width: 72px;
+}
+.kma-classic-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+.kma-left,
+.kma-right {
+    min-width: 0;
+}
+.kma-form-row {
+    display: grid;
+    grid-template-columns: 170px minmax(0, 1fr);
+    gap: 6px;
+    align-items: start;
+    margin-bottom: 4px;
+}
+.kma-form-row > label {
+    padding-top: 4px;
+}
+.kma-check-row {
+    grid-template-columns: 170px repeat(3, auto);
+    align-items: center;
+}
+.kma-check-row span {
+    white-space: nowrap;
+}
+.kma-objective-grid {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+}
+.kma-anatomy-strip {
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+}
+.kma-anatomy-thumb {
+    width: 68px;
+    height: 112px;
+    padding: 3px;
+    border: 1px solid #9eb2d1;
+    background: #fff;
+    border-radius: 3px;
+    cursor: pointer;
+}
+.kma-anatomy-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+.kma-gcs-row {
+    display: grid;
+    grid-template-columns: 44px 16px 44px 16px 44px 16px 44px;
+    gap: 4px;
+    align-items: center;
+    margin-bottom: 5px;
+}
+.kma-physical-row {
+    grid-template-columns: 78px minmax(0, 1fr);
+}
+.kma-support-grid {
+    display: grid;
+    grid-template-columns: repeat(4, auto) minmax(120px, 1fr);
+    gap: 4px 8px;
+    align-items: center;
+}
+.kma-two-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+.kma-long-text {
+    height: 72px !important;
+}
+.kma-diagnosis-row {
+    display: grid;
+    grid-template-columns: 118px minmax(0, 1fr) 58px 86px 28px;
+    gap: 5px;
+    align-items: center;
+    margin-bottom: 4px;
+}
+.kma-education-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 82px 120px;
+    gap: 5px;
+    align-items: start;
+}
+.kma-education-grid textarea {
+    grid-row: span 2;
+    height: 58px !important;
+}
+.kma-result-area {
+    display: grid;
+    grid-template-columns: 130px minmax(0, 1fr) 72px minmax(0, 1fr);
+    gap: 5px 7px;
+    align-items: center;
+}
+.kma-result-area label {
+    margin-bottom: 0;
+}
+@media (max-width: 980px) {
+    .kma-classic-layout {
+        grid-template-columns: 1fr;
+    }
+    .kma-check-row,
+    .kma-result-area,
+    .kma-diagnosis-row,
+    .kma-education-grid {
+        grid-template-columns: 1fr;
+    }
+    .kma-objective-grid,
+    .kma-two-columns {
+        grid-template-columns: 1fr;
+    }
 }
 .kajian-line {
     display: flex;
@@ -2737,11 +3004,23 @@ function kmaActivateTab(selector) {
     $(selector).addClass('active in');
 }
 
+function kmaFillPatientHeader(patient) {
+    patient = patient || {};
+    $('#kma-registration-no').val(patient.registration_no || <?= json_encode($visit->registration_no ?? '-') ?>);
+    $('#kma-medical-record-no').val(patient.medical_record_no || <?= json_encode($p->code ?? '-') ?>);
+    $('#kma-patient-name').val(patient.name || <?= json_encode($p->full_name ?? '-') ?>);
+    $('#kma-doctor-name').val(patient.doctor || <?= json_encode($d->doctor_name ?? '-') ?>);
+}
+
 function kmaResetForm() {
     var form = document.getElementById('form-kajian-awal');
     if (form) {
         form.reset();
     }
+    $('#kma-assessment-no').val('AUTO');
+    $('#kma-assessment-date').val(<?= json_encode(date('Y-m-d')) ?>);
+    $('#kma-assessment-time').val(<?= json_encode(date('H:i')) ?>);
+    kmaFillPatientHeader();
     $('#kma-message').text('').css('color', '');
     $('#kma-save-state').val('Memuat...');
     kmaActivateTab('#kma-tab-data-dasar');
@@ -2769,12 +3048,7 @@ $('#btn-kajian-awal').on('click', function () {
             $('#kma-assessment-date').val(data.assessment_date || <?= json_encode(date('Y-m-d')) ?>);
             $('#kma-assessment-time').val((data.assessment_time || <?= json_encode(date('H:i')) ?>).substring(0, 5));
 
-            if (res.patient) {
-                $('#kma-registration-no').val(res.patient.registration_no || '-');
-                $('#kma-medical-record-no').val(res.patient.medical_record_no || '-');
-                $('#kma-patient-name').val(res.patient.name || '-');
-                $('#kma-doctor-name').val(res.patient.doctor || '-');
-            }
+            kmaFillPatientHeader(res.patient);
 
             kmaFillSection('data_dasar', data.data_dasar || {});
             kmaFillSection('subjektif', data.subjektif || {});
@@ -2787,12 +3061,24 @@ $('#btn-kajian-awal').on('click', function () {
         });
 });
 
+$('#btn-new-kajian-awal').on('click', function () {
+    kmaResetForm();
+    $('#kma-save-state').val('Baru');
+    $('#kma-message').text('Form kajian baru siap diisi.').css('color', '#1e3a5f');
+});
+
+$('#btn-save-kajian-awal-top').on('click', function () {
+    $('#btn-save-kajian-awal').trigger('click');
+});
+
 $('#btn-save-kajian-awal').on('click', function () {
-    var $btn = $(this);
+    var $btn = $('#btn-save-kajian-awal, #btn-save-kajian-awal-top');
     var csrf = $('#form-kajian-awal input[name="_csrfToken"]').val();
 
     $('#kma-message').text('Menyimpan...').css('color', '#1e3a5f');
-    $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Menyimpan');
+    $btn.prop('disabled', true);
+    $('#btn-save-kajian-awal').html('<i class="fa fa-spinner fa-spin"></i> Menyimpan');
+    $('#btn-save-kajian-awal-top').html('<i class="fa fa-spinner fa-spin"></i> Simpan');
 
     $.ajax({
         url: SIMPAN_KAJIAN_AWAL_URL,
@@ -2811,7 +3097,9 @@ $('#btn-save-kajian-awal').on('click', function () {
     }).fail(function (xhr) {
         $('#kma-message').text('Gagal menyimpan (' + xhr.status + ').').css('color', '#b91c1c');
     }).always(function () {
-        $btn.prop('disabled', false).html('<i class="fa fa-save"></i> Simpan');
+        $btn.prop('disabled', false);
+        $('#btn-save-kajian-awal').html('<i class="fa fa-save"></i> Simpan');
+        $('#btn-save-kajian-awal-top').html('<i class="fa fa-save"></i> Simpan');
     });
 });
 

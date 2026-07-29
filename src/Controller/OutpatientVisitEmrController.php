@@ -380,7 +380,9 @@ class OutpatientVisitEmrController extends AppController
         $this->request->allowMethod(['post']);
         $this->autoRender = false;
 
+        $this->loadModel('OutpatientInitialMedicalAssessments');
         $side = (string)$this->request->getData('side');
+        $source = (string)$this->request->getData('source', 'emr');
         $imageData = (string)$this->request->getData('image');
         $allowedSides = ['front' => 'anatomy_front', 'back' => 'anatomy_back'];
 
@@ -467,6 +469,28 @@ class OutpatientVisitEmrController extends AppController
                 'message' => 'Nama file anatomi gagal disimpan ke database.',
                 'errors' => $emr->getErrors(),
             ], 422);
+        }
+
+        if ($source === 'kajian') {
+
+            $assessment = $this->OutpatientInitialMedicalAssessments
+                ->find()
+                ->where([
+                    'outpatient_visit_id' => $visitId
+                ])
+                ->first();
+
+            if ($assessment) {
+
+                $assessment->{$field} = $fileName;
+
+                $this->OutpatientInitialMedicalAssessments
+                    ->save($assessment, [
+                        'validate' => false
+                    ]);
+
+            }
+
         }
 
         // Hapus file versi lama setelah database berhasil diarahkan ke file baru.
