@@ -464,15 +464,7 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
             if ($patientSchema->hasColumn('title')) {
                 $patientData['title'] = $title;
             }
-            $patientData['full_name'] = $title !== '' ? $title . ' ' . $fullName : $fullName;
-
-            // ============================================================
-            // FIX: kolom province/city/district/subdistrict wajib diisi
-            // di database, tapi form cuma kirim id_prov/id_kab/id_kec/id_kel
-            // (yang isinya sudah berupa NAMA wilayah, bukan angka ID).
-            // Jadi salin nilainya ke kolom province/city/district/subdistrict
-            // kalau kolom itu masih kosong.
-            // ============================================================
+            $patientData['full_name'] = $fullName;
             $regionNameMap = [
                 'province'    => 'id_prov',
                 'city'        => 'id_kab',
@@ -956,7 +948,7 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
                     if ($patientSchema->hasColumn('title')) {
                         $patient->title = $title;
                     }
-                    $patient->full_name = $title !== '' ? $title . ' ' . $fullName : $fullName;
+                    $patient->full_name = $fullName;
 
                     $patientFields = [
                         'identity_type', 'identity_number', 'gender', 'blood_type', 'birth_date',

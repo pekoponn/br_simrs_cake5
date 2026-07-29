@@ -519,4 +519,127 @@ class OutpatientLettersController extends AppController
         $this->set(compact('letter', 'visit'));
     }
 
+    public function getSuratBuktiRajal($visitId = null)
+    {
+        $this->request->allowMethod(['get']);
+        $this->autoRender = false;
+
+        $letter = $this->OutpatientLetters->find()
+            ->where([
+                'outpatient_visit_id' => (int)$visitId,
+                'letter_type' => 'bukti_rajal',
+            ])
+            ->first();
+
+        return $this->response->withType('application/json')->withStringBody(json_encode([
+            'success' => true,
+            'data'    => $letter ? [
+                'letter_id'                 => $letter->id,
+                'letter_no'                 => $letter->letter_no,
+                'anamnesa'                  => $letter->anamnesa,
+                'diagnosis_primary_text'    => $letter->diagnosis_primary_text,
+                'diagnosis_secondary_text'  => $letter->diagnosis_secondary_text,
+                'action_primary_text'       => $letter->action_primary_text,
+                'action_secondary_text'     => $letter->action_secondary_text,
+                'supporting_diagnosis'      => $letter->supporting_diagnosis,
+                'is_autopsy'                => (int)$letter->is_autopsy,
+                'special_actions'           => $letter->special_actions ? json_decode($letter->special_actions, true) : [],
+                'prescription'              => $letter->prescription,
+                'advice_notes'              => $letter->advice_notes,
+                'discharged_by_doctor_id'   => $letter->discharged_by_doctor_id,
+                'completing_doctor_id'      => $letter->completing_doctor_id,
+                'patient_or_family_name'    => $letter->patient_or_family_name,
+            ] : null,
+        ]));
+    }
+
+    public function simpanSuratBuktiRajal($visitId = null)
+    {
+        $this->request->allowMethod(['post']);
+        $this->autoRender = false;
+
+        $this->loadModel('OutpatientVisits');
+        $visit = $this->OutpatientVisits->get($visitId);
+        $data  = $this->request->getData();
+
+        $entity = $this->OutpatientLetters->find()
+            ->where([
+                'outpatient_visit_id' => $visit->id,
+                'letter_type' => 'bukti_rajal',
+            ])
+            ->first();
+
+        if (!$entity) {
+            $entity = $this->OutpatientLetters->newEmptyEntity();
+            $entity->outpatient_visit_id = $visit->id;
+            $entity->registration_id     = $visit->registration_id ?? null;
+            $entity->patient_id          = $visit->patient_id ?? null;
+            $entity->doctor_id           = $visit->doctor_id ?? null;
+            $entity->letter_type         = 'bukti_rajal';
+            $entity->letter_no           = 'SBRJ-' . date('Ymd') . '-' . str_pad((string)$visit->id, 5, '0', STR_PAD_LEFT);
+        }
+
+        $specialActions = $data['special_actions'] ?? [];
+        $specialActionsJson = !empty($specialActions)
+            ? json_encode($specialActions, JSON_UNESCAPED_UNICODE)
+            : null;
+
+        $fields = [
+            'anamnesa'                 => $data['anamnesa'] ?? null,
+            'diagnosis_primary_text'   => $data['diagnosis_primary_text'] ?? null,
+            'diagnosis_secondary_text' => $data['diagnosis_secondary_text'] ?? null,
+            'action_primary_text'      => $data['action_primary_text'] ?? null,
+            'action_secondary_text'    => $data['action_secondary_text'] ?? null,
+            'supporting_diagnosis'     => $data['supporting_diagnosis'] ?? null,
+            'is_autopsy'               => !empty($data['is_autopsy']) ? 1 : 0,
+            'special_actions'          => $specialActionsJson,
+            'prescription'             => $data['prescription'] ?? null,
+            'advice_notes'             => $data['advice_notes'] ?? null,
+            'discharged_by_doctor_id'  => !empty($data['discharged_by_doctor_id']) ? (int)$data['discharged_by_doctor_id'] : null,
+            'completing_doctor_id'     => !empty($data['completing_doctor_id']) ? (int)$data['completing_doctor_id'] : null,
+            'patient_or_family_name'   => $data['patient_or_family_name'] ?? null,
+            'examined_at'              => !empty($data['examined_at']) ? $data['examined_at'] : date('Y-m-d'),
+        ];
+
+        $entity = $this->OutpatientLetters->patchEntity($entity, $fields, [
+            'validate' => false,
+        ]);
+
+        if ($this->OutpatientLetters->save($entity, ['checkRules' => false])) {
+            return $this->response->withType('application/json')->withStringBody(json_encode([
+                'success'   => true,
+                'letter_id' => $entity->id,
+                'letter_no' => $entity->letter_no,
+            ]));
+        }
+
+        return $this->response->withType('application/json')->withStringBody(json_encode([
+            'success' => false,
+            'message' => 'Gagal menyimpan surat bukti rawat jalan.',
+            'errors'  => $entity->getErrors(),
+        ]));
+    }
+
+    public function cetakSuratBuktiRajal($letterId = null)
+    {
+        $letter = $this->OutpatientLetters->get($letterId, [
+            'contain' => ['Patients', 'Doctors', 'OutpatientVisits'],
+        ]);
+
+        if ($letter->letter_type !== 'bukti_rajal') {
+            throw new \Cake\Http\Exception\NotFoundException('Surat bukti rawat jalan tidak ditemukan.');
+        }
+
+        $this->loadModel('Doctors');
+        $dischargedByDoctor = !empty($letter->discharged_by_doctor_id)
+            ? $this->Doctors->find()->where(['id' => $letter->discharged_by_doctor_id])->first()
+            : null;
+        $completingDoctor = !empty($letter->completing_doctor_id)
+            ? $this->Doctors->find()->where(['id' => $letter->completing_doctor_id])->first()
+            : null;
+
+        $this->viewBuilder()->setLayout('print');
+        $this->set(compact('letter', 'dischargedByDoctor', 'completingDoctor'));
+    }
+
 }

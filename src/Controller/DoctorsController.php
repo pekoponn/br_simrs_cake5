@@ -201,4 +201,21 @@ class DoctorsController extends AppController
 
         return $this->redirect(['action' => 'index']);
     }
+
+     public function listActive()
+    {
+        $this->request->allowMethod(['get']);
+        $this->autoRender = false;
+
+        $doctors = $this->Doctors->find()
+            ->select(['id', 'doctor_name', 'specialist', 'polyclinic_name'])
+            ->where(['is_active' => 'Y'])
+            ->order(['doctor_name' => 'ASC'])
+            ->enableHydration(false)
+            ->toArray();
+
+        return $this->response
+            ->withType('application/json')
+            ->withStringBody(json_encode($doctors));
+    }
 }

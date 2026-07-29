@@ -351,9 +351,11 @@ $anatomyBackUrl = $anatomyBackExists
                         <i class="fa fa-file-medical" style="color:#fff;"></i><br> KAJIAN MEDIS AWAL
                     </button>
                 </div>
-                <div class="col-xs-4">
-                    <button type="button" class="btn btn-sm btn-block btn-inverse"
-                            style="font-size:11px;">
+                <button type="button" class="btn btn-sm btn-block btn-inverse btn-surat-bukti-rajal"
+                            style="font-size:11px;"
+                            data-noreg="<?= h($visit->registration_no ?? '-') ?>"
+                            data-nama="<?= h($p->full_name ?? '-') ?>"
+                            data-dokter="<?= h($d->doctor_name ?? '-') ?>">
                         <i class="fa fa-receipt"></i> SURAT BUKTI RAWAT JALAN
                     </button>
                 </div>
@@ -1728,7 +1730,7 @@ $anatomyBackUrl = $anatomyBackExists
                         <button type="button" class="btn btn-default btn-sm" id="btn-cetak-sks" disabled>
                             <i class="fa fa-print"></i> Cetak
                         </button>
-                        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button>
+                        <!-- <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button> -->
                     </div>
                 </div>
             </div>
@@ -1911,6 +1913,132 @@ $anatomyBackUrl = $anatomyBackExists
                         <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-surat-bukti-rajal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" style="width:980px; max-width:97%;" role="document">
+        <div class="modal-content hasil-window">
+            <div class="hasil-title">
+                <span><i class="fa fa-receipt"></i> Bukti Pelayanan Kesehatan — Rawat Jalan</span>
+                <button type="button" class="hasil-close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="hasil-body" style="max-height:88vh; overflow-y:auto; padding:10px 14px; font-size:12px;">
+
+                <div class="row">
+                    <!-- ══ KOLOM KIRI ══ -->
+                    <div class="col-xs-6" style="border-right:1px solid #c9d6ea; padding-right:14px;">
+
+                        <div class="sbr-line">
+                            <label>No Registrasi</label>
+                            <input type="text" id="sbr-noreg" class="form-control input-sm" readonly>
+                        </div>
+                        <div class="sbr-line">
+                            <label>No Surat</label>
+                            <input type="text" id="sbr-noSurat" class="form-control input-sm" value="AUTO" readonly>
+                        </div>
+                        <div class="sbr-line">
+                            <label>Nama Pasien</label>
+                            <input type="text" id="sbr-nama" class="form-control input-sm" readonly>
+                        </div>
+
+                        <label class="sbr-label">Anamnesa</label>
+                        <textarea id="sbr-anamnesa" class="form-control input-sm sbr-ta-1" placeholder="Keluhan / riwayat singkat..."></textarea>
+
+                        <label class="sbr-label">Diagnosa Utama</label>
+                        <textarea id="sbr-diagnosa-utama" class="form-control input-sm sbr-ta-1" placeholder="Otomatis dari ICD-10 (Utama)" readonly style="background:#f5f5f5;"></textarea>
+
+                        <label class="sbr-label">Diagnosa Sekunder</label>
+                        <textarea id="sbr-diagnosa-sekunder" class="form-control input-sm sbr-ta-1" placeholder="Otomatis dari ICD-10 (Sekunder)" readonly style="background:#f5f5f5;"></textarea>
+
+                        <label class="sbr-label">Tindakan Utama</label>
+                        <textarea id="sbr-tindakan-utama" class="form-control input-sm sbr-ta-1" placeholder="Otomatis dari ICD-9 (Utama)" readonly style="background:#f5f5f5;"></textarea>
+
+                        <label class="sbr-label">Tindakan Sekunder</label>
+                        <textarea id="sbr-tindakan-sekunder" class="form-control input-sm sbr-ta-1" placeholder="Otomatis dari ICD-9 (Sekunder)" readonly style="background:#f5f5f5;"></textarea>
+
+                        <label class="sbr-label">Penunjang Diagnosa</label>
+                        <div style="position:relative;">
+                            <input type="text" id="sbr-penunjang-search" class="form-control input-sm"
+                                   placeholder="Cari tindakan penunjang (Lab/Radiologi)..." autocomplete="off">
+                            <div id="sbr-penunjang-dropdown" style="
+                                display:none; position:absolute; z-index:9999; background:#fff;
+                                border:1px solid #ced4da; border-radius:4px; box-shadow:0 4px 12px rgba(0,0,0,.12);
+                                max-height:160px; overflow-y:auto; font-size:12px; width:100%;"></div>
+                        </div>
+                        <textarea id="sbr-penunjang" class="form-control input-sm sbr-ta-1" style="margin-top:4px;"
+                                  placeholder="Daftar penunjang diagnosa terpilih..."></textarea>
+
+                    </div>
+
+                    <!-- ══ KOLOM KANAN ══ -->
+                    <div class="col-xs-6" style="padding-left:14px;">
+
+                        <div class="sbr-line">
+                            <label>Otopsi</label>
+                            <div style="display:flex; gap:14px; padding-top:6px;">
+                                <label style="font-weight:400;"><input type="radio" name="sbr_otopsi" value="0" checked> Tidak</label>
+                                <label style="font-weight:400;"><input type="radio" name="sbr_otopsi" value="1"> Ya</label>
+                            </div>
+                        </div>
+
+                        <label class="sbr-label">Tindakan - Tindakan Khusus</label>
+                        <div style="margin-bottom:6px;">
+                            <label style="margin-right:12px; font-weight:400;"><input type="checkbox" class="sbr-special-action" value="Phaco"> Phaco</label>
+                            <label style="margin-right:12px; font-weight:400;"><input type="checkbox" class="sbr-special-action" value="Hemodialisa"> Hemodialisa</label>
+                            <label style="margin-right:12px; font-weight:400;"><input type="checkbox" class="sbr-special-action" value="CT-SCAN"> CT-SCAN</label>
+                            <label style="font-weight:400;"><input type="checkbox" class="sbr-special-action" value="Kemoterapi"> Kemoterapi</label>
+                            <br>
+                            <label style="font-weight:400;"><input type="checkbox" class="sbr-special-action" value="Lainnya" id="sbr-special-lainnya-check"> Lainnya</label>
+                            <input type="text" id="sbr-special-lainnya-text" class="form-control input-sm"
+                                   placeholder="Sebutkan tindakan khusus lainnya..." style="margin-top:3px; display:none;">
+                        </div>
+
+                        <label class="sbr-label">Resep</label>
+                        <textarea id="sbr-resep" class="form-control input-sm sbr-ta-2" placeholder="Nama obat, dosis, jumlah..."></textarea>
+
+                        <label class="sbr-label">Saran / Anjuran</label>
+                        <textarea id="sbr-saran" class="form-control input-sm sbr-ta-1" placeholder="Saran / anjuran untuk pasien..."></textarea>
+
+                        <div class="sbr-line">
+                            <label>Dipulangkan Oleh Dr</label>
+                            <select id="sbr-dokter-pulang" class="form-control input-sm">
+                                <option value="">-- Pilih Dokter --</option>
+                            </select>
+                        </div>
+
+                        <div class="sbr-line">
+                            <label>Dokter yg Melengkapi</label>
+                            <select id="sbr-dokter-lengkap" class="form-control input-sm">
+                                <option value="">-- Pilih Dokter --</option>
+                            </select>
+                        </div>
+
+                        <div class="sbr-line">
+                            <label>Nama Pasien / Keluarga</label>
+                            <input type="text" id="sbr-nama-keluarga" class="form-control input-sm"
+                                   placeholder="Nama pada surat (pasien / wali / keluarga)...">
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top:10px; border-top:1px solid #c9d6ea; padding-top:8px;">
+                    <div class="col-xs-12 text-right">
+                        <button type="button" class="btn btn-default btn-sm" id="btn-tambah-sbr">Tambah</button>
+                        <button type="button" class="btn btn-primary btn-sm" id="btn-simpan-sbr">
+                            <i class="fa fa-save"></i> Simpan
+                        </button>
+                        <button type="button" class="btn btn-default btn-sm" id="btn-edit-sbr">Edit</button>
+                        <button type="button" class="btn btn-success btn-sm" id="btn-cetak-sbr" disabled>
+                            <i class="fa fa-print"></i> Cetak
+                        </button>
+                        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -2880,6 +3008,42 @@ input.action-unit-price-display:focus {
 #kma-message {
     font-size: 12px;
     font-weight: 600;
+}
+
+.sbr-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+.sbr-line label {
+    width: 130px;
+    flex: 0 0 130px;
+    margin: 0;
+    font-weight: 600;
+    font-size: 11px;
+}
+.sbr-line input,
+.sbr-line select {
+    flex: 1;
+}
+.sbr-label {
+    display: block;
+    font-weight: 600;
+    font-size: 11px;
+    margin: 5px 0 2px;
+}
+.sbr-ta-1 {
+    height: 40px !important;
+    min-height: 40px !important;
+    resize: vertical;
+    margin-bottom: 2px;
+}
+.sbr-ta-2 {
+    height: 56px !important;
+    min-height: 56px !important;
+    resize: vertical;
+    margin-bottom: 2px;
 }
 </style>
 
@@ -3868,15 +4032,11 @@ $('#btn-cetak-spt').on('click', function () {
         ).show();
 
         $.ajax({
-            url: DOCTOR_BY_POLY_URL,
-            method: 'GET',
-            data: {
-                poly_name: polyName,
-                q: q
-            },
-            dataType: 'json',
-            timeout: 5000,
-            success: function (data) {
+        url: DOCTORS_LIST_URL,
+        method: 'GET',
+        data: { poly_name: '', q: '' },
+        dataType: 'json',
+        success: function (data) {
                 renderDoctorDropdown(data);
             },
             error: function () {
@@ -5441,6 +5601,270 @@ var RENCANA_RAWAT_INAP_URL = <?= json_encode($this->Url->build([
     'action'     => 'planInpatient',
     $visit->id,
 ])) ?>;
+
+var GET_SBR_URL = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'getSuratBuktiRajal',
+    $visit->id,
+])) ?>;
+var SIMPAN_SBR_URL = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'simpanSuratBuktiRajal',
+    $visit->id,
+])) ?>;
+var CETAK_SBR_URL_BASE = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'cetakSuratBuktiRajal',
+])) ?>;
+var DOCTORS_LIST_URL = <?= json_encode($this->Url->build([
+    'controller' => 'Doctors',
+    'action'     => 'listActive',
+])) ?>;
+
+var currentSbrLetterId = null;
+
+function sbrGetIcdText(bodySelector, wantUtama) {
+    var lines = [];
+    $(bodySelector + ' tr').each(function () {
+        var $row = $(this);
+        var kode = $.trim($row.find('input[name$="[' + ($row.closest('tbody').attr('id') === 'icd10-body' ? 'icd10_code' : 'icd9_code') + '"]').length
+            ? $row.find('input[name^="' + ($row.closest('tbody').attr('id') === 'icd10-body' ? 'icd10_code' : 'icd9_code') + '"]').val()
+            : '');
+        var namaField = $row.closest('tbody').attr('id') === 'icd10-body' ? 'icd10_nama' : 'icd9_nama';
+        var utamaField = $row.closest('tbody').attr('id') === 'icd10-body' ? 'icd10_utama' : 'icd9_utama';
+        var nama = $.trim($row.find('input[name^="' + namaField + '"]').val());
+        if (!kode && !nama) return;
+        var isUtama = $row.find('input[name="' + utamaField + '"]').is(':checked');
+        if (wantUtama && !isUtama) return;
+        if (!wantUtama && isUtama) return;
+        lines.push((kode ? kode + ' - ' : '') + nama);
+    });
+    return lines.join('\n');
+}
+
+function sbrFillIcdFields() {
+    $('#sbr-diagnosa-utama').val(sbrGetIcdText('#icd10-body', true));
+    $('#sbr-diagnosa-sekunder').val(sbrGetIcdText('#icd10-body', false));
+    $('#sbr-tindakan-utama').val(sbrGetIcdText('#icd9-body', true));
+    $('#sbr-tindakan-sekunder').val(sbrGetIcdText('#icd9-body', false));
+}
+
+function sbrLoadDoctorOptions() {
+    var $selects = $('#sbr-dokter-pulang, #sbr-dokter-lengkap');
+    $selects.each(function () {
+        var $s = $(this);
+        $s.html('<option value="">-- Pilih Dokter --</option>');
+    });
+
+    $.ajax({
+        url: DOCTORS_LIST_URL,
+        method: 'GET',
+        dataType: 'json',
+        success: function (data) {
+            if (!data || !data.length) return;
+            $.each(data, function (_, item) {
+                var name = item.doctor_name || item.name || '';
+                var id = item.id || '';
+                if (!id) return;
+                var label = name + (item.specialist ? ' (' + item.specialist + ')' : '');
+                $('#sbr-dokter-pulang, #sbr-dokter-lengkap').append(
+                    '<option value="' + id + '">' + htmlEscape(label) + '</option>'
+                );
+            });
+        },
+        error: function () {
+            $('#sbr-dokter-pulang, #sbr-dokter-lengkap').append(
+                '<option value="">-- Gagal memuat dokter --</option>'
+            );
+        }
+    });
+}
+
+$('#sbr-special-lainnya-check').on('change', function () {
+    $('#sbr-special-lainnya-text').toggle(this.checked);
+});
+
+function sbrSetFieldLock(selector, isLocked) {
+    var $field = $(selector);
+    $field.prop('readonly', isLocked);
+    $field.css({
+        background: isLocked ? '#f5f5f5' : '',
+        cursor: isLocked ? 'not-allowed' : ''
+    });
+}
+
+function sbrLockFilledFields() {
+    sbrSetFieldLock('#sbr-anamnesa', $.trim($('#sbr-anamnesa').val()) !== '');
+    sbrSetFieldLock('#sbr-resep', $.trim($('#sbr-resep').val()) !== '');
+    sbrSetFieldLock('#sbr-saran', $.trim($('#sbr-saran').val()) !== '');
+    sbrSetFieldLock('#sbr-nama-keluarga', $.trim($('#sbr-nama-keluarga').val()) !== '');
+}
+
+$(document).on('click', '.btn-surat-bukti-rajal', function () {
+    $('#sbr-noreg').val(<?= json_encode($visit->registration_no ?? '-') ?>);
+    $('#sbr-nama').val(<?= json_encode($p->full_name ?? '-') ?>);
+    $('#sbr-nama-keluarga').val(<?= json_encode($p->full_name ?? '') ?>);
+    $('#sbr-anamnesa').val(<?= json_encode(trim((string)($emr->chief_complaint ?? $emr->illness_history ?? ''))) ?>);
+    $('#sbr-resep').val(<?= json_encode($emr->prescription_notes ?? '') ?>);
+    $('#sbr-saran').val(<?= json_encode($emr->doctor_notes ?? '') ?>);
+    $('#sbr-penunjang').val('');
+    $('input[name="sbr_otopsi"][value="0"]').prop('checked', true);
+    $('.sbr-special-action').prop('checked', false);
+    $('#sbr-special-lainnya-text').val('').hide();
+    $('#sbr-noSurat').val('AUTO');
+    currentSbrLetterId = null;
+    $('#btn-cetak-sbr').prop('disabled', true);
+
+    // Kunci dulu berdasarkan data awal dari EMR/pasien
+    sbrLockFilledFields();
+
+    sbrFillIcdFields();
+    sbrLoadDoctorOptions();
+
+    $.ajax({
+        url: GET_SBR_URL,
+        method: 'GET',
+        dataType: 'json',
+        success: function (res) {
+            if (res && res.success && res.data) {
+                var d = res.data;
+                currentSbrLetterId = d.letter_id;
+                $('#sbr-noSurat').val(d.letter_no || 'AUTO');
+                if (d.anamnesa)                $('#sbr-anamnesa').val(d.anamnesa);
+                if (d.supporting_diagnosis)     $('#sbr-penunjang').val(d.supporting_diagnosis);
+                if (d.prescription)             $('#sbr-resep').val(d.prescription);
+                if (d.advice_notes)             $('#sbr-saran').val(d.advice_notes);
+                if (d.patient_or_family_name)   $('#sbr-nama-keluarga').val(d.patient_or_family_name);
+                $('input[name="sbr_otopsi"][value="' + (d.is_autopsy ? '1' : '0') + '"]').prop('checked', true);
+
+                if (Array.isArray(d.special_actions)) {
+                    $.each(d.special_actions, function (_, val) {
+                        $('.sbr-special-action[value="' + val + '"]').prop('checked', true);
+                        if (val !== 'Phaco' && val !== 'Hemodialisa' && val !== 'CT-SCAN' && val !== 'Kemoterapi') {
+                            $('#sbr-special-lainnya-check').prop('checked', true);
+                            $('#sbr-special-lainnya-text').val(val).show();
+                        }
+                    });
+                }
+
+                setTimeout(function () {
+                    if (d.discharged_by_doctor_id) $('#sbr-dokter-pulang').val(d.discharged_by_doctor_id);
+                    if (d.completing_doctor_id) $('#sbr-dokter-lengkap').val(d.completing_doctor_id);
+                }, 400);
+
+                $('#btn-cetak-sbr').prop('disabled', false);
+
+                // Kunci ulang setelah nilai dari data tersimpan ikut ditimpakan
+                sbrLockFilledFields();
+            }
+        }
+    });
+
+    $('#modal-surat-bukti-rajal').modal('show');
+});
+
+$('#btn-simpan-sbr, #btn-tambah-sbr, #btn-edit-sbr').on('click', function () {
+    var csrf = $('input[name="_csrfToken"]').val();
+
+    var specialActions = [];
+    $('.sbr-special-action:checked').each(function () {
+        var val = $(this).val();
+        if (val === 'Lainnya') {
+            var teks = $.trim($('#sbr-special-lainnya-text').val());
+            if (teks) specialActions.push(teks);
+        } else {
+            specialActions.push(val);
+        }
+    });
+
+    var payload = {
+        _csrfToken: csrf,
+        anamnesa: $('#sbr-anamnesa').val(),
+        diagnosis_primary_text: $('#sbr-diagnosa-utama').val(),
+        diagnosis_secondary_text: $('#sbr-diagnosa-sekunder').val(),
+        action_primary_text: $('#sbr-tindakan-utama').val(),
+        action_secondary_text: $('#sbr-tindakan-sekunder').val(),
+        supporting_diagnosis: $('#sbr-penunjang').val(),
+        is_autopsy: $('input[name="sbr_otopsi"]:checked').val(),
+        special_actions: specialActions,
+        prescription: $('#sbr-resep').val(),
+        advice_notes: $('#sbr-saran').val(),
+        discharged_by_doctor_id: $('#sbr-dokter-pulang').val(),
+        completing_doctor_id: $('#sbr-dokter-lengkap').val(),
+        patient_or_family_name: $('#sbr-nama-keluarga').val(),
+        examined_at: new Date().toISOString().slice(0, 10),
+    };
+
+    $.ajax({
+        url: SIMPAN_SBR_URL,
+        method: 'POST',
+        data: payload,
+        dataType: 'json',
+        success: function (res) {
+            if (res.success) {
+                $('#sbr-noSurat').val(res.letter_no);
+                currentSbrLetterId = res.letter_id;
+                $('#btn-cetak-sbr').prop('disabled', false);
+                alert('Surat berhasil disimpan: ' + res.letter_no);
+            } else {
+                alert(res.message || 'Gagal menyimpan surat.');
+            }
+        },
+        error: function () {
+            alert('Gagal menghubungi server.');
+        }
+    });
+});
+
+$('#btn-cetak-sbr').on('click', function () {
+    if (!currentSbrLetterId) return;
+    window.open(CETAK_SBR_URL_BASE + '/' + currentSbrLetterId, '_blank');
+});
+
+var sbrPenunjangTimer = null;
+$('#sbr-penunjang-search').on('input', function () {
+    clearTimeout(sbrPenunjangTimer);
+    var q = $.trim($(this).val());
+    if (q.length < 1) { $('#sbr-penunjang-dropdown').hide().empty(); return; }
+    sbrPenunjangTimer = setTimeout(function () {
+        $.ajax({
+            url: SEARCH_URL,
+            method: 'GET',
+            data: { q: q },
+            dataType: 'json',
+            success: function (data) {
+                var $dd = $('#sbr-penunjang-dropdown');
+                $dd.empty();
+                if (!data || !data.length) {
+                    $dd.html('<div style="padding:8px;color:#aaa;">Tidak ditemukan</div>').show();
+                    return;
+                }
+                $.each(data, function (_, item) {
+                    var nama = item.nama || item.name || '';
+                    var kode = item.kode || item.code || '';
+                    $('<div class="poly-dd-item"></div>')
+                        .html('<strong>' + escHtml(nama) + '</strong>' + (kode ? ' (' + escHtml(kode) + ')' : ''))
+                        .on('mousedown', function (e) {
+                            e.preventDefault();
+                            var current = $.trim($('#sbr-penunjang').val());
+                            var line = (kode ? kode + ' - ' : '') + nama;
+                            $('#sbr-penunjang').val(current ? current + '\n' + line : line);
+                            $('#sbr-penunjang-search').val('');
+                            $dd.hide().empty();
+                        })
+                        .appendTo($dd);
+                });
+                $dd.show();
+            }
+        });
+    }, 250);
+});
+
+$(document).on('mousedown', function (e) {
+    if (!$(e.target).closest('#sbr-penunjang-search, #sbr-penunjang-dropdown').length) {
+        $('#sbr-penunjang-dropdown').hide();
+    }
+});
 
 $.ajax({
     url: GET_SPRI_URL,

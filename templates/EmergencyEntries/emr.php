@@ -324,9 +324,9 @@ $orderRegistrationNo = $registration->registration_no
                     </button>
                 </div>
                 <div class="col-xs-4">
-                    <button type="button" class="btn btn-sm btn-block btn-inverse"
+                    <button type="button" class="btn btn-sm btn-block btn-inverse" id="btn-surat-bukti-rajal"
                             style="font-size:11px;">
-                        <i class="fa fa-receipt"></i> SURAT BUKTI RAWAT IGD
+                        <i class="fa fa-receipt"></i> SURAT BUKTI RAWAT JALAN
                     </button>
                 </div>
             </div>

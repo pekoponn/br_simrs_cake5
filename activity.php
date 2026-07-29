@@ -1586,3 +1586,24 @@ ADD COLUMN action_notes_secondary TEXT NULL AFTER action_notes;
 ALTER TABLE `outpatient_visit_emr`
     ADD COLUMN `anatomy_front` VARCHAR(255) NULL AFTER `icd9_items`,
     ADD COLUMN `anatomy_back` VARCHAR(255) NULL AFTER `anatomy_front`;
+
+ALTER TABLE `outpatient_letters`
+    ADD COLUMN `anamnesa` TEXT NULL AFTER `examined_at`,
+    ADD COLUMN `diagnosis_primary_text` TEXT NULL AFTER `anamnesa`,
+    ADD COLUMN `diagnosis_secondary_text` TEXT NULL AFTER `diagnosis_primary_text`,
+    ADD COLUMN `action_primary_text` TEXT NULL AFTER `diagnosis_secondary_text`,
+    ADD COLUMN `action_secondary_text` TEXT NULL AFTER `action_primary_text`,
+    ADD COLUMN `supporting_diagnosis` TEXT NULL AFTER `action_secondary_text`,
+    ADD COLUMN `is_autopsy` TINYINT(1) NOT NULL DEFAULT 0 AFTER `supporting_diagnosis`,
+    ADD COLUMN `special_actions` TEXT NULL AFTER `is_autopsy`,
+    ADD COLUMN `prescription` TEXT NULL AFTER `special_actions`,
+    ADD COLUMN `advice_notes` TEXT NULL AFTER `prescription`,
+    ADD COLUMN `discharged_by_doctor_id` INT UNSIGNED NULL AFTER `advice_notes`,
+    ADD COLUMN `completing_doctor_id` INT UNSIGNED NULL AFTER `discharged_by_doctor_id`,
+    ADD COLUMN `patient_or_family_name` VARCHAR(150) NULL AFTER `completing_doctor_id`;
+
+    ALTER TABLE patients
+ADD COLUMN title VARCHAR(10) NULL AFTER full_name;
+
+ALTER TABLE registrations
+ADD COLUMN admission_time TIME NULL AFTER registration_date;
