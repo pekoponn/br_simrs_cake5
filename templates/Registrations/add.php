@@ -25,6 +25,7 @@
 // Default variable agar add.php tidak notice ketika proses save gagal / return dari controller.
 $registration = $registration ?? null;
 $fromQueue = $fromQueue ?? false;
+$fromPlannedInpatient = $fromPlannedInpatient ?? false;
 $queueId = $queueId ?? null;
 $queueNumber = $queueNumber ?? null;
 $queueCode = $queueCode ?? null;
@@ -48,6 +49,9 @@ $masterTreatmentPackages = $masterTreatmentPackages ?? [];
 $masterPatientReferrers = $masterPatientReferrers ?? [];
 
 $currentServiceType = $this->request->getData('service_type') ?? ($registration->service_type ?? 'rawat_jalan');
+if ($fromPlannedInpatient) {
+    $currentServiceType = 'rawat_inap';
+}
 $currentQueueNumber = $this->request->getData('queue_number')
     ?? $this->request->getData('queue_no')
     ?? ($registration->queue_no ?? ($registration->queue_number ?? ($queueNumber ?? '')));
@@ -827,23 +831,31 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                                             Pelayanan
                                             <?php if ($fromQueue): ?>
                                                 <small style="color:#888;">(otomatis Rawat Jalan dari antrian)</small>
+                                                <?php elseif ($fromPlannedInpatient): ?>
+                                                <small style="color:#888;">(otomatis Rawat Inap dari rencana rawat inap)</small>
                                             <?php endif; ?>
                                         </label><br>
-                                        <label style="margin-right:20px;">
+                                        <?php
+                                            $lockRawatJalan = $fromPlannedInpatient;
+                                            $lockIgd        = $fromQueue || $fromPlannedInpatient;
+                                            $lockRawatInap  = $fromQueue;
+                                        ?>
+                                        <label style="margin-right:20px; <?= $lockRawatJalan ? 'color:#adb5bd;' : '' ?>">
                                             <input type="radio" name="service_type" value="rawat_jalan"
-                                                <?= ($fromQueue || $currentServiceType === 'rawat_jalan') ? 'checked' : '' ?>>
+                                                <?= (($fromQueue || $currentServiceType === 'rawat_jalan') && !$fromPlannedInpatient) ? 'checked' : '' ?>
+                                                <?= $lockRawatJalan ? 'disabled' : '' ?>>
                                             Rawat Jalan
                                         </label>
-                                        <label style="margin-right:20px; <?= $fromQueue ? 'color:#adb5bd;' : '' ?>">
+                                        <label style="margin-right:20px; <?= $lockIgd ? 'color:#adb5bd;' : '' ?>">
                                             <input type="radio" name="service_type" value="igd"
                                                 <?= $currentServiceType === 'igd' ? 'checked' : '' ?>
-                                                <?= $fromQueue ? 'disabled' : '' ?>>
+                                                <?= $lockIgd ? 'disabled' : '' ?>>
                                             IGD
                                         </label>
-                                        <label style="<?= $fromQueue ? 'color:#adb5bd;' : '' ?>">
+                                        <label style="<?= $lockRawatInap ? 'color:#adb5bd;' : '' ?>">
                                             <input type="radio" name="service_type" value="rawat_inap"
                                                 <?= $currentServiceType === 'rawat_inap' ? 'checked' : '' ?>
-                                                <?= $fromQueue ? 'disabled' : '' ?>>
+                                                <?= $lockRawatInap ? 'disabled' : '' ?>>
                                             Rawat Inap
                                         </label>
                                     </div>

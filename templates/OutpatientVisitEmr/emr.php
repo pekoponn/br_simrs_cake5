@@ -667,65 +667,52 @@ $anatomyBackUrl = $anatomyBackExists
     <!-- RAWAT INAP -->
     <div class="col-md-4">
 
-        <div style="
-            background:#fafafa;
-            border:1px solid #ddd;
-            border-radius:4px;
-            padding:10px;
-            min-height:220px;">
+            <div style="
+                background:#fafafa;
+                border:1px solid #ddd;
+                border-radius:4px;
+                padding:10px;
+                min-height:220px;">
 
-            <div class="checkbox">
-                <label>
-                    <input type="checkbox"
-                           name="referral_inpatient"
-                           value="1"
-                           <?= !empty($visit->referral_inpatient) ? 'checked' : '' ?>>
-                    Dilakukan Rawat Inap
-                </label>
-            </div>
+                <div class="form-group" style="margin-bottom:8px;">
+                    <input type="text"
+                        name="inpatient_referral_no"
+                        class="form-control input-sm"
+                        value="<?= h($inpatientReferralNo) ?>"
+                        readonly
+                        style="background:#f5f5f5; font-weight:600; cursor:not-allowed;">
+                </div>
 
-            <div class="form-group" style="margin-bottom:8px;">
-                <input type="text"
-                       name="inpatient_referral_no"
-                       class="form-control input-sm"
-                       value="<?= h($inpatientReferralNo) ?>"
-                       readonly
-                       style="background:#f5f5f5; font-weight:600; cursor:not-allowed;">
-            </div>
+                <div class="form-group" style="margin-bottom:8px;">
+                    <label style="font-size:11px; font-weight:600; color:#555; margin-bottom:3px; display:block;">
+                        Alasan Rujukan Rawat Inap
+                    </label>
+                    <textarea id="spri-alasan"
+                            class="form-control input-sm"
+                            rows="3"
+                            placeholder="Tuliskan alasan medis pasien perlu dirawat inap..."
+                            <?= $isDone ? 'readonly' : '' ?>></textarea>
+                </div>
 
-
-            <button type="button"
-                    class="btn btn-default btn-block">
-                Surat Pengantar Rawat
-            </button>
-
-            <div style="margin-top:15px;">
-                <label>Note</label>
-                <textarea
-                    name="referral_note"
-                    class="form-control"
-                    rows="5"><?= h($visit->referral_note ?? '') ?></textarea>
-            </div>
-
-            <div style="margin-top:10px;">
                 <button type="button"
-                        class="btn btn-default btn-block"
-                        style="
-                            font-size:12px;
-                            font-weight:600;
-                            border:1px solid #b5b5b5;
-                            background:#f8f8f8;">
-                    <i class="fa fa-print"></i>
-                    Cetak Antrian (Konsul)
+                        id="btn-surat-pengantar-rawat"
+                        class="btn btn-default btn-block">
+                    <i class="fa fa-print"></i> Surat Pengantar Rawat
                 </button>
+
+                <div style="margin-top:10px; <?= !empty($visit->is_planned_inpatient) ? '' : 'display:none;' ?>"
+                    id="wrap-btn-rencana-rawat-inap">
+                    <button type="button"
+                            id="btn-rencana-rawat-inap"
+                            class="btn btn-success btn-block"
+                            <?= !empty($visit->is_planned_inpatient) ? 'disabled' : '' ?>>
+                        <i class="fa <?= !empty($visit->is_planned_inpatient) ? 'fa-check' : 'fa-procedures' ?>"></i>
+                        <?= !empty($visit->is_planned_inpatient) ? 'Sudah Direncanakan' : 'Rencanakan Pasien ke Rawat Inap' ?>
+                    </button>
+                </div>
             </div>
-
         </div>
-
     </div>
-
-</div>
-
 </div>
 
                         <!-- ══ TAB SKDP ══ -->
@@ -5433,4 +5420,97 @@ if (document.getElementById('icd9-body')) {
 
 // Sinkronkan sekali saat halaman dibuka (kalau sudah ada data ICD tersimpan)
 updateDiagnosisSummary();
+
+var GET_SPRI_URL = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'getSuratPengantarRawat',
+    $visit->id,
+])) ?>;
+var SIMPAN_SPRI_URL = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'simpanSuratPengantarRawat',
+    $visit->id,
+])) ?>;
+var CETAK_SPRI_URL = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'cetakSuratPengantarRawat',
+    $visit->id,
+])) ?>;
+var RENCANA_RAWAT_INAP_URL = <?= json_encode($this->Url->build([
+    'controller' => 'PatientAdmissions',
+    'action'     => 'planInpatient',
+    $visit->id,
+])) ?>;
+
+$.ajax({
+    url: GET_SPRI_URL,
+    method: 'GET',
+    dataType: 'json',
+    success: function (res) {
+        if (res && res.success && res.data && res.data.reason) {
+            $('#spri-alasan').val(res.data.reason);
+        }
+    }
+});
+
+$('#btn-surat-pengantar-rawat').on('click', function () {
+    var $btn = $(this);
+    var csrf = $('input[name="_csrfToken"]').val();
+    var alasan = $.trim($('#spri-alasan').val());
+
+    if (!alasan) {
+        alert('Isi alasan rujukan rawat inap terlebih dahulu.');
+        $('#spri-alasan').focus();
+        return;
+    }
+
+    $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Menyimpan...');
+
+    $.ajax({
+        url: SIMPAN_SPRI_URL,
+        method: 'POST',
+        data: { _csrfToken: csrf, reason: alasan },
+        dataType: 'json',
+        success: function (res) {
+            $btn.prop('disabled', false).html('<i class="fa fa-print"></i> Surat Pengantar Rawat');
+            if (res && res.success) {
+                window.open(CETAK_SPRI_URL, '_blank');
+                $('#wrap-btn-rencana-rawat-inap').slideDown(150);
+            } else {
+                alert((res && res.message) || 'Gagal menyimpan alasan rujukan.');
+            }
+        },
+        error: function () {
+            $btn.prop('disabled', false).html('<i class="fa fa-print"></i> Surat Pengantar Rawat');
+            alert('Gagal menghubungi server.');
+        }
+    });
+});
+
+$('#btn-rencana-rawat-inap').on('click', function () {
+    var $btn = $(this);
+    if (!confirm('Rencanakan pasien ini masuk daftar Rencana Rawat Inap?')) return;
+
+    $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Memproses...');
+
+    $.ajax({
+        url: RENCANA_RAWAT_INAP_URL,
+        method: 'POST',
+        dataType: 'json',
+        data: { _csrfToken: $('input[name="_csrfToken"]').val() },
+        success: function (res) {
+            if (res && res.success) {
+                alert('Pasien berhasil masuk daftar Rencana Rawat Inap.');
+                $btn.html('<i class="fa fa-check"></i> Sudah Direncanakan').prop('disabled', true);
+            } else {
+                alert((res && res.message) || 'Gagal menambahkan ke Rencana Rawat Inap.');
+                $btn.prop('disabled', false).html('<i class="fa fa-procedures"></i> Rencanakan Pasien ke Rawat Inap');
+            }
+        },
+        error: function () {
+            alert('Gagal menghubungi server.');
+            $btn.prop('disabled', false).html('<i class="fa fa-procedures"></i> Rencanakan Pasien ke Rawat Inap');
+        }
+    });
+});
 </script>

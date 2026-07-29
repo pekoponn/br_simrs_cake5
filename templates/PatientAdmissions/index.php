@@ -159,8 +159,7 @@ $baseUrl = ['controller' => 'PatientAdmissions', 'action' => 'index'];
 
 <?= $this->Krs->breadcrumb('Patient Admissions', 'Pendaftaran Pasien') ?>
 
-<!-- <div class="patient-admission-index content"> -->
-    <div class="patient-admission">
+<div class="patient-admission patient-admission-index">
     <div class="pa-header">
         <div>
             <h4><i class="fa fa-user-plus"></i> Pendaftaran Pasien</h4>
@@ -220,141 +219,383 @@ $baseUrl = ['controller' => 'PatientAdmissions', 'action' => 'index'];
         </ul>
     </div>
 
-    <div class="pa-table-wrap">
-        <table class="table table-bordered pa-table">
-            <thead>
-                <?php if ($tab === 'jkn'): ?>
-                    <tr>
-                        <th>S E P</th><th>Token</th><th>Antrino</th><th>No Rujukan</th><th>NO BPJS</th><th>RM</th><th>Nama Pasien</th><th>NO HP</th><th>Tgl Daftar</th><th>Poli</th><th>Dokter</th><th>Status</th>
-                    </tr>
-                <?php elseif ($tab === 'rawat_jalan'): ?>
-                    <tr>
-                        <th>No Antri</th><th>Resume</th><th>Aksi</th><th>Rek Medis</th><th>Dokter</th><th>No Reg</th><th>Nama Pasien</th><th>Tgl Masuk</th><th>Poli</th><th>Ruang</th><th>Status</th>
-                    </tr>
-                <?php elseif ($tab === 'igd'): ?>
-                    <tr>
-                        <th>No Antri</th><th>Resume</th><th>Aksi</th><th>No RM</th><th>No Registrasi</th><th>Nama Pasien</th><th>Gender</th><th>Tgl Masuk</th><th>Tgl Selesai</th><th>Cara Bayar</th><th>Dokter</th>
-                    </tr>
-                <?php elseif ($tab === 'rawat_inap' || $tab === 'tutup_sementara'): ?>
-                    <tr>
-                        <th>No</th><th>No. Registrasi</th><th>No. RM</th><th>Nama Pasien</th><th>Gender</th><th>Tanggal Masuk</th><th>Ruang</th><th>Kelas</th><th>Bed</th><th>Jenis Pasien</th><th>Tanggal Lahir</th><th>Nama Ayah</th><th>Nama Suami/Istri</th><th>Dokter Inap</th><th>Username</th>
-                    </tr>
-                <?php else: ?>
-                    <tr>
-                        <th>Proses</th><th>No. Reg</th><th>Rekmed</th><th>Nama Pasien</th><th>Tgl Masuk</th><th>Unit</th><th>Dokter</th><th>Status</th>
-                    </tr>
-                <?php endif; ?>
-            </thead>
-            <tbody>
-                <?php if ($totalRows === 0): ?>
-                    <?php $colspan = $tab === 'jkn' ? 12 : ($tab === 'rawat_jalan' || $tab === 'igd' ? 11 : (($tab === 'rawat_inap' || $tab === 'tutup_sementara') ? 15 : 8)); ?>
-                    <tr><td colspan="<?= $colspan ?>" class="text-center text-muted" style="padding:28px;">Belum ada data untuk filter ini.</td></tr>
-                <?php else: ?>
-                    <?php $i = 1; ?>
-                    <?php foreach ($rows as $r): ?>
-                        <?php [$genderLabel, $rowColor] = $getGender($r); ?>
+    <div class="pa-body-card">
+        <div class="pa-table-wrap">
+            <table class="table table-bordered pa-table">
+                <thead>
+                    <?php if ($tab === 'jkn'): ?>
+                        <tr>
+                            <th>S E P</th><th>Token</th><th>Antrino</th><th>No Rujukan</th><th>NO BPJS</th><th>RM</th><th>Nama Pasien</th><th>NO HP</th><th>Tgl Daftar</th><th>Poli</th><th>Dokter</th><th>Status</th>
+                        </tr>
+                    <?php elseif ($tab === 'rawat_jalan'): ?>
+                        <tr>
+                            <th>No Antri</th><th>Resume</th><th>Aksi</th><th>Rek Medis</th><th>Dokter</th><th>No Reg</th><th>Nama Pasien</th><th>Tgl Masuk</th><th>Poli</th><th>Ruang</th><th>Status</th>
+                        </tr>
+                    <?php elseif ($tab === 'igd'): ?>
+                        <tr>
+                            <th>No Antri</th><th>Resume</th><th>Aksi</th><th>No RM</th><th>No Registrasi</th><th>Nama Pasien</th><th>Gender</th><th>Tgl Masuk</th><th>Tgl Selesai</th><th>Cara Bayar</th><th>Dokter</th>
+                        </tr>
+                    <?php elseif ($tab === 'rawat_inap' || $tab === 'tutup_sementara'): ?>
+                        <tr>
+                            <th>No</th><th>No. Registrasi</th><th>No. RM</th><th>Nama Pasien</th><th>Gender</th><th>Tanggal Masuk</th><th>Ruang</th><th>Kelas</th><th>Bed</th><th>Jenis Pasien</th><th>Tanggal Lahir</th><th>Nama Ayah</th><th>Nama Suami/Istri</th><th>Dokter Inap</th><th>Username</th>
+                        </tr>
+                    <?php else: ?>
+                        <tr>
+                            <th>Proses</th><th>No. Reg</th><th>Rekmed</th><th>Nama Pasien</th><th>Tgl Masuk</th><th>Unit</th><th>Dokter</th><th>Status</th>
+                        </tr>
+                    <?php endif; ?>
+                </thead>
+                <tbody>
+                    <?php if ($totalRows === 0): ?>
+                        <?php $colspan = $tab === 'jkn' ? 12 : ($tab === 'rawat_jalan' || $tab === 'igd' ? 11 : (($tab === 'rawat_inap' || $tab === 'tutup_sementara') ? 15 : 8)); ?>
+                        <tr><td colspan="<?= $colspan ?>" class="text-center text-muted" style="padding:28px;">Belum ada data untuk filter ini.</td></tr>
+                    <?php else: ?>
+                        <?php $i = 1; ?>
+                        <?php foreach ($rows as $r): ?>
+                            <?php [$genderLabel, $rowColor] = $getGender($r); ?>
 
-                        <?php if ($tab === 'jkn'): ?>
-                            <tr>
-                                <td class="text-center"><a href="#" class="btn btn-xs btn-info">SEP</a></td>
-                                <td><?= h($r->polyclinic_queue_id ?? '') ?></td>
-                                <td><?= h($r->queue_no ?? $r->polyclinic_queue->queue_number ?? '') ?></td>
-                                <td><?= h($r->refferal_no ?? $r->reference_type ?? '') ?></td>
-                                <td><?= h($r->insurance_card_no ?? $r->bpjs_nik ?? '') ?></td>
-                                <td><?= h($getRm($r)) ?></td>
-                                <td><strong><?= h($getPatientName($r)) ?></strong></td>
-                                <td><?= h($getPhone($r)) ?></td>
-                                <td><?= $displayDate($r->registration_date ?? null) ?></td>
-                                <td><?= h($getUnit($r)) ?></td>
-                                <td><?= h($getDoctor($r)) ?></td>
-                                <td><span class="label label-default"><?= h($r->status ?? '') ?></span></td>
-                            </tr>
+                            <?php if ($tab === 'jkn'): ?>
+                                <tr>
+                                    <td class="text-center"><a href="#" class="btn btn-xs btn-info">SEP</a></td>
+                                    <td><?= h($r->polyclinic_queue_id ?? '') ?></td>
+                                    <td><?= h($r->queue_no ?? $r->polyclinic_queue->queue_number ?? '') ?></td>
+                                    <td><?= h($r->refferal_no ?? $r->reference_type ?? '') ?></td>
+                                    <td><?= h($r->insurance_card_no ?? $r->bpjs_nik ?? '') ?></td>
+                                    <td><?= h($getRm($r)) ?></td>
+                                    <td><strong><?= h($getPatientName($r)) ?></strong></td>
+                                    <td><?= h($getPhone($r)) ?></td>
+                                    <td><?= $displayDate($r->registration_date ?? null) ?></td>
+                                    <td><?= h($getUnit($r)) ?></td>
+                                    <td><?= h($getDoctor($r)) ?></td>
+                                    <td><span class="label label-default"><?= h($r->status ?? '') ?></span></td>
+                                </tr>
 
-                        <?php elseif ($tab === 'rawat_jalan'): ?>
-                            <tr>
-                                <td class="text-center big-queue"><?= h($r->queue_number ?? '-') ?></td>
-                                <td class="text-center"><a href="#" class="btn btn-xs btn-info"><i class="fa fa-file-medical"></i></a></td>
-                                <td class="text-center"><a href="#" class="btn btn-xs btn-teal">EMR</a> <a href="#" class="btn btn-xs btn-warning">CPPT</a></td>
-                                <td><?= h($getRm($r)) ?></td>
-                                <td><?= h($getDoctor($r)) ?></td>
-                                <td><?= h($getNoReg($r)) ?></td>
-                                <td><strong><?= h($getPatientName($r)) ?></strong></td>
-                                <td><?= $displayDateTime($r->visit_date ?? null, $r->visit_time ?? null) ?></td>
-                                <td><?= h($r->polyclinic_name ?? '') ?></td>
-                                <td><?= h($r->room_name ?? $r->registration->room_name ?? $r->registration->room->room_name ?? '') ?></td>
-                                <td><span class="label label-default"><?= h($r->status ?? '') ?></span></td>
-                            </tr>
+                            <?php elseif ($tab === 'rawat_jalan'): ?>
+                                <tr>
+                                    <td class="text-center big-queue"><?= h($r->queue_number ?? '-') ?></td>
+                                    <td class="text-center"><a href="#" class="btn btn-xs btn-info"><i class="fa fa-file-medical"></i></a></td>
+                                    <td class="text-center"><a href="#" class="btn btn-xs btn-teal">EMR</a> <a href="#" class="btn btn-xs btn-warning">CPPT</a></td>
+                                    <td><?= h($getRm($r)) ?></td>
+                                    <td><?= h($getDoctor($r)) ?></td>
+                                    <td><?= h($getNoReg($r)) ?></td>
+                                    <td><strong><?= h($getPatientName($r)) ?></strong></td>
+                                    <td><?= $displayDateTime($r->visit_date ?? null, $r->visit_time ?? null) ?></td>
+                                    <td><?= h($r->polyclinic_name ?? '') ?></td>
+                                    <td><?= h($r->room_name ?? $r->registration->room_name ?? $r->registration->room->room_name ?? '') ?></td>
+                                    <td><span class="label label-default"><?= h($r->status ?? '') ?></span></td>
+                                </tr>
 
-                        <?php elseif ($tab === 'igd'): ?>
-                            <tr style="background:<?= h($rowColor) ?>;">
-                                <td class="text-center big-queue"><?= h($r->queue_no ?? $r->polyclinic_queue->queue_number ?? '-') ?></td>
-                                <td class="text-center"><a href="#" class="btn btn-xs btn-info"><i class="fa fa-file-medical"></i></a></td>
-                                <td class="text-center"><a href="#" class="btn btn-xs btn-teal">EMR</a> <a href="#" class="btn btn-xs btn-warning">CPPT</a> <a href="#" class="btn btn-xs btn-danger">Triase</a></td>
-                                <td><?= h($getRm($r)) ?></td>
-                                <td><?= h($getNoReg($r)) ?></td>
-                                <td><strong><?= h($getPatientName($r)) ?></strong></td>
-                                <td class="text-center"><span class="label label-default"><?= h($genderLabel) ?></span></td>
-                                <td><?= $displayDateTime($r->registration_date ?? null, $r->created ?? null) ?></td>
-                                <td><?= $displayDate($r->modified ?? null, 'd-m-Y H:i') ?></td>
-                                <td><?= h($getPayment($r)) ?></td>
-                                <td><?= h($getDoctor($r)) ?></td>
-                            </tr>
+                            <?php elseif ($tab === 'igd'): ?>
+                                <tr style="background:<?= h($rowColor) ?>;">
+                                    <td class="text-center big-queue"><?= h($r->queue_no ?? $r->polyclinic_queue->queue_number ?? '-') ?></td>
+                                    <td class="text-center"><a href="#" class="btn btn-xs btn-info"><i class="fa fa-file-medical"></i></a></td>
+                                    <td class="text-center"><a href="#" class="btn btn-xs btn-teal">EMR</a> <a href="#" class="btn btn-xs btn-warning">CPPT</a> <a href="#" class="btn btn-xs btn-danger">Triase</a></td>
+                                    <td><?= h($getRm($r)) ?></td>
+                                    <td><?= h($getNoReg($r)) ?></td>
+                                    <td><strong><?= h($getPatientName($r)) ?></strong></td>
+                                    <td class="text-center"><span class="label label-default"><?= h($genderLabel) ?></span></td>
+                                    <td><?= $displayDateTime($r->registration_date ?? null, $r->created ?? null) ?></td>
+                                    <td><?= $displayDate($r->modified ?? null, 'd-m-Y H:i') ?></td>
+                                    <td><?= h($getPayment($r)) ?></td>
+                                    <td><?= h($getDoctor($r)) ?></td>
+                                </tr>
 
-                        <?php elseif ($tab === 'rawat_inap' || $tab === 'tutup_sementara'): ?>
-                            <tr style="background:<?= h($rowColor) ?>;">
-                                <td class="text-center"><?= $i ?></td>
-                                <td><?= h($getNoReg($r)) ?></td>
-                                <td><?= h($getRm($r)) ?></td>
-                                <td><strong><?= h($getPatientName($r)) ?></strong></td>
-                                <td class="text-center"><span class="label label-default"><?= h($genderLabel) ?></span></td>
-                                <td><?= $displayDateTime($r->registration_date ?? null, $r->created ?? null) ?></td>
-                                <td><?= h($getRoom($r)) ?></td>
-                                <td><?= h($getClass($r)) ?></td>
-                                <td><?= h($getBed($r)) ?></td>
-                                <td><?= h($getPayment($r)) ?></td>
-                                <td><?= $getBirth($r) ?></td>
-                                <td><?= h($getFather($r)) ?></td>
-                                <td><?= h($getSpouse($r)) ?></td>
-                                <td><?= h($getDoctor($r)) ?></td>
-                                <td><?= h($getUsername($r)) ?></td>
-                            </tr>
+                            <?php elseif ($tab === 'rawat_inap' || $tab === 'tutup_sementara'): ?>
+                                <tr style="background:<?= h($rowColor) ?>;">
+                                    <td class="text-center"><?= $i ?></td>
+                                    <td><?= h($getNoReg($r)) ?></td>
+                                    <td><?= h($getRm($r)) ?></td>
+                                    <td><strong><?= h($getPatientName($r)) ?></strong></td>
+                                    <td class="text-center"><span class="label label-default"><?= h($genderLabel) ?></span></td>
+                                    <td><?= $displayDateTime($r->registration_date ?? null, $r->created ?? null) ?></td>
+                                    <td><?= h($getRoom($r)) ?></td>
+                                    <td><?= h($getClass($r)) ?></td>
+                                    <td><?= h($getBed($r)) ?></td>
+                                    <td><?= h($getPayment($r)) ?></td>
+                                    <td><?= $getBirth($r) ?></td>
+                                    <td><?= h($getFather($r)) ?></td>
+                                    <td><?= h($getSpouse($r)) ?></td>
+                                    <td><?= h($getDoctor($r)) ?></td>
+                                    <td><?= h($getUsername($r)) ?></td>
+                                </tr>
 
-                        <?php else: ?>
-                            <tr>
-                                <td class="text-center"><a href="#" class="btn btn-xs btn-info">Proses</a></td>
-                                <td><?= h($getNoReg($r)) ?></td>
-                                <td><?= h($getRm($r)) ?></td>
-                                <td><strong><?= h($getPatientName($r)) ?></strong></td>
-                                <td><?= $displayDateTime($r->registration_date ?? null, $r->created ?? null) ?></td>
-                                <td><?= h($getUnit($r)) ?></td>
-                                <td><?= h($getDoctor($r)) ?></td>
-                                <td><span class="label label-default"><?= h($r->status ?? '') ?></span></td>
-                            </tr>
-                        <?php endif; ?>
-                        <?php $i++; ?>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </tbody>
-        </table>
-    </div>
+                            <?php else: ?>
+                                <tr>
+                                    <td class="text-center">
+                                        <?= $this->Html->link(
+                                            'Proses',
+                                            [
+                                                'controller' => 'Registrations',
+                                                'action' => 'add',
+                                                '?' => [
+                                                    'from_planned_inpatient' => 1,
+                                                    'source_registration_id' => $r->id ?? '',
+                                                ],
+                                            ],
+                                            ['class' => 'btn btn-xs btn-info', 'escape' => false]
+                                        ) ?>
+                                    </td>
+                                    <td><?= h($getNoReg($r)) ?></td>
+                                    <td><?= h($getRm($r)) ?></td>
+                                    <td><strong><?= h($getPatientName($r)) ?></strong></td>
+                                    <td><?= $displayDateTime($r->registration_date ?? null, $r->created ?? null) ?></td>
+                                    <td><?= h($getUnit($r)) ?></td>
+                                    <td><?= h($getDoctor($r)) ?></td>
+                                    <td><span class="label label-default"><?= h($r->status ?? '') ?></span></td>
+                                </tr>
+                            <?php endif; ?>
+                            <?php $i++; ?>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
 
-    <div class="pa-footer">
-        <a href="#" class="btn btn-default btn-sm">Get Jadwal dr HFIS</a>
-        <a href="#" class="btn btn-default btn-sm">Jadwal dokter</a>
-        <a href="#" class="btn btn-default btn-sm">Surat Kontrol dan SPRI</a>
-        <a href="#" class="btn btn-default btn-sm">Dashboard JKN</a>
-        <a href="#" class="btn btn-default btn-sm">Antrian Online dan Task</a>
-        <a href="#" class="btn btn-default btn-sm">JKN Master</a>
-        <div class="pa-pagination">
-            <?= $this->Paginator->counter('Halaman {{page}} / {{pages}}, total {{count}} data') ?>
-            <?= $this->Paginator->prev('‹', ['class' => 'btn btn-default btn-xs']) ?>
-            <?= $this->Paginator->next('›', ['class' => 'btn btn-default btn-xs']) ?>
+        <div class="pa-footer">
+            <div class="pa-footer-actions">
+                <a href="#" class="btn btn-default btn-sm">Get Jadwal dr HFIS</a>
+                <a href="#" class="btn btn-default btn-sm">Jadwal dokter</a>
+                <a href="#" class="btn btn-default btn-sm">Surat Kontrol dan SPRI</a>
+                <a href="#" class="btn btn-default btn-sm">Dashboard JKN</a>
+                <a href="#" class="btn btn-default btn-sm">Antrian Online dan Task</a>
+                <a href="#" class="btn btn-default btn-sm">JKN Master</a>
+            </div>
+            <div class="pa-pagination">
+                <?= $this->Paginator->counter('Halaman {{page}} / {{pages}}, total {{count}} data') ?>
+                <?= $this->Paginator->prev('‹', ['class' => 'btn btn-default btn-xs']) ?>
+                <?= $this->Paginator->next('›', ['class' => 'btn btn-default btn-xs']) ?>
+            </div>
         </div>
     </div>
-</div>
-
+</div><!-- /.patient-admission -->
 <style>
-.patient-admission-index{font-size:12px;color:#1e293b}.pa-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.pa-header h4{margin:0;font-weight:800;color:#1e3a5f}.pa-header small{color:#6b7280}.pa-filter-card{background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:10px 12px;margin-bottom:10px}.pa-info-row{display:flex;gap:28px;margin-bottom:8px}.pa-info-row small{display:block;color:#6b7280;font-size:11px}.pa-info-row strong{color:#1e3a5f}.pa-form label{font-size:11px;color:#555;font-weight:600}.pa-tabs-wrap{border:1px solid #dee2e6;border-bottom:none;background:#fff;border-radius:6px 6px 0 0}.pa-tabs>li>a{font-size:11px;font-weight:700;padding:9px 12px;color:#1e3a5f}.pa-tabs>li.active>a,.pa-tabs>li.active>a:hover{background:#1e3a5f!important;color:#fff!important}.pa-table-wrap{max-height:500px;overflow:auto;border:1px solid #dee2e6;background:#fff}.pa-table{margin-bottom:0!important;font-size:11px;min-width:1200px}.pa-table>thead>tr>th{background:#1e3a5f!important;color:#fff!important;border-color:#2d4f7f!important;text-align:center;vertical-align:middle;white-space:nowrap;padding:6px 5px!important}.pa-table td{vertical-align:middle!important;white-space:nowrap;padding:4px 5px!important;border-color:#9fb6c8!important}.pa-table tbody tr:hover{background:#fff3cd!important}.big-queue{font-weight:800;font-size:16px;color:#1e3a5f}.btn-xs{padding:3px 7px;font-size:11px;line-height:1.5;border-radius:4px}.btn-teal{background-color:#17a2b8;border-color:#17a2b8;color:#fff!important}.pa-footer{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:10px;background:#fafafa;border:1px solid #dee2e6;border-radius:6px;padding:10px 12px}.pa-pagination{margin-left:auto;font-size:11px;color:#555;display:flex;gap:6px;align-items:center}@media(max-width:1200px){.pa-header{display:block}.pa-table-wrap{max-height:430px}.pa-pagination{margin-left:0;width:100%}}
+html, body {
+    height: 100%;
+}
+.patient-admission-index {
+    font-size: 12px;
+    color: #1e293b;
+    display: flex;
+    flex-direction: column;
+    min-height: calc(90vh - 65px); /* 65px = tinggi topbar biru di atas */
+    overflow: hidden; /* jaga-jaga supaya halaman tidak ikut scroll */
+}
+
+/* ── Header ── */
+.pa-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.pa-header h4 {
+    margin: 0;
+    font-weight: 800;
+    color: #1e3a5f;
+}
+.pa-header small {
+    color: #6b7280;
+}
+
+/* ── Filter Card ── */
+.pa-filter-card {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+}
+.pa-info-row {
+    display: flex;
+    gap: 28px;
+    margin-bottom: 8px;
+}
+.pa-info-row small {
+    display: block;
+    color: #6b7280;
+    font-size: 11px;
+}
+.pa-info-row strong {
+    color: #1e3a5f;
+}
+.pa-form label {
+    font-size: 11px;
+    color: #555;
+    font-weight: 600;
+}
+
+/* ── Tabs ── */
+.pa-tabs-wrap {
+    border: 1px solid #dee2e6;
+    border-bottom: none;
+    background: #fff;
+    border-radius: 6px 6px 0 0;
+    overflow: hidden;
+}
+.pa-tabs {
+    display: flex;
+    justify-content: space-between;
+    margin: 0;
+    width: 100%;
+}
+.pa-tabs > li {
+    float: none;
+    flex: 1 1 auto;
+    text-align: center;
+}
+.pa-tabs > li > a {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 9px 12px;
+    color: #1e3a5f;
+    white-space: nowrap;
+}
+.pa-tabs > li.active > a,
+.pa-tabs > li.active > a:hover {
+    background: #1e3a5f !important;
+    color: #fff !important;
+}
+
+.pa-body-card {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 0 0 6px 6px;
+    flex: 1 1 auto;
+    min-height: 0;  
+}
+
+.pa-table-wrap {
+    flex: 1 1 auto;
+    overflow: auto;
+    background: #fff;
+}
+.pa-table {
+    margin-bottom: 0 !important;
+    font-size: 11px;
+    min-width: 1200px;
+}
+.pa-table > thead > tr > th {
+    background: #1e3a5f !important;
+    color: #fff !important;
+    border-color: #2d4f7f !important;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+    padding: 6px 5px !important;
+}
+.pa-table td {
+    vertical-align: middle !important;
+    white-space: nowrap;
+    padding: 4px 5px !important;
+    border-color: #9fb6c8 !important;
+}
+.pa-table tbody tr:hover {
+    background: #fff3cd !important;
+}
+.big-queue {
+    font-weight: 800;
+    font-size: 16px;
+    color: #1e3a5f;
+}
+
+/* ── Footer nempel di bawah kartu, bukan fixed/sticky ── */
+.pa-footer {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+    background: #fff;
+    border-top: 1px solid #dee2e6;
+    padding: 14px 20px;
+}
+.pa-footer-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+.pa-footer-actions > a.btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+.pa-pagination {
+    font-size: 11px;
+    color: #555;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.pa-table > thead > tr > th {
+    background: #1e3a5f !important;
+    color: #fff !important;
+    border-color: #2d4f7f !important;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+    padding: 6px 5px !important;
+}
+.pa-table td {
+    vertical-align: middle !important;
+    white-space: nowrap;
+    padding: 4px 5px !important;
+    border-color: #9fb6c8 !important;
+}
+.pa-table tbody tr:hover {
+    background: #fff3cd !important;
+}
+.big-queue {
+    font-weight: 800;
+    font-size: 16px;
+    color: #1e3a5f;
+}
+.btn-xs {
+    padding: 3px 7px;
+    font-size: 11px;
+    line-height: 1.5;
+    border-radius: 4px;
+}
+.btn-teal {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+    color: #fff !important;
+}
+
+.pa-footer-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+.pa-footer-actions > a.btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+
+/* ── Responsive ── */
+@media (max-width: 1200px) {
+    .pa-header {
+        display: block;
+    }
+    .pa-table-wrap {
+        max-height: 430px;
+    }
+    .pa-footer {
+        left: 0;
+        flex-wrap: wrap;
+        position: static; /* di layar sempit biarkan mengalir normal, tidak fixed */
+        box-shadow: none;
+    }
+    .pa-table-wrap {
+        margin-bottom: 10px;
+    }
+}
 </style>
 
 <script>

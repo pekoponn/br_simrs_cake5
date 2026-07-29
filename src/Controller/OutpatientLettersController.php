@@ -412,4 +412,111 @@ class OutpatientLettersController extends AppController
         $this->set(compact('letter'));
     }
 
+
+    public function getSuratPengantarRawat($visitId = null)
+    {
+        $this->request->allowMethod(['get']);
+        $this->autoRender = false;
+
+        $letter = $this->OutpatientLetters->find()
+            ->where([
+                'outpatient_visit_id' => (int)$visitId,
+                'letter_type' => 'pengantar_rawat',
+            ])
+            ->first();
+
+        return $this->response->withType('application/json')->withStringBody(json_encode([
+            'success' => true,
+            'data'    => $letter ? [
+                'letter_id' => $letter->id,
+                'letter_no' => $letter->letter_no,
+                'reason'    => $letter->notes,
+                'diagnosis' => $letter->diagnosis,
+            ] : null,
+        ]));
+    }
+
+    public function simpanSuratPengantarRawat($visitId = null)
+    {
+        $this->request->allowMethod(['post']);
+        $this->autoRender = false;
+
+        $this->loadModel('OutpatientVisits');
+        $visit = $this->OutpatientVisits->get($visitId);
+        $data  = $this->request->getData();
+
+        $entity = $this->OutpatientLetters->find()
+            ->where([
+                'outpatient_visit_id' => $visit->id,
+                'letter_type' => 'pengantar_rawat',
+            ])
+            ->first();
+
+        if (!$entity) {
+            $entity = $this->OutpatientLetters->newEmptyEntity();
+            $entity->outpatient_visit_id = $visit->id;
+            $entity->registration_id     = $visit->registration_id ?? null;
+            $entity->patient_id          = $visit->patient_id ?? null;
+            $entity->doctor_id           = $visit->doctor_id ?? null;
+            $entity->letter_type         = 'pengantar_rawat';
+            $entity->letter_no           = 'SPRI-' . date('Ymd') . '-' . str_pad((string)$visit->id, 5, '0', STR_PAD_LEFT);
+        }
+
+        $entity = $this->OutpatientLetters->patchEntity($entity, [
+            'diagnosis' => $entity->diagnosis ?: ($visit->diagnosis_primary ?? null),
+            'notes'     => $data['reason'] ?? null,
+        ], ['validate' => false]);
+
+        if ($this->OutpatientLetters->save($entity, ['checkRules' => false])) {
+            return $this->response->withType('application/json')->withStringBody(json_encode([
+                'success'   => true,
+                'letter_id' => $entity->id,
+                'letter_no' => $entity->letter_no,
+            ]));
+        }
+
+        return $this->response->withType('application/json')->withStringBody(json_encode([
+            'success' => false,
+            'message' => 'Gagal menyimpan alasan rujukan.',
+            'errors'  => $entity->getErrors(),
+        ]));
+    }
+
+    public function cetakSuratPengantarRawat($visitId = null)
+    {
+        $this->request->allowMethod(['get']);
+
+        $this->loadModel('OutpatientVisits');
+        $visit = $this->OutpatientVisits->get($visitId, [
+            'contain' => ['Patients', 'Doctors', 'Registrations'],
+        ]);
+
+        $letter = $this->OutpatientLetters->find()
+            ->where([
+                'outpatient_visit_id' => $visit->id,
+                'letter_type' => 'pengantar_rawat',
+            ])
+            ->first();
+
+        if (!$letter) {
+            $letter = $this->OutpatientLetters->newEmptyEntity();
+            $letter->outpatient_visit_id = $visit->id;
+            $letter->registration_id     = $visit->registration_id ?? null;
+            $letter->patient_id          = $visit->patient_id ?? null;
+            $letter->doctor_id           = $visit->doctor_id ?? null;
+            $letter->letter_type         = 'pengantar_rawat';
+            $letter->letter_no           = 'SPRI-' . date('Ymd') . '-' . str_pad((string)$visit->id, 5, '0', STR_PAD_LEFT);
+            $letter->diagnosis = $visit->diagnosis_primary ?? null;
+
+            $this->OutpatientLetters->save($letter, ['checkRules' => false]);
+        }
+
+        $letter = $this->OutpatientLetters->get($letter->id, [
+            'contain' => ['Patients', 'Doctors', 'OutpatientVisits'],
+        ]);
+
+        $this->viewBuilder()->setLayout('print');
+        $this->set(compact('letter', 'visit'));
+    }
+
 }

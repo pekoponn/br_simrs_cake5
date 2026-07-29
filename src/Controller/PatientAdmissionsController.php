@@ -229,4 +229,76 @@ class PatientAdmissionsController extends AppController
 
         return $query;
     }
+
+    public function planInpatient($visitId = null)
+    {
+        $this->request->allowMethod(['post']);
+        $this->autoRender = false;
+
+        $visit = $this->OutpatientVisits->get($visitId, [
+            'contain' => ['Patients', 'Doctors', 'Registrations'],
+        ]);
+
+        if (!empty($visit->is_planned_inpatient)) {
+            return $this->response->withType('application/json')->withStringBody(json_encode([
+                'success' => false,
+                'message' => 'Kunjungan ini sudah direncanakan rawat inap sebelumnya.',
+            ]));
+        }
+
+        // Ambil registrasi yang SUDAH ADA untuk kunjungan ini — jangan buat baru.
+        $registrationId = $visit->registration_id ?? ($visit->registration->id ?? null);
+
+        if (empty($registrationId)) {
+            return $this->response->withType('application/json')->withStringBody(json_encode([
+                'success' => false,
+                'message' => 'Data registrasi untuk kunjungan ini tidak ditemukan.',
+            ]));
+        }
+
+        $registration = $this->Registrations->get($registrationId);
+
+        $conn = $this->Registrations->getConnection();
+        $saved = false;
+
+        try {
+            $conn->transactional(function () use (&$saved, $registration, $visit) {
+                // Cukup ubah status registrasi yang sudah ada.
+                // registration_no, service_type, poli, dokter TIDAK diubah.
+                $registration->status = 'rencana_rawat_inap';
+
+                if (!$this->Registrations->save($registration, ['checkRules' => false])) {
+                    throw new \Exception('registration');
+                }
+
+                $visit->is_planned_inpatient = 1;
+                $visit->status = 'done';
+                if ($this->OutpatientVisits->getSchema()->hasColumn('end_time')) {
+                    $visit->end_time = date('Y-m-d H:i:s');
+                }
+
+                if (!$this->OutpatientVisits->save($visit, ['checkRules' => false])) {
+                    throw new \Exception('visit');
+                }
+
+                $saved = true;
+            });
+        } catch (\Throwable $e) {
+            $saved = false;
+        }
+
+        if ($saved) {
+            return $this->response->withType('application/json')->withStringBody(json_encode([
+                'success' => true,
+                'registration_id' => $registration->id,
+                'registration_no' => $registration->registration_no,
+            ]));
+        }
+
+        return $this->response->withType('application/json')->withStringBody(json_encode([
+            'success' => false,
+            'message' => 'Gagal memperbarui status registrasi.',
+            'errors' => array_merge($registration->getErrors(), $visit->getErrors()),
+        ]));
+    }
 }
