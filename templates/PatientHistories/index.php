@@ -1000,8 +1000,8 @@ $(function () {
 
     function genderRowClass(gender) {
         var g = (gender == null ? '' : String(gender)).trim().toLowerCase();
-        var female = ['p', 'f', 'female', 'perempuan', 'wanita', 'w'];
-        var male = ['l', 'm', 'male', 'laki-laki', 'pria'];
+        var female = ['w', 'wanita', 'f', 'female', 'perempuan'];
+        var male = ['p', 'pria', 'l', 'male', 'laki-laki', 'm'];
         if (female.indexOf(g) !== -1) return 'row-female';
         if (male.indexOf(g) !== -1) return 'row-male';
         return '';

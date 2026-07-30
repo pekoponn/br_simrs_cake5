@@ -476,6 +476,30 @@ $anatomyBackUrl = $anatomyBackExists
                                             <i class="fa fa-file-medical" style="color:#1e3a5f;"></i>
                                             Protokol Terapi
                                         </button> -->
+                                    <button type="button" class="btn btn-xs btn-default btn-block m-b-5 btn-surat-skdp"
+                                            style="text-align:left; font-size:11px;"
+                                            data-noreg="<?= h($visit->registration_no ?? '-') ?>"
+                                            data-rekmed="<?= h($p->code ?? '-') ?>"
+                                            data-nama="<?= h($p->full_name ?? '-') ?>"
+                                            data-alamat="<?= h($p->address ?? '-') ?>"
+                                            data-dokter="<?= h($d->doctor_name ?? '-') ?>"
+                                            data-tglperiksa="<?= is_object($visit->visit_date) ? $visit->visit_date->format('d-m-Y') : h($visit->visit_date ?? '-') ?>"
+                                            data-umur="<?= h($umurLengkap) ?>">
+                                        <i class="fa fa-file-medical" style="color:#1e3a5f;"></i>
+                                        Surat SKDP
+                                    </button>
+                                    <button type="button" class="btn btn-xs btn-default btn-block m-b-5 btn-surat-kontrol-bpjs"
+                                            style="text-align:left; font-size:11px;"
+                                            data-noreg="<?= h($visit->registration_no ?? '-') ?>"
+                                            data-rekmed="<?= h($p->code ?? '-') ?>"
+                                            data-nama="<?= h($p->full_name ?? '-') ?>"
+                                            data-jk="<?= ($p->gender ?? '') === 'Male' ? 'Laki-laki' : 'Perempuan' ?>"
+                                            data-tgllahir="<?= !empty($p->birth_date) ? (is_object($p->birth_date) ? $p->birth_date->format('d-m-Y') : h($p->birth_date)) : '-' ?>"
+                                            data-dokter="<?= h($d->doctor_name ?? '-') ?>"
+                                            data-tglperiksa="<?= is_object($visit->visit_date) ? $visit->visit_date->format('d-m-Y') : h($visit->visit_date ?? '-') ?>">
+                                        <i class="fa fa-file-medical" style="color:#1e3a5f;"></i>
+                                        Surat Kontrol BPJS
+                                    </button>
                                     <button type="button" class="btn btn-xs btn-default btn-block m-b-5"
                                             style="text-align:left; font-size:11px;">
                                         <i class="fa fa-file-medical" style="color:#1e3a5f;"></i>
@@ -717,120 +741,6 @@ $anatomyBackUrl = $anatomyBackExists
         </div>
     </div>
 </div>
-
-                        <!-- ══ TAB SKDP ══ -->
-                        <div id="tab-skdp" class="tab-pane">
-                    <div style="
-                        background:#fafafa;
-                        border:1px solid #ddd;
-                        border-radius:4px;
-                        padding:12px;
-                    ">
-
-                        <div style="margin-bottom:10px;">
-                            <button type="button"
-                                    class="btn btn-primary btn-xs">
-                                <i class="fa fa-file-medical"></i>
-                                BUAT SURAT KONTROL BPJS
-                            </button>
-                        </div>
-
-                        <div class="row">
-
-                            <!-- KIRI -->
-                            <div class="col-md-4">
-
-                                <div class="form-group">
-                                    <label style="font-size:11px;font-weight:600;">
-                                        TGL KEMBALI KONTROL
-                                    </label>
-
-                                    <input type="date"
-                                        class="form-control input-sm"
-                                        name="bpjs_control_date"
-                                        value="<?= h($visit->bpjs_control_date ?? '') ?>">
-                                </div>
-
-                                <div class="form-group">
-                                    <label style="font-size:11px;font-weight:600;">
-                                        KETERANGAN KONTROL
-                                    </label>
-
-                                    <input type="text"
-                                        class="form-control input-sm"
-                                        name="bpjs_control_notes"
-                                        value="<?= h($visit->bpjs_control_notes ?? '') ?>">
-                                </div>
-
-                                <div class="form-group">
-                                    <label style="font-size:11px;font-weight:600;">
-                                        RENCANA TINDAKAN SAAT KONTROL
-                                    </label>
-
-                                    <input type="text"
-                                        class="form-control input-sm"
-                                        name="bpjs_control_plan"
-                                        value="<?= h($visit->bpjs_control_plan ?? '') ?>">
-                                </div>
-
-                            </div>
-
-                            <!-- KANAN -->
-                            <div class="col-md-8">
-
-                                <div class="form-group">
-                                    <label style="font-size:11px;font-weight:600;">
-                                        Alasan blm dikembalikan ke perujuk
-                                    </label>
-
-                                    <textarea
-                                        class="form-control"
-                                        rows="4"
-                                        name="skdp_notes"><?= h($visit->skdp_notes ?? '') ?></textarea>
-                                </div>
-
-                                <div class="row" style="margin-top:15px;">
-
-                                    <div class="col-md-8">
-
-                                        <button type="button"
-                                                class="btn btn-primary btn-sm mb-3">
-                                            <i class="fa fa-save"></i>
-                                            BUAT SKDP
-                                        </button>
-
-                                        <button type="button"
-                                                class="btn btn-success btn-sm">
-                                            <i class="fa fa-print"></i>
-                                            CETAK SKDP
-                                        </button>
-
-                                    </div>
-
-                                    <!-- <div class="col-md-4 text-right">
-
-                                        <label style="margin-top:6px;">
-                                            <input type="checkbox"
-                                                name="skdp_print_classic"
-                                                value="1">
-                                            Print Classic
-                                        </label>
-
-                                    </div> -->
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                    </div>
-
-                    </div><!-- /tab-content -->
-                </div>
-            </div><!-- /panel surat-rujuk-skdp -->
 
             <!-- Diagnosa & ICD -->
             <div class="panel panel-default" style="margin-top:10px;">
@@ -1645,7 +1555,7 @@ $anatomyBackUrl = $anatomyBackExists
     </div>
 </div>
 
-
+<!-- ── MODAL SURAT KETERANGAN SAKIT ── -->
 <div class="modal fade" id="modal-surat-sakit" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" style="width:640px; max-width:95%;" role="document">
         <div class="modal-content hasil-window">
@@ -1696,16 +1606,13 @@ $anatomyBackUrl = $anatomyBackExists
                 </div>
                 <div class="row hasil-row" style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap; margin-left:2px;">
                     <label style="flex:0 0 auto; margin:0; white-space:nowrap;">Ijin (Hari)</label>
-                    <input type="number" id="sks-lama" class="form-control input-sm"
-                           min="0" value="0" style="width:60px; flex:0 0 auto;">
+                    <input type="number" id="sks-lama" class="form-control input-sm" min="0" value="0" style="width:60px; flex:0 0 auto;">
  
                     <label style="flex:0 0 auto; margin:0 0 0 30px; white-space:nowrap;">Dari</label>
-                    <input type="date" id="sks-dari" class="form-control input-sm"
-                           style="width:150px; flex:0 0 auto;">
+                    <input type="date" id="sks-dari" class="form-control input-sm" style="width:150px; flex:0 0 auto;">
  
                     <label style="flex:0 0 auto; margin:0 0 0 6px; white-space:nowrap;">S/d</label>
-                    <input type="date" id="sks-sampai" class="form-control input-sm"
-                           style="width:150px; flex:0 0 auto;">
+                    <input type="date" id="sks-sampai" class="form-control input-sm" style="width:150px; flex:0 0 auto;">
                 </div>
 
                 <div class="row hasil-row">
@@ -1732,6 +1639,170 @@ $anatomyBackUrl = $anatomyBackExists
                             <i class="fa fa-print"></i> Cetak
                         </button>
                         <!-- <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button> -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── MODAL SURAT KONTROL BPJS ── -->
+<div class="modal fade" id="modal-surat-kontrol-bpjs" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" style="width:640px; max-width:96%;" role="document">
+        <div class="modal-content hasil-window">
+            <div class="hasil-title">
+                <span><i class="fa fa-file-medical"></i> Surat Kontrol BPJS</span>
+                <button type="button" class="hasil-close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="hasil-body" style="max-height:75vh; overflow-y:auto;">
+                <div class="row hasil-row">
+                    <label class="col-xs-3">No Surat</label>
+                    <div class="col-xs-9"><input type="text" id="skb-noSurat" class="form-control input-sm" value="AUTO" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">No Rekam Medis</label>
+                    <div class="col-xs-9"><input type="text" id="skb-rekmed" class="form-control input-sm" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Nama Pasien</label>
+                    <div class="col-xs-6"><input type="text" id="skb-nama" class="form-control input-sm" readonly></div>
+                    <label class="col-xs-1">JK</label>
+                    <div class="col-xs-2"><input type="text" id="skb-jk" class="form-control input-sm" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Tgl Lahir</label>
+                    <div class="col-xs-4"><input type="text" id="skb-tgl-lahir" class="form-control input-sm" readonly></div>
+                    <label class="col-xs-2">No Kartu BPJS</label>
+                    <div class="col-xs-3"><input type="text" id="skb-no-kartu" class="form-control input-sm" placeholder="0001480121335"></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Kepada Yth (Dokter Tujuan)</label>
+                    <div class="col-xs-9">
+                        <select id="skb-dokter-tujuan" class="form-control input-sm">
+                            <option value="">-- Pilih Dokter --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Diagnosa</label>
+                    <div class="col-xs-9"><textarea id="skb-diagnosa" class="form-control input-sm" rows="2" placeholder="Otomatis dari ICD-10 (Utama)" readonly style="background:#f5f5f5;"></textarea></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Dokter Pemeriksa (DPJP)</label>
+                    <div class="col-xs-6"><input type="text" id="skb-dokter" class="form-control input-sm" readonly></div>
+                    <label class="col-xs-1">Tgl</label>
+                    <div class="col-xs-2"><input type="text" id="skb-tglperiksa" class="form-control input-sm" readonly></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Tgl Kontrol Berikutnya</label>
+                    <div class="col-xs-9"><input type="date" id="skb-tgl-kontrol" class="form-control input-sm"></div>
+                </div>
+                <div class="row hasil-row">
+                    <label class="col-xs-3">Catatan</label>
+                    <div class="col-xs-9"><textarea id="skb-catatan" class="form-control" rows="3"
+                        placeholder="Keterangan tambahan untuk surat kontrol BPJS..."></textarea></div>
+                </div>
+                <div class="row" style="margin-top:10px;">
+                    <div class="col-xs-12 text-right">
+                        <button type="button" class="btn btn-primary btn-sm" id="btn-simpan-skb">
+                            <i class="fa fa-save"></i> Buat Surat Kontrol BPJS
+                        </button>
+                        <button type="button" class="btn btn-success btn-sm" id="btn-cetak-skb" disabled>
+                            <i class="fa fa-print"></i> Cetak
+                        </button>
+                        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── MODAL SKDP ── -->
+<div class="modal fade" id="modal-surat-skdp" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" style="width:920px; max-width:97%;" role="document">
+        <div class="modal-content hasil-window">
+            <div class="hasil-title">
+                <span><i class="fa fa-id-card-alt"></i> Surat Keterangan Dalam Perawatan Spesialis (SKDP)</span>
+                <button type="button" class="hasil-close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="hasil-body" style="padding:10px 14px; font-size:12px;">
+
+                <!-- Baris info identitas: full width, ringkas -->
+                <div class="row">
+                    <div class="col-xs-3">
+                        <label class="skdp-label">No SKDP</label>
+                        <input type="text" id="skdp-noSurat" class="form-control input-sm" value="AUTO" readonly>
+                    </div>
+                    <div class="col-xs-3">
+                        <label class="skdp-label">No Rekam Medis</label>
+                        <input type="text" id="skdp-rekmed" class="form-control input-sm" readonly>
+                    </div>
+                    <div class="col-xs-4">
+                        <label class="skdp-label">Nama Pasien</label>
+                        <input type="text" id="skdp-nama" class="form-control input-sm" readonly>
+                    </div>
+                    <div class="col-xs-2">
+                        <label class="skdp-label">Tgl Periksa</label>
+                        <input type="text" id="skdp-tglperiksa" class="form-control input-sm" readonly>
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top:6px;">
+                    <div class="col-xs-9">
+                        <label class="skdp-label">Dokter</label>
+                        <input type="text" id="skdp-dokter" class="form-control input-sm" readonly>
+                    </div>
+                    <div class="col-xs-3">
+                        <label class="skdp-label">No Kartu BPJS</label>
+                        <input type="text" id="skdp-no-kartu" class="form-control input-sm" placeholder="0001480121335">
+                    </div>
+                </div>
+
+                <hr style="margin:10px 0;">
+
+                <!-- Dua kolom: kiri klinis, kanan administratif -->
+                <div class="row">
+                    <!-- ══ KOLOM KIRI: Klinis ══ -->
+                    <div class="col-xs-6" style="border-right:1px solid #c9d6ea; padding-right:14px;">
+                        <label class="skdp-label">Diagnosa Utama</label>
+                        <textarea id="skdp-diagnosa" class="form-control input-sm skdp-ta-1" placeholder="Otomatis dari ICD-10 (Utama)" readonly style="background:#f5f5f5;"></textarea>
+
+                        <label class="skdp-label">Terapi</label>
+                        <textarea id="skdp-terapi" class="form-control skdp-ta-2" placeholder="Nama obat, dosis, aturan pakai..."></textarea>
+
+                        <label class="skdp-label">Alasan blm dikembalikan ke perujuk</label>
+                        <textarea id="skdp-alasan" class="form-control skdp-ta-2"></textarea>
+
+                        <label class="skdp-label">Rencana Tindak Lanjut Kunjungan Selanjutnya</label>
+                        <textarea id="skdp-rencana" class="form-control skdp-ta-2"></textarea>
+                    </div>
+
+                    <!-- ══ KOLOM KANAN: Administratif ══ -->
+                    <div class="col-xs-6" style="padding-left:14px;">
+                        <label class="skdp-label">Tanggal Surat Rujukan</label>
+                        <input type="date" id="skdp-tgl-rujukan" class="form-control input-sm">
+
+                        <label class="skdp-label" style="margin-top:8px;">No Rujukan</label>
+                        <input type="text" id="skdp-no-rujukan" class="form-control input-sm">
+
+                        <label class="skdp-label" style="margin-top:8px;">Alasan Kontrol</label>
+                        <input type="text" id="skdp-keterangan" class="form-control input-sm" placeholder="Misal: kontrol ulang">
+
+                        <label class="skdp-label" style="margin-top:8px;">Tgl Kembali Kontrol</label>
+                        <input type="date" id="skdp-tgl-kontrol" class="form-control input-sm">
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top:12px; border-top:1px solid #c9d6ea; padding-top:8px;">
+                    <div class="col-xs-12 text-right">
+                        <button type="button" class="btn btn-primary btn-sm" id="btn-simpan-skdp">
+                            <i class="fa fa-save"></i> Buat SKDP
+                        </button>
+                        <button type="button" class="btn btn-success btn-sm" id="btn-cetak-skdp" disabled>
+                            <i class="fa fa-print"></i> Cetak SKDP
+                        </button>
+                        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button>
                     </div>
                 </div>
             </div>
@@ -3046,6 +3117,26 @@ input.action-unit-price-display:focus {
     resize: vertical;
     margin-bottom: 2px;
 }
+
+
+.skdp-label {
+    display: block;
+    font-weight: 600;
+    font-size: 11px;
+    margin: 5px 0 2px;
+}
+.skdp-ta-1 {
+    height: 44px !important;
+    min-height: 44px !important;
+    resize: vertical;
+    margin-bottom: 2px;
+}
+.skdp-ta-2 {
+    height: 56px !important;
+    min-height: 56px !important;
+    resize: vertical;
+    margin-bottom: 2px;
+}
 </style>
 
 <script>
@@ -3566,115 +3657,250 @@ $('#btn-cetak-ksl').on('click', function () {
     window.open(CETAK_KSL_URL_BASE + '/' + currentKslLetterId, '_blank');
 });
 
-var GET_SKH_URL = <?= json_encode($this->Url->build([
+var GET_SKDP_URL = <?= json_encode($this->Url->build([
     'controller' => 'OutpatientLetters',
-    'action'     => 'getSuratSehat',
+    'action'     => 'getSuratSkdp',
     $visit->id,
 ])) ?>;
-var SIMPAN_SKH_URL = <?= json_encode($this->Url->build([
+var SIMPAN_SKDP_URL = <?= json_encode($this->Url->build([
     'controller' => 'OutpatientLetters',
-    'action'     => 'simpanSuratSehat',
+    'action'     => 'simpanSuratSkdp',
     $visit->id,
 ])) ?>;
-var CETAK_SKH_URL_BASE = <?= json_encode($this->Url->build([
+var CETAK_SKDP_URL_BASE = <?= json_encode($this->Url->build([
     'controller' => 'OutpatientLetters',
-    'action'     => 'cetakSuratSehat',
+    'action'     => 'cetakSuratSkdp',
+])) ?>;
+var currentSkdpLetterId = null;
+
+var GET_SKB_URL = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'getSuratKontrolBpjs',
+    $visit->id,
+])) ?>;
+var SIMPAN_SKB_URL = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'simpanSuratKontrolBpjs',
+    $visit->id,
+])) ?>;
+var CETAK_SKB_URL_BASE = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'cetakSuratKontrolBpjs',
 ])) ?>;
 
-var currentSkhLetterId = null;
+var currentSkbLetterId = null;
 
-$(document).on('click', '.btn-surat-sehat', function () {
+function getIcd10UtamaOnlyText() {
+    var text = '';
+    $('#icd10-body tr.icd10-row').each(function () {
+        var $row = $(this);
+        if (!$row.find('input[name="icd10_utama"]').is(':checked')) return;
+        var kode = $.trim($row.find('input[name^="icd10_code"]').val());
+        var nama = $.trim($row.find('input[name^="icd10_nama"]').val());
+        if (kode || nama) {
+            text = (kode ? kode + ' - ' : '') + nama;
+        }
+    });
+    return text;
+}
+
+function skbLoadDoctorOptions(selectedId) {
+    var $s = $('#skb-dokter-tujuan');
+    $s.html('<option value="">-- Pilih Dokter --</option>');
+    $.ajax({
+        url: DOCTORS_LIST_URL,
+        method: 'GET',
+        dataType: 'json',
+        success: function (data) {
+            if (!data || !data.length) return;
+            $.each(data, function (_, item) {
+                var name = item.doctor_name || item.name || '';
+                var id = item.id || '';
+                var specialist = item.specialist || '';
+                if (!id) return;
+                var label = name + (specialist ? ' (' + specialist + ')' : '');
+                $s.append(
+                    '<option value="' + id + '" data-nama="' + htmlEscape(name) + '" data-spesialis="' + htmlEscape(specialist) + '">' +
+                    htmlEscape(label) + '</option>'
+                );
+            });
+            if (selectedId) $s.val(selectedId);
+        },
+        error: function () {
+            $s.append('<option value="">-- Gagal memuat dokter --</option>');
+        }
+    });
+}
+
+$(document).on('click', '.btn-surat-kontrol-bpjs', function () {
     var $b = $(this);
+    $('#skb-rekmed').val($b.data('rekmed'));
+    $('#skb-nama').val($b.data('nama'));
+    $('#skb-jk').val($b.data('jk'));
+    $('#skb-tgl-lahir').val($b.data('tgllahir'));
+    $('#skb-dokter').val($b.data('dokter'));
+    $('#skb-tglperiksa').val($b.data('tglperiksa'));
+    $('#skb-diagnosa').val(getIcd10UtamaOnlyText());
+    $('#skb-no-kartu').val('');
+    $('#skb-noSurat').val('AUTO');
+    $('#skb-tgl-kontrol').val('');
+    $('#skb-catatan').val('');
+    currentSkbLetterId = null;
+    $('#btn-cetak-skb').prop('disabled', true);
 
-    $('#skh-rekmed').val($b.data('rekmed'));
-    $('#skh-nama').val($b.data('nama'));
-    $('#skh-alamat').val($b.data('alamat'));
-    $('#skh-umur').val($b.data('umur'));
-    $('#skh-jk').val($b.data('jk'));
-    $('#skh-bb').val($b.data('bb'));
-    $('#skh-tb').val($b.data('tb'));
-    $('#skh-td').val($b.data('td'));
-    $('#skh-suhu').val($b.data('suhu'));
-    $('#skh-goldar').val($b.data('goldar'));
-    $('#skh-dokter').val($b.data('dokter'));
-    $('#skh-tglperiksa').val($b.data('tglperiksa'));
-    $('#skh-butawarna').val('');
-    $('#skh-hasil-detail').val('');
-    $('#skh-keterangan').val('');
-    $('#skh-hasil-sehat').prop('checked', true);
-    $('#skh-normal').prop('checked', true);
-    $('#skh-noSurat').val('AUTO');
-    currentSkhLetterId = null;
-    $('#btn-cetak-skh').prop('disabled', true);
+    skbLoadDoctorOptions();
 
     $.ajax({
-        url: GET_SKH_URL,
+        url: GET_SKB_URL,
         method: 'GET',
         dataType: 'json',
         success: function (res) {
             if (res && res.success && res.data) {
                 var d = res.data;
-                currentSkhLetterId = d.letter_id;
-                $('#skh-noSurat').val(d.letter_no || 'AUTO');
-                if (d.weight !== null)         $('#skh-bb').val(d.weight);
-                if (d.height !== null)         $('#skh-tb').val(d.height);
-                if (d.blood_pressure !== null) $('#skh-td').val(d.blood_pressure);
-                if (d.temperature !== null)    $('#skh-suhu').val(d.temperature);
-                if (d.color_blind !== null)    $('#skh-butawarna').val(d.color_blind);
-                if (d.blood_type !== null)     $('#skh-goldar').val(d.blood_type);
-                if (d.result !== null)         $('#skh-hasil-sehat, #skh-hasil-tidak-sehat').filter('[value="' + d.result + '"]').prop('checked', true);
-                if (d.result_notes !== null)   $('#skh-hasil-detail').val(d.result_notes);
-                if (d.notes !== null)          $('#skh-keterangan').val(d.notes);
-                $('#skh-normal').prop('checked', !!d.is_normal);
-                $('#btn-cetak-skh').prop('disabled', false);
+                currentSkbLetterId = d.letter_id;
+                $('#skb-noSurat').val(d.letter_no || 'AUTO');
+                if (d.control_date)  $('#skb-tgl-kontrol').val(d.control_date);
+                if (d.notes)         $('#skb-catatan').val(d.notes);
+                if (d.bpjs_card_no)  $('#skb-no-kartu').val(d.bpjs_card_no);
+                if (d.diagnosis)     $('#skb-diagnosa').val(d.diagnosis);
+                if (d.referral_doctor_id) {
+                    setTimeout(function () { $('#skb-dokter-tujuan').val(d.referral_doctor_id); }, 400);
+                }
+                $('#btn-cetak-skb').prop('disabled', false);
             }
         }
     });
 
-    $('#modal-surat-sehat').modal('show');
+    $('#modal-surat-kontrol-bpjs').modal('show');
 });
 
-$('#btn-simpan-skh').on('click', function () {
+$('#btn-simpan-skb').on('click', function () {
     var csrf = $('input[name="_csrfToken"]').val();
-    var payload = {
-        _csrfToken: csrf,
-        weight: $('#skh-bb').val(),
-        height: $('#skh-tb').val(),
-        blood_pressure: $('#skh-td').val(),
-        temperature: $('#skh-suhu').val(),
-        color_blind: $('#skh-butawarna').val(),
-        blood_type: $('#skh-goldar').val(),
-        result: $('input[name="skh_hasil"]:checked').val(),
-        result_notes: $('#skh-hasil-detail').val(),
-        notes: $('#skh-keterangan').val(),
-        is_normal: $('#skh-normal').is(':checked') ? 1 : 0,
-        examined_at: new Date().toISOString().slice(0, 10),
-    };
+    var $opt  = $('#skb-dokter-tujuan option:selected');
 
     $.ajax({
-        url: SIMPAN_SKH_URL,
+        url: SIMPAN_SKB_URL,
         method: 'POST',
-        data: payload,
+        data: {
+            _csrfToken: csrf,
+            control_date: $('#skb-tgl-kontrol').val(),
+            notes: $('#skb-catatan').val(),
+            bpjs_card_no: $('#skb-no-kartu').val(),
+            diagnosis: $('#skb-diagnosa').val(),
+            referral_doctor_id: $('#skb-dokter-tujuan').val(),
+            referral_doctor_name: $opt.data('nama') || '',
+            referral_doctor_specialist: $opt.data('spesialis') || '',
+            examined_at: new Date().toISOString().slice(0, 10),
+        },
         dataType: 'json',
         success: function (res) {
             if (res.success) {
-                $('#skh-noSurat').val(res.letter_no);
-                currentSkhLetterId = res.letter_id;
-                $('#btn-cetak-skh').prop('disabled', false);
-                alert('Surat berhasil disimpan: ' + res.letter_no);
+                $('#skb-noSurat').val(res.letter_no);
+                currentSkbLetterId = res.letter_id;
+                $('#btn-cetak-skb').prop('disabled', false);
+                alert('Surat Kontrol BPJS berhasil disimpan: ' + res.letter_no);
             } else {
                 alert(res.message || 'Gagal menyimpan surat.');
             }
         },
-        error: function () {
-            alert('Gagal menghubungi server.');
-        }
+        error: function () { alert('Gagal menghubungi server.'); }
     });
 });
 
-$('#btn-cetak-skh').on('click', function () {
-    if (!currentSkhLetterId) return;
-    window.open(CETAK_SKH_URL_BASE + '/' + currentSkhLetterId, '_blank');
+$('#btn-cetak-skb').on('click', function () {
+    if (!currentSkbLetterId) return;
+    window.open(CETAK_SKB_URL_BASE + '/' + currentSkbLetterId, '_blank');
+});
+
+function skdpGetIcd10UtamaText() {
+    var text = '';
+    $('#icd10-body tr.icd10-row').each(function () {
+        var $row = $(this);
+        if (!$row.find('input[name="icd10_utama"]').is(':checked')) return;
+        var kode = $.trim($row.find('input[name^="icd10_code"]').val());
+        var nama = $.trim($row.find('input[name^="icd10_nama"]').val());
+        if (kode || nama) {
+            text = (kode ? kode + ' - ' : '') + nama;
+        }
+    });
+    return text;
+}
+
+$(document).on('click', '.btn-surat-skdp', function () {
+    var $b = $(this);
+    $('#skdp-rekmed').val($b.data('rekmed'));
+    $('#skdp-nama').val($b.data('nama'));
+    $('#skdp-dokter').val($b.data('dokter'));
+    $('#skdp-tglperiksa').val($b.data('tglperiksa'));
+    $('#skdp-diagnosa').val(skdpGetIcd10UtamaText());
+    $('#skdp-terapi').val(<?= json_encode($emr->prescription_notes ?? '') ?>);
+    $('#skdp-noSurat').val('AUTO');
+    $('#skdp-tgl-rujukan').val('');
+    $('#skdp-no-kartu').val('');
+    $('#skdp-no-rujukan').val('');
+    $('#skdp-alasan').val('');
+    $('#skdp-rencana').val('');
+    $('#skdp-keterangan').val('');
+    $('#skdp-tgl-kontrol').val('');
+    currentSkdpLetterId = null;
+    $('#btn-cetak-skdp').prop('disabled', true);
+    $.ajax({
+        url: GET_SKDP_URL,
+        method: 'GET',
+        dataType: 'json',
+        success: function (res) {
+            if (res && res.success && res.data) {
+                var d = res.data;
+                currentSkdpLetterId = d.letter_id;
+                $('#skdp-noSurat').val(d.letter_no || 'AUTO');
+                if (d.therapy)          $('#skdp-terapi').val(d.therapy);
+                if (d.referral_date)    $('#skdp-tgl-rujukan').val(d.referral_date);
+                if (d.bpjs_card_no)     $('#skdp-no-kartu').val(d.bpjs_card_no);
+                if (d.referral_no)      $('#skdp-no-rujukan').val(d.referral_no);
+                if (d.reason)           $('#skdp-alasan').val(d.reason);
+                if (d.control_plan)     $('#skdp-rencana').val(d.control_plan);
+                if (d.control_notes)    $('#skdp-keterangan').val(d.control_notes);
+                if (d.control_date)     $('#skdp-tgl-kontrol').val(d.control_date);
+                $('#btn-cetak-skdp').prop('disabled', false);
+            }
+        }
+    });
+    $('#modal-surat-skdp').modal('show');
+});
+$('#btn-simpan-skdp').on('click', function () {
+    var csrf = $('input[name="_csrfToken"]').val();
+    $.ajax({
+        url: SIMPAN_SKDP_URL,
+        method: 'POST',
+        data: {
+            _csrfToken: csrf,
+            diagnosis: $('#skdp-diagnosa').val(),
+            therapy: $('#skdp-terapi').val(),
+            referral_date: $('#skdp-tgl-rujukan').val(),
+            bpjs_card_no: $('#skdp-no-kartu').val(),
+            referral_no: $('#skdp-no-rujukan').val(),
+            reason: $('#skdp-alasan').val(),
+            control_plan: $('#skdp-rencana').val(),
+            control_notes: $('#skdp-keterangan').val(),
+            control_date: $('#skdp-tgl-kontrol').val(),
+        },
+        dataType: 'json',
+        success: function (res) {
+            if (res.success) {
+                $('#skdp-noSurat').val(res.letter_no);
+                currentSkdpLetterId = res.letter_id;
+                $('#btn-cetak-skdp').prop('disabled', false);
+                alert('SKDP berhasil disimpan: ' + res.letter_no);
+            } else {
+                alert(res.message || 'Gagal menyimpan SKDP.');
+            }
+        },
+        error: function () { alert('Gagal menghubungi server.'); }
+    });
+});
+$('#btn-cetak-skdp').on('click', function () {
+    if (!currentSkdpLetterId) return;
+    window.open(CETAK_SKDP_URL_BASE + '/' + currentSkdpLetterId, '_blank');
 });
 
 var GET_SPT_URL = <?= json_encode($this->Url->build([

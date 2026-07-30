@@ -451,6 +451,36 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
                                     <?php endif; ?>
                                 <?php endif; ?>
 
+                                <?= $this->Html->link(
+                                    '<i class="fa fa-folder-open"></i> Rekam Medis',
+                                    [
+                                        'controller' => 'MedicalRecords',
+                                        'action'     => 'index',
+                                        '?'          => ['q' => $pCode],
+                                    ],
+                                    [
+                                        'escape'      => false,
+                                        'class'       => 'btn btn-xs btn-rm',
+                                        'data-toggle' => 'tooltip',
+                                        'title'       => 'Buka Rekam Medis Pasien'
+                                    ]
+                                ) ?>
+
+                                <?= $this->Html->link(
+                                    '<i class="fa fa-history"></i> Riwayat',
+                                    [
+                                        'controller' => 'PatientHistories',
+                                        'action'     => 'index',
+                                        '?'          => ['q' => $pCode],
+                                    ],
+                                    [
+                                        'escape'      => false,
+                                        'class'       => 'btn btn-xs btn-riwayat',
+                                        'data-toggle' => 'tooltip',
+                                        'title'       => 'Buka Riwayat Pemeriksaan Pasien'
+                                    ]
+                                ) ?>
+
                             </div>
                         </td>
 
@@ -569,6 +599,28 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
 .btn-teal:hover, .btn-teal:focus {
     background-color: #138496;
     border-color: #117a8b;
+    color: #fff;
+}
+
+.btn-rm {
+    background-color: #6c5ce7;
+    border-color: #6c5ce7;
+    color: #fff;
+}
+.btn-rm:hover, .btn-rm:focus {
+    background-color: #5a4bd6;
+    border-color: #5a4bd6;
+    color: #fff;
+}
+
+.btn-riwayat {
+    background-color: #495057;
+    border-color: #495057;
+    color: #fff;
+}
+.btn-riwayat:hover, .btn-riwayat:focus {
+    background-color: #343a40;
+    border-color: #343a40;
     color: #fff;
 }
 

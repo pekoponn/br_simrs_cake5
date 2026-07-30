@@ -642,4 +642,190 @@ class OutpatientLettersController extends AppController
         $this->set(compact('letter', 'dischargedByDoctor', 'completingDoctor'));
     }
 
+    public function getSuratSkdp($visitId = null)
+    {
+        $this->request->allowMethod(['get']);
+        $this->autoRender = false;
+
+        $letter = $this->OutpatientLetters->find()
+            ->where([
+                'outpatient_visit_id' => (int)$visitId,
+                'letter_type' => 'skdp',
+            ])
+            ->first();
+
+        return $this->response->withType('application/json')->withStringBody(json_encode([
+            'success' => true,
+            'data'    => $letter ? [
+                'letter_id'     => $letter->id,
+                'letter_no'     => $letter->letter_no,
+                'control_date'  => $letter->leave_from ? (string)$letter->leave_from : null,
+                'control_notes' => $letter->notes,
+                'control_plan'  => $letter->advice_notes,
+                'reason'        => $letter->diagnosis,
+            ] : null,
+        ]));
+    }
+
+    public function simpanSuratSkdp($visitId = null)
+    {
+        $this->request->allowMethod(['post']);
+        $this->autoRender = false;
+
+        $this->loadModel('OutpatientVisits');
+        $visit = $this->OutpatientVisits->get($visitId);
+        $data  = $this->request->getData();
+
+        $entity = $this->OutpatientLetters->find()
+            ->where([
+                'outpatient_visit_id' => $visit->id,
+                'letter_type' => 'skdp',
+            ])
+            ->first();
+
+        if (!$entity) {
+            $entity = $this->OutpatientLetters->newEmptyEntity();
+            $entity->outpatient_visit_id = $visit->id;
+            $entity->registration_id     = $visit->registration_id ?? null;
+            $entity->patient_id          = $visit->patient_id ?? null;
+            $entity->doctor_id           = $visit->doctor_id ?? null;
+            $entity->letter_type         = 'skdp';
+            $entity->letter_no           = 'SKDP-' . date('Ymd') . '-' . str_pad((string)$visit->id, 5, '0', STR_PAD_LEFT);
+        }
+
+        $fields = [
+            'leave_from'   => !empty($data['control_date']) ? $data['control_date'] : null,
+            'notes'        => $data['control_notes'] ?? null,
+            'advice_notes' => $data['control_plan'] ?? null,
+            'diagnosis'    => $data['reason'] ?? null,
+            'examined_at'  => !empty($data['examined_at']) ? $data['examined_at'] : date('Y-m-d'),
+        ];
+
+        $entity = $this->OutpatientLetters->patchEntity($entity, $fields, ['validate' => false]);
+
+        if ($this->OutpatientLetters->save($entity, ['checkRules' => false])) {
+            return $this->response->withType('application/json')->withStringBody(json_encode([
+                'success'   => true,
+                'letter_id' => $entity->id,
+                'letter_no' => $entity->letter_no,
+            ]));
+        }
+
+        return $this->response->withType('application/json')->withStringBody(json_encode([
+            'success' => false,
+            'message' => 'Gagal menyimpan SKDP.',
+            'errors'  => $entity->getErrors(),
+        ]));
+    }
+
+    public function cetakSuratSkdp($letterId = null)
+    {
+        $letter = $this->OutpatientLetters->get($letterId, [
+            'contain' => ['Patients', 'Doctors', 'OutpatientVisits'],
+        ]);
+
+        if ($letter->letter_type !== 'skdp') {
+            throw new \Cake\Http\Exception\NotFoundException('Surat SKDP tidak ditemukan.');
+        }
+
+        $this->viewBuilder()->setLayout('print');
+        $this->set(compact('letter'));
+    }
+
+    public function getSuratKontrolBpjs($visitId = null)
+{
+    $this->request->allowMethod(['get']);
+    $this->autoRender = false;
+
+    $letter = $this->OutpatientLetters->find()
+        ->where([
+            'outpatient_visit_id' => (int)$visitId,
+            'letter_type' => 'kontrol_bpjs',
+        ])
+        ->first();
+
+    return $this->response->withType('application/json')->withStringBody(json_encode([
+        'success' => true,
+        'data'    => $letter ? [
+            'letter_id'                  => $letter->id,
+            'letter_no'                  => $letter->letter_no,
+            'control_date'               => $letter->leave_from ? (string)$letter->leave_from : null,
+            'notes'                      => $letter->notes,
+            'bpjs_card_no'               => $letter->bpjs_card_no,
+            'diagnosis'                  => $letter->diagnosis,
+            'referral_doctor_id'         => $letter->referral_doctor_id,
+            'referral_doctor_name'       => $letter->referral_doctor_name,
+            'referral_doctor_specialist' => $letter->referral_doctor_specialist,
+        ] : null,
+    ]));
+}
+
+public function simpanSuratKontrolBpjs($visitId = null)
+{
+    $this->request->allowMethod(['post']);
+    $this->autoRender = false;
+
+    $this->loadModel('OutpatientVisits');
+    $visit = $this->OutpatientVisits->get($visitId);
+    $data  = $this->request->getData();
+
+    $entity = $this->OutpatientLetters->find()
+        ->where([
+            'outpatient_visit_id' => $visit->id,
+            'letter_type' => 'kontrol_bpjs',
+        ])
+        ->first();
+
+    if (!$entity) {
+        $entity = $this->OutpatientLetters->newEmptyEntity();
+        $entity->outpatient_visit_id = $visit->id;
+        $entity->registration_id     = $visit->registration_id ?? null;
+        $entity->patient_id          = $visit->patient_id ?? null;
+        $entity->doctor_id           = $visit->doctor_id ?? null;
+        $entity->letter_type         = 'kontrol_bpjs';
+        $entity->letter_no           = 'SKB-' . date('Ymd') . '-' . str_pad((string)$visit->id, 5, '0', STR_PAD_LEFT);
+    }
+
+    $fields = [
+        'leave_from'                 => !empty($data['control_date']) ? $data['control_date'] : null,
+        'notes'                      => $data['notes'] ?? null,
+        'bpjs_card_no'               => $data['bpjs_card_no'] ?? null,
+        'diagnosis'                  => $data['diagnosis'] ?? null,
+        'referral_doctor_id'         => !empty($data['referral_doctor_id']) ? (int)$data['referral_doctor_id'] : null,
+        'referral_doctor_name'       => $data['referral_doctor_name'] ?? null,
+        'referral_doctor_specialist' => $data['referral_doctor_specialist'] ?? null,
+        'examined_at'                => !empty($data['examined_at']) ? $data['examined_at'] : date('Y-m-d'),
+    ];
+
+    $entity = $this->OutpatientLetters->patchEntity($entity, $fields, ['validate' => false]);
+
+    if ($this->OutpatientLetters->save($entity, ['checkRules' => false])) {
+        return $this->response->withType('application/json')->withStringBody(json_encode([
+            'success'   => true,
+            'letter_id' => $entity->id,
+            'letter_no' => $entity->letter_no,
+        ]));
+    }
+
+    return $this->response->withType('application/json')->withStringBody(json_encode([
+        'success' => false,
+        'message' => 'Gagal menyimpan surat kontrol BPJS.',
+        'errors'  => $entity->getErrors(),
+    ]));
+}
+
+    public function cetakSuratKontrolBpjs($letterId = null)
+    {
+        $letter = $this->OutpatientLetters->get($letterId, [
+            'contain' => ['Patients', 'Doctors', 'OutpatientVisits'],
+        ]);
+
+        if ($letter->letter_type !== 'kontrol_bpjs') {
+            throw new \Cake\Http\Exception\NotFoundException('Surat kontrol BPJS tidak ditemukan.');
+        }
+
+        $this->viewBuilder()->setLayout('print');
+        $this->set(compact('letter'));
+    }
+
 }
