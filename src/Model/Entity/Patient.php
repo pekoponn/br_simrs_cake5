@@ -65,6 +65,7 @@ class Patient extends Entity
         'identity_number' => true,
         'gender' => true,
         'blood_type' => true,
+        'allergy' => true,
         'birth_date' => true,
         'age' => true,
         'address' => true,

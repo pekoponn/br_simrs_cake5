@@ -186,6 +186,7 @@ $conditions['DATE(Registrations.registration_date) <='] = $filterDateTo;
                     'identity_number',
                     'gender',
                     'blood_type',
+                    'allergy',
                     'birth_date',
                     'address',
                     'father_name',
@@ -241,7 +242,7 @@ $conditions['DATE(Registrations.registration_date) <='] = $filterDateTo;
 
                 $queuePatientFieldsFallback = [
                     'id', 'code', 'title', 'full_name', 'identity_type', 'identity_number',
-                    'gender', 'blood_type', 'birth_date', 'address', 'father_name', 'mother_name',
+                    'gender', 'blood_type', 'allergy', 'birth_date', 'address', 'father_name', 'mother_name',
                     'phone_number', 'nationality', 'citizenship', 'occupation', 'religion',
                     'education', 'ethnic_group', 'marital_status',
                     'province', 'city', 'district', 'subdistrict', 
@@ -390,6 +391,7 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
             'identity_number',
             'gender',
             'blood_type',
+            'allergy',
             'birth_date',
             'age',
             'address',
@@ -578,7 +580,7 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
 
         unset(
             $data['patient'],
-            $data['patient_title'],
+            // $data['patient_title'],
             $data['person_responsible'],
             $data['poly_name']
         );
@@ -837,7 +839,8 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
     // agar form tidak terlihat kosong dan error validasi bisa dibaca.
     if ($this->request->is('post') && !empty($data) && is_array($data)) {
         $safeDataForEntity = $data;
-        unset($safeDataForEntity['patient'], $safeDataForEntity['patient_title'], $safeDataForEntity['person_responsible'], $safeDataForEntity['poly_name']);
+        // unset($safeDataForEntity['patient'], $safeDataForEntity['patient_title'], $safeDataForEntity['person_responsible'], $safeDataForEntity['poly_name']);
+        unset($safeDataForEntity['patient'], $safeDataForEntity['person_responsible'], $safeDataForEntity['poly_name']);
         $registrationColumnsForEntity = array_flip($this->Registrations->getSchema()->columns());
         $safeDataForEntity = array_intersect_key($safeDataForEntity, $registrationColumnsForEntity);
         $registration = $this->Registrations->patchEntity($registration, $safeDataForEntity);
@@ -951,9 +954,7 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
                     $patient->full_name = $fullName;
 
                     $patientFields = [
-                        'identity_type', 'identity_number', 'gender', 'blood_type', 'birth_date',
-                        'address', 'father_name', 'mother_name', 'phone_number', 'nationality',
-                        'citizenship', 'occupation', 'religion', 'education', 'ethnic_group', 'marital_status',
+                        'identity_type', 'identity_number', 'gender', 'blood_type', 'allergy', 'birth_date','address', 'father_name', 'mother_name', 'phone_number', 'nationality','citizenship', 'occupation', 'religion', 'education', 'ethnic_group', 'marital_status',
                     ];
                     foreach ($patientFields as $field) {
                         if ($patientSchema->hasColumn($field) && array_key_exists($field, $data['patient'])) {
@@ -976,7 +977,8 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
             }
 
             // WAJIB: hapus dari $data supaya tidak ikut patchEntity ke Registration
-            unset($data['patient'], $data['patient_title']);
+            unset($data['patient']);
+            // , $data['patient_title']
 
             // Ambil data penanggung jawab saat edit.
 
@@ -1977,6 +1979,7 @@ private function _saveDoctorScheduleQuotaHistory(int $scheduleId, string $cycleD
             'identity_number',
             'gender',
             'blood_type',
+            'allergy',
             'birth_date',
             'address',
             'father_name',

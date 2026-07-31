@@ -68,6 +68,7 @@ class Registration extends Entity
     protected $_accessible = [
         'registration_no' => true,
         'patient_id' => true,
+        'patient_title' => true,
         'registration_date' => true,
         'admission_time' => true,
         'service_type' => true,

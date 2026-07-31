@@ -235,6 +235,7 @@ class OutpatientVisitEmrController extends AppController
             }
 
             if ($saved) {
+                $this->syncExistingKajianVitals((int)$visit->id, $emr);
                 $this->Flash->success(__('EMR berhasil disimpan.'));
                 return $this->redirect(['action' => 'emr', $visit->id]);
             }
@@ -525,6 +526,14 @@ class OutpatientVisitEmrController extends AppController
             ->where(['outpatient_visit_id' => $visit->id])
             ->first();
 
+        $emr = $this->OutpatientVisitEmr->find()
+            ->where(['outpatient_visit_id' => $visit->id])
+            ->first();
+        $dataDasar = $this->syncKajianVitalsFromEmr(
+            $this->decodeAssessmentSection($assessment->data_dasar ?? null),
+            $emr
+        );
+
         return $this->jsonResponse([
             'success' => true,
             'data' => [
@@ -532,7 +541,7 @@ class OutpatientVisitEmrController extends AppController
                 'assessment_no' => $assessment->assessment_no ?? $this->buildKajianAwalNo((int)$visit->id),
                 'assessment_date' => $this->formatAssessmentDate($assessment->assessment_date ?? null),
                 'assessment_time' => $this->formatAssessmentTime($assessment->assessment_time ?? null),
-                'data_dasar' => $this->decodeAssessmentSection($assessment->data_dasar ?? null),
+                'data_dasar' => $dataDasar,
                 'subjektif' => $this->decodeAssessmentSection($assessment->subjektif ?? null),
                 'observasi' => $this->decodeAssessmentSection($assessment->observasi ?? null),
             ],
@@ -577,7 +586,33 @@ class OutpatientVisitEmrController extends AppController
         $assessment->subjektif = $this->encodeAssessmentSection($data['subjektif'] ?? []);
         $assessment->observasi = $this->encodeAssessmentSection($data['observasi'] ?? []);
 
-        if ($this->OutpatientInitialMedicalAssessments->save($assessment, ['checkRules' => false])) {
+        $emr = $this->OutpatientVisitEmr->find()
+            ->where(['outpatient_visit_id' => $visit->id])
+            ->first();
+        if (!$emr) {
+            $emr = $this->OutpatientVisitEmr->newEmptyEntity();
+            $emr->outpatient_visit_id = $visit->id;
+            $emr->created_by_user_id = $this->getCurrentUserId();
+        }
+        $this->applyKajianVitalsToEmr($emr, $data['data_dasar'] ?? []);
+
+        $saved = false;
+        $conn = $this->OutpatientInitialMedicalAssessments->getConnection();
+        try {
+            $conn->transactional(function () use (&$saved, $assessment, $emr) {
+                if (!$this->OutpatientInitialMedicalAssessments->save($assessment, ['checkRules' => false])) {
+                    throw new \Exception('assessment');
+                }
+                if (!$this->OutpatientVisitEmr->save($emr, ['checkRules' => false])) {
+                    throw new \Exception('emr');
+                }
+                $saved = true;
+            });
+        } catch (\Throwable $e) {
+            $saved = false;
+        }
+
+        if ($saved) {
             return $this->jsonResponse([
                 'success' => true,
                 'message' => 'Kajian medis awal berhasil disimpan.',
@@ -591,6 +626,107 @@ class OutpatientVisitEmrController extends AppController
             'message' => 'Gagal menyimpan kajian medis awal.',
             'errors' => $assessment->getErrors(),
         ], 422);
+    }
+
+    private function syncExistingKajianVitals(int $visitId, $emr): void
+    {
+        $this->loadModel('OutpatientInitialMedicalAssessments');
+
+        $assessment = $this->OutpatientInitialMedicalAssessments->find()
+            ->where(['outpatient_visit_id' => $visitId])
+            ->first();
+        if (!$assessment) {
+            return;
+        }
+
+        $dataDasar = $this->syncKajianVitalsFromEmr(
+            $this->decodeAssessmentSection($assessment->data_dasar ?? null),
+            $emr
+        );
+        $assessment->data_dasar = $this->encodeAssessmentSection($dataDasar);
+        $assessment->modified_by_user_id = $this->getCurrentUserId();
+
+        $this->OutpatientInitialMedicalAssessments->save($assessment, ['checkRules' => false]);
+    }
+
+    private function syncKajianVitalsFromEmr(array $dataDasar, $emr): array
+    {
+        if (!$emr) {
+            return $dataDasar;
+        }
+
+        $map = [
+            'tekanan_darah' => 'blood_pressure',
+            'nadi' => 'pulse',
+            'napas' => 'respiratory_rate',
+            'suhu' => 'temperature',
+            'bb' => 'weight',
+            'tb' => 'height',
+            'spo2' => 'oxygen_saturation',
+            'skala_nyeri' => 'pain_scale',
+        ];
+
+        foreach ($map as $kajianField => $emrField) {
+            $value = $emr->{$emrField} ?? null;
+            if ($value !== null && $value !== '') {
+                $dataDasar[$kajianField] = $value;
+            }
+        }
+
+        return $dataDasar;
+    }
+
+    private function applyKajianVitalsToEmr($emr, array $dataDasar): void
+    {
+        $map = [
+            'tekanan_darah' => ['field' => 'blood_pressure', 'type' => 'string'],
+            'nadi' => ['field' => 'pulse', 'type' => 'int'],
+            'napas' => ['field' => 'respiratory_rate', 'type' => 'int'],
+            'suhu' => ['field' => 'temperature', 'type' => 'float'],
+            'bb' => ['field' => 'weight', 'type' => 'float'],
+            'tb' => ['field' => 'height', 'type' => 'float'],
+            'spo2' => ['field' => 'oxygen_saturation', 'type' => 'int'],
+            'skala_nyeri' => ['field' => 'pain_scale', 'type' => 'int'],
+        ];
+
+        foreach ($map as $kajianField => $emrMeta) {
+            if (!array_key_exists($kajianField, $dataDasar)) {
+                continue;
+            }
+
+            $value = trim((string)$dataDasar[$kajianField]);
+            if ($value === '') {
+                $emr->{$emrMeta['field']} = null;
+                continue;
+            }
+
+            if ($emrMeta['type'] === 'int') {
+                $emr->{$emrMeta['field']} = (int)$value;
+            } elseif ($emrMeta['type'] === 'float') {
+                $emr->{$emrMeta['field']} = (float)$value;
+            } else {
+                $emr->{$emrMeta['field']} = $value;
+            }
+        }
+
+        if (!empty($emr->weight) && !empty($emr->height)) {
+            $hm = $emr->height / 100;
+            $emr->bmi = round($emr->weight / ($hm * $hm), 2);
+            if ($emr->bmi < 18.5) {
+                $emr->bmi_category = 'Underweight';
+            } elseif ($emr->bmi < 25.0) {
+                $emr->bmi_category = 'NormalWeight';
+            } elseif ($emr->bmi < 30.0) {
+                $emr->bmi_category = 'Overweight';
+            } else {
+                $emr->bmi_category = 'Obese';
+            }
+        } else {
+            $emr->bmi = null;
+            $emr->bmi_category = null;
+        }
+
+        $emr->modified_by_user_id = $this->getCurrentUserId();
     }
 
     private function buildKajianAwalNo(int $visitId): string

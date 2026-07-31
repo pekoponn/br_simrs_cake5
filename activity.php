@@ -1607,3 +1607,9 @@ ADD COLUMN title VARCHAR(10) NULL AFTER full_name;
 
 ALTER TABLE registrations
 ADD COLUMN admission_time TIME NULL AFTER registration_date;
+
+ALTER TABLE patients
+ADD COLUMN allergy TEXT NULL DEFAULT NULL
+COMMENT 'Riwayat alergi pasien' AFTER blood_type;
+
+ALTER TABLE registrations ADD COLUMN patient_title VARCHAR(10) NULL AFTER patient_id;

@@ -129,6 +129,11 @@ class PatientsTable extends Table
             ->notEmptyString('blood_type');
 
         $validator
+            ->scalar('allergy')
+            ->maxLength('allergy', 255)
+            ->allowEmptyString('allergy');
+
+        $validator
             ->date('birth_date')
             ->allowEmptyDate('birth_date');
 

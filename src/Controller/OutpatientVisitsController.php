@@ -378,9 +378,6 @@ $this->set(compact(
                $this->OutpatientVisits->save($visit);
         }
 
-        // ⬅️ BARU
-        $this->syncCpptInstructionsToEmr($visit->id);
-
         $this->Flash->success(__('CPPT berhasil ditambahkan.'));
         } else {
             $err = json_encode($note->getErrors(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
@@ -389,49 +386,6 @@ $this->set(compact(
 
         return $this->redirect(['action' => 'cppt', $id]);
     }
-    
-        private function syncCpptInstructionsToEmr($visitId)
-    {
-        $this->loadModel('OutpatientCpptNotes');
-        $this->loadModel('OutpatientVisitEmr');
-
-        $notes = $this->OutpatientCpptNotes->find()
-            ->where(['outpatient_visit_id' => $visitId])
-            ->order(['noted_at' => 'ASC', 'id' => 'ASC'])
-            ->all();
-
-        $lines = [];
-        foreach ($notes as $note) {
-            $instruction = trim((string)($note->instruction ?? ''));
-            if ($instruction === '') {
-                continue;
-            }
-
-            $dt = $note->noted_at ?? $note->created ?? null;
-            $dtObj = is_object($dt) ? $dt : (!empty($dt) ? new \DateTime($dt) : null);
-            $label = $dtObj ? $dtObj->format('d-m-Y H:i') : '-';
-
-            $lines[] = '[' . $label . '] ' . $instruction;
-        }
-
-        $combined = implode("\n\n", $lines);
-        if ($combined === '') {
-            return;
-        }
-
-        $emr = $this->OutpatientVisitEmr->find()
-            ->where(['outpatient_visit_id' => $visitId])
-            ->first();
-
-        if (!$emr) {
-            $emr = $this->OutpatientVisitEmr->newEmptyEntity();
-            $emr->outpatient_visit_id = $visitId;
-        }
-
-        $emr->doctor_notes = $combined;
-        $this->OutpatientVisitEmr->save($emr, ['validate' => false]);
-    }
-    
     public function deleteCppt($noteId = null)
     {
         $this->request->allowMethod(['post', 'delete']);
