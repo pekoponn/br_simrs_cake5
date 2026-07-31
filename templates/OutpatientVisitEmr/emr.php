@@ -382,12 +382,12 @@ $anatomyBackUrl = $anatomyBackExists
                                 <i class="fa fa-share-square"></i> Dirujuk / Konsultan
                             </a>
                         </li>
-                        <li role="presentation">
+                        <!-- <li role="presentation">
                             <a href="#tab-skdp" data-toggle="tab"
                                style="font-size:11px; padding:7px 12px; font-weight:600;">
                                 <i class="fa fa-id-card-alt"></i> SKDP
                             </a>
-                        </li>
+                        </li> -->
                     </ul>
                 </div>
 
@@ -742,6 +742,10 @@ $anatomyBackUrl = $anatomyBackExists
     </div>
 </div>
 
+                    </div><!-- /tab-content -->
+                </div><!-- /panel-body emr-tab-body -->
+            </div><!-- /panel surat / rujuk / skdp -->
+
             <!-- Diagnosa & ICD -->
             <div class="panel panel-default" style="margin-top:10px;">
                 <div class="panel-heading" style="padding:8px 12px;">
@@ -935,9 +939,6 @@ $anatomyBackUrl = $anatomyBackExists
                     <!-- Follow-up dihapus: Tanggal Kontrol, Rujuk Ke, Alasan Rujukan dipindah/tidak ditampilkan di bawah ICD-9 -->
                 </div>
             </div>
-
-           
-
 
         </div><!-- /col kiri -->
 
@@ -1320,6 +1321,7 @@ $anatomyBackUrl = $anatomyBackExists
                                     <label>Suhu <input type="text" name="data_dasar[suhu]" class="form-control input-sm" value="<?= h($emr->temperature ?? '') ?>"></label>
                                     <label>BB <input type="text" name="data_dasar[bb]" class="form-control input-sm" value="<?= h($emr->weight ?? '') ?>"></label>
                                     <label>TB <input type="text" name="data_dasar[tb]" class="form-control input-sm" value="<?= h($emr->height ?? '') ?>"></label>
+                                    <label>SpO2 <input type="number" name="data_dasar[spo2]" class="form-control input-sm" value="<?= h($emr->oxygen_saturation ?? '') ?>"></label>
                                     <label>LLA <input type="text" name="data_dasar[lla]" class="form-control input-sm"></label>
                                     <label>Skala Nyeri <input type="text" name="data_dasar[skala_nyeri]" class="form-control input-sm" value="<?= h($emr->pain_scale ?? '') ?>"></label>
                                 </div>
@@ -3255,6 +3257,66 @@ function kmaFillPatientHeader(patient) {
     $('#kma-doctor-name').val(patient.doctor || <?= json_encode($d->doctor_name ?? '-') ?>);
 }
 
+var kmaVitalPairs = [
+    {emr: 'blood_pressure', kma: 'data_dasar[tekanan_darah]'},
+    {emr: 'pulse', kma: 'data_dasar[nadi]'},
+    {emr: 'respiratory_rate', kma: 'data_dasar[napas]'},
+    {emr: 'temperature', kma: 'data_dasar[suhu]'},
+    {emr: 'weight', kma: 'data_dasar[bb]'},
+    {emr: 'height', kma: 'data_dasar[tb]'},
+    {emr: 'oxygen_saturation', kma: 'data_dasar[spo2]'},
+    {emr: 'pain_scale', kma: 'data_dasar[skala_nyeri]'}
+];
+var kmaSyncingVitals = false;
+
+function kmaField(name) {
+    return $('#form-kajian-awal').find('[name="' + name.replace(/"/g, '\\"') + '"]');
+}
+
+function syncKmaVitalToEmr($field) {
+    if (kmaSyncingVitals) {
+        return;
+    }
+
+    var name = $field.attr('name');
+    var pair = kmaVitalPairs.find(function (item) {
+        return item.kma === name;
+    });
+    if (!pair) {
+        return;
+    }
+
+    kmaSyncingVitals = true;
+    $('input[name="' + pair.emr + '"]').val($field.val()).trigger('input');
+    kmaSyncingVitals = false;
+}
+
+function syncEmrVitalToKma($field) {
+    if (kmaSyncingVitals) {
+        return;
+    }
+
+    var name = $field.attr('name');
+    var pair = kmaVitalPairs.find(function (item) {
+        return item.emr === name;
+    });
+    if (!pair) {
+        return;
+    }
+
+    kmaSyncingVitals = true;
+    kmaField(pair.kma).val($field.val()).trigger('input');
+    kmaSyncingVitals = false;
+}
+
+function syncAllEmrVitalsToKma() {
+    kmaSyncingVitals = true;
+    kmaVitalPairs.forEach(function (pair) {
+        kmaField(pair.kma).val($('input[name="' + pair.emr + '"]').val());
+    });
+    kmaSyncingVitals = false;
+}
+
 function kmaResetForm() {
     var form = document.getElementById('form-kajian-awal');
     if (form) {
@@ -3296,6 +3358,7 @@ $('#btn-kajian-awal').on('click', function () {
             kmaFillSection('data_dasar', data.data_dasar || {});
             kmaFillSection('subjektif', data.subjektif || {});
             kmaFillSection('observasi', data.observasi || {});
+            syncAllEmrVitalsToKma();
             $('#kma-save-state').val(data.id ? 'Sudah tersimpan' : 'Baru');
         })
         .fail(function (xhr) {
@@ -3314,7 +3377,17 @@ $('#btn-save-kajian-awal-top').on('click', function () {
     $('#btn-save-kajian-awal').trigger('click');
 });
 
+$(document).on('input change', '#form-kajian-awal [name^="data_dasar["]', function () {
+    syncKmaVitalToEmr($(this));
+});
+
+$(document).on('input change', 'input[name="blood_pressure"], input[name="pulse"], input[name="respiratory_rate"], input[name="temperature"], input[name="weight"], input[name="height"], input[name="oxygen_saturation"], input[name="pain_scale"]', function () {
+    syncEmrVitalToKma($(this));
+});
+
 $('#btn-save-kajian-awal').on('click', function () {
+    syncAllEmrVitalsToKma();
+
     var $btn = $('#btn-save-kajian-awal, #btn-save-kajian-awal-top');
     var csrf = $('#form-kajian-awal input[name="_csrfToken"]').val();
 
