@@ -250,6 +250,15 @@ $renderSoapSections = function (array $rows) use ($findFirstValue, $formatIcdIte
 
     foreach ($sections as $title => $aliases) {
         $value = $findFirstValue($rows, $aliases);
+        if (is_string($value)) {
+            $trimmed = trim($value);
+            if ($trimmed !== '' && ($trimmed[0] === '[' || $trimmed[0] === '{')) {
+                $decoded = json_decode($trimmed, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $value = $decoded;
+                }
+            }
+        }
         if (is_array($value)) {
             $value = $formatIcdItems($value);
         }
@@ -921,7 +930,11 @@ $renderIntegrationTable = function (array $rows) {
                                     if (!empty($PatientHistory)) {
                                         $soapRows[] = $PatientHistory;
                                     }
-                                    $soapRows = array_merge($soapRows, $registrationDetails['examinations'] ?? []);
+                                    $soapRows = array_merge(
+                                        $soapRows,
+                                        $registrationDetails['examinations'] ?? [],
+                                        $registrationDetails['emr_all'] ?? []
+                                    );
                                     $PatientHistoryStatus = is_array($PatientHistory)
                                         ? ($PatientHistory['status'] ?? null)
                                         : ($PatientHistory->status ?? null);

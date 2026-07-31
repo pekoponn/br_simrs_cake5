@@ -17,6 +17,7 @@ class MedicalRecordsController extends AppController
         $this->loadModel('Patients');
         $this->loadModel('Registrations');
         $this->loadModel('OutpatientVisits');
+        $this->loadModel('OutpatientVisitEmr');
         $this->loadModel('MedicalRecords');
         $this->loadModel('MedicalRecordInpatients');
         $this->loadModel('MedicalRecordOutpatientIgds');
@@ -93,6 +94,15 @@ class MedicalRecordsController extends AppController
 
                     if ($outpatientVisit) {
                         $registration->set('outpatient_visit', $outpatientVisit);
+
+                        $outpatientVisitEmr = $this->OutpatientVisitEmr->find()
+                            ->where(['OutpatientVisitEmr.outpatient_visit_id' => (int)$outpatientVisit->id])
+                            ->order(['OutpatientVisitEmr.id' => 'DESC'])
+                            ->first();
+
+                        if ($outpatientVisitEmr) {
+                            $registration->set('outpatient_visit_emr', $outpatientVisitEmr);
+                        }
                     }
 
                     $medicalRecord = $this->MedicalRecords->find()

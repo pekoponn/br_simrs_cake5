@@ -142,6 +142,7 @@ $renderSoap = function (array $rows) use ($findFirstValue, $formatIcdItems) {
         'Diagnosa' => ['assessment', 'diagnosis_primary', 'diagnosis_secondary', 'diagnosa', 'diagnosis'],
         'Saran / Anjuran' => ['plan', 'doctor_notes', 'saran', 'anjuran', 'therapy', 'terapi'],
         'Diagnosa / ICD10' => ['icd10_items', 'icd10', 'icd10_code', 'diagnosis_code'],
+        'Tindakan / ICD-9 CM' => ['icd9_items', 'icd9', 'icd9_code', 'icd9_nama', 'procedure_code', 'procedure_name', 'action_notes'],
         'Skala Nyeri' => ['pain_scale', 'skala_nyeri', 'nyeri', 'pain_score'],
     ];
     $vitals = [

@@ -109,17 +109,73 @@ $getFirst = function ($items) {
     return null;
 };
 
-$getDiagnoses = function ($mr, string $type): array {
-    if (empty($mr) || empty($mr->medical_record_diagnoses)) {
+$normalizeEmrIcdItems = function ($items): array {
+    if (is_string($items)) {
+        $decoded = json_decode($items, true);
+        $items = json_last_error() === JSON_ERROR_NONE ? $decoded : [];
+    }
+
+    if (!is_array($items)) {
         return [];
     }
+
     $rows = [];
-    foreach ($mr->medical_record_diagnoses as $row) {
-        if (strtoupper((string)($row->type ?? '')) === strtoupper($type)) {
-            $rows[] = $row;
+    foreach ($items as $item) {
+        if (!is_array($item)) {
+            continue;
+        }
+
+        $code = trim((string)($item['kode'] ?? $item['code'] ?? ''));
+        $diagnosis = trim((string)($item['nama'] ?? $item['name'] ?? $item['diagnosis'] ?? ''));
+        if ($code === '' && $diagnosis === '') {
+            continue;
+        }
+
+        $rows[] = [
+            'code' => $code,
+            'diagnosis' => $diagnosis,
+            'is_primary' => !empty($item['utama']) || !empty($item['is_primary']),
+        ];
+    }
+
+    return $rows;
+};
+
+$getDiagnoses = function ($mr, string $type, $registration = null) use ($normalizeEmrIcdItems): array {
+    $rows = [];
+    if (!empty($mr) && !empty($mr->medical_record_diagnoses)) {
+        foreach ($mr->medical_record_diagnoses as $row) {
+            if (strtoupper((string)($row->type ?? '')) === strtoupper($type)) {
+                $rows[] = $row;
+            }
         }
     }
-    return $rows;
+
+    if (!empty($rows)) {
+        return $rows;
+    }
+
+    $emr = $registration->outpatient_visit_emr ?? null;
+    if (!$emr) {
+        return [];
+    }
+
+    $field = strtoupper($type) === 'ICD9' ? 'icd9_items' : 'icd10_items';
+    return $normalizeEmrIcdItems($emr->{$field} ?? null);
+};
+
+$diagnosisValue = function ($row, string $field) {
+    if (is_array($row)) {
+        return $row[$field] ?? null;
+    }
+    return $row->{$field} ?? null;
+};
+
+$diagnosisPrimary = function ($row): bool {
+    if (is_array($row)) {
+        return !empty($row['is_primary']) || !empty($row['utama']);
+    }
+    return !empty($row->is_primary) || !empty($row->utama);
 };
 
 $getServiceType = function ($registration): string {
@@ -330,8 +386,8 @@ $firstRegistrationId = $firstRegistration->id ?? null;
                         $mr = $getMedicalRecord($registration);
                         $inpatient = $mr ? $getFirst($mr->medical_record_inpatients ?? []) : null;
                         $outIgd = $mr ? $getFirst($mr->medical_record_outpatient_igds ?? []) : null;
-                        $icd10s = $getDiagnoses($mr, 'ICD10');
-                        $icd9s = $getDiagnoses($mr, 'ICD9');
+                        $icd10s = $getDiagnoses($mr, 'ICD10', $registration);
+                        $icd9s = $getDiagnoses($mr, 'ICD9', $registration);
                         ?>
                         <div class="mr-panel <?= $i === 0 ? 'active' : '' ?>" data-panel-history-id="<?= h($registration->id) ?>" data-service-type="<?= h($getServiceType($registration)) ?>" style="<?= $i === 0 ? '' : 'display:none;' ?>">
 
@@ -469,9 +525,9 @@ $firstRegistrationId = $firstRegistration->id ?? null;
                                                     <?php else: ?>
                                                         <?php foreach ($icd10s as $d): ?>
                                                             <tr>
-                                                                <td style="font-family:monospace; font-weight:700;"><?= h($d->code ?? '') ?></td>
-                                                                <td><?= h($d->diagnosis ?? '') ?></td>
-                                                                <td class="text-center"><input type="checkbox" disabled <?= !empty($d->is_primary) ? 'checked' : '' ?>></td>
+                                                                <td style="font-family:monospace; font-weight:700;"><?= h($diagnosisValue($d, 'code') ?? '') ?></td>
+                                                                <td><?= h($diagnosisValue($d, 'diagnosis') ?? '') ?></td>
+                                                                <td class="text-center"><input type="checkbox" disabled <?= $diagnosisPrimary($d) ? 'checked' : '' ?>></td>
                                                             </tr>
                                                         <?php endforeach; ?>
                                                     <?php endif; ?>
@@ -497,9 +553,9 @@ $firstRegistrationId = $firstRegistration->id ?? null;
                                                     <?php else: ?>
                                                         <?php foreach ($icd9s as $d): ?>
                                                             <tr>
-                                                                <td style="font-family:monospace; font-weight:700;"><?= h($d->code ?? '') ?></td>
-                                                                <td><?= h($d->diagnosis ?? '') ?></td>
-                                                                <td class="text-center"><input type="checkbox" disabled <?= !empty($d->is_primary) ? 'checked' : '' ?>></td>
+                                                                <td style="font-family:monospace; font-weight:700;"><?= h($diagnosisValue($d, 'code') ?? '') ?></td>
+                                                                <td><?= h($diagnosisValue($d, 'diagnosis') ?? '') ?></td>
+                                                                <td class="text-center"><input type="checkbox" disabled <?= $diagnosisPrimary($d) ? 'checked' : '' ?>></td>
                                                             </tr>
                                                         <?php endforeach; ?>
                                                     <?php endif; ?>
@@ -560,9 +616,9 @@ $firstRegistrationId = $firstRegistration->id ?? null;
                                                 <?php else: ?>
                                                     <?php foreach ($icd10s as $d): ?>
                                                         <tr>
-                                                            <td style="font-family:monospace; font-weight:700;"><?= h($d->code ?? '') ?></td>
-                                                            <td><?= h($d->diagnosis ?? '') ?></td>
-                                                            <td class="text-center"><input type="checkbox" disabled <?= !empty($d->is_primary) ? 'checked' : '' ?>></td>
+                                                            <td style="font-family:monospace; font-weight:700;"><?= h($diagnosisValue($d, 'code') ?? '') ?></td>
+                                                            <td><?= h($diagnosisValue($d, 'diagnosis') ?? '') ?></td>
+                                                            <td class="text-center"><input type="checkbox" disabled <?= $diagnosisPrimary($d) ? 'checked' : '' ?>></td>
                                                         </tr>
                                                     <?php endforeach; ?>
                                                 <?php endif; ?>
@@ -578,9 +634,9 @@ $firstRegistrationId = $firstRegistration->id ?? null;
                                                 <?php else: ?>
                                                     <?php foreach ($icd9s as $d): ?>
                                                         <tr>
-                                                            <td style="font-family:monospace; font-weight:700;"><?= h($d->code ?? '') ?></td>
-                                                            <td><?= h($d->diagnosis ?? '') ?></td>
-                                                            <td class="text-center"><input type="checkbox" disabled <?= !empty($d->is_primary) ? 'checked' : '' ?>></td>
+                                                            <td style="font-family:monospace; font-weight:700;"><?= h($diagnosisValue($d, 'code') ?? '') ?></td>
+                                                            <td><?= h($diagnosisValue($d, 'diagnosis') ?? '') ?></td>
+                                                            <td class="text-center"><input type="checkbox" disabled <?= $diagnosisPrimary($d) ? 'checked' : '' ?>></td>
                                                         </tr>
                                                     <?php endforeach; ?>
                                                 <?php endif; ?>

@@ -250,6 +250,15 @@ $renderSoapSections = function (array $rows) use ($findFirstValue, $formatIcdIte
 
     foreach ($sections as $title => $aliases) {
         $value = $findFirstValue($rows, $aliases);
+        if (is_string($value)) {
+            $trimmed = trim($value);
+            if ($trimmed !== '' && ($trimmed[0] === '[' || $trimmed[0] === '{')) {
+                $decoded = json_decode($trimmed, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $value = $decoded;
+                }
+            }
+        }
         if (is_array($value)) {
             $value = $formatIcdItems($value);
         }

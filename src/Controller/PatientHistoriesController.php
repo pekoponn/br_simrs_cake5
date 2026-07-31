@@ -965,6 +965,7 @@ private function resolveUserName($connection, callable $hasTable, $userId): ?str
     {
         $this->loadModel('Patients');
         $this->loadModel('OutpatientVisits');
+        $this->loadModel('OutpatientVisitEmr');
 
         $patient = $this->Patients->get($patientId);
         $connection = ConnectionManager::get('default');
@@ -1011,6 +1012,14 @@ private function resolveUserName($connection, callable $hasTable, $userId): ?str
             }
 
             $detailData[$visit->id] = [];
+            $emrRowsAll = [];
+            if ($hasTable('outpatient_visit_emr')) {
+                $emrRowsAll = $this->OutpatientVisitEmr->find()
+                    ->where(['OutpatientVisitEmr.outpatient_visit_id' => (int)$visit->id])
+                    ->order(['OutpatientVisitEmr.id' => 'ASC'])
+                    ->all()
+                    ->toArray();
+            }
 
             foreach ($detailTables as $key => $table) {
                 $detailData[$visit->id][$key] = $this->readDetailRows(
@@ -1020,6 +1029,8 @@ private function resolveUserName($connection, callable $hasTable, $userId): ?str
                     $PatientHistory['id'] ?? $PatientHistory->id ?? null
                 );
             }
+
+            $detailData[$visit->id]['emr_all'] = $emrRowsAll;
         }
 
         $registrations = $visits;
