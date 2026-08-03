@@ -302,6 +302,8 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
 
                         $pName  = $v->patient->full_name ?? '-';
                         $pCode  = $v->patient->code ?? '-';
+                        $pTitle = $v->patient->title ?? '';
+                        $pDisplayName = ($pTitle !== '' ? $pTitle . ' ' : '') . $pName;
                         $dName  = $v->doctor->doctor_name ?? '-';
                         $roomName = $v->room_name
                             ?? $v->registration->room_name
@@ -331,7 +333,9 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
                         data-status="<?= $v->status ?>"
                         data-queue="<?= h($v->queue_number ?? '') ?>"
                         data-poli="<?= h($v->polyclinic_name ?? '') ?>"
-                        data-room="<?= h($roomName !== '-' ? $roomName : '') ?>">
+                        data-room="<?= h($roomName !== '-' ? $roomName : '') ?>"
+                        data-patient="<?= h($pName) ?>"
+                        data-title="<?= h($v->patient->title ?? '') ?>">
 
                         <!-- No Antri -->
                         <td class="text-center" style="font-weight:800; font-size:16px; color:#1e3a5f;">
@@ -499,7 +503,7 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
                         </td>
 
                         <td>
-                            <div style="font-weight:700; color:#1f2937;"><?= h($pName) ?></div>
+                            <div style="font-weight:700; color:#1f2937;"><?= h($pDisplayName) ?></div>
                             <?php if (!empty($v->polyclinic_name)): ?>
                                 <div style="font-size:10px; color:#9ca3af;">
                                     <i class="fa fa-hospital"></i> <?= h($v->polyclinic_name) ?>
@@ -742,13 +746,28 @@ function speakText(text) {
 }
 
 // ── Gabungan: chime lalu ucapkan nomor antrian + poli + ruang ────────────────
-function announceQueueCall(queue, poli, room) {
+
+var TITLE_MAP = {
+    'tn': 'Tuan',
+    'ny': 'Nyonya',
+    'nn': 'Nona',
+    'an': 'Anak',
+    'by': 'Bayi'
+};
+
+function announceQueueCall(patientName, title, room) {
     playCallChime();
 
     var parts = [];
-    parts.push(queue ? ('Nomor antrian ' + queue) : 'Pasien berikutnya');
-    if (poli)  parts.push('silakan menuju ' + poli);
-    if (room)  parts.push('ruang ' + room);
+    var titleKey  = (title || '').toString().trim().toLowerCase();
+    var gelarKata = TITLE_MAP[titleKey] || '';
+
+    if (patientName) {
+        parts.push('Panggilan untuk ' + (gelarKata ? gelarKata + ' ' : '') + patientName);
+    } else {
+        parts.push('Pasien berikutnya');
+    }
+    if (room) parts.push('menuju ruang ' + room);
 
     var text = parts.join(', ') + '.';
 
@@ -823,8 +842,8 @@ $(document).on('click', '.btn-panggil', function() {
             if (res.success) {
 
                 announceQueueCall(
-                    $row.data('queue'),
-                    $row.data('poli'),
+                    $row.data('patient'),
+                    $row.data('title'),
                     $row.data('room')
                 );
 

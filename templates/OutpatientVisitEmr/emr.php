@@ -9,6 +9,20 @@ $p = $visit->patient;
 $d = $visit->doctor;
 $isDone = in_array($visit->status, ['done', 'cancelled']);
 
+$isDone = in_array($visit->status, ['done', 'cancelled']);
+
+$noRekamMedis = $p->code ?? '-';
+try {
+    $medicalRecordsTable = \Cake\ORM\TableRegistry::getTableLocator()->get('MedicalRecords');
+    $mrRow = $medicalRecordsTable->find()
+        ->where(['registration_id' => $visit->registration_id ?? 0])
+        ->first();
+    if ($mrRow && !empty($mrRow->medical_record_no)) {
+        $noRekamMedis = $mrRow->medical_record_no;
+    }
+} catch (\Throwable $e) {
+}
+
 $patientBirthDate = '-';
 if (!empty($p->birth_date)) {
     if (is_object($p->birth_date) && method_exists($p->birth_date, 'format')) {
@@ -51,7 +65,7 @@ $anatomyBackUrl = $anatomyBackExists
 
 <?= $this->Krs->breadcrumb('Outpatient Visits', 'EMR — Pemeriksaan Pasien') ?>
 
-<div class="outpatient-visits emr content">
+<div class="outpatient-visits emr">
 
     <!-- ── Header ── -->
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -89,7 +103,11 @@ $anatomyBackUrl = $anatomyBackExists
             </div>
             <div class="col-md-3">
                 <small>Nama Pasien</small><br>
-                <strong><?= h($p->full_name ?? '-') ?></strong>
+                <?php
+                    $pTitle = $p->title ?? '';
+                    $pDisplayName = ($pTitle !== '' ? $pTitle . ' ' : '') . ($p->full_name ?? '-');
+                ?>
+                <strong><?= h($pDisplayName) ?></strong>
             </div>
             <div class="col-md-2">
                 <small>Tgl Lahir / Umur</small><br>
@@ -402,7 +420,7 @@ $anatomyBackUrl = $anatomyBackExists
                                         <button type="button" class="btn btn-xs btn-default btn-block m-b-5 btn-surat-sakit"
                                                 style="text-align:left; font-size:11px;"
                                                 data-noreg="<?= h($visit->registration_no ?? '-') ?>"
-                                                data-rekmed="<?= h($p->code ?? '-') ?>"
+                                                data-rekmed="<?= h($noRekamMedis) ?>"
                                                 data-nama="<?= h($p->full_name ?? '-') ?>"
                                                 data-alamat="<?= h($p->address ?? '-') ?>"
                                                 data-jk="<?= ($p->gender ?? '') === 'Male' ? 'PRIA' : 'WANITA' ?>"
@@ -430,7 +448,7 @@ $anatomyBackUrl = $anatomyBackExists
                                         <button type="button" class="btn btn-xs btn-default btn-block m-b-5 btn-surat-konsultasi"
                                             style="text-align:left; font-size:11px;"
                                             data-noreg="<?= h($visit->registration_no ?? '-') ?>"
-                                            data-rekmed="<?= h($p->code ?? '-') ?>"
+                                            data-rekmed="<?= h($noRekamMedis) ?>"
                                             data-nama="<?= h($p->full_name ?? '-') ?>"
                                             data-alamat="<?= h($p->address ?? '-') ?>"
                                             data-dokter="<?= h($d->doctor_name ?? '-') ?>"
@@ -442,7 +460,7 @@ $anatomyBackUrl = $anatomyBackExists
                                     <button type="button" class="btn btn-xs btn-default btn-block m-b-5 btn-surat-sehat"
                                             style="text-align:left; font-size:11px;"
                                             data-noreg="<?= h($visit->registration_no ?? '-') ?>"
-                                            data-rekmed="<?= h($p->code ?? '-') ?>"
+                                            data-rekmed="<?= h($noRekamMedis) ?>"
                                             data-nama="<?= h($p->full_name ?? '-') ?>"
                                             data-alamat="<?= h($p->address ?? '-') ?>"
                                             data-jk="<?= ($p->gender ?? '') === 'Male' ? 'PRIA' : 'WANITA' ?>"
@@ -479,7 +497,7 @@ $anatomyBackUrl = $anatomyBackExists
                                     <button type="button" class="btn btn-xs btn-default btn-block m-b-5 btn-surat-skdp"
                                             style="text-align:left; font-size:11px;"
                                             data-noreg="<?= h($visit->registration_no ?? '-') ?>"
-                                            data-rekmed="<?= h($p->code ?? '-') ?>"
+                                            data-rekmed="<?= h($noRekamMedis) ?>"
                                             data-nama="<?= h($p->full_name ?? '-') ?>"
                                             data-alamat="<?= h($p->address ?? '-') ?>"
                                             data-dokter="<?= h($d->doctor_name ?? '-') ?>"
@@ -491,7 +509,7 @@ $anatomyBackUrl = $anatomyBackExists
                                     <button type="button" class="btn btn-xs btn-default btn-block m-b-5 btn-surat-kontrol-bpjs"
                                             style="text-align:left; font-size:11px;"
                                             data-noreg="<?= h($visit->registration_no ?? '-') ?>"
-                                            data-rekmed="<?= h($p->code ?? '-') ?>"
+                                            data-rekmed="<?= h($noRekamMedis) ?>"
                                             data-nama="<?= h($p->full_name ?? '-') ?>"
                                             data-jk="<?= ($p->gender ?? '') === 'Male' ? 'Laki-laki' : 'Perempuan' ?>"
                                             data-tgllahir="<?= !empty($p->birth_date) ? (is_object($p->birth_date) ? $p->birth_date->format('d-m-Y') : h($p->birth_date)) : '-' ?>"
@@ -724,7 +742,7 @@ $anatomyBackUrl = $anatomyBackExists
                 <button type="button"
                         id="btn-surat-pengantar-rawat"
                         class="btn btn-default btn-block">
-                    <i class="fa fa-print"></i> Surat Pengantar Rawat
+                    <i class="fa fa-print"></i> Surat Pengantar Rawat Inap
                 </button>
 
                 <div style="margin-top:10px; <?= !empty($visit->is_planned_inpatient) ? '' : 'display:none;' ?>"
@@ -1147,7 +1165,7 @@ $anatomyBackUrl = $anatomyBackExists
                     <button type="button"
                             class="btn btn-success btn-sm btn-block btn-hasil-pemeriksaan-emr"
                             data-noreg="<?= h($visit->registration_no ?? '-') ?>"
-                            data-rekmed="<?= h($p->code ?? '-') ?>"
+                            data-rekmed="<?= h($noRekamMedis) ?>"
                             data-nama="<?= h($p->full_name ?? '-') ?>"
                             data-dokter="<?= h($d->doctor_name ?? '-') ?>"
                             data-tanggal="<?= !empty($visit->visit_date) && is_object($visit->visit_date) ? $visit->visit_date->format('d-m-Y') : h($visit->visit_date ?? '-') ?>"
@@ -3177,6 +3195,20 @@ var GET_KAJIAN_AWAL_URL = <?= json_encode($this->Url->build([
     'action'     => 'kajianAwal',
     $visit->id,
 ])) ?>;
+var GET_SKH_URL = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'getSuratSehat',
+    $visit->id,
+])) ?>;
+var SIMPAN_SKH_URL = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'simpanSuratSehat',
+    $visit->id,
+])) ?>;
+var CETAK_SKH_URL_BASE = <?= json_encode($this->Url->build([
+    'controller' => 'OutpatientLetters',
+    'action'     => 'cetakSuratSehat',
+])) ?>;
 var SIMPAN_KAJIAN_AWAL_URL = <?= json_encode($this->Url->build([
     'controller' => 'OutpatientVisitEmr',
     'action'     => 'simpanKajianAwal',
@@ -3528,7 +3560,105 @@ $('#btn-cetak-sks').on('click', function () {
     window.open(CETAK_SKS_URL_BASE + '/' + currentSksLetterId, '_blank');
 });
 
-
+var currentSkhLetterId = null;
+ 
+$(document).on('click', '.btn-surat-sehat', function () {
+    var $b = $(this);
+ 
+    $('#skh-rekmed').val($b.data('rekmed'));
+    $('#skh-nama').val($b.data('nama'));
+    $('#skh-alamat').val($b.data('alamat'));
+    $('#skh-umur').val($b.data('umur'));
+    $('#skh-jk').val($b.data('jk'));
+    $('#skh-bb').val($b.data('bb'));
+    $('#skh-tb').val($b.data('tb'));
+    $('#skh-td').val($b.data('td'));
+    $('#skh-suhu').val($b.data('suhu'));
+    $('#skh-goldar').val($b.data('goldar'));
+    $('#skh-butawarna').val('');
+    $('#skh-dokter').val($b.data('dokter'));
+    $('#skh-tglperiksa').val($b.data('tglperiksa'));
+    $('#skh-hasil-sehat').prop('checked', true);
+    $('#skh-hasil-detail').val('');
+    $('#skh-keterangan').val('');
+    $('#skh-normal').prop('checked', true);
+    $('#skh-noSurat').val('AUTO');
+    currentSkhLetterId = null;
+    $('#btn-cetak-skh').prop('disabled', true);
+ 
+    $.ajax({
+        url: GET_SKH_URL,
+        method: 'GET',
+        dataType: 'json',
+        success: function (res) {
+            if (res && res.success && res.data) {
+                var d = res.data;
+                currentSkhLetterId = d.letter_id;
+                $('#skh-noSurat').val(d.letter_no || 'AUTO');
+                if (d.weight !== null)         $('#skh-bb').val(d.weight);
+                if (d.height !== null)         $('#skh-tb').val(d.height);
+                if (d.blood_pressure !== null) $('#skh-td').val(d.blood_pressure);
+                if (d.temperature !== null)    $('#skh-suhu').val(d.temperature);
+                if (d.color_blind !== null)    $('#skh-butawarna').val(d.color_blind);
+                if (d.blood_type !== null)     $('#skh-goldar').val(d.blood_type);
+                if (d.result === 'TIDAK SEHAT') {
+                    $('#skh-hasil-tidak-sehat').prop('checked', true);
+                } else {
+                    $('#skh-hasil-sehat').prop('checked', true);
+                }
+                if (d.result_detail !== null)   $('#skh-hasil-detail').val(d.result_detail);
+                if (d.statement_notes !== null) $('#skh-keterangan').val(d.statement_notes);
+                $('#skh-normal').prop('checked', !!d.is_normal);
+                $('#btn-cetak-skh').prop('disabled', false);
+            }
+        }
+    });
+ 
+    $('#modal-surat-sehat').modal('show');
+});
+ 
+$('#btn-simpan-skh').on('click', function () {
+    var csrf = $('input[name="_csrfToken"]').val();
+    var payload = {
+        _csrfToken: csrf,
+        weight: $('#skh-bb').val(),
+        height: $('#skh-tb').val(),
+        blood_pressure: $('#skh-td').val(),
+        temperature: $('#skh-suhu').val(),
+        color_blind: $('#skh-butawarna').val(),
+        blood_type: $('#skh-goldar').val(),
+        result: $('input[name="skh_hasil"]:checked').val() === 'tidak_sehat' ? 'TIDAK SEHAT' : 'SEHAT',
+        result_detail: $('#skh-hasil-detail').val(),
+        statement_notes: $('#skh-keterangan').val(),
+        is_normal: $('#skh-normal').is(':checked') ? 1 : 0,
+        examined_at: new Date().toISOString().slice(0, 10),
+    };
+ 
+    $.ajax({
+        url: SIMPAN_SKH_URL,
+        method: 'POST',
+        data: payload,
+        dataType: 'json',
+        success: function (res) {
+            if (res.success) {
+                $('#skh-noSurat').val(res.letter_no);
+                currentSkhLetterId = res.letter_id;
+                $('#btn-cetak-skh').prop('disabled', false);
+                alert('Surat berhasil disimpan: ' + res.letter_no);
+            } else {
+                alert(res.message || 'Gagal menyimpan surat.');
+            }
+        },
+        error: function () {
+            alert('Gagal menghubungi server.');
+        }
+    });
+});
+ 
+$('#btn-cetak-skh').on('click', function () {
+    if (!currentSkhLetterId) return;
+    window.open(CETAK_SKH_URL_BASE + '/' + currentSkhLetterId, '_blank');
+});
 
 var GET_KSL_URL = <?= json_encode($this->Url->build([
     'controller' => 'OutpatientLetters',

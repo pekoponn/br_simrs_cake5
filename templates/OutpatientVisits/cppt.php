@@ -73,9 +73,13 @@ function cpptText($value) {
                     </div>
 
                     <div class="row cppt-form-row">
-                        <label class="col-xs-3">&nbsp;</label>
+                        <label class="col-xs-3">Nama Pasien</label>
                         <div class="col-xs-9">
-                            <input type="text" class="form-control input-sm" value="<?= h($p->full_name ?? '-') ?>" readonly>
+                            <?php
+                                $pTitle = $p->title ?? '';
+                                $pDisplayName = ($pTitle !== '' ? $pTitle . ' ' : '') . ($p->full_name ?? '-');
+                            ?>
+                            <input type="text" class="form-control input-sm" value="<?= h($pDisplayName) ?>" readonly>
                         </div>
                     </div>
 

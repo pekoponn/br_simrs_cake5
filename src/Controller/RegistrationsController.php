@@ -490,7 +490,6 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
                     $patientData[$pField] = null;
                 }
             }
-            $patientData['full_name'] = $title !== '' ? $title . ' ' . $fullName : $fullName;
 
             $newPatientData = $patientData;
         }
@@ -679,6 +678,13 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
                         !empty($patientInputForMerge[$field] ?? null)
                     ) {
                         $patient->{$field} = $patientInputForMerge[$field];
+                    }
+                }
+
+                if ($patientSchema->hasColumn('title')) {
+                    $titleInput = trim((string)($data['patient_title'] ?? ''));
+                    if ($titleInput !== '') {
+                        $patient->title = $titleInput;
                     }
                 }
 

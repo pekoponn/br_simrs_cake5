@@ -25,7 +25,8 @@ function rmText($value) {
 }
 
 $mrNo       = $p->code ?? '';
-$namaPasien = $p->full_name ?? '';
+$pTitleRm   = $p->title ?? '';
+$namaPasien = ($pTitleRm !== '' ? $pTitleRm . ' ' : '') . ($p->full_name ?? '');
 $tglMasuk   = rmDate($visit->visit_date ?? $r->registration_date ?? null);
 $tglKeluar  = rmDate($visit->end_time ?? null) ?: date('Y-m-d');
 $dpjp       = $d->doctor_name ?? '';

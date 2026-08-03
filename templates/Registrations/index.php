@@ -226,8 +226,13 @@ $summaryUrl = $this->Url->build(['action' => 'getSummary']);
 
                         <td>
                             <?php if ($registration->has('patient') && $registration->patient): ?>
+                                <?php
+                                    $regPatientTitle = $registration->patient->title ?? '';
+                                    $regPatientName  = $registration->patient->full_name ?? '-';
+                                    $regPatientDisplayName = ($regPatientTitle !== '' ? $regPatientTitle . ' ' : '') . $regPatientName;
+                                ?>
                                 <i class="fa fa-user" style="color:#6c757d; margin-right:4px;"></i>
-                                <strong><?= h($registration->patient->full_name ?? '-') ?></strong>
+                                <strong><?= h($regPatientDisplayName) ?></strong>
                                 <br>
                                 <small style="color:#6c757d; font-size:11px;">
                                     <?= h($registration->patient->code ?? '') ?>

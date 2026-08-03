@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 namespace App\Controller;
+use App\Controller\Traits\PdfRenderTrait;
 
 /**
  * OutpatientLetters Controller
@@ -11,6 +12,7 @@ namespace App\Controller;
  */
 class OutpatientLettersController extends AppController
 {
+    use PdfRenderTrait;
     /**
      * Index method
      *
@@ -394,8 +396,14 @@ class OutpatientLettersController extends AppController
             'contain' => ['Patients', 'Doctors', 'OutpatientVisits'],
         ]);
 
-        $this->viewBuilder()->setLayout('print'); // pastikan layout 'print' sudah ada, atau ganti ke layout kosong
-        $this->set(compact('letter'));
+        return $this->streamPdf(
+            'cetak_surat_sakit',
+            compact('letter'),
+            'Surat-Keterangan-Sakit-' . $letter->letter_no . '.pdf',
+            'A5',
+            'portrait',
+            'attachment' 
+        );
     }
 
     public function cetakSuratKonsultasi($letterId = null)
@@ -749,7 +757,7 @@ class OutpatientLettersController extends AppController
         'data'    => $letter ? [
             'letter_id'                  => $letter->id,
             'letter_no'                  => $letter->letter_no,
-            'control_date'               => $letter->leave_from ? (string)$letter->leave_from : null,
+            'control_date'               => $letter->leave_from ? $letter->leave_from->format('Y-m-d') : null,
             'notes'                      => $letter->notes,
             'bpjs_card_no'               => $letter->bpjs_card_no,
             'diagnosis'                  => $letter->diagnosis,
@@ -820,12 +828,125 @@ public function simpanSuratKontrolBpjs($visitId = null)
             'contain' => ['Patients', 'Doctors', 'OutpatientVisits'],
         ]);
 
-        if ($letter->letter_type !== 'kontrol_bpjs') {
-            throw new \Cake\Http\Exception\NotFoundException('Surat kontrol BPJS tidak ditemukan.');
-        }
+        return $this->streamPdf(
+            'cetak_surat_kontrol_bpjs',
+            compact('letter'),
+            'Surat-Kontrol-BPJS-' . $letter->letter_no . '.pdf',
+            'A5',
+            'portrait',
+            'attachment'
+        );
+    }
 
-        $this->viewBuilder()->setLayout('print');
-        $this->set(compact('letter'));
+    public function getSuratSehat($visitId = null)
+    {
+        $this->request->allowMethod(['get']);
+        $this->autoRender = false;
+ 
+        $letter = $this->OutpatientLetters->find()
+            ->where([
+                'outpatient_visit_id' => (int)$visitId,
+                'letter_type' => 'sehat',
+            ])
+            ->first();
+ 
+        return $this->response->withType('application/json')->withStringBody(json_encode([
+            'success' => true,
+            'data'    => $letter ? [
+                'letter_id'           => $letter->id,
+                'letter_no'           => $letter->letter_no,
+                'weight'              => $letter->weight,
+                'height'              => $letter->height,
+                'blood_pressure'      => $letter->blood_pressure,
+                'temperature'         => $letter->temperature,
+                'color_blind'         => $letter->color_blind,
+                'blood_type'          => $letter->blood_type,
+                'result'              => $letter->diagnosis,
+                'result_detail'       => $letter->notes,
+                'statement_notes'     => $letter->consultation_answer,
+                'is_normal'           => (int)$letter->is_normal,
+            ] : null,
+        ]));
+    }
+ 
+    public function simpanSuratSehat($visitId = null)
+    {
+        $this->request->allowMethod(['post']);
+        $this->autoRender = false;
+ 
+        $this->loadModel('OutpatientVisits');
+        $visit = $this->OutpatientVisits->get($visitId);
+ 
+        $data = $this->request->getData();
+ 
+        $entity = $this->OutpatientLetters->find()
+            ->where([
+                'outpatient_visit_id' => $visit->id,
+                'letter_type' => 'sehat',
+            ])
+            ->first();
+ 
+        if (!$entity) {
+            $entity = $this->OutpatientLetters->newEmptyEntity();
+            $entity->outpatient_visit_id = $visit->id;
+            $entity->registration_id     = $visit->registration_id ?? null;
+            $entity->patient_id          = $visit->patient_id ?? null;
+            $entity->doctor_id           = $visit->doctor_id ?? null;
+            $entity->letter_type         = 'sehat';
+            $entity->letter_no           = 'SKH-' . date('Ymd') . '-' . str_pad((string)$visit->id, 5, '0', STR_PAD_LEFT);
+        }
+ 
+        $fields = [
+            'weight'              => $data['weight'] ?? null,
+            'height'              => $data['height'] ?? null,
+            'blood_pressure'      => $data['blood_pressure'] ?? null,
+            'temperature'         => $data['temperature'] ?? null,
+            'color_blind'         => $data['color_blind'] ?? null,
+            'blood_type'          => $data['blood_type'] ?? null,
+            'diagnosis'           => $data['result'] ?? 'SEHAT',
+            'notes'               => $data['result_detail'] ?? null,
+            'consultation_answer' => $data['statement_notes'] ?? null,
+            'is_normal'           => !empty($data['is_normal']) ? 1 : 0,
+            'examined_at'         => !empty($data['examined_at']) ? $data['examined_at'] : date('Y-m-d'),
+        ];
+ 
+        $entity = $this->OutpatientLetters->patchEntity($entity, $fields, [
+            'validate' => false,
+        ]);
+ 
+        if ($this->OutpatientLetters->save($entity, ['checkRules' => false])) {
+            return $this->response->withType('application/json')->withStringBody(json_encode([
+                'success'   => true,
+                'letter_id' => $entity->id,
+                'letter_no' => $entity->letter_no,
+            ]));
+        }
+ 
+        return $this->response->withType('application/json')->withStringBody(json_encode([
+            'success' => false,
+            'message' => 'Gagal menyimpan surat keterangan sehat.',
+            'errors'  => $entity->getErrors(),
+        ]));
+    }
+ 
+    public function cetakSuratSehat($letterId = null)
+    {
+        $letter = $this->OutpatientLetters->get($letterId, [
+            'contain' => ['Patients', 'Doctors', 'OutpatientVisits'],
+        ]);
+ 
+        if ($letter->letter_type !== 'sehat') {
+            throw new \Cake\Http\Exception\NotFoundException('Surat keterangan sehat tidak ditemukan.');
+        }
+ 
+        return $this->streamPdf(
+            'cetak_surat_sehat',
+            compact('letter'),
+            'Surat-Keterangan-Sehat-' . $letter->letter_no . '.pdf',
+            'A5',
+            'portrait',
+            'attachment'
+        );
     }
 
 }

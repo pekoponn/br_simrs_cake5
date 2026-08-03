@@ -29,6 +29,29 @@ use Cake\ORM\Entity;
  * @property string|null $consultation_answer
  * @property bool|null $is_normal
  * @property \Cake\I18n\FrozenDate|null $examined_at
+ * 
+ * 
+ * // Dipakai oleh Surat Kontrol BPJS (letter_type = 'kontrol_bpjs')
+ * @property string|null $bpjs_card_no
+ * @property int|null $referral_doctor_id
+ * @property string|null $referral_doctor_name
+ * @property string|null $referral_doctor_specialist
+ *
+ * // Dipakai oleh Surat Bukti Rawat Jalan (letter_type = 'bukti_rajal')
+ * @property string|null $anamnesa
+ * @property string|null $diagnosis_primary_text
+ * @property string|null $diagnosis_secondary_text
+ * @property string|null $action_primary_text
+ * @property string|null $action_secondary_text
+ * @property string|null $supporting_diagnosis
+ * @property bool|null $is_autopsy
+ * @property string|null $special_actions
+ * @property string|null $prescription
+ * @property string|null $advice_notes
+ * @property int|null $discharged_by_doctor_id
+ * @property int|null $completing_doctor_id
+ * @property string|null $patient_or_family_name
+ * 
  * @property \Cake\I18n\FrozenTime|null $created
  * @property \Cake\I18n\FrozenTime|null $modified
  *
@@ -69,6 +92,29 @@ class OutpatientLetter extends Entity
         'consultation_answer' => true,
         'is_normal' => true,
         'examined_at' => true,
+        // Surat Kontrol BPJS — sebelumnya belum accessible sehingga
+        // patchEntity() diam-diam membuang nilai ini saat disimpan.
+        'bpjs_card_no' => true,
+        'referral_doctor_id' => true,
+        'referral_doctor_name' => true,
+        'referral_doctor_specialist' => true,
+
+        // Surat Bukti Rawat Jalan
+        'anamnesa' => true,
+        'diagnosis_primary_text' => true,
+        'diagnosis_secondary_text' => true,
+        'action_primary_text' => true,
+        'action_secondary_text' => true,
+        'supporting_diagnosis' => true,
+        'is_autopsy' => true,
+        'special_actions' => true,
+        'prescription' => true,
+        'advice_notes' => true,
+        'discharged_by_doctor_id' => true,
+        'completing_doctor_id' => true,
+        'patient_or_family_name' => true,
+
+        
         'created' => true,
         'modified' => true,
         'outpatient_visit' => true,
