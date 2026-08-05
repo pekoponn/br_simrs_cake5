@@ -114,7 +114,7 @@ class PatientAdmissionsController extends AppController
                     $or['OutpatientVisits.id'] = (int)$q;
                 }
 
-                return $exp->or_($or);
+                return $exp->or($or);
             });
         }
 
@@ -181,14 +181,14 @@ class PatientAdmissionsController extends AppController
                     $or['Registrations.patient_id'] = (int)$q;
                 }
 
-                return $exp->or_($or);
+                return $exp->or($or);
             });
         }
 
         switch ($tab) {
             case 'jkn':
                 $query->where(function ($exp) {
-                    return $exp->or_([
+                    return $exp->or([
                         'Registrations.insurance_card_no IS NOT' => null,
                         'Registrations.sep_no IS NOT' => null,
                         'Registrations.bpjs_nik IS NOT' => null,
@@ -219,7 +219,7 @@ class PatientAdmissionsController extends AppController
 
             case 'rencana_rawat_inap':
                 $query->where(function ($exp) {
-                    return $exp->or_([
+                    return $exp->or([
                         'Registrations.service_type' => 'rencana_rawat_inap',
                         'Registrations.status IN' => ['rencana_rawat_inap', 'planned_inpatient', 'rencana'],
                     ]);
