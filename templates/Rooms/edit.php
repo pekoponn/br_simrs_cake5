@@ -91,7 +91,7 @@ $dataChild = $this->Html->link(
                         'Y' => 'Aktif',
                         'N' => 'Tidak Aktif'
                     ],
-                    'class' => 'form-control'
+                    'class' => 'form-control select2Form',
                 ]) ?>
             </div>
         </div>

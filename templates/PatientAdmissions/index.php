@@ -182,7 +182,17 @@ $baseUrl = ['controller' => 'PatientAdmissions', 'action' => 'index'];
             <div class="row" style="display:flex;align-items:flex-end;flex-wrap:wrap;">
                 <div class="col-md-2">
                     <label>Cari Pasien</label>
-                    <?= $this->Form->select('search_by', ['name' => 'Nama pasien', 'rm' => 'No RM', 'reg' => 'No Registrasi', 'bpjs' => 'No BPJS'], ['value' => $this->request->getQuery('search_by', 'name'), 'empty' => false, 'class' => 'form-control input-sm']) ?>
+                    <?= $this->Form->select('search_by', [
+                        'name' => 'Nama pasien',
+                        'rm'   => 'No RM',
+                        'reg'  => 'No Registrasi',
+                        'bpjs' => 'No BPJS',
+                    ], [
+                        'id'    => 'search-by',
+                        'value' => $this->request->getQuery('search_by', 'name'),
+                        'empty' => false,
+                        'class' => 'form-control select2Form',
+                    ]) ?>
                 </div>
                 <div class="col-md-4">
                     <label>&nbsp;</label>

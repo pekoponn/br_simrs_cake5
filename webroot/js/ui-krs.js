@@ -512,55 +512,55 @@ var handleDataTablesApi = function(classTable, modalTable, modalDetailTable, btn
        
     });
 
-    $(document).on("click", "."+btnApproveCeo, function(){
+    // $(document).on("click", "."+btnApproveCeo, function(){
 
-        var confirmTitle = "Apakah anda yakin ingin memproses PCA tersebut ?";
-        var id_data=$(this).attr("id_data");
-        var value = {
-            id_data: id_data
-        };
+    //     var confirmTitle = "Apakah anda yakin ingin memproses PCA tersebut ?";
+    //     var id_data=$(this).attr("id_data");
+    //     var value = {
+    //         id_data: id_data
+    //     };
 
-        var idData = id_data.split("^");
+    //     var idData = id_data.split("^");
 
-        var $form = $(this).closest('form');
-        bootbox.confirm(confirmTitle, function(result) {
-            if(result==true) {
-                // Alamat untuk edit form
-                jQuery.ajax({
-                    type: "post",
-                    async: true,
-                    cache: false,
-                    dataType: "html",
-                    data: {
-                        id:idData[0], status:idData[1], userId:idData[2]
-                    }, 
-                    /*headers: {
-                        'X-CSRF-Token': $('meta[name="csrfToken"]').attr('content')
-                    },*/
-                    // data: value,
-                    url: urlApproveCeo,
+    //     var $form = $(this).closest('form');
+    //     bootbox.confirm(confirmTitle, function(result) {
+    //         if(result==true) {
+    //             // Alamat untuk edit form
+    //             jQuery.ajax({
+    //                 type: "post",
+    //                 async: true,
+    //                 cache: false,
+    //                 dataType: "html",
+    //                 data: {
+    //                     id:idData[0], status:idData[1], userId:idData[2]
+    //                 }, 
+    //                 /*headers: {
+    //                     'X-CSRF-Token': $('meta[name="csrfToken"]').attr('content')
+    //                 },*/
+    //                 // data: value,
+    //                 url: urlApproveCeo,
                    
-                    success: function(data, textStatus, jqXHR) {
-                        var table = $('#'+classTable).DataTable(); 
-                        table.ajax.reload( null, false );
-                        swal({
-                          title: "Berhasil",
-                          text: "Terima kasih, data PCA berhasil diubah.",
-                          timer: 4500,
-                          icon: 'success',
-                          button: false,
-                          // showConfirmButton: false,                          
-                          //className: 'facebook',
-                        });                     
-                    },
-                    error: function(jqXHR, textStatus, errorThrown) {
-                       swal("Error!", textStatus, "error");
-                    }
-                });
-                return true;
-            }
-        });
-    });
+    //                 success: function(data, textStatus, jqXHR) {
+    //                     var table = $('#'+classTable).DataTable(); 
+    //                     table.ajax.reload( null, false );
+    //                     swal({
+    //                       title: "Berhasil",
+    //                       text: "Terima kasih, data PCA berhasil diubah.",
+    //                       timer: 4500,
+    //                       icon: 'success',
+    //                       button: false,
+    //                       // showConfirmButton: false,                          
+    //                       //className: 'facebook',
+    //                     });                     
+    //                 },
+    //                 error: function(jqXHR, textStatus, errorThrown) {
+    //                    swal("Error!", textStatus, "error");
+    //                 }
+    //             });
+    //             return true;
+    //         }
+    //     });
+    // });
 };
 
 var Krs = function () {
@@ -586,3 +586,83 @@ var Krs = function () {
 $(document).ready(function() {
     Krs.init();
 });
+
+const SwalHelper = {
+    confirm: async function (title = 'Apakah Anda yakin?', text = '', confirmButtonText = 'Ya', cancelButtonText = 'Batal') {
+        return await Swal.fire({
+            title: title,
+            text: text,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: confirmButtonText,
+            cancelButtonText: cancelButtonText,
+            reverseButtons: true
+        });
+    },
+
+        delete: async function (
+        title = 'Apakah Anda yakin ingin menghapus?',
+        text = 'Data yang dihapus tidak dapat dikembalikan!',
+        confirmButtonText = 'Hapus',
+        cancelButtonText = 'Batal'
+    ) {
+        return await Swal.fire({
+            title: title,
+            text: text,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: confirmButtonText,
+            cancelButtonText: cancelButtonText,
+            reverseButtons: true
+        });
+    },
+
+    success: function (message = 'Berhasil', title = 'Sukses', timer = 5000) {
+        return Swal.fire({
+            icon: 'success',
+            title: title,
+            text: message,
+            timer: timer,
+            // showConfirmButton: false
+        });
+    },
+
+    error: function (message = 'Terjadi kesalahan', title = 'Gagal') {
+        return Swal.fire({
+            icon: 'error',
+            title: title,
+            html: message
+        });
+    },
+
+    info: function (message, title = 'Info') {
+        return Swal.fire({
+            icon: 'info',
+            title: title,
+            text: message
+        });
+    },
+
+    warning: function (message, title = 'Peringatan') {
+        return Swal.fire({
+            icon: 'warning',
+            title: title,
+            text: message
+        });
+    },
+
+      loading: function (title = 'Memuat data...', text = 'Silakan tunggu') {
+        Swal.fire({
+            title: title,
+            text: text,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+    },
+    close: function() {
+        Swal.close();
+    }
+};

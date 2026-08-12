@@ -72,7 +72,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                             '1' => 'Aktif',
                             '0' => 'Nonaktif',
                         ], [
-                            'class' => 'form-control',
+                            'class' => 'form-control select2Form',
                             'value' => $isActive,
                         ]) ?>
                     </div>
@@ -182,6 +182,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 currentButton.innerHTML = '<i class="fa ' + (active ? 'fa-check' : 'fa-times') + '"></i> ' + (active ? 'Aktif' : 'Nonaktif');
             });
         });
+    });
+});
+
+$(document).ready(function () {
+    $('.select2Form').select2({
+        width: '100%',
+        minimumResultsForSearch: 0
     });
 });
 </script>

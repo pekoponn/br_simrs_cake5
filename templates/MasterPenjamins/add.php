@@ -124,3 +124,13 @@ $typeOptions = [
     </div>
 
 </div>
+
+
+<script>
+$(document).ready(function () {
+    $('.select2Form').select2({
+        width: '100%',
+        minimumResultsForSearch: 0
+    });
+});
+</script>

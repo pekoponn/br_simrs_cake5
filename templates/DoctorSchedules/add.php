@@ -265,7 +265,7 @@
                     'label' => 'Dokter',
                     'options' => $doctors,
                     'empty' => '-- Pilih Dokter --',
-                    'class' => 'input',
+                    'class' => 'input select2Form',
                     'id' => 'ds-doctor-id',
                     'templates' => [
                         'inputContainer' => '{{content}}',
@@ -302,7 +302,7 @@
                         'Minggu' => 'Minggu'
                     ],
                     'empty' => '-- Pilih Hari --',
-                    'class' => 'input',
+                    'class' => 'input select2Form',
                     'templates' => [
                         'inputContainer' => '{{content}}',
                     ],
@@ -317,7 +317,7 @@
                         'Y' => 'Aktif',
                         'N' => 'Tidak Aktif'
                     ],
-                    'class' => 'input',
+                    'class' => 'input select2Form',
                     'templates' => [
                         'inputContainer' => '{{content}}',
                     ],
@@ -388,6 +388,13 @@
 </div>
 
 <script>
+
+$(document).ready(function () {
+    $('.select2Form').select2({
+        width: '100%',
+        minimumResultsForSearch: 0
+    });
+});
 (function () {
     // Mapping doctor_id => nama poli, dikirim dari controller (Doctors->polyclinic_name)
     var doctorPolyclinics = <?= json_encode($doctorPolyclinics ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
@@ -405,7 +412,7 @@
         poliInput.value = poli ? poli : '';
     }
 
-    doctorSelect.addEventListener('change', updatePoli);
+    $(doctorSelect).on('change', updatePoli);
     updatePoli();
 })();
 </script>

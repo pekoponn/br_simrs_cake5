@@ -38,10 +38,10 @@
 			<div class="dropdown-menu dropdown-menu-right">
 				<a href="javascript:;" class="dropdown-item"><small>Last login : <?php echo $lastLoginDate; ?></small></a>
 				<div class="dropdown-divider"></div>
-				<?php echo $this->Html->link('Keluar', ['controller' => 'auth', 'action' => 'logout', 'full_base' => true], ['escape' => false, 'class' => 'dropdown-item']); ?>
+				<?php echo $this->Html->link('Keluar', ['prefix' => false,'controller' => 'auth', 'action' => 'logout', 'full_base' => true], ['escape' => false, 'class' => 'dropdown-item']); ?>
 			</div>
 		</li>
-		<li class="dropdown"><?php echo $this->Html->link('<i class="fa fa-power-off"></i>', ['controller' => 'auth', 'action' => 'logout', 'full_base' => true], ['escape' => false, 'class' => 'f-s-14']); ?></li>
+		<li class="dropdown"><?php echo $this->Html->link('<i class="fa fa-power-off"></i>', ['prefix' => false, 'controller' => 'auth', 'action' => 'logout', 'full_base' => true], ['escape' => false, 'class' => 'f-s-14']); ?></li>
 	</ul>
 </div>
 

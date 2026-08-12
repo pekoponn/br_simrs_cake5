@@ -74,7 +74,7 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                                 '0' => 'Nonaktif'
                             ],
                             [
-                                'class' => 'form-control',
+                                'class' => 'form-control select2Form',
                                 'value' => $isActive
                             ]
                         ) ?>
@@ -373,6 +373,13 @@ $(document).on('click', '.btn-preview', function () {
 
     });
 
+});
+
+$(document).ready(function () {
+    $('.select2Form').select2({
+        width: '100%',
+        minimumResultsForSearch: 0
+    });
 });
 
 </script>

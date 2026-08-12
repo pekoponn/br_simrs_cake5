@@ -33,7 +33,8 @@
                             'type' => 'select',
                             'options' => $this->Krs->laboratoryCategories(),
                             'empty' => '-- Pilih Kategori --',
-                            'class' => 'form-control input-sm',
+                            'class' => 'form-control select2Form',
+                            'id' => 'add-lab-category',
                         ]) ?>
                     </div>
                 </div>
@@ -103,7 +104,8 @@
                             'type' => 'select',
                             'options' => [1 => 'Aktif', 0 => 'Tidak Aktif'],
                             'default' => 1,
-                            'class' => 'form-control input-sm',
+                            'class' => 'form-control select2Form',
+                            'id' => 'add-lab-is-active',
                         ]) ?>
                     </div>
                 </div>

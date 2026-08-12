@@ -11,7 +11,7 @@ use Cake\Validation\Validator;
 /**
  * Branches Model
  *
- * @property \App\Model\Table\TransportersTable&\Cake\ORM\Association\BelongsTo $Transporters
+//  * @property \App\Model\Table\TransportersTable&\Cake\ORM\Association\BelongsTo $Transporters
  * @property \App\Model\Table\AccAccountMappingsTable&\Cake\ORM\Association\HasMany $AccAccountMappings
  * @property \App\Model\Table\AccAccountsTable&\Cake\ORM\Association\HasMany $AccAccounts
  * @property \App\Model\Table\AccBeginningBalancesTable&\Cake\ORM\Association\HasMany $AccBeginningBalances
@@ -118,9 +118,9 @@ class BranchesTable extends Table
 
         $this->addBehavior('Timestamp');
 
-        $this->belongsTo('Transporters', [
-            'foreignKey' => 'transporter_id',
-        ]);
+        // $this->belongsTo('Transporters', [
+        //     'foreignKey' => 'transporter_id',
+        // ]);
         $this->hasMany('AccAccountMappings', [
             'foreignKey' => 'branch_id',
         ]);
@@ -292,48 +292,48 @@ class BranchesTable extends Table
         $this->hasMany('Projects', [
             'foreignKey' => 'branch_id',
         ]);
-        $this->hasMany('RecipientPayers', [
-            'foreignKey' => 'branch_id',
-        ]);
-        $this->hasMany('Settings', [
-            'foreignKey' => 'branch_id',
-        ]);
-        $this->hasMany('Templates', [
-            'foreignKey' => 'branch_id',
-        ]);
-        $this->hasMany('TransporterPrices', [
-            'foreignKey' => 'branch_id',
-        ]);
-        $this->hasMany('Transporters', [
-            'foreignKey' => 'branch_id',
-        ]);
-        $this->hasMany('TruckInspections', [
-            'foreignKey' => 'branch_id',
-        ]);
-        $this->hasMany('TruckSchedules', [
-            'foreignKey' => 'branch_id',
-        ]);
-        $this->hasMany('Trucks', [
-            'foreignKey' => 'branch_id',
-        ]);
-        $this->hasMany('TrucksOri', [
-            'foreignKey' => 'branch_id',
-        ]);
-        $this->hasMany('UnidentifiedIncomes', [
-            'foreignKey' => 'branch_id',
-        ]);
-        $this->hasMany('Users', [
-            'foreignKey' => 'branch_id',
-        ]);
-        $this->hasMany('WastePrices', [
-            'foreignKey' => 'branch_id',
-        ]);
-        $this->hasMany('WasteTypes', [
-            'foreignKey' => 'branch_id',
-        ]);
-        $this->hasMany('Wastes', [
-            'foreignKey' => 'branch_id',
-        ]);
+        // $this->hasMany('RecipientPayers', [
+        //     'foreignKey' => 'branch_id',
+        // ]);
+        // $this->hasMany('Settings', [
+        //     'foreignKey' => 'branch_id',
+        // ]);
+        // $this->hasMany('Templates', [
+        //     'foreignKey' => 'branch_id',
+        // ]);
+        // $this->hasMany('TransporterPrices', [
+        //     'foreignKey' => 'branch_id',
+        // ]);
+        // $this->hasMany('Transporters', [
+        //     'foreignKey' => 'branch_id',
+        // ]);
+        // $this->hasMany('TruckInspections', [
+        //     'foreignKey' => 'branch_id',
+        // ]);
+        // $this->hasMany('TruckSchedules', [
+        //     'foreignKey' => 'branch_id',
+        // ]);
+        // $this->hasMany('Trucks', [
+        //     'foreignKey' => 'branch_id',
+        // ]);
+        // $this->hasMany('TrucksOri', [
+        //     'foreignKey' => 'branch_id',
+        // ]);
+        // $this->hasMany('UnidentifiedIncomes', [
+        //     'foreignKey' => 'branch_id',
+        // ]);
+        // $this->hasMany('Users', [
+        //     'foreignKey' => 'branch_id',
+        // ]);
+        // $this->hasMany('WastePrices', [
+        //     'foreignKey' => 'branch_id',
+        // ]);
+        // $this->hasMany('WasteTypes', [
+        //     'foreignKey' => 'branch_id',
+        // ]);
+        // $this->hasMany('Wastes', [
+        //     'foreignKey' => 'branch_id',
+        // ]);
     }
 
     /**
@@ -740,7 +740,7 @@ class BranchesTable extends Table
      */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
-        $rules->add($rules->existsIn(['transporter_id'], 'Transporters'), ['errorField' => 'transporter_id']);
+        // $rules->add($rules->existsIn(['transporter_id'], 'Transporters'), ['errorField' => 'transporter_id']);
 
         return $rules;
     }

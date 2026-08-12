@@ -532,14 +532,6 @@ $isAktif = $statusLower === 'aktif' || $statusLower === '';
                                 <?php regField('ID', $registration->id ?? '', 'col-md-3') ?>
                                 <?php regField('Dibuat', formatDateView($registration->created, true), 'col-md-4') ?>
                                 <?php regField('Diubah', formatDateView($registration->modified, true), 'col-md-4') ?>
-                                <?php regFieldRaw(
-                                    'Status Aktif',
-                                    '<span class="badge-pill ' . (($registration->is_active ?? '') === 'Y' ? 'badge-green' : 'badge-gray') . '">'
-                                        . h(($registration->is_active ?? '') === 'Y' ? 'AKTIF' : 'NONAKTIF')
-                                        . '</span>',
-                                    'col-md-1'
-                                ) ?>
-
                                 <?php if (!empty($registration->delete_log)): ?>
                                     <?php regField('Delete Log', $registration->delete_log, 'col-md-12') ?>
                                 <?php endif; ?>

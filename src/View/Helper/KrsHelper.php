@@ -133,6 +133,8 @@ class KrsHelper extends Helper
 			$btnAttribute = ['name' => '<i class="fa fa-plus"></i>', 'color' => 'inverse', 'title' => 'Baru'];
 		} elseif ($type == "preview") {
 			$btnAttribute = ['name' => '<i class="fa fa-desktop"></i>', 'color' => 'yellow', 'title' => 'Tampilkan'];
+		} elseif ($type == "editCustome") {
+			$btnAttribute = ['name' => '<i class="fa fa-pencil-alt"></i>', 'color' => 'purple', 'title' => 'Ubah'];
 		} elseif ($type == "edit") {
 			$btnAttribute = ['name' => '<i class="fa fa-pencil-alt"></i>', 'color' => 'info', 'title' => 'Ubah'];
 		} elseif ($type == "edit_admin") {
@@ -1407,6 +1409,46 @@ class KrsHelper extends Helper
 			'DATANG SENDIRI' => 'DATANG SENDIRI',
 			'KECELAKAAN LALU LINTAS' => 'KECELAKAAN LALU LINTAS',
 		];
+	}
+
+	public function tindakanKategori($value = null)
+	{
+		$data = [
+			'Konsultasi'    => 'Konsultasi',
+			'Tindakan Medis' => 'Tindakan Medis',
+			'Tindakan Bedah' => 'Tindakan Bedah',
+			'Laboratorium'  => 'Laboratorium',
+			'Radiologi'     => 'Radiologi',
+			'Fisioterapi'   => 'Fisioterapi',
+			'Farmasi'       => 'Farmasi',
+			'Keperawatan'   => 'Keperawatan',
+			'Gizi'          => 'Gizi',
+			'Administrasi'  => 'Administrasi',
+			'Lainnya'       => 'Lainnya',
+		];
+
+		return $value !== null ? ($data[$value] ?? $value) : $data;
+	}
+
+	public function regions($value = null)
+	{
+		$data = [
+			'Surabaya' => 'Surabaya',
+			'Ambon' => 'Ambon',
+			'Denpasar' => 'Denpasar',
+			'Tabanan' => 'Tabanan',
+		];
+
+		return $value !== null ? ($data[$value] ?? $value) : $data;
+	}
+
+	public function bankName($data=null)
+	{
+		$view = array('BNI'=>'BNI', 'MANDIRI'=>'MANDIRI', 'PERMATA'=>'PERMATA','BTN'=>'BTN','BRI'=>'BRI','BSI'=>'BSI','CIMB NIAGA'=>'CIMB NIAGA','DANAMON'=>'DANAMON','MAYBANK'=>'MAYBANK','BANK JATIM'=>'BANK JATIM','PANIN'=>'PANIN','UOB'=>'UOB','BCA'=>'BCA', 'CAD'=>'CAD', 'CASH'=>'CASH', 'ARTHA GRAHA INTERNASIONAL' => 'ARTHA GRAHA INTERNASIONAL', 'BPD BALI' => 'BPD BALI');
+		
+		$result = (empty($data)) ? $view : $view[$data];
+		
+		return $result;
 	}
 
 }

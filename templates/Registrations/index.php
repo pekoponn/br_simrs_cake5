@@ -71,8 +71,8 @@ $summaryUrl = $this->Url->build(['action' => 'getSummary']);
                 ) ?>
 
                 <?php $currentStatus = $this->request->getQuery('status', ''); ?>
-                <select name="status" class="form-control form-control-sm"
-                        style="width:130px;" onchange="this.form.submit()">
+                <select id="filter-status" name="status" class="form-control select2Form select2-submit"
+                        style="width:130px;">
                     <option value=""        <?= $currentStatus === ''        ? 'selected' : '' ?>>Semua Status</option>
                     <option value="aktif"   <?= $currentStatus === 'aktif'   ? 'selected' : '' ?>>Aktif</option>
                     <option value="selesai" <?= $currentStatus === 'selesai' ? 'selected' : '' ?>>Selesai</option>
@@ -80,8 +80,7 @@ $summaryUrl = $this->Url->build(['action' => 'getSummary']);
                 </select>
 
                 <?php $currentSvc = $this->request->getQuery('service_type', ''); ?>
-                <select name="service_type" class="form-control form-control-sm"
-                        style="width:150px;" onchange="this.form.submit()">
+                <select id="filter-service-type" name="service_type" class="form-control select2Form select2-submit" style="width:150px;">
                     <option value=""             <?= $currentSvc === ''             ? 'selected' : '' ?>>Semua Layanan</option>
                     <option value="rawat_jalan"  <?= $currentSvc === 'rawat_jalan'  ? 'selected' : '' ?>>Rawat Jalan</option>
                     <option value="igd"          <?= $currentSvc === 'igd'          ? 'selected' : '' ?>>IGD</option>
@@ -102,8 +101,8 @@ $summaryUrl = $this->Url->build(['action' => 'getSummary']);
                     style="width:150px;"
                     value="<?= h($this->request->getQuery('date_to', date('Y-m-d'))) ?>">
 
-                <select name="payment_method" class="form-control form-control-sm"
-                        style="width:130px;" onchange="this.form.submit()">
+                <select id="filter-payment-method" name="payment_method" class="form-control select2Form select2-submit"
+                        style="width:130px;">
                     <option value="">Cara Bayar</option>
                     <option value="UMUM"
                         <?= $this->request->getQuery('payment_method') === 'UMUM' ? 'selected' : '' ?>>
@@ -432,10 +431,20 @@ $(document).ready(function () {
 
     $('[data-toggle="tooltip"]').tooltip();
 
+    $('.select2Form').select2({
+        width: '150px',
+        minimumResultsForSearch: 0
+    });
+
+    $('.select2-submit').on('change', function () {
+        $('#search-form').submit();
+    });
+
     // Langsung fetch summary pertama kali
     fetchSummary();
 
     // Polling setiap 15 detik
     setInterval(fetchSummary, 15000);
+    
 });
 </script>

@@ -11,6 +11,7 @@ $dataChild = $this->Html->link('Doctor', ['action' => 'index'], ['full_base' => 
 $polyclinics = $polyclinics ?? $this->Krs->polyclinics();
 $religions = $religions ?? $this->Krs->religions();
 $specialists = $specialists ?? $this->Krs->specialists();
+$regions = $regions ?? $this->Krs->regions();
 ?>
 
 <?= $this->Krs->breadcrumb('Master', $dataChild, 'Buat') ?>
@@ -57,16 +58,18 @@ $specialists = $specialists ?? $this->Krs->specialists();
             </div>
 
             <label class="col-form-label col-md-1">
-                Region
+                Wilayah
             </label>
 
             <div class="col-md-2">
 
                 <?php
                 echo $this->Form->control('region', [
+                    'type' => 'select',
                     'label' => false,
-                    'class' => 'form-control',
-                    'placeholder' => 'Region...'
+                    'class' => 'form-control select2Form',
+                    'options' => $regions,
+                    'empty' => '-- Pilih Wilayah --'
                 ]);
                 ?>
 
@@ -112,7 +115,7 @@ $specialists = $specialists ?? $this->Krs->specialists();
             </div>
 
             <label class="col-form-label col-md-1">
-                Specialist
+                Spesialis
             </label>
 
             <div class="col-md-5">
@@ -123,7 +126,7 @@ $specialists = $specialists ?? $this->Krs->specialists();
                     'label' => false,
                     'class' => 'form-control select2Form',
                     'options' => $specialists,
-                    'empty' => '-- Pilih Specialist --'
+                    'empty' => '-- Pilih Spesialis --'
                 ]);
                 ?>
 
@@ -135,7 +138,7 @@ $specialists = $specialists ?? $this->Krs->specialists();
         <div class="form-group row m-b-15">
 
             <label class="col-form-label col-md-1">
-                Polyclinic
+                Polyklinik
             </label>
 
             <div class="col-md-3">
@@ -145,7 +148,7 @@ $specialists = $specialists ?? $this->Krs->specialists();
                     'label' => false,
                     'class' => 'form-control select2Form',
                     'options' => $polyclinics,
-                    'empty' => '-- Pilih Polyclinic --',
+                    'empty' => '-- Pilih Polyklinik --',
                     'required' => true
                 ]);
                 ?>
@@ -153,7 +156,7 @@ $specialists = $specialists ?? $this->Krs->specialists();
             </div>
 
             <label class="col-form-label col-md-1">
-                Religion
+                Agama
             </label>
 
             <div class="col-md-3">
@@ -164,14 +167,14 @@ $specialists = $specialists ?? $this->Krs->specialists();
                     'label' => false,
                     'class' => 'form-control select2Form',
                     'options' => $religions,
-                    'empty' => '-- Pilih Religion --'
+                    'empty' => '-- Pilih Agama --'
                 ]);
                 ?>
 
             </div>
 
             <label class="col-form-label col-md-1">
-                Gender
+                Jenis Kelamin
             </label>
 
             <div class="col-md-3">
@@ -184,7 +187,7 @@ $specialists = $specialists ?? $this->Krs->specialists();
                         'Male' => 'Laki-laki',
                         'Female' => 'Perempuan'
                     ],
-                    'empty' => '-- Pilih Gender --'
+                    'empty' => '-- Pilih Jenis Kelamin --'
                 ]);
                 ?>
 
@@ -228,7 +231,7 @@ $specialists = $specialists ?? $this->Krs->specialists();
             </div>
 
             <label class="col-form-label col-md-1">
-                Phone
+                Nomor Telepon
             </label>
 
             <div class="col-md-3">
@@ -237,7 +240,7 @@ $specialists = $specialists ?? $this->Krs->specialists();
                 echo $this->Form->control('phone_number', [
                     'label' => false,
                     'class' => 'form-control',
-                    'placeholder' => 'Phone Number...'
+                    'placeholder' => 'Nomor Telepon...'
                 ]);
                 ?>
 

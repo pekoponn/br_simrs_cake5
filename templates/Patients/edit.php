@@ -79,7 +79,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($patient) {
                         'options' => ['KTP' => 'KTP', 'SIM' => 'SIM', 'Paspor' => 'Paspor',
                                       'KIA' => 'KIA', 'BPJS' => 'BPJS'],
                         'empty'   => '-- Pilih Jenis --',
-                        'class'   => 'form-control',
+                        'class'   => 'form-control select2Form',
                     ]) ?>
                 </div>
             </div>
@@ -102,7 +102,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($patient) {
                         'label'   => false,
                         'options' => ['Male' => '♂ Laki-laki', 'Female' => '♀ Perempuan'],
                         'empty'   => '-- Pilih Gender --',
-                        'class'   => 'form-control',
+                        'class'   => 'form-control select2Form',
                     ]) ?>
                 </div>
             </div>
@@ -115,7 +115,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($patient) {
                         'label'   => false,
                         'options' => ['A' => 'A', 'B' => 'B', 'AB' => 'AB', 'O' => 'O'],
                         'empty'   => '-- Pilih --',
-                        'class'   => 'form-control',
+                        'class'   => 'form-control select2Form',
                     ]) ?>
                 </div>
             </div>
@@ -148,7 +148,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($patient) {
                         'type'    => 'select',
                         'label'   => false,
                         'options' => ['Y' => 'Active', 'N' => 'Non Active'],
-                        'class'   => 'form-control',
+                        'class'   => 'form-control select2Form',
                     ]) ?>
                 </div>
             </div>
@@ -177,7 +177,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($patient) {
                             'Lainnya'  => 'Lainnya',
                         ],
                         'empty' => '-- Pilih --',
-                        'class' => 'form-control',
+                        'class' => 'form-control select2Form',
                     ]) ?>
                 </div>
             </div>
@@ -194,7 +194,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($patient) {
                             'S3' => 'S3', 'Lainnya' => 'Lainnya',
                         ],
                         'empty' => '-- Pilih --',
-                        'class' => 'form-control',
+                        'class' => 'form-control select2Form',
                     ]) ?>
                 </div>
             </div>
@@ -212,7 +212,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($patient) {
                             'Cerai Mati'    => 'Cerai Mati',
                         ],
                         'empty' => '-- Pilih --',
-                        'class' => 'form-control',
+                        'class' => 'form-control select2Form',
                     ]) ?>
                 </div>
             </div>
@@ -222,7 +222,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($patient) {
                     <label>Pekerjaan</label>
                     <?= $this->Form->control('occupation', [
                         'label' => false,
-                        'class' => 'form-control',
+                        'class' => 'form-control select2Form',
                     ]) ?>
                 </div>
             </div>
@@ -232,7 +232,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($patient) {
                     <label>Kewarganegaraan</label>
                     <?= $this->Form->control('nationality', [
                         'label' => false,
-                        'class' => 'form-control',
+                        'class' => 'form-control select2Form',
                     ]) ?>
                 </div>
             </div>
@@ -242,7 +242,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($patient) {
                     <label>Citizenship</label>
                     <?= $this->Form->control('citizenship', [
                         'label' => false,
-                        'class' => 'form-control',
+                        'class' => 'form-control select2Form',
                     ]) ?>
                 </div>
             </div>
@@ -252,7 +252,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($patient) {
                     <label>Suku</label>
                     <?= $this->Form->control('ethnic_group', [
                         'label' => false,
-                        'class' => 'form-control',
+                        'class' => 'form-control select2Form',
                     ]) ?>
                 </div>
             </div>

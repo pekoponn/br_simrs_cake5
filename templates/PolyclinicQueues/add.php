@@ -153,11 +153,11 @@ $selectedQueueSession = $this->request->getData('queue_session') ?? 'morning';
     }
 
     .visit-date-display {
-        flex: 1;
-        background: #f1f3f5 !important;
-        color: #475569;
+        max-width: 220px;
+        background: #fff !important;
+        color: #172033;
         font-weight: 700;
-        cursor: default;
+        cursor: pointer;
     }
 
     .visit-date-toggle {
@@ -742,17 +742,17 @@ $selectedQueueSession = $this->request->getData('queue_session') ?? 'morning';
                         <div class="queue-field">
                             <label>Tanggal Kunjungan</label>
                             <div class="visit-date-row">
-                                <input type="text" class="form-control visit-date-display" id="visit-date-display" value="<?= h($selectedVisitDate) ?>" readonly>
-                                <div class="visit-date-toggle">
-                                    <button type="button" class="visit-date-btn is-active" id="btn-visit-today" data-date="<?= h($todayDate) ?>">
-                                        Hari Ini
-                                    </button>
-                                    <button type="button" class="visit-date-btn" id="btn-visit-tomorrow" data-date="<?= h($tomorrowDate) ?>">
-                                        Besok
-                                    </button>
-                                </div>
+                                <input
+                                    type="date"
+                                    class="form-control visit-date-display"
+                                    id="visit-date"
+                                    name="visit_date"
+                                    value="<?= h($selectedVisitDate) ?>"
+                                    min="<?= h($todayDate) ?>"
+                                    max="<?= h($tomorrowDate) ?>"
+                                    required>
                             </div>
-                            <input type="hidden" name="visit_date" id="visit-date" value="<?= h($selectedVisitDate) ?>">
+                            <!-- <input type="hidden" name="visit_date" id="visit-date" value="<?= h($selectedVisitDate) ?>"> -->
                             <small class="text-muted">*Tanggal kunjungan hanya hari ini atau besok</small>
                         </div>
                     </div>
@@ -924,15 +924,15 @@ $selectedQueueSession = $this->request->getData('queue_session') ?? 'morning';
 
     (function() {
         var visitDateInput = document.getElementById('visit-date');
-        var visitDateDisplay = document.getElementById('visit-date-display');
-        var todayBtn = document.getElementById('btn-visit-today');
-        var tomorrowBtn = document.getElementById('btn-visit-tomorrow');
+        // var visitDateDisplay = document.getElementById('visit-date-display');
+        // var todayBtn = document.getElementById('btn-visit-today');
+        // var tomorrowBtn = document.getElementById('btn-visit-tomorrow');
         var todayDate = '<?= h($todayDate) ?>';
         var tomorrowDate = '<?= h($tomorrowDate) ?>';
         var grid = document.getElementById('poli-grid');
         var scheduleUrl = '<?= $this->Url->build(['controller' => 'PolyclinicQueues', 'action' => 'getPolyclinicSchedule']) ?>';
 
-        if (!visitDateInput || !todayBtn || !tomorrowBtn) {
+        if (!visitDateInput) {
             return;
         }
 
@@ -1003,22 +1003,24 @@ $selectedQueueSession = $this->request->getData('queue_session') ?? 'morning';
                 });
         }
 
-        function selectVisitDate(dateValue, activeBtn) {
-            visitDateInput.value = dateValue;
-            visitDateDisplay.value = dateValue;
-
-            todayBtn.classList.toggle('is-active', activeBtn === todayBtn);
-            tomorrowBtn.classList.toggle('is-active', activeBtn === tomorrowBtn);
-
-            refreshScheduleForDate(dateValue);
+        visitDateInput.addEventListener('click', function() {
+        if (typeof visitDateInput.showPicker === 'function') {
+            try {
+                visitDateInput.showPicker();
+            } catch (e) {
+            }
         }
-
-        todayBtn.addEventListener('click', function() {
-            selectVisitDate(todayDate, todayBtn);
         });
 
-        tomorrowBtn.addEventListener('click', function() {
-            selectVisitDate(tomorrowDate, tomorrowBtn);
+        visitDateInput.addEventListener('change', function() {
+            var val = visitDateInput.value;
+
+            if (!val || val < todayDate || val > tomorrowDate) {
+                val = todayDate;
+                visitDateInput.value = todayDate;
+            }
+
+            refreshScheduleForDate(val);
         });
     })();
 

@@ -62,7 +62,7 @@ if ($currentType !== '' && !isset($typeOptions[$currentType])) {
                     'type',
                     $typeOptions,
                     [
-                        'class' => 'form-control',
+                        'class' => 'form-control select2Form',
                         'empty' => 'Pilih Jenis',
                         'required' => true
                     ]
@@ -81,7 +81,7 @@ if ($currentType !== '' && !isset($typeOptions[$currentType])) {
                         0 => 'Nonaktif'
                     ],
                     [
-                        'class' => 'form-control',
+                        'class' => 'form-control select2Form',
                         'value' => (int)$masterPenjamin->is_active
                     ]
                 ) ?>
@@ -159,3 +159,13 @@ if ($currentType !== '' && !isset($typeOptions[$currentType])) {
     </div>
 
 </div>
+
+
+<script>
+$(document).ready(function () {
+    $('.select2Form').select2({
+        width: '100%',
+        minimumResultsForSearch: 0
+    });
+});
+</script>

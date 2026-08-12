@@ -68,7 +68,7 @@ if ($currentCategory !== '' && !isset($kategoriOptions[$currentCategory])) {
                 <label>Kategori <span class="text-danger">*</span></label>
 
                 <?= $this->Form->select('category', $kategoriOptions, [
-                    'class' => 'form-control',
+                    'class' => 'form-control select2Form',
                     'empty' => 'Pilih Kategori',
                     'required' => true,
                 ]) ?>
@@ -110,7 +110,7 @@ if ($currentCategory !== '' && !isset($kategoriOptions[$currentCategory])) {
                     1 => 'Aktif',
                     0 => 'Nonaktif'
                 ], [
-                    'class' => 'form-control',
+                    'class' => 'form-control select2Form',
                     'value' => (int)$masterLaboratory->is_active
                 ]) ?>
 
@@ -194,4 +194,6 @@ if ($currentCategory !== '' && !isset($kategoriOptions[$currentCategory])) {
     });
 
 })();
+
+
 </script>

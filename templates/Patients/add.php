@@ -85,7 +85,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                             'BPJS' => 'BPJS'
                         ],
                         'empty'   => '-- Pilih Jenis --',
-                        'class'   => 'form-control',
+                        'class'   => 'form-control select2Form',
                     ]) ?>
                 </div>
             </div>
@@ -109,7 +109,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                         'label'   => false,
                         'options' => ['Male' => '♂ Laki-laki', 'Female' => '♀ Perempuan'],
                         'empty'   => '-- Pilih Gender --',
-                        'class'   => 'form-control',
+                        'class'   => 'form-control select2Form',
                     ]) ?>
                 </div>
             </div>
@@ -122,7 +122,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                         'label'   => false,
                         'options' => ['A' => 'A', 'B' => 'B', 'AB' => 'AB', 'O' => 'O'],
                         'empty'   => '-- Pilih --',
-                        'class'   => 'form-control',
+                        'class'   => 'form-control select2Form',
                     ]) ?>
                 </div>
             </div>
@@ -190,7 +190,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                             'Lainnya'   => 'Lainnya',
                         ],
                         'empty' => '-- Pilih --',
-                        'class' => 'form-control',
+                        'class' => 'form-control select2Form',
                     ]) ?>
                 </div>
             </div>
@@ -212,7 +212,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                             'Lainnya'   => 'Lainnya',
                         ],
                         'empty' => '-- Pilih --',
-                        'class' => 'form-control',
+                        'class' => 'form-control select2Form',
                     ]) ?>
                 </div>
             </div>
@@ -230,7 +230,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                             'Cerai Mati'    => 'Cerai Mati',
                         ],
                         'empty' => '-- Pilih --',
-                        'class' => 'form-control',
+                        'class' => 'form-control select2Form',
                     ]) ?>
                 </div>
             </div>
@@ -240,7 +240,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                     <label>Pekerjaan</label>
                     <?= $this->Form->control('occupation', [
                         'label'       => false,
-                        'class'       => 'form-control',
+                        'class'       => 'form-control select2Form',
                         'placeholder' => 'Pekerjaan pasien',
                     ]) ?>
                 </div>
@@ -251,7 +251,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                     <label>Kewarganegaraan</label>
                     <?= $this->Form->control('nationality', [
                         'label'       => false,
-                        'class'       => 'form-control',
+                        'class'       => 'form-control select2Form',
                         'placeholder' => 'WNI / WNA',
                         'value'       => 'WNI',
                     ]) ?>
@@ -263,7 +263,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                     <label>Citizenship</label>
                     <?= $this->Form->control('citizenship', [
                         'label'       => false,
-                        'class'       => 'form-control',
+                        'class'       => 'form-control select2Form',
                         'placeholder' => 'Indonesia',
                     ]) ?>
                 </div>
@@ -274,7 +274,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                     <label>Suku</label>
                     <?= $this->Form->control('ethnic_group', [
                         'label'       => false,
-                        'class'       => 'form-control',
+                        'class'       => 'form-control select2Form',
                         'placeholder' => 'Jawa / Sunda / Batak / dll',
                     ]) ?>
                 </div>

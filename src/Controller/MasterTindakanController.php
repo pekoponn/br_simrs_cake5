@@ -121,6 +121,59 @@ class MasterTindakanController extends AppController
         $this->set(compact('masterTindakan'));
     }
 
+    public function getNextKode()
+    {
+        $this->request->allowMethod(['get']);
+        $this->autoRender = false;
+
+        $kategoriPrefix = [
+            'Konsultasi'    => 'KON',
+            'Tindakan'      => 'TIN',
+            'Laboratorium'  => 'LAB',
+            'Radiologi'     => 'RAD',
+            'Farmasi'       => 'FAR',
+            'Operasi'       => 'OPR',
+            'Rawat Inap'    => 'RIN',
+            'Rawat Jalan'   => 'RJL',
+            'IGD'           => 'IGD',
+            'Lainnya'       => 'LAN',
+        ];
+
+        $kategori = trim((string)$this->request->getQuery('kategori', ''));
+        $prefix   = $kategoriPrefix[$kategori] ?? null;
+
+        if (empty($kategori) || $prefix === null) {
+            return $this->_jsonResponse([
+                'success' => false,
+                'message' => 'Kategori tidak valid.',
+            ], 400);
+        }
+
+        // Cari kode terakhir dengan prefix ini, urutkan berdasarkan angka terbesar
+        $lastRow = $this->MasterTindakan->find()
+            ->select(['kode'])
+            ->where(['MasterTindakan.kode LIKE' => $prefix . '-%'])
+            ->enableHydration(false)
+            ->toArray();
+
+        $maxNo = 0;
+        foreach ($lastRow as $row) {
+            if (preg_match('/-(\d+)$/', $row['kode'], $m)) {
+                $maxNo = max($maxNo, (int)$m[1]);
+            }
+        }
+
+        $nextNo   = $maxNo + 1;
+        $nextKode = $prefix . '-' . str_pad((string)$nextNo, 3, '0', STR_PAD_LEFT);
+
+        return $this->_jsonResponse([
+            'success'  => true,
+            'kode'     => $nextKode,
+            'prefix'   => $prefix,
+            'next_no'  => $nextNo,
+        ]);
+    }
+
     /**
      * Toggle aktif/nonaktif via AJAX
      */

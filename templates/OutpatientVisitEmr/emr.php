@@ -502,7 +502,8 @@ $anatomyBackUrl = $anatomyBackExists
                                             data-alamat="<?= h($p->address ?? '-') ?>"
                                             data-dokter="<?= h($d->doctor_name ?? '-') ?>"
                                             data-tglperiksa="<?= is_object($visit->visit_date) ? $visit->visit_date->format('d-m-Y') : h($visit->visit_date ?? '-') ?>"
-                                            data-umur="<?= h($umurLengkap) ?>">
+                                            data-umur="<?= h($umurLengkap) ?>"
+                                            data-bpjs="<?= h($visit->registration->insurance_card_no ?? '') ?>">
                                         <i class="fa fa-file-medical" style="color:#1e3a5f;"></i>
                                         Surat SKDP
                                     </button>
@@ -514,7 +515,8 @@ $anatomyBackUrl = $anatomyBackExists
                                             data-jk="<?= ($p->gender ?? '') === 'Male' ? 'Laki-laki' : 'Perempuan' ?>"
                                             data-tgllahir="<?= !empty($p->birth_date) ? (is_object($p->birth_date) ? $p->birth_date->format('d-m-Y') : h($p->birth_date)) : '-' ?>"
                                             data-dokter="<?= h($d->doctor_name ?? '-') ?>"
-                                            data-tglperiksa="<?= is_object($visit->visit_date) ? $visit->visit_date->format('d-m-Y') : h($visit->visit_date ?? '-') ?>">
+                                            data-tglperiksa="<?= is_object($visit->visit_date) ? $visit->visit_date->format('d-m-Y') : h($visit->visit_date ?? '-') ?>"
+                                            data-bpjs="<?= h($visit->registration->insurance_card_no ?? '') ?>">
                                         <i class="fa fa-file-medical" style="color:#1e3a5f;"></i>
                                         Surat Kontrol BPJS
                                     </button>
@@ -3506,15 +3508,42 @@ $(document).on('click', '.btn-surat-sakit', function () {
     $('#modal-surat-sakit').modal('show');
 });
 
+function parseDateInput(str) {
+    if (!str) return null;
+    var p = str.split('-');
+    if (p.length !== 3) return null;
+    var d = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10));
+    return isNaN(d) ? null : d;
+}
+function formatDateInput(d) {
+    var y  = d.getFullYear();
+    var m  = String(d.getMonth() + 1).padStart(2, '0');
+    var da = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + da;
+}
+
+
+function hitungSampaiSakit() {
+    var dari = $('#sks-dari').val();
+    var lama = parseInt($('#sks-lama').val(), 10);
+    if (!dari || !lama || lama < 1) return;
+    var d1 = parseDateInput(dari);
+    if (!d1) return;
+    var d2 = new Date(d1);
+    d2.setDate(d2.getDate() + (lama - 1));
+    $('#sks-sampai').val(formatDateInput(d2));
+}
+
 function hitungLamaSakit() {
-    var d1 = new Date($('#sks-dari').val());
-    var d2 = new Date($('#sks-sampai').val());
-    if (!isNaN(d1) && !isNaN(d2) && d2 >= d1) {
+    var d1 = parseDateInput($('#sks-dari').val());
+    var d2 = parseDateInput($('#sks-sampai').val());
+    if (d1 && d2 && d2 >= d1) {
         var days = Math.round((d2 - d1) / 86400000) + 1;
         $('#sks-lama').val(days);
     }
 }
-$('#sks-dari, #sks-sampai').on('change', hitungLamaSakit);
+$('#sks-dari, #sks-lama').on('input change', hitungSampaiSakit);
+$('#sks-sampai').on('change', hitungLamaSakit);
 
 $('#btn-simpan-sks').on('click', function () {
     var csrf = $('input[name="_csrfToken"]').val();
@@ -3541,7 +3570,7 @@ $('#btn-simpan-sks').on('click', function () {
         dataType: 'json',
         success: function (res) {
             if (res.success) {
-                $('#sks-noSurat').val(res.letter_no);
+                $('#sks-noSurat').val(res.letter_no || 'AUTO');
                 currentSksLetterId = res.letter_id;
                 $('#btn-cetak-sks').prop('disabled', false);
                 alert('Surat berhasil disimpan: ' + res.letter_no);
@@ -3945,7 +3974,7 @@ $(document).on('click', '.btn-surat-kontrol-bpjs', function () {
     $('#skb-tglperiksa').val($b.data('tglperiksa'));
     $('#skb-diagnosa').val(getIcd10UtamaOnlyText());
     $('#skb-no-kartu').val('');
-    $('#skb-noSurat').val('AUTO');
+    $('#skb-no-kartu').val($b.data('bpjs') || '');
     $('#skb-tgl-kontrol').val('');
     $('#skb-catatan').val('');
     currentSkbLetterId = null;
@@ -4039,7 +4068,7 @@ $(document).on('click', '.btn-surat-skdp', function () {
     $('#skdp-terapi').val(<?= json_encode($emr->prescription_notes ?? '') ?>);
     $('#skdp-noSurat').val('AUTO');
     $('#skdp-tgl-rujukan').val('');
-    $('#skdp-no-kartu').val('');
+    $('#skdp-no-kartu').val($b.data('bpjs') || '');
     $('#skdp-no-rujukan').val('');
     $('#skdp-alasan').val('');
     $('#skdp-rencana').val('');
@@ -6054,15 +6083,16 @@ var DOCTORS_LIST_URL = <?= json_encode($this->Url->build([
 var currentSbrLetterId = null;
 
 function sbrGetIcdText(bodySelector, wantUtama) {
+    var isIcd10   = bodySelector === '#icd10-body';
+    var rowClass  = isIcd10 ? 'icd10-row' : 'icd9-row';
+    var codeField = isIcd10 ? 'icd10_code' : 'icd9_code';
+    var nameField = isIcd10 ? 'icd10_nama' : 'icd9_nama';
+    var utamaField = isIcd10 ? 'icd10_utama' : 'icd9_utama';
     var lines = [];
-    $(bodySelector + ' tr').each(function () {
+    $(bodySelector + ' tr.' + rowClass).each(function () {
         var $row = $(this);
-        var kode = $.trim($row.find('input[name$="[' + ($row.closest('tbody').attr('id') === 'icd10-body' ? 'icd10_code' : 'icd9_code') + '"]').length
-            ? $row.find('input[name^="' + ($row.closest('tbody').attr('id') === 'icd10-body' ? 'icd10_code' : 'icd9_code') + '"]').val()
-            : '');
-        var namaField = $row.closest('tbody').attr('id') === 'icd10-body' ? 'icd10_nama' : 'icd9_nama';
-        var utamaField = $row.closest('tbody').attr('id') === 'icd10-body' ? 'icd10_utama' : 'icd9_utama';
-        var nama = $.trim($row.find('input[name^="' + namaField + '"]').val());
+        var kode = $.trim($row.find('input[name^="' + codeField + '"]').val());
+        var nama = $.trim($row.find('input[name^="' + nameField + '"]').val());
         if (!kode && !nama) return;
         var isUtama = $row.find('input[name="' + utamaField + '"]').is(':checked');
         if (wantUtama && !isUtama) return;

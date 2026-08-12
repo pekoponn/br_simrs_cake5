@@ -4,13 +4,21 @@
  * @var \App\Model\Entity\Doctor $doctor
  * @var array $polyclinics
  * @var array $religions
+ * @var array $specialists
+ * @var array $regions
  */
 
 $dataChild = $this->Html->link('Doctor', ['action' => 'index'], ['full_base'=>true]);
 $polyclinics = $polyclinics ?? $this->Krs->polyclinics();
 $religions = $religions ?? $this->Krs->religions();
+$specialists = $specialists ?? $this->Krs->specialists();
+$regions = $regions ?? $this->Krs->regions();
 $selectedPolyclinic = $this->request->getData('polyclinic_name')
     ?? ($doctor->polyclinic_name ?? '');
+$selectedSpecialist = $this->request->getData('specialist')
+    ?? ($doctor->specialist ?? '');
+$selectedRegion = $this->request->getData('region')
+    ?? ($doctor->region ?? '');
 ?>
 
 <?= $this->Krs->breadcrumb('Master', $dataChild, 'Edit') ?>

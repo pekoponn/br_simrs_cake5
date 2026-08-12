@@ -23,7 +23,14 @@ if (!empty($visit->visit_date)) {
 }
 
 $visitTime = !empty($visit->visit_time) ? substr((string)$visit->visit_time, 0, 8) : '-';
-$logoPath = WWW_ROOT . 'img' . DS . 'logo_br1.png';
+$hospitalLogoPath = WWW_ROOT . 'img' . DS . 'logo_br2.png';
+$hospitalLogoDataUri = null;
+if (is_file($hospitalLogoPath)) {
+    $imgData = @file_get_contents($hospitalLogoPath);
+    if ($imgData !== false) {
+        $hospitalLogoDataUri = 'data:image/png;base64,' . base64_encode($imgData);
+    }
+}
 ?>
 
 <style>
@@ -48,34 +55,32 @@ $logoPath = WWW_ROOT . 'img' . DS . 'logo_br1.png';
     .kop-left,
     .kop-right {
         display: table-cell;
-        vertical-align: top;
+        vertical-align: middle;
     }
     .kop-left {
-        width: 58%;
+        width: 46%;
     }
-    .kop-right {
-        width: 42%;
-        font-family: Arial, sans-serif;
-        font-size: 12px;
-        line-height: 1.35;
-        padding-top: 4px;
+    .kop-left::after {
+        content: "";
+        display: table;
+        clear: both;
     }
     .logo {
         float: left;
-        width: 88px;
-        margin-right: 12px;
+        width: 78px;
+        margin-right: 10px;
     }
     .rs-name {
         font-family: Georgia, "Times New Roman", serif;
-        font-size: 22px;
+        font-size: 19px;
         font-weight: bold;
         color: #000000;
-        line-height: 1.05;
+        line-height: 1.2;
         padding-top: 15px;
     }
     .rs-city {
         font-family: Arial, sans-serif;
-        font-size: 22px;
+        font-size: 19px;
         font-weight: bold;
         color: #000000;
     }
@@ -134,8 +139,8 @@ $logoPath = WWW_ROOT . 'img' . DS . 'logo_br1.png';
 <div class="print-page">
     <div class="kop">
         <div class="kop-left">
-            <?php if (is_file($logoPath)): ?>
-                <img src="<?= h($this->Url->image('logo_br1.png')) ?>" class="logo" alt="RSU Bhakti Rahayu">
+            <?php if ($hospitalLogoDataUri): ?>
+                <img src="<?= h($hospitalLogoDataUri) ?>" class="logo" alt="RSU Bhakti Rahayu">
             <?php endif; ?>
             <div class="rs-name">RSU BHAKTI RAHAYU</div>
             <div class="rs-city">Surabaya</div>

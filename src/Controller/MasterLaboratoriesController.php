@@ -36,11 +36,27 @@ class MasterLaboratoriesController extends AppController
             ]);
         }
 
+        $sortableFields = [
+            'id',
+            'code',
+            'name',
+            'tariff',
+            'jasa_rs',
+            'jasa_dr',
+            'jasa_perawat',
+            'category',
+            'is_active',
+            'created',
+            'modified',
+        ];
+
         $this->paginate = [
             'limit' => 20,
             'order' => [
-                'MasterLaboratories.id' => 'DESC',
+                'id' => 'ASC',
             ],
+            'sortableFields' => $sortableFields,
+            'sortWhitelist' => $sortableFields,
         ];
 
         $masterLaboratories = $this->paginate($query);

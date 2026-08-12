@@ -1,0 +1,61 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Model\Entity;
+
+use Cake\ORM\Entity;
+
+/**
+ * AccBeginningBalance Entity
+ *
+ * @property int $id
+ * @property string $branch_id
+ * @property int|null $acc_chart_of_account_id
+ * @property \Cake\I18n\FrozenDate|null $dates
+ * @property int|null $status
+ * @property int|null $position
+ * @property string|null $ledger_dc
+ * @property string|null $debet
+ * @property string|null $credit
+ * @property int|null $is_active
+ * @property string|null $is_create
+ * @property \Cake\I18n\FrozenTime|null $created
+ * @property string|null $is_update
+ * @property \Cake\I18n\FrozenTime|null $modified
+ * @property string|null $is_delete
+ * @property \Cake\I18n\FrozenTime|null $deleted
+ *
+ * @property \App\Model\Entity\Branch $branch
+ * @property \App\Model\Entity\AccChartOfAccount $acc_chart_of_account
+ */
+class AccBeginningBalance extends Entity
+{
+    /**
+     * Fields that can be mass assigned using newEntity() or patchEntity().
+     *
+     * Note that when '*' is set to true, this allows all unspecified fields to
+     * be mass assigned. For security purposes, it is advised to set '*' to false
+     * (or remove it), and explicitly make individual fields accessible as needed.
+     *
+     * @var array
+     */
+    protected $_accessible = [
+        'branch_id' => true,
+        'acc_chart_of_account_id' => true,
+        'dates' => true,
+        'status' => true,
+        'position' => true,
+        'ledger_dc' => true,
+        'debet' => true,
+        'credit' => true,
+        'is_active' => true,
+        'is_create' => true,
+        'created' => true,
+        'is_update' => true,
+        'modified' => true,
+        'is_delete' => true,
+        'deleted' => true,
+        'branch' => true,
+        'acc_chart_of_account' => true,
+    ];
+}

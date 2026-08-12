@@ -520,7 +520,7 @@
 
                 <div>
                     <label class="ds-filter-label">Filter Hari</label>
-                    <select name="day" class="form-control ds-input">
+                    <select id="filter-day" name="day" class="form-control ds-input select2Form">
                         <option value="">Semua Hari</option>
                         <?php foreach ($days as $d): ?>
                             <option value="<?= h($d) ?>" <?= $dayFilter === $d ? 'selected' : '' ?>>
@@ -777,3 +777,12 @@
     </div>
 
 </div>
+
+<script>
+$(document).ready(function () {
+    $('.select2Form').select2({
+        width: '100%',
+        minimumResultsForSearch: 0
+    });
+});
+</script>

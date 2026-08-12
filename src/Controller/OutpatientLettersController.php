@@ -144,8 +144,8 @@ class OutpatientLettersController extends AppController
                 'color_blind'    => $letter->color_blind,
                 'blood_type'     => $letter->blood_type,
                 'leave_days'     => $letter->leave_days,
-                'leave_from'     => $letter->leave_from ? (string)$letter->leave_from : null,
-                'leave_to'       => $letter->leave_to ? (string)$letter->leave_to : null,
+                'leave_from'     => $letter->leave_from ? $letter->leave_from->format('Y-m-d') : null,
+                'leave_to'       => $letter->leave_to ? $letter->leave_to->format('Y-m-d') : null,
                 'diagnosis'      => $letter->diagnosis,
                 'is_normal'      => (int)$letter->is_normal,
             ] : null,
@@ -183,7 +183,7 @@ class OutpatientLettersController extends AppController
             $entity->patient_id          = $visit->patient_id ?? null;
             $entity->doctor_id           = $visit->doctor_id ?? null;
             $entity->letter_type         = 'sakit';
-            $entity->letter_no           = 'SKS-' . date('Ymd') . '-' . str_pad((string)$visit->id, 5, '0', STR_PAD_LEFT);
+            $entity->letter_no           = null;
         }
 
         // Semua field opsional — boleh disimpan meski belum lengkap.
@@ -274,7 +274,7 @@ class OutpatientLettersController extends AppController
             $entity->patient_id          = $visit->patient_id ?? null;
             $entity->doctor_id           = $visit->doctor_id ?? null;
             $entity->letter_type         = 'konsultasi';
-            $entity->letter_no           = 'KSL-' . date('Ymd') . '-' . str_pad((string)$visit->id, 5, '0', STR_PAD_LEFT);
+            $entity->letter_no           = null;
         }
  
         $notes = $data['notes'] ?? null;
@@ -396,6 +396,8 @@ class OutpatientLettersController extends AppController
             'contain' => ['Patients', 'Doctors', 'OutpatientVisits'],
         ]);
 
+        $this->assignSequentialLetterNo($letter, 'SKS');
+
         return $this->streamPdf(
             'cetak_surat_sakit',
             compact('letter'),
@@ -416,8 +418,16 @@ class OutpatientLettersController extends AppController
             throw new \Cake\Http\Exception\NotFoundException('Surat konsultasi tidak ditemukan.');
         }
 
-        $this->viewBuilder()->setLayout('print');
-        $this->set(compact('letter'));
+        $this->assignSequentialLetterNo($letter, 'KSL');
+
+        return $this->streamPdf(
+            'cetak_surat_konsultasi',
+            compact('letter'),
+            'Surat-Konsultasi-' . $letter->letter_no . '.pdf',
+            'A4',
+            'portrait',
+            'attachment'
+        );
     }
 
 
@@ -467,7 +477,7 @@ class OutpatientLettersController extends AppController
             $entity->patient_id          = $visit->patient_id ?? null;
             $entity->doctor_id           = $visit->doctor_id ?? null;
             $entity->letter_type         = 'pengantar_rawat';
-            $entity->letter_no           = 'SPRI-' . date('Ymd') . '-' . str_pad((string)$visit->id, 5, '0', STR_PAD_LEFT);
+            $entity->letter_no           = null;
         }
 
         $entity = $this->OutpatientLetters->patchEntity($entity, [
@@ -522,6 +532,8 @@ class OutpatientLettersController extends AppController
         $letter = $this->OutpatientLetters->get($letter->id, [
             'contain' => ['Patients', 'Doctors', 'OutpatientVisits'],
         ]);
+
+        $this->assignSequentialLetterNo($letter, 'SPRI');
 
         $this->viewBuilder()->setLayout('print');
         $this->set(compact('letter', 'visit'));
@@ -584,7 +596,7 @@ class OutpatientLettersController extends AppController
             $entity->patient_id          = $visit->patient_id ?? null;
             $entity->doctor_id           = $visit->doctor_id ?? null;
             $entity->letter_type         = 'bukti_rajal';
-            $entity->letter_no           = 'SBRJ-' . date('Ymd') . '-' . str_pad((string)$visit->id, 5, '0', STR_PAD_LEFT);
+            $entity->letter_no           = null;
         }
 
         $specialActions = $data['special_actions'] ?? [];
@@ -638,6 +650,8 @@ class OutpatientLettersController extends AppController
             throw new \Cake\Http\Exception\NotFoundException('Surat bukti rawat jalan tidak ditemukan.');
         }
 
+        $this->assignSequentialLetterNo($letter, 'SBRJ');
+
         $this->loadModel('Doctors');
         $dischargedByDoctor = !empty($letter->discharged_by_doctor_id)
             ? $this->Doctors->find()->where(['id' => $letter->discharged_by_doctor_id])->first()
@@ -646,8 +660,36 @@ class OutpatientLettersController extends AppController
             ? $this->Doctors->find()->where(['id' => $letter->completing_doctor_id])->first()
             : null;
 
-        $this->viewBuilder()->setLayout('print');
-        $this->set(compact('letter', 'dischargedByDoctor', 'completingDoctor'));
+        $emr = null;
+        if (!empty($letter->outpatient_visit_id)) {
+            try {
+                $emrTable = \Cake\ORM\TableRegistry::getTableLocator()->get('OutpatientVisitEmr');
+                $emr = $emrTable->find()
+                    ->where(['outpatient_visit_id' => $letter->outpatient_visit_id])
+                    ->first();
+            } catch (\Throwable $e) {
+            }
+        }
+
+        $noRekamMedis = $letter->patient->code ?? '-';
+        try {
+            $medicalRecordsTable = \Cake\ORM\TableRegistry::getTableLocator()->get('MedicalRecords');
+            $mrRow = $medicalRecordsTable->find()
+                ->where(['registration_id' => $letter->outpatient_visit->registration_id ?? 0])
+                ->first();
+            if ($mrRow && !empty($mrRow->medical_record_no)) {
+                $noRekamMedis = $mrRow->medical_record_no;
+            }
+        } catch (\Throwable $e) {
+        }
+        return $this->streamPdf(
+        'cetak_surat_bukti_rajal',
+        compact('letter', 'dischargedByDoctor', 'completingDoctor', 'emr', 'noRekamMedis'),
+        'Surat-Bukti-Rawat-Jalan-' . $letter->letter_no . '.pdf',
+        'A4',
+        'portrait',
+        'attachment'
+        );  
     }
 
     public function getSuratSkdp($visitId = null)
@@ -671,6 +713,7 @@ class OutpatientLettersController extends AppController
                 'control_notes' => $letter->notes,
                 'control_plan'  => $letter->advice_notes,
                 'reason'        => $letter->diagnosis,
+                'bpjs_card_no'  => $letter->bpjs_card_no,
             ] : null,
         ]));
     }
@@ -698,15 +741,20 @@ class OutpatientLettersController extends AppController
             $entity->patient_id          = $visit->patient_id ?? null;
             $entity->doctor_id           = $visit->doctor_id ?? null;
             $entity->letter_type         = 'skdp';
-            $entity->letter_no           = 'SKDP-' . date('Ymd') . '-' . str_pad((string)$visit->id, 5, '0', STR_PAD_LEFT);
+            $entity->letter_no           = null;
         }
 
         $fields = [
-            'leave_from'   => !empty($data['control_date']) ? $data['control_date'] : null,
-            'notes'        => $data['control_notes'] ?? null,
-            'advice_notes' => $data['control_plan'] ?? null,
-            'diagnosis'    => $data['reason'] ?? null,
-            'examined_at'  => !empty($data['examined_at']) ? $data['examined_at'] : date('Y-m-d'),
+            'diagnosis'                => $data['diagnosis'] ?? null,
+            'prescription'             => $data['therapy'] ?? null,
+            'leave_from'               => !empty($data['referral_date']) ? $data['referral_date'] : null,
+            'leave_to'                 => !empty($data['control_date']) ? $data['control_date'] : null,
+            'referral_doctor_name'     => $data['referral_no'] ?? null,
+            'bpjs_card_no'             => $data['bpjs_card_no'] ?? null,
+            'notes'                    => $data['reason'] ?? null,
+            'advice_notes'             => $data['control_plan'] ?? null,
+            'diagnosis_secondary_text' => $data['control_notes'] ?? null,
+            'examined_at'              => !empty($data['examined_at']) ? $data['examined_at'] : date('Y-m-d'),
         ];
 
         $entity = $this->OutpatientLetters->patchEntity($entity, $fields, ['validate' => false]);
@@ -736,8 +784,28 @@ class OutpatientLettersController extends AppController
             throw new \Cake\Http\Exception\NotFoundException('Surat SKDP tidak ditemukan.');
         }
 
-        $this->viewBuilder()->setLayout('print');
-        $this->set(compact('letter'));
+        $this->assignSequentialLetterNo($letter, 'SKDP');
+
+        $noRekamMedis = $letter->patient->code ?? '-';
+        try {
+            $medicalRecordsTable = \Cake\ORM\TableRegistry::getTableLocator()->get('MedicalRecords');
+            $mrRow = $medicalRecordsTable->find()
+                ->where(['registration_id' => $letter->outpatient_visit->registration_id ?? 0])
+                ->first();
+            if ($mrRow && !empty($mrRow->medical_record_no)) {
+                $noRekamMedis = $mrRow->medical_record_no;
+            }
+        } catch (\Throwable $e) {
+        }
+
+        return $this->streamPdf(
+            'cetak_surat_skdp',
+            compact('letter', 'noRekamMedis'),
+            'Surat-SKDP-' . $letter->letter_no . '.pdf',
+            'A5',
+            'portrait',
+            'attachment'
+        );
     }
 
     public function getSuratKontrolBpjs($visitId = null)
@@ -791,7 +859,7 @@ public function simpanSuratKontrolBpjs($visitId = null)
         $entity->patient_id          = $visit->patient_id ?? null;
         $entity->doctor_id           = $visit->doctor_id ?? null;
         $entity->letter_type         = 'kontrol_bpjs';
-        $entity->letter_no           = 'SKB-' . date('Ymd') . '-' . str_pad((string)$visit->id, 5, '0', STR_PAD_LEFT);
+        $entity->letter_no           = null;
     }
 
     $fields = [
@@ -827,6 +895,8 @@ public function simpanSuratKontrolBpjs($visitId = null)
         $letter = $this->OutpatientLetters->get($letterId, [
             'contain' => ['Patients', 'Doctors', 'OutpatientVisits'],
         ]);
+
+        $this->assignSequentialLetterNo($letter, 'SKB');
 
         return $this->streamPdf(
             'cetak_surat_kontrol_bpjs',
@@ -893,7 +963,7 @@ public function simpanSuratKontrolBpjs($visitId = null)
             $entity->patient_id          = $visit->patient_id ?? null;
             $entity->doctor_id           = $visit->doctor_id ?? null;
             $entity->letter_type         = 'sehat';
-            $entity->letter_no           = 'SKH-' . date('Ymd') . '-' . str_pad((string)$visit->id, 5, '0', STR_PAD_LEFT);
+            $entity->letter_no           = null;
         }
  
         $fields = [
@@ -938,6 +1008,8 @@ public function simpanSuratKontrolBpjs($visitId = null)
         if ($letter->letter_type !== 'sehat') {
             throw new \Cake\Http\Exception\NotFoundException('Surat keterangan sehat tidak ditemukan.');
         }
+
+        $this->assignSequentialLetterNo($letter, 'SKH');
  
         return $this->streamPdf(
             'cetak_surat_sehat',
@@ -947,6 +1019,34 @@ public function simpanSuratKontrolBpjs($visitId = null)
             'portrait',
             'attachment'
         );
+    }
+
+    private function assignSequentialLetterNo(\App\Model\Entity\OutpatientLetter $letter, string $prefix): string
+    {
+        if (!empty($letter->letter_no) && $letter->letter_no !== 'AUTO') {
+            return $letter->letter_no;
+        }
+
+        $today = date('Ymd');
+        $likePattern = $prefix . '-' . $today . '-%';
+
+        $last = $this->OutpatientLetters->find()
+            ->where([
+                'letter_type' => $letter->letter_type,
+                'letter_no LIKE' => $likePattern,
+            ])
+            ->order(['id' => 'DESC'])
+            ->first();
+
+        $nextSeq = 1;
+        if ($last && preg_match('/-(\d+)$/', (string)$last->letter_no, $m)) {
+            $nextSeq = (int)$m[1] + 1;
+        }
+
+        $letter->letter_no = $prefix . '-' . $today . '-' . str_pad((string)$nextSeq, 5, '0', STR_PAD_LEFT);
+        $this->OutpatientLetters->save($letter, ['checkRules' => false, 'validate' => false]);
+
+        return $letter->letter_no;
     }
 
 }

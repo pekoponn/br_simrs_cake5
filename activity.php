@@ -1613,3 +1613,187 @@ ADD COLUMN allergy TEXT NULL DEFAULT NULL
 COMMENT 'Riwayat alergi pasien' AFTER blood_type;
 
 ALTER TABLE registrations ADD COLUMN patient_title VARCHAR(10) NULL AFTER patient_id;
+
+//INI ACTIVITY BITAH//
+07/08/2026
+CREATE TABLE `branches` (
+	`id` INT NOT NULL AUTO_INCREMENT,
+	`code` VARCHAR(50) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`name` VARCHAR(50) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`company_name` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`company_address` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`business_fields` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`company_telp` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`company_fax` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`company_npwp` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`company_director` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`company_director_1` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`sign_title_1` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`company_director_2` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`sign_title_2` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`company_director_3` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`sign_title_3` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`company_director_4` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`sign_title_4` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`warehouse_address` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`warehouse_telp` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`warehouse_fax` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`manifest_number` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`invoice_code` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`invoice_number` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`invoice_number_include` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`invoice_evidence_email` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`faktur_pajak_number` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`berita_acara_number` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`permit_number` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`offer_number` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`offer_year` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`bank` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`norek` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`an` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`bank_name_1` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`bank_norek_1` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`bank_an_1` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`bank_name_2` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`bank_norek_2` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`bank_an_2` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`bank_name_3` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`bank_norek_3` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`bank_an_3` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`bank_name_4` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`bank_norek_4` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`bank_an_4` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`bank_name_5` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`bank_norek_5` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`bank_an_5` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`va_bank_an` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`va_bank_name` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`va_bank_branch` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`va_bank_norek` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`wa_invoice` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`city_invoice` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`email` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`emergency_call` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`offer_perihal` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`offer_description` TEXT NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`offer_info` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`manifest_type` VARCHAR(50) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`manifest_code` VARCHAR(50) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`offer_code` VARCHAR(100) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`sign_1` VARCHAR(100) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`sign_2` VARCHAR(100) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`sign_3` VARCHAR(100) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`sign_4` VARCHAR(100) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`mou_code` VARCHAR(100) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`transporter_id` INT NULL DEFAULT NULL,
+	`header` VARCHAR(100) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`footer` VARCHAR(100) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`desc` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`is_create` VARCHAR(50) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`created` DATETIME NULL DEFAULT NULL,
+	`is_update` VARCHAR(50) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`modified` DATETIME NULL DEFAULT NULL,
+	`is_delete` VARCHAR(50) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`deleted` DATETIME NULL DEFAULT NULL,
+	`status` VARCHAR(50) NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	`is_active` ENUM('Y','N') NULL DEFAULT 'Y' COLLATE 'utf8mb3_general_ci',
+	`is_log` TEXT NULL DEFAULT NULL COLLATE 'utf8mb3_general_ci',
+	PRIMARY KEY (`id`) USING BTREE
+)
+COLLATE='utf8mb3_general_ci'
+ENGINE=MyISAM
+;
+CREATE TABLE `recipient_payers` (
+	`id` INT NOT NULL AUTO_INCREMENT,
+	`branch_id` INT NOT NULL DEFAULT '0',
+	`code` VARCHAR(50) NULL DEFAULT NULL COLLATE 'latin1_swedish_ci',
+	`name` VARCHAR(255) NULL DEFAULT NULL COLLATE 'latin1_swedish_ci',
+	`status` INT NULL DEFAULT NULL,
+	`position` INT NULL DEFAULT NULL,
+	`is_active` ENUM('Y','N') NULL DEFAULT NULL COLLATE 'latin1_swedish_ci',
+	`is_log` TEXT NULL DEFAULT NULL COLLATE 'latin1_swedish_ci',
+	`is_create` INT NULL DEFAULT NULL,
+	`created` DATETIME NULL DEFAULT NULL,
+	`is_update` INT NULL DEFAULT NULL,
+	`modified` DATETIME NULL DEFAULT NULL,
+	`is_delete` INT NULL DEFAULT NULL,
+	`deleted` DATETIME NULL DEFAULT NULL,
+	PRIMARY KEY (`id`) USING BTREE,
+	INDEX `NewIndex1` (`name`) USING BTREE
+)
+COLLATE='latin1_swedish_ci'
+ENGINE=MyISAM
+;
+composer require phpoffice/phpspreadsheet
+====================================================================================================================================
+06/08/2026
+CREATE TABLE `bank_accounts` (
+	`id` INT NOT NULL AUTO_INCREMENT,
+	`branch_id` INT NOT NULL DEFAULT '0',
+	`code` VARCHAR(100) NULL DEFAULT NULL COMMENT 'Kode rekening bank' COLLATE 'latin1_swedish_ci',
+	`bank_name` VARCHAR(100) NOT NULL COMMENT 'Nama bank' COLLATE 'latin1_swedish_ci',
+	`account_holder` VARCHAR(100) NOT NULL COMMENT 'Nama pemilik rekening' COLLATE 'latin1_swedish_ci',
+	`account_number` VARCHAR(50) NOT NULL COMMENT 'Nomor rekening' COLLATE 'latin1_swedish_ci',
+	`opening_balance` DECIMAL(18,2) NOT NULL DEFAULT '0.00' COMMENT 'Saldo awal rekening',
+	`ending_balance` DECIMAL(18,2) NOT NULL DEFAULT '0.00' COMMENT 'Saldo akhir rekening',
+	`description` TEXT NULL DEFAULT NULL COMMENT 'Keterangan tambahan' COLLATE 'latin1_swedish_ci',
+	`is_create` INT NULL DEFAULT NULL,
+	`created` DATETIME NULL DEFAULT NULL,
+	`is_update` INT NULL DEFAULT NULL,
+	`modified` DATETIME NULL DEFAULT NULL,
+	`is_delete` INT NULL DEFAULT NULL,
+	`deleted` DATETIME NULL DEFAULT NULL,
+	`is_active` ENUM('Y','N') NOT NULL DEFAULT 'Y' COLLATE 'latin1_swedish_ci',
+	`is_log` TEXT NULL DEFAULT NULL COLLATE 'latin1_swedish_ci',
+	PRIMARY KEY (`id`) USING BTREE
+)
+COLLATE='latin1_swedish_ci'
+ENGINE=MyISAM
+;
+CREATE TABLE `bank_incomes` (
+	`id` INT NOT NULL AUTO_INCREMENT,
+	`branch_id` INT NOT NULL DEFAULT '0',
+	`ubs` VARCHAR(255) NULL DEFAULT NULL COLLATE 'latin1_swedish_ci',
+	`acc_coa_id` INT NULL DEFAULT '0' COMMENT 'COA',
+	`payment_type` VARCHAR(255) NULL DEFAULT NULL COLLATE 'latin1_swedish_ci',
+	`nominal` DECIMAL(18,2) NOT NULL DEFAULT '0.00' COMMENT 'Nominal Nya',
+	`description` TEXT NULL DEFAULT NULL COMMENT 'Keterangan tambahan' COLLATE 'latin1_swedish_ci',
+	`file_1` VARCHAR(255) NULL DEFAULT NULL COLLATE 'latin1_swedish_ci',
+	`file_2` VARCHAR(255) NULL DEFAULT NULL COLLATE 'latin1_swedish_ci',
+	`is_create` INT NULL DEFAULT NULL,
+	`created` DATETIME NULL DEFAULT NULL,
+	`is_update` INT NULL DEFAULT NULL,
+	`modified` DATETIME NULL DEFAULT NULL,
+	`is_delete` INT NULL DEFAULT NULL,
+	`deleted` DATETIME NULL DEFAULT NULL,
+	`is_active` ENUM('Y','N') NOT NULL DEFAULT 'Y' COLLATE 'latin1_swedish_ci',
+	`is_log` TEXT NULL DEFAULT NULL COLLATE 'latin1_swedish_ci',
+	PRIMARY KEY (`id`) USING BTREE
+)
+COLLATE='latin1_swedish_ci'
+ENGINE=MyISAM
+;
+CREATE TABLE `bank_topups` (
+	`id` INT NOT NULL AUTO_INCREMENT,
+	`branch_id` INT NOT NULL DEFAULT '0',
+	`acc_coa_id` INT NULL DEFAULT '0' COMMENT 'COA',
+	`acc_coa_to_id` INT NULL DEFAULT '0' COMMENT 'COA Tujuan',
+	`ubs` VARCHAR(255) NULL DEFAULT NULL COLLATE 'latin1_swedish_ci',
+	`payment_type` VARCHAR(255) NULL DEFAULT NULL COLLATE 'latin1_swedish_ci',
+	`nominal` DECIMAL(18,2) NOT NULL DEFAULT '0.00' COMMENT 'Nominal Nya',
+	`description` TEXT NULL DEFAULT NULL COMMENT 'Keterangan tambahan' COLLATE 'latin1_swedish_ci',
+	`file_1` VARCHAR(255) NULL DEFAULT NULL COLLATE 'latin1_swedish_ci',
+	`file_2` VARCHAR(255) NULL DEFAULT NULL COLLATE 'latin1_swedish_ci',
+	`is_create` INT NULL DEFAULT NULL,
+	`created` DATETIME NULL DEFAULT NULL,
+	`is_update` INT NULL DEFAULT NULL,
+	`modified` DATETIME NULL DEFAULT NULL,
+	`is_delete` INT NULL DEFAULT NULL,
+	`deleted` DATETIME NULL DEFAULT NULL,
+	`is_active` ENUM('Y','N') NOT NULL DEFAULT 'Y' COLLATE 'latin1_swedish_ci',
+	`is_log` TEXT NULL DEFAULT NULL COLLATE 'latin1_swedish_ci',
+	PRIMARY KEY (`id`) USING BTREE
+)
+COLLATE='latin1_swedish_ci'
+ENGINE=MyISAM
+;

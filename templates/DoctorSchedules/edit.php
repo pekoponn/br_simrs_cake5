@@ -3,6 +3,7 @@
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\DoctorSchedule $doctorSchedule
  * @var string[]|\Cake\Collection\CollectionInterface $doctors
+ * @var array $doctorPolyclinics
  */
 
 function fmtDsTimeForInput($val) {
@@ -214,6 +215,33 @@ $days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
         background: #1d4ed8;
     }
 
+    /* Field Poli - readonly, auto-terisi */
+    .ds-poli-wrap {
+        position: relative;
+    }
+
+    .ds-poli-wrap input {
+        background: #f8fafc !important;
+        color: #1d4ed8;
+        font-weight: 800;
+        cursor: not-allowed;
+    }
+
+    .ds-poli-wrap .ds-poli-tag {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: #94a3b8;
+        background: #eef2f7;
+        padding: 3px 8px;
+        border-radius: 999px;
+        pointer-events: none;
+    }
+
     @media (max-width: 700px) {
         .ds-form-grid,
         .ds-form-grid.ds-grid-3 {
@@ -271,10 +299,28 @@ $days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
                     'options' => $doctors,
                     'class' => 'form-control ds-form-control select2Form',
                     'empty' => '-- Pilih Dokter --',
+                    'id' => 'ds-doctor-id',
                     'templates' => ['inputContainer' => '{{content}}'],
                 ]) ?>
             </div>
 
+            <div class="ds-form-group">
+                <label class="ds-form-label">Poli</label>
+                <div class="ds-poli-wrap">
+                    <input
+                        type="text"
+                        id="ds-poli-display"
+                        class="form-control ds-form-control"
+                        value=""
+                        placeholder="Otomatis terisi setelah memilih dokter"
+                        readonly
+                    >
+                    <span class="ds-poli-tag">Auto</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="ds-form-grid ds-grid-3">
             <div class="ds-form-group">
                 <label class="ds-form-label">Hari <span class="req">*</span></label>
                 <?= $this->Form->control('day', [
@@ -286,9 +332,7 @@ $days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
                     'templates' => ['inputContainer' => '{{content}}'],
                 ]) ?>
             </div>
-        </div>
 
-        <div class="ds-form-grid ds-grid-3">
             <div class="ds-form-group">
                 <label class="ds-form-label">Jam Mulai <span class="req">*</span></label>
                 <?= $this->Form->control('start_time', [
@@ -310,7 +354,9 @@ $days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
                     'templates' => ['inputContainer' => '{{content}}'],
                 ]) ?>
             </div>
+        </div>
 
+        <div class="ds-form-grid">
             <div class="ds-form-group">
                 <label class="ds-form-label">Kuota</label>
                 <?= $this->Form->control('quota', [
@@ -322,9 +368,7 @@ $days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
                     'templates' => ['inputContainer' => '{{content}}'],
                 ]) ?>
             </div>
-        </div>
 
-        <div class="ds-form-grid">
             <div class="ds-form-group full">
                 <label class="ds-form-label">Catatan</label>
                 <?= $this->Form->control('note', [
@@ -372,4 +416,28 @@ $days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
             $(".select2Form").select2();
         }
     });
+
+    (function () {
+        var doctorPolyclinics = <?= json_encode($doctorPolyclinics ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+
+        var doctorSelect = document.getElementById('ds-doctor-id');
+        var poliInput = document.getElementById('ds-poli-display');
+
+        if (!doctorSelect || !poliInput) {
+            return;
+        }
+
+        function updatePoli() {
+            var selectedId = doctorSelect.value;
+            var poli = doctorPolyclinics[selectedId];
+            poliInput.value = poli ? poli : '';
+        }
+
+        doctorSelect.addEventListener('change', updatePoli);
+        updatePoli();
+
+        if (window.jQuery && jQuery.fn.select2) {
+            jQuery(doctorSelect).on('select2:select select2:clear', updatePoli);
+        }
+    })();
 </script>

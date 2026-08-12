@@ -102,47 +102,47 @@ $routes->scope('/', function (RouteBuilder $builder) {
     $builder->fallbacks();
 });
 
-// prefix Accounting 
-/*Router::prefix('acc', function (RouteBuilder $routes) {
+//prefix Accounting 
+Router::prefix('acc', function (RouteBuilder $routes) {
     $routes->connect('/', ['controller' => 'Acc', 'action' => 'index']);
     $routes->fallbacks(DashedRoute::class);
 });
 
-// prefix HRGA 
-Router::prefix('hga', function (RouteBuilder $routes) {
-    $routes->connect('/', ['controller' => 'Hga', 'action' => 'index']);
-    $routes->fallbacks(DashedRoute::class);
-});
+// // prefix HRGA 
+// Router::prefix('hga', function (RouteBuilder $routes) {
+//     $routes->connect('/', ['controller' => 'Hga', 'action' => 'index']);
+//     $routes->fallbacks(DashedRoute::class);
+// });
 
-// prefix HSE 
-Router::prefix('hse', function (RouteBuilder $routes) {
-    $routes->connect('/', ['controller' => 'Hse', 'action' => 'index']);
-    $routes->fallbacks(DashedRoute::class);
-});
+// // prefix HSE 
+// Router::prefix('hse', function (RouteBuilder $routes) {
+//     $routes->connect('/', ['controller' => 'Hse', 'action' => 'index']);
+//     $routes->fallbacks(DashedRoute::class);
+// });
 
-// prefix Marketing 
-Router::prefix('mkt', function (RouteBuilder $routes) {
-    $routes->connect('/', ['controller' => 'Mkt', 'action' => 'index']);
-    $routes->fallbacks(DashedRoute::class);
-});
+// // prefix Marketing 
+// Router::prefix('mkt', function (RouteBuilder $routes) {
+//     $routes->connect('/', ['controller' => 'Mkt', 'action' => 'index']);
+//     $routes->fallbacks(DashedRoute::class);
+// });
 
-// prefix Production 
-Router::prefix('pro', function (RouteBuilder $routes) {
-    $routes->connect('/', ['controller' => 'Pro', 'action' => 'index']);
-    $routes->fallbacks(DashedRoute::class);
-});
+// // prefix Production 
+// Router::prefix('pro', function (RouteBuilder $routes) {
+//     $routes->connect('/', ['controller' => 'Pro', 'action' => 'index']);
+//     $routes->fallbacks(DashedRoute::class);
+// });
 
-// prefix Transport 
-Router::prefix('trs', function (RouteBuilder $routes) {
-    $routes->connect('/', ['controller' => 'Trs', 'action' => 'index']);
-    $routes->fallbacks(DashedRoute::class);
-});
+// // prefix Transport 
+// Router::prefix('trs', function (RouteBuilder $routes) {
+//     $routes->connect('/', ['controller' => 'Trs', 'action' => 'index']);
+//     $routes->fallbacks(DashedRoute::class);
+// });
 
-// prefix Warehouse 
-Router::prefix('whs', function (RouteBuilder $routes) {
-    $routes->connect('/', ['controller' => 'Whs', 'action' => 'index']);
-    $routes->fallbacks(DashedRoute::class);
-});
+// // prefix Warehouse 
+// Router::prefix('whs', function (RouteBuilder $routes) {
+//     $routes->connect('/', ['controller' => 'Whs', 'action' => 'index']);
+//     $routes->fallbacks(DashedRoute::class);
+// });
 
 // prefix Master 
 Router::prefix('master', function (RouteBuilder $routes) {
@@ -150,11 +150,11 @@ Router::prefix('master', function (RouteBuilder $routes) {
     $routes->fallbacks(DashedRoute::class);
 });
 
-// prefix IT 
-Router::prefix('it', function (RouteBuilder $routes) {
-    $routes->connect('/', ['controller' => 'It', 'action' => 'index']);
-    $routes->fallbacks(DashedRoute::class);
-});*/
+// // prefix IT 
+// Router::prefix('it', function (RouteBuilder $routes) {
+//     $routes->connect('/', ['controller' => 'It', 'action' => 'index']);
+//     $routes->fallbacks(DashedRoute::class);
+// });*/
 
 /*
  * If you need a different set of middleware or none at all,

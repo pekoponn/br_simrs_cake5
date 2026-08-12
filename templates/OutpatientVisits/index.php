@@ -133,52 +133,20 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
                     <label style="font-size:11px; font-weight:600; color:#555;">
                         <i class="fa fa-hospital"></i> Poli
                     </label>
-                    <select name="poli" class="form-control input-sm">
+                    <select id="filter-poli" name="poli" class="form-control select2Form">
                         <option value="">Semua Poli</option>
 
-                        <option value="Poli Umum" <?= $filterPoli == 'Poli Umum' ? 'selected' : '' ?>>
-                            Poli Umum
-                        </option>
-
-                        <option value="Poli Gigi" <?= $filterPoli == 'Poli Gigi' ? 'selected' : '' ?>>
-                            Poli Gigi
-                        </option>
-
-                        <option value="Poli Anak" <?= $filterPoli == 'Poli Anak' ? 'selected' : '' ?>>
-                            Poli Anak
-                        </option>
-
-                        <option value="Poli Kandungan" <?= $filterPoli == 'Poli Kandungan' ? 'selected' : '' ?>>
-                            Poli Kandungan
-                        </option>
-
-                        <option value="Poli Penyakit Dalam" <?= $filterPoli == 'Poli Penyakit Dalam' ? 'selected' : '' ?>>
-                            Poli Penyakit Dalam
-                        </option>
-
-                        <option value="Poli Mata" <?= $filterPoli == 'Poli Mata' ? 'selected' : '' ?>>
-                            Poli Mata
-                        </option>
-
-                        <option value="Poli THT" <?= $filterPoli == 'Poli THT' ? 'selected' : '' ?>>
-                            Poli THT
-                        </option>
-
-                        <option value="Poli Bedah" <?= $filterPoli == 'Poli Bedah' ? 'selected' : '' ?>>
-                            Poli Bedah
-                        </option>
-
-                        <option value="Poli Saraf" <?= $filterPoli == 'Poli Saraf' ? 'selected' : '' ?>>
-                            Poli Saraf
-                        </option>
-
-                        <option value="Poli Kulit" <?= $filterPoli == 'Poli Kulit' ? 'selected' : '' ?>>
-                            Poli Kulit
-                        </option>
-
-                        <option value="Poli Jantung" <?= $filterPoli == 'Poli Jantung' ? 'selected' : '' ?>>
-                            Poli Jantung
-                        </option>
+                        <option value="Poli Umum" <?= $filterPoli == 'Poli Umum' ? 'selected' : '' ?>>Poli Umum</option>
+                        <option value="Poli Gigi" <?= $filterPoli == 'Poli Gigi' ? 'selected' : '' ?>>Poli Gigi</option>
+                        <option value="Poli Anak" <?= $filterPoli == 'Poli Anak' ? 'selected' : '' ?>>Poli Anak</option>
+                        <option value="Poli Kandungan" <?= $filterPoli == 'Poli Kandungan' ? 'selected' : '' ?>>Poli Kandungan</option>
+                        <option value="Poli Penyakit Dalam" <?= $filterPoli == 'Poli Penyakit Dalam' ? 'selected' : '' ?>>Poli Penyakit Dalam</option>
+                        <option value="Poli Mata" <?= $filterPoli == 'Poli Mata' ? 'selected' : '' ?>>Poli Mata</option>
+                        <option value="Poli THT" <?= $filterPoli == 'Poli THT' ? 'selected' : '' ?>>Poli THT</option>
+                        <option value="Poli Bedah" <?= $filterPoli == 'Poli Bedah' ? 'selected' : '' ?>>Poli Bedah</option>
+                        <option value="Poli Saraf" <?= $filterPoli == 'Poli Saraf' ? 'selected' : '' ?>>Poli Saraf</option>
+                        <option value="Poli Kulit" <?= $filterPoli == 'Poli Kulit' ? 'selected' : '' ?>>Poli Kulit</option>
+                        <option value="Poli Jantung" <?= $filterPoli == 'Poli Jantung' ? 'selected' : '' ?>>Poli Jantung</option>
                     </select>
                 </div>
 
@@ -186,7 +154,7 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
                     <label style="font-size:11px; font-weight:600; color:#555;">
                         <i class="fa fa-user-md"></i> Dokter
                     </label>
-                    <select name="doctor_id" class="form-control input-sm">
+                    <select id="filter-doctor" name="doctor_id" class="form-control select2Form">
                         <option value="">Semua Dokter</option>
                         <?php foreach ($doctors as $did => $dname): ?>
                             <option value="<?= h($did) ?>" <?= (string)$filterDoctor === (string)$did ? 'selected' : '' ?>>
@@ -200,7 +168,7 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
                     <label style="font-size:11px; font-weight:600; color:#555;">
                         <i class="fa fa-filter"></i> Status
                     </label>
-                    <select name="status" class="form-control input-sm">
+                    <select id="filter-status" name="status" class="form-control select2Form">
                         <option value="">Semua</option>
                         <?php foreach ($statusCfg as $sval => $sc): ?>
                             <option value="<?= h($sval) ?>" <?= $filterStatus === $sval ? 'selected' : '' ?>>
@@ -994,5 +962,10 @@ $('#btn-refresh').on('click', function(e) {
 
 $(function() {
     $('[data-toggle="tooltip"]').tooltip();
+
+    $('.select2Form').select2({
+        width: '100%',
+        dropdownAutoWidth: true
+    });
 });
 </script>
