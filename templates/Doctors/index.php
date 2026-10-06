@@ -114,7 +114,6 @@
                         <th width="90">Kode</th>
                         <th width="220">Nama Dokter</th>
                         <th width="130">NIK</th>
-                        <th width="140">Spesialis</th>
                         <th width="130">Poliklinik</th>
                         <th width="80">Gender</th>
                         <th width="120">No. SIP</th>
@@ -156,13 +155,6 @@
                     <!-- NIK -->
                     <td style="font-size:11px;">
                         <?= !empty($doctor->nik) ? h($doctor->nik) : '<span style="color:#ccc;">—</span>' ?>
-                    </td>
-
-                    <!-- Spesialis -->
-                    <td style="font-size:12px;">
-                        <?= !empty($doctor->specialist)
-                            ? '<span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">' . h($doctor->specialist) . '</span>'
-                            : '<span style="color:#ccc;">—</span>' ?>
                     </td>
 
                     <!-- Poliklinik -->

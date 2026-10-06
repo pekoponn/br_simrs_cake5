@@ -82,8 +82,47 @@ class MasterTindakanTable extends Table
             ->notEmptyString('kategori');
 
         $validator
-            ->decimal('harga')
-            ->notEmptyString('harga');
+            ->scalar('jenis_layanan')
+            ->allowEmptyString('jenis_layanan');
+
+        $validator
+            ->decimal('harga_umum')
+            ->notEmptyString('harga_umum');
+
+        $validator
+            ->decimal('harga_bpjs')
+            ->notEmptyString('harga_bpjs');
+
+        $validator
+            ->decimal('harga_reimbes')
+            ->notEmptyString('harga_reimbes');
+
+       $validator
+            ->decimal('persen_dokter_umum')
+            ->range('persen_dokter_umum', [0, 100])
+            ->allowEmptyString('persen_dokter_umum');
+
+        $validator
+            ->decimal('persen_dokter_bpjs')
+            ->range('persen_dokter_bpjs', [0, 100])
+            ->allowEmptyString('persen_dokter_bpjs');
+
+        $validator
+            ->decimal('persen_dokter_reimbes')
+            ->range('persen_dokter_reimbes', [0, 100])
+            ->allowEmptyString('persen_dokter_reimbes');
+
+        $validator
+            ->boolean('applies_rawat_jalan')
+            ->notEmptyString('applies_rawat_jalan');
+
+        $validator
+            ->boolean('applies_rawat_inap')
+            ->notEmptyString('applies_rawat_inap');
+
+        $validator
+            ->boolean('applies_igd')
+            ->notEmptyString('applies_igd');
 
         $validator
             ->scalar('satuan')

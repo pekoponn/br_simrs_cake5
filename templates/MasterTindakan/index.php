@@ -99,13 +99,15 @@ $csrfToken = $this->request->getAttribute('csrfToken');
             <table class="table table-hover table-bordered table-master" style="font-size:12px;">
                 <thead>
                     <tr>
-                        <th width="110"><?= $this->Paginator->sort('kode', 'Kode') ?></th>
+                        <th width="100"><?= $this->Paginator->sort('kode', 'Kode') ?></th>
                         <th><?= $this->Paginator->sort('nama', 'Nama Tindakan') ?></th>
-                        <th width="150"><?= $this->Paginator->sort('kategori', 'Kategori') ?></th>
-                        <th width="120"><?= $this->Paginator->sort('harga', 'Harga') ?></th>
-                        <th width="90"><?= $this->Paginator->sort('satuan', 'Satuan') ?></th>
+                        <th width="90">Jenis Harga</th>
+                        <th width="105">Cost Rp</th>
+                        <th width="105">Jasa Rs/Klinik Rp</th>
+                        <th width="65">% Dr</th>
+                        <th width="120">Komisi Dokter Rp<br><small>(Insentif/Jasa)</small></th>
+                        <th width="130"><?= $this->Paginator->sort('kategori', 'Kategori') ?></th>
                         <th width="90"><?= $this->Paginator->sort('is_active', 'Status') ?></th>
-                        <th width="130"><?= $this->Paginator->sort('modified', 'Diubah') ?></th>
                         <th width="95">Aksi</th>
                     </tr>
                 </thead>
@@ -113,81 +115,81 @@ $csrfToken = $this->request->getAttribute('csrfToken');
                 <tbody>
                 <?php if (empty($masterTindakan) || !count($masterTindakan)): ?>
                     <tr>
-                        <td colspan="8" class="text-center" style="padding:30px; color:#777;">
+                        <td colspan="10" class="text-center" style="padding:30px; color:#777;">
                             Data tindakan tidak ditemukan
                         </td>
                     </tr>
                 <?php else: ?>
-                    <?php foreach ($masterTindakan as $item): ?>
-                        <tr class="tindakan-row">
-                            <td class="text-center" style="font-family:monospace; font-weight:700;">
-                                <?= h($item->kode) ?>
-                            </td>
+                    <?php foreach ($masterTindakan as $item):
+                        $shareLabelMap = ['rs_dr' => 'RS+DR', 'rs' => 'RS', 'dr' => 'DR'];
+                        $hargaRows = [
+                            ['label' => 'BPJS',    'cost' => $item->harga_bpjs,    'persen' => $item->persen_dokter_bpjs,    'jasa' => $item->jasa_rs_bpjs,    'komisi' => $item->komisi_dokter_bpjs,    'share' => $item->share_type_bpjs    ?? 'rs_dr', 'badge' => '#0c5460', 'bg' => '#cff4fc'],
+                            ['label' => 'Reimbes', 'cost' => $item->harga_reimbes, 'persen' => $item->persen_dokter_reimbes, 'jasa' => $item->jasa_rs_reimbes, 'komisi' => $item->komisi_dokter_reimbes, 'share' => $item->share_type_reimbes ?? 'rs_dr', 'badge' => '#856404', 'bg' => '#fff3cd'],
+                            ['label' => 'Umum',    'cost' => $item->harga_umum,    'persen' => $item->persen_dokter_umum,    'jasa' => $item->jasa_rs_umum,    'komisi' => $item->komisi_dokter_umum,    'share' => $item->share_type_umum    ?? 'rs_dr', 'badge' => '#155724', 'bg' => '#d4edda'],
+                        ];
+                    ?>
+                        <?php foreach ($hargaRows as $i => $h): ?>
+                            <tr class="tindakan-row<?= $i === 0 ? ' tindakan-row-first' : '' ?>">
 
-                            <td>
-                                <div style="font-weight:600; color:#1f2937;">
-                                    <?= h($item->nama) ?>
-                                </div>
-
-                                <?php if (!empty($item->keterangan)): ?>
-                                    <div style="font-size:10px; color:#6b7280; margin-top:2px;">
-                                        <?= h($item->keterangan) ?>
-                                    </div>
+                                <?php if ($i === 0): ?>
+                                    <td rowspan="3" class="text-center" style="font-family:monospace; font-weight:700; vertical-align:middle;">
+                                        <?= h($item->kode) ?>
+                                    </td>
+                                    <td rowspan="3" style="vertical-align:middle;">
+                                        <div style="font-weight:600; color:#1f2937;">
+                                            <?= h($item->nama) ?>
+                                        </div>
+                                        <?php if (!empty($item->keterangan)): ?>
+                                            <div style="font-size:10px; color:#6b7280; margin-top:2px;">
+                                                <?= h($item->keterangan) ?>
+                                            </div>
+                                        <?php endif; ?>
+                                    </td>
                                 <?php endif; ?>
-                            </td>
 
-                            <td class="text-center">
-                                <span class="badge-category">
-                                    <?= h($item->kategori ?: '-') ?>
-                                </span>
-                            </td>
+                                <td class="text-center">
+                                    <span style="background:<?= $h['bg'] ?>; color:<?= $h['badge'] ?>;
+                                                 border-radius:12px; padding:2px 10px; font-size:11px; font-weight:700;">
+                                        <?= $h['label'] ?>
+                                    </span>
+                                    <div style="font-size:9px; color:#9ca3af; margin-top:2px;">
+                                        <?= $shareLabelMap[$h['share']] ?? $h['share'] ?>
+                                    </div>
+                                </td>
+                                <td class="text-right" style="font-weight:700;">
+                                    <?= number_format((float)$h['cost'], 0, ',', '.') ?>
+                                </td>
+                                <td class="text-right" style="font-size:11px;">
+                                    <?= number_format((float)$h['jasa'], 0, ',', '.') ?>
+                                </td>
+                                <td class="text-center" style="font-size:11px;">
+                                    <?= number_format((float)$h['persen'], 0) ?>%
+                                </td>
+                                <td class="text-right" style="font-weight:700; color:#155724;">
+                                    <?= number_format((float)$h['komisi'], 0, ',', '.') ?>
+                                </td>
 
-                            <td class="text-right" style="font-weight:700;">
-                                Rp <?= number_format((float)$item->harga, 0, ',', '.') ?>
-                            </td>
+                                <?php if ($i === 0): ?>
+                                    <td rowspan="3" class="text-center" style="vertical-align:middle;">
+                                        <span class="badge-category"><?= h($item->kategori ?: '-') ?></span>
+                                    </td>
+                                    <td rowspan="3" class="text-center" style="vertical-align:middle;">
+                                        <button type="button"
+                                                class="toggle-active-btn <?= $item->is_active ? 'status-on' : 'status-off' ?>"
+                                                data-id="<?= h($item->id) ?>"
+                                                data-active="<?= (int)$item->is_active ?>">
+                                            <?= $item->is_active ? 'Aktif' : 'Nonaktif' ?>
+                                        </button>
+                                    </td>
+                                    <td rowspan="3" class="text-center" style="white-space:nowrap; vertical-align:middle;">
+                                        <?= $this->Html->link('<i class="fa fa-eye"></i>', ['action' => 'view', $item->id], ['escape' => false, 'title' => 'Lihat', 'class' => 'btn-action']) ?>
+                                        <?= $this->Html->link('<i class="fa fa-edit"></i>', ['action' => 'edit', $item->id], ['escape' => false, 'title' => 'Edit', 'class' => 'btn-action']) ?>
+                                        <?= $this->Form->postLink('<i class="fa fa-trash"></i>', ['action' => 'delete', $item->id], ['escape' => false, 'confirm' => __('Hapus tindakan "{0}"?', $item->nama), 'title' => 'Hapus', 'class' => 'btn-action btn-action-danger']) ?>
+                                    </td>
+                                <?php endif; ?>
 
-                            <td class="text-center">
-                                <?= h($item->satuan ?: '-') ?>
-                            </td>
-
-                            <td class="text-center">
-                                <button type="button"
-                                        class="toggle-active-btn <?= $item->is_active ? 'status-on' : 'status-off' ?>"
-                                        data-id="<?= h($item->id) ?>"
-                                        data-active="<?= (int)$item->is_active ?>">
-                                    <?= $item->is_active ? 'Aktif' : 'Nonaktif' ?>
-                                </button>
-                            </td>
-
-                            <td class="text-center" style="font-size:11px; color:#6c757d;">
-                                <?= h($item->modified ? $item->modified->format('d/m/Y H:i') : '-') ?>
-                            </td>
-
-                            <td class="text-center" style="white-space:nowrap;">
-                                <?= $this->Html->link(
-                                    '<i class="fa fa-eye"></i>',
-                                    ['action' => 'view', $item->id],
-                                    ['escape' => false, 'title' => 'Lihat', 'class' => 'btn-action']
-                                ) ?>
-
-                                <?= $this->Html->link(
-                                    '<i class="fa fa-edit"></i>',
-                                    ['action' => 'edit', $item->id],
-                                    ['escape' => false, 'title' => 'Edit', 'class' => 'btn-action']
-                                ) ?>
-
-                                <?= $this->Form->postLink(
-                                    '<i class="fa fa-trash"></i>',
-                                    ['action' => 'delete', $item->id],
-                                    [
-                                        'escape' => false,
-                                        'confirm' => __('Hapus tindakan "{0}"?', $item->nama),
-                                        'title' => 'Hapus',
-                                        'class' => 'btn-action btn-action-danger',
-                                    ]
-                                ) ?>
-                            </td>
-                        </tr>
+                            </tr>
+                        <?php endforeach; ?>
                     <?php endforeach; ?>
                 <?php endif; ?>
                 </tbody>
@@ -280,6 +282,14 @@ $csrfToken = $this->request->getAttribute('csrfToken');
 
 .table-master > tbody > tr:hover {
     background:#f0f9ff !important;
+}
+
+.table-master > tbody > tr:hover {
+    background:#f0f9ff !important;
+}
+
+.tindakan-row-first {
+    border-top: 2px solid #1e3a5f;
 }
 
 .badge-category {

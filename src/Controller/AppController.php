@@ -205,11 +205,41 @@ class AppController extends Controller
           $outpatientVisitHelperActions = [
             'getSummary',
             'liveData',
+            'panggil',
+            'datang',
           ];
 
           $canAccessOutpatientVisitHelper = $getController === 'outpatientvisits'
             && in_array($getAction, $outpatientVisitHelperActions, true)
             && !empty($resultCheck['index']);
+
+          $outpatientBillingViewActions = [
+            'kasir',
+            'kwitansi',
+          ];
+
+          $outpatientBillingMutationActions = [
+            'tambahItem',
+            'hapusItem',
+            'toggleReadyTransfer',
+            'prosesBayar',
+          ];
+
+          $canAccessOutpatientBillingHelper = $getController === 'outpatientbillings'
+            && (
+              (
+                in_array($getAction, $outpatientBillingViewActions, true)
+                && (
+                  !empty($resultCheck['index'])
+                  || !empty($resultCheck['kasir'])
+                  || !empty($resultCheck[$getAction])
+                )
+              )
+              || (
+                in_array($getAction, $outpatientBillingMutationActions, true)
+                && !empty($resultCheck[$getAction])
+              )
+            );
 
           $outpatientVisitCpptActions = [
             'addCppt',
@@ -257,6 +287,21 @@ class AppController extends Controller
             'simpanSuratKonsultasi',
             'getSuratJawabanKonsultasi',
             'simpanSuratJawabanKonsultasi',
+            'getSuratPengantarRawat',
+            'simpanSuratPengantarRawat',
+            'cetakSuratPengantarRawat',
+            'getSuratBuktiRajal',
+            'simpanSuratBuktiRajal',
+            'cetakSuratBuktiRajal',
+            'getSuratSkdp',
+            'simpanSuratSkdp',
+            'cetakSuratSkdp',
+            'getSuratKontrolBpjs',
+            'simpanSuratKontrolBpjs',
+            'cetakSuratKontrolBpjs',
+            'getSuratSehat',
+            'simpanSuratSehat',
+            'cetakSuratSehat',
             'cetakSuratKonsultasi',
             'cetakSuratSakit',
           ];
@@ -293,6 +338,22 @@ class AppController extends Controller
               || !empty($resultCheck['history'])
             );
 
+          $paymentHistoryHelperActions = [
+            'searchPatients',
+          ];
+
+          $canAccessPaymentHistoryHelper = $getController === 'paymenthistories'
+            && in_array($getAction, $paymentHistoryHelperActions, true)
+            && !empty($resultCheck['index']);
+
+          $canAccessPatientAdmissionPlan = $getController === 'patientadmissions'
+            && $getAction === 'planInpatient'
+            && (
+              !empty($resultCheck['index'])
+              || !empty($checkUrl['outpatientvisits']['emr'])
+              || !empty($checkUrl['outpatientvisitemr']['emr'])
+            );
+
           $masterDataControllers = [
             'mastericd9',
             'mastericd10',
@@ -306,6 +367,20 @@ class AppController extends Controller
           $canAccessEmrMasterSearch = in_array($getController, $masterDataControllers, true)
             && $getAction === 'search'
             && !empty($checkUrl['outpatientvisits']['emr']);
+
+          $masterTenagaMedisHelperActions = [
+            'nextKode',
+            'searchModal',
+            'toggleActive',
+          ];
+
+          $canAccessMasterTenagaMedisHelper = $getController === 'mastertenagamedis'
+            && in_array($getAction, $masterTenagaMedisHelperActions, true)
+            && (
+              !empty($resultCheck['index'])
+              || !empty($resultCheck['add'])
+              || !empty($resultCheck['edit'])
+            );
 
           $orderFormHelperActions = [
             'cariPasien',
@@ -392,6 +467,7 @@ class AppController extends Controller
             || $canAccessPolyclinicQueueEntry
             || $canAccessDoctorHelper
             || $canAccessOutpatientVisitHelper
+            || $canAccessOutpatientBillingHelper
             || $canAccessOutpatientVisitCppt
             || $canAccessOutpatientVisitEmrHelper
             || $canAccessOutpatientVisitEmrPage
@@ -399,8 +475,11 @@ class AppController extends Controller
             || $canAccessOutpatientLetterHelper
             || $canAccessMedicalRecordHelper
             || $canAccessPatientHistoryHelper
+            || $canAccessPaymentHistoryHelper
+            || $canAccessPatientAdmissionPlan
             || $canAccessMasterDataView
             || $canAccessEmrMasterSearch
+            || $canAccessMasterTenagaMedisHelper
             || $canAccessOrderForm
             || $canAccessOrderFormHelper
             || $canAccessOrderDetail
@@ -414,6 +493,7 @@ class AppController extends Controller
               'mastericd9' => ['search', 'toggleActive'],
               'mastericd10' => ['search', 'toggleActive'],
               'mastertindakan' => ['search', 'searchDebug', 'toggleActive'],
+              'mastertenagamedis' => ['nextKode', 'searchModal', 'toggleActive'],
               'medicalrecords' => ['searchPatients'],
               'orders' => [
                 'cariPasien',
@@ -430,10 +510,13 @@ class AppController extends Controller
               'invoices' => ['cariBapb'],
               'kartustok' => ['searchMedicine'],
               'medicinestocks' => ['toggleValid'],
-              'outpatientletters' => ['getSuratSakit', 'simpanSuratSakit', 'getSuratKonsultasi', 'simpanSuratKonsultasi', 'getSuratJawabanKonsultasi', 'simpanSuratJawabanKonsultasi', 'cetakSuratKonsultasi', 'cetakSuratSakit'],
+              'outpatientbillings' => ['tambahItem', 'hapusItem', 'toggleReadyTransfer'],
+              'outpatientletters' => ['getSuratSakit', 'simpanSuratSakit', 'getSuratKonsultasi', 'simpanSuratKonsultasi', 'getSuratJawabanKonsultasi', 'simpanSuratJawabanKonsultasi', 'getSuratPengantarRawat', 'simpanSuratPengantarRawat', 'cetakSuratPengantarRawat', 'getSuratBuktiRajal', 'simpanSuratBuktiRajal', 'cetakSuratBuktiRajal', 'getSuratSkdp', 'simpanSuratSkdp', 'cetakSuratSkdp', 'getSuratKontrolBpjs', 'simpanSuratKontrolBpjs', 'cetakSuratKontrolBpjs', 'getSuratSehat', 'simpanSuratSehat', 'cetakSuratSehat', 'cetakSuratKonsultasi', 'cetakSuratSakit'],
               'outpatientvisitemr' => ['kajianAwal', 'saveAnatomy', 'simpanKajianAwal'],
-              'outpatientvisits' => ['getSummary', 'liveData', 'addCppt', 'deleteCppt', 'panggil', 'searchIcd10', 'searchIcd9', 'hasilPemeriksaan'],
+              'outpatientvisits' => ['getSummary', 'liveData', 'addCppt', 'deleteCppt', 'panggil', 'datang', 'searchIcd10', 'searchIcd9', 'hasilPemeriksaan'],
+              'patientadmissions' => ['planInpatient'],
               'patienthistories' => ['searchPatients'],
+              'paymenthistories' => ['searchPatients'],
               'patients' => ['getKabupatens', 'getKecamatans', 'getKelurahans', 'get-kabupatens', 'get-kecamatans', 'get-kelurahans'],
               'polyclinicqueues' => ['searchPoly', 'searchPolyQueue', 'callQueue', 'createReferralQueue', 'searchPatients'],
               'rencanapembelians' => ['ambilDetail'],

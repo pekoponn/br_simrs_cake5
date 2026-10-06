@@ -140,11 +140,21 @@ class OutpatientBillingsController extends AppController
         ->order(['created' => 'DESC'])
         ->all();
 
-    $this->set(compact('billing', 'items', 'payments'));
+    $paidRow = $this->OutpatientBillingPayments->find()
+        ->where(['billing_id' => $billing->id])
+        ->select(['total' => $this->OutpatientBillingPayments->find()->func()->sum('amount')])
+        ->enableHydration(false)
+        ->first();
+    $totalPaidSoFar = (float)($paidRow['total'] ?? 0);
+    $outstandingAmount = max(0, (float)$billing->grand_total - $totalPaidSoFar);
+
+    $this->set(compact('billing', 'items', 'payments', 'totalPaidSoFar', 'outstandingAmount'));
 }
 
 public function kwitansi($id = null)
 {
+    $this->viewBuilder()->disableAutoLayout();
+
     if (empty($id)) {
         $billing = $this->OutpatientBillings->find()
             ->where([
@@ -165,7 +175,7 @@ public function kwitansi($id = null)
     }
 
     $billing = $this->OutpatientBillings->get($id, [
-        'contain' => ['Patients', 'Doctors'],
+        'contain' => ['Patients', 'Doctors', 'Registrations'],
     ]);
 
     $items = $this->OutpatientBillingItems->find()
@@ -249,6 +259,26 @@ public function kwitansi($id = null)
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // TOGGLE READY TO TRANSFER — checkbox "Sudah siap ditransfer ke rawat inap"
+    // ─────────────────────────────────────────────────────────────────────────
+    public function toggleReadyTransfer($id = null)
+    {
+        $this->request->allowMethod(['post']);
+        $this->autoRender = false;
+
+        $billing = $this->OutpatientBillings->get($id);
+        $billing->ready_to_transfer = (bool)$this->request->getData('ready_to_transfer');
+
+        if (!$this->OutpatientBillings->save($billing)) {
+            return $this->response->withType('application/json')
+                ->withStringBody(json_encode(['success' => false, 'message' => 'Gagal menyimpan status.']));
+        }
+
+        return $this->response->withType('application/json')
+            ->withStringBody(json_encode(['success' => true]));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // PROSES BAYAR
     // ─────────────────────────────────────────────────────────────────────────
     public function prosesBayar($id = null)
@@ -269,9 +299,66 @@ public function kwitansi($id = null)
         $paidAmount    = (float)($data['paid_amount'] ?? 0);
         $discountType  = $data['discount_type']  ?? 'nominal';
         $discountValue = (float)($data['discount_value'] ?? 0);
-        $notes         = $data['notes'] ?? null;
+                $notes         = $data['notes'] ?? null;
+        $paidBy        = $data['paid_by'] ?? null;
 
-        // Hitung diskon
+        $paymentProofFilename = $billing->payment_proof ?? null;
+        $uploadedProof = $this->request->getUploadedFile('payment_proof');
+
+        if ($uploadedProof && $uploadedProof->getError() === UPLOAD_ERR_OK) {
+            $uploadDir = WWW_ROOT . 'uploads' . DS . 'payment_proofs' . DS;
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+
+            $ext = pathinfo($uploadedProof->getClientFilename(), PATHINFO_EXTENSION);
+            $paymentProofFilename = 'proof_' . $billing->id . '_' . time() . '.' . $ext;
+
+            $uploadedProof->moveTo($uploadDir . $paymentProofFilename);
+        }
+
+        $jaminanFields = [
+            'insurance_partner_name' => $data['insurance_partner_name'] ?? null,
+            'policy_no'              => $data['policy_no'] ?? null,
+            'admin_fee'              => (float)($data['admin_fee'] ?? 0),
+            'inacbg_amount'          => (float)($data['inacbg_amount'] ?? 0),
+            'cbg_code'               => $data['cbg_code'] ?? null,
+            'guarantor2_name'        => $data['guarantor2_name'] ?? null,
+            'guarantor2_amount'      => (float)($data['guarantor2_amount'] ?? 0),
+            'guarantor3_name'        => $data['guarantor3_name'] ?? null,
+            'guarantor3_amount'      => (float)($data['guarantor3_amount'] ?? 0),
+            'uncollectible_amount'   => (float)($data['uncollectible_amount'] ?? 0),
+        ];
+
+        $transferFields = [
+            'transfer_card_no'       => $data['transfer_card_no'] ?? null,
+            'transfer_bank_auth_no'  => $data['transfer_bank_auth_no'] ?? null,
+            'transfer_card_type'     => $data['transfer_card_type'] ?? 'transfer',
+            'transfer_admin_percent' => (float)($data['transfer_admin_percent'] ?? 0),
+            'transfer_bank_dest'     => $data['transfer_bank_dest'] ?? null,
+        ];
+
+        $receiptNo = trim((string)($data['receipt_no'] ?? ''));
+        if ($receiptNo === '') {
+            $todayPrefix = 'KW-' . date('Ymd') . '-';
+
+            $lastReceipt = $this->OutpatientBillings->find()
+                ->select(['receipt_no'])
+                ->where(['receipt_no LIKE' => $todayPrefix . '%'])
+                ->order(['receipt_no' => 'DESC'])
+                ->epilog('FOR UPDATE')
+                ->first();
+
+            $nextSeq = 1;
+            if ($lastReceipt && $lastReceipt->receipt_no) {
+                $lastSeq = (int)substr($lastReceipt->receipt_no, strlen($todayPrefix));
+                $nextSeq = $lastSeq + 1;
+            }
+
+            $receiptNo = $todayPrefix . str_pad((string)$nextSeq, 4, '0', STR_PAD_LEFT);
+        }
+
+                // Hitung diskon
         $discountAmount = 0;
         if ($discountType === 'percent') {
             $discountAmount = round($billing->subtotal * $discountValue / 100, 2);
@@ -279,46 +366,119 @@ public function kwitansi($id = null)
             $discountAmount = $discountValue;
         }
 
-        $grandTotal   = max(0, $billing->subtotal - $discountAmount);
-        $changeAmount = max(0, $paidAmount - $grandTotal);
+        $grandTotal = max(0, $billing->subtotal - $discountAmount);
 
-        if ($paymentMethod === 'tunai' && $paidAmount < $grandTotal) {
-            $this->Flash->error(__('Jumlah bayar kurang dari total tagihan.'));
+        $paidRow = $this->OutpatientBillingPayments->find()
+            ->where(['billing_id' => $billing->id])
+            ->select(['total' => $this->OutpatientBillingPayments->find()->func()->sum('amount')])
+            ->enableHydration(false)
+            ->first();
+        $totalPreviouslyPaid = (float)($paidRow['total'] ?? 0);
+        $outstanding = max(0, $grandTotal - $totalPreviouslyPaid);
+
+        $changeAmount = max(0, $paidAmount - $outstanding);
+
+        if ($paymentMethod === 'tunai' && $paidAmount < $outstanding) {
+            $this->Flash->error(__('Jumlah bayar kurang dari sisa tagihan. Sisa tagihan: Rp ' . number_format($outstanding, 0, ',', '.')));
             return $this->redirect(['action' => 'kasir', $id]);
         }
 
-        // Nomor pembayaran
-        $paymentNo = 'PAY-' . date('Ymd') . '-' . str_pad((string)$id, 6, '0', STR_PAD_LEFT);
+        $paymentSeq = $this->OutpatientBillingPayments->find()
+            ->where(['billing_id' => $billing->id])
+            ->count() + 1;
+        $paymentNo = 'PAY-' . date('Ymd') . '-' . str_pad((string)$id, 6, '0', STR_PAD_LEFT) . '-' . $paymentSeq;
 
-        // Simpan pembayaran
         $payment = $this->OutpatientBillingPayments->newEmptyEntity();
         $payment = $this->OutpatientBillingPayments->patchEntity($payment, [
             'billing_id'     => $billing->id,
             'payment_no'     => $paymentNo,
             'payment_method' => $paymentMethod,
-            'amount'         => $grandTotal,
+            'amount'         => $outstanding,
             'verified'       => 1,
             'verified_at'    => date('Y-m-d H:i:s'),
             'notes'          => $notes,
-            'created_by'     => $this->Auth->user('id') ?? null,
+            'created_by'     => $this->request->getSession()->read('Auth.User.id') ?? null,
         ]);
         $this->OutpatientBillingPayments->save($payment);
 
-        // Update billing
         $billing->discount_type   = $discountType;
         $billing->discount_value  = $discountValue;
         $billing->discount_amount = $discountAmount;
         $billing->grand_total     = $grandTotal;
         $billing->payment_method  = $paymentMethod;
-        $billing->paid_amount     = $paidAmount;
+        $billing->paid_amount     = $totalPreviouslyPaid + $outstanding;
         $billing->change_amount   = $changeAmount;
         $billing->status          = 'paid';
         $billing->paid_at         = date('Y-m-d H:i:s');
         $billing->notes           = $notes;
+        $billing->paid_by         = $paidBy;
+        $billing->receipt_no      = $receiptNo;
+        $billing->payment_proof   = $paymentProofFilename;
+
+        if (in_array($paymentMethod, ['bpjs', 'asuransi'], true)) {
+            $billing = $this->OutpatientBillings->patchEntity($billing, $jaminanFields, [
+                'validate' => false,
+            ]);
+        }
+
+        if ($paymentMethod === 'transfer') {
+            $billing = $this->OutpatientBillings->patchEntity($billing, $transferFields, [
+                'validate' => false,
+            ]);
+        }
+
         $this->OutpatientBillings->save($billing);
 
-        $this->Flash->success(__('Pembayaran berhasil! Kembalian: Rp ' . number_format($changeAmount, 0, ',', '.')));
+                $this->Flash->success(__('Pembayaran berhasil! Kembalian: Rp ' . number_format($changeAmount, 0, ',', '.')));
         return $this->redirect(['action' => 'kwitansi', $billing->id]);
+    }
+
+    public function reopen($id = null)
+    {
+        $this->request->allowMethod(['post']);
+
+        $billing = $this->OutpatientBillings->get($id, [
+            'contain' => ['Patients'],
+        ]);
+
+        if (!in_array($billing->status, ['paid', 'void', 'cancelled'], true)) {
+            $this->Flash->error(__('Tagihan ini belum lunas/ditutup, tidak perlu dibuka kembali.'));
+            return $this->redirect($this->referer());
+        }
+
+        $reason = trim((string)$this->request->getData('reopen_reason'));
+        if ($reason === '') {
+            $this->Flash->error(__('Alasan pembukaan akses wajib diisi.'));
+            return $this->redirect($this->referer());
+        }
+
+        $billing->reopen_reason = $reason;
+        $billing->reopened_at   = date('Y-m-d H:i:s');
+        $billing->reopened_by   = $this->request->getSession()->read('Auth.User.id') ?? null;
+        $billing->reopen_count  = (int)($billing->reopen_count ?? 0) + 1;
+
+        if (!empty($billing->outpatient_visit_id)) {
+            $this->loadModel('OutpatientVisits');
+            $visit = $this->OutpatientVisits->find()
+                ->where(['id' => $billing->outpatient_visit_id])
+                ->first();
+            if ($visit) {
+                $visit->status = 'in_progress';
+                $this->OutpatientVisits->save($visit, ['checkRules' => false]);
+            }
+        }
+
+        if ($this->OutpatientBillings->save($billing, ['checkRules' => false])) {
+            $this->Flash->success(__('Akses pemeriksaan (EMR/CPPT/Resume) berhasil dibuka kembali. Status kasir tetap Lunas sampai ada perubahan tindakan/obat yang menambah tagihan.'));
+        } else {
+            $this->Flash->error(__('Gagal membuka akses tagihan.'));
+        }
+
+        return $this->redirect([
+            'controller' => 'PaymentHistories',
+            'action' => 'index',
+            '?' => ['patient_id' => $billing->patient_id, 'billing_id' => $billing->id],
+        ]);
     }
 
     // ─────────────────────────────────────────────────────────────────────────

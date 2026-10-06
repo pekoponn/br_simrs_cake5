@@ -45,6 +45,8 @@ class DoctorSchedule extends Entity
         'start_time' => true,
         'end_time' => true,
         'quota' => true,
+        'quota_used' => true,
+        'estimated_minutes' => true,
         'note' => true,
         'is_create' => true,
         'created' => true,

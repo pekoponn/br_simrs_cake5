@@ -733,7 +733,7 @@ foreach ($historyGroups as $group) {
                         <i class="fa fa-search"></i> Buka Modal Cari Pasien
                     </button>
                     <div style="font-size:11px;color:#777;margin-top:6px;line-height:1.4;">
-                        Pencarian pasien tetap memakai modal. Ketik kode pasien / nama / NIK / telepon / alamat, hasil langsung muncul di bawah.
+                        Pencarian pasien tetap memakai modal. Ketik rekam medis / nama / NIK / telepon / alamat, hasil langsung muncul di bawah.
                     </div>
                 </div>
             </div>
@@ -797,7 +797,7 @@ foreach ($historyGroups as $group) {
                 <div class="panel-body">
                     <div class="row" style="margin-bottom:6px;">
                         <div class="col-md-2">
-                            <label>Kode Pasien</label>
+                            <label>Rekam Medis</label>
                             <input type="text" class="form-control input-sm" value="<?= h($patient->code ?? '-') ?>" readonly>
                         </div>
                         <div class="col-md-3">

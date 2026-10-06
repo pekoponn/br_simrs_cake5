@@ -200,11 +200,23 @@ $baseUrl = ['controller' => 'PatientAdmissions', 'action' => 'index'];
                 </div>
                 <div class="col-md-2">
                     <label>Tanggal Dari</label>
-                    <?= $this->Form->control('date_from', ['label' => false, 'type' => 'date', 'value' => $dateFrom, 'class' => 'form-control input-sm']) ?>
+                    <?= $this->Form->control('date_from', [
+                        'label' => false,
+                        'type' => 'text',
+                        'value' => $dateFrom,
+                        'class' => 'form-control input-sm datepicker-pa',
+                        'autocomplete' => 'off'
+                    ]) ?>
                 </div>
                 <div class="col-md-2">
                     <label>Sampai</label>
-                    <?= $this->Form->control('date_to', ['label' => false, 'type' => 'date', 'value' => $dateTo, 'class' => 'form-control input-sm']) ?>
+                    <?= $this->Form->control('date_to', [
+                        'label' => false,
+                        'type' => 'text',
+                        'value' => $dateTo,
+                        'class' => 'form-control input-sm datepicker-pa',
+                        'autocomplete' => 'off'
+                    ]) ?>
                 </div>
                 <div class="col-md-2">
                     <label>&nbsp;</label><br>
@@ -239,7 +251,7 @@ $baseUrl = ['controller' => 'PatientAdmissions', 'action' => 'index'];
                         </tr>
                     <?php elseif ($tab === 'rawat_jalan'): ?>
                         <tr>
-                            <th>No Antri</th><th>Resume</th><th>Aksi</th><th>Rek Medis</th><th>Dokter</th><th>No Reg</th><th>Nama Pasien</th><th>Tgl Masuk</th><th>Poli</th><th>Ruang</th><th>Status</th>
+                            <th class="pa-col-noantri">No Antri</th><th>Rek Medis</th><th>Dokter</th><th>No Reg</th><th class="pa-col-namapasien">Nama Pasien</th><th>Tgl Masuk</th><th>Poli</th><th>Ruang</th><th>Status</th><th class="pa-col-aksi">Aksi</th>
                         </tr>
                     <?php elseif ($tab === 'igd'): ?>
                         <tr>
@@ -257,7 +269,18 @@ $baseUrl = ['controller' => 'PatientAdmissions', 'action' => 'index'];
                 </thead>
                 <tbody>
                     <?php if ($totalRows === 0): ?>
-                        <?php $colspan = $tab === 'jkn' ? 12 : ($tab === 'rawat_jalan' || $tab === 'igd' ? 11 : (($tab === 'rawat_inap' || $tab === 'tutup_sementara') ? 15 : 8)); ?>
+                        <?php
+                        $colspan = 8;
+                        if ($tab === 'jkn') {
+                            $colspan = 12;
+                        } elseif ($tab === 'rawat_jalan') {
+                            $colspan = 10;
+                        } elseif ($tab === 'igd') {
+                            $colspan = 11;
+                        } elseif ($tab === 'rawat_inap' || $tab === 'tutup_sementara') {
+                            $colspan = 15;
+                        }
+                        ?>
                         <tr><td colspan="<?= $colspan ?>" class="text-center text-muted" style="padding:28px;">Belum ada data untuk filter ini.</td></tr>
                     <?php else: ?>
                         <?php $i = 1; ?>
@@ -281,18 +304,57 @@ $baseUrl = ['controller' => 'PatientAdmissions', 'action' => 'index'];
                                 </tr>
 
                             <?php elseif ($tab === 'rawat_jalan'): ?>
-                                <tr>
-                                    <td class="text-center big-queue"><?= h($r->queue_number ?? '-') ?></td>
-                                    <td class="text-center"><a href="#" class="btn btn-xs btn-info"><i class="fa fa-file-medical"></i></a></td>
-                                    <td class="text-center"><a href="#" class="btn btn-xs btn-teal">EMR</a> <a href="#" class="btn btn-xs btn-warning">CPPT</a></td>
+                                <?php
+                                $isBelumRegistrasi = ($r->status ?? '') === 'Belum Registrasi';
+                                $admissionUrl = $r->_url ?? null;
+                                $callQueueId = $r->_call_queue_id ?? null;
+                                $callFormId = $callQueueId ? ('call-form-' . $callQueueId) : '';
+                                $callCode = $r->queue_number ?? ($r->registration_no ?? '');
+                                ?>
+                                <?php if ($isBelumRegistrasi && $callQueueId): ?>
+                                    <?= $this->Form->create(null, [
+                                        'url' => ['controller' => 'PolyclinicQueues', 'action' => 'callQueue', $callQueueId],
+                                        'id' => $callFormId,
+                                        'style' => 'display:none;',
+                                    ]) ?>
+                                    <?= $this->Form->end() ?>
+                                <?php endif; ?>
+                                <tr<?= ($isBelumRegistrasi && $admissionUrl)
+                                    ? ' style="cursor:pointer;background:#fff8e6;" onclick="if($(event.target).closest(\'.queue-actions\').length){return;} window.location.href=\'' . h($admissionUrl) . '\';"'
+                                    : '' ?>>
+                                    <td class="text-center big-queue pa-col-noantri"><?= h($r->queue_number ?? '-') ?></td>
                                     <td><?= h($getRm($r)) ?></td>
                                     <td><?= h($getDoctor($r)) ?></td>
-                                    <td><?= h($getNoReg($r)) ?></td>
-                                    <td><strong><?= h($getPatientName($r)) ?></strong></td>
+                                    <td><?= h($getNoReg($r) ?: '-') ?></td>
+                                    <td class="pa-col-namapasien"><strong><?= h($getPatientName($r)) ?></strong></td>
                                     <td><?= $displayDateTime($r->visit_date ?? null, $r->visit_time ?? null) ?></td>
                                     <td><?= h($r->polyclinic_name ?? '') ?></td>
-                                    <td><?= h($r->room_name ?? $r->registration->room_name ?? $r->registration->room->room_name ?? '') ?></td>
-                                    <td><span class="label label-default"><?= h($r->status ?? '') ?></span></td>
+                                    <td><?= h($r->room_name ?? '') ?></td>
+                                    <td>
+                                        <span class="label <?= $isBelumRegistrasi ? 'label-warning' : 'label-success' ?>">
+                                            <?= h($r->status ?? '') ?>
+                                        </span>
+                                    </td>
+                                    <td class="text-center queue-actions pa-col-aksi">
+                                        <?php if ($isBelumRegistrasi): ?>
+                                            <?php if ($callQueueId): ?>
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-xs btn-primary btn-panggil-admisi"
+                                                    data-queue-code="<?= h($callCode) ?>"
+                                                    data-form-id="<?= h($callFormId) ?>">
+                                                    <i class="fa fa-bullhorn"></i> Panggil
+                                                </button>
+                                            <?php else: ?>
+                                                <span class="label label-default" title="Belum ada nomor antrian aktif untuk booking ini">
+                                                    <i class="fa fa-clock"></i> Menunggu Antrian
+                                                </span>
+                                            <?php endif; ?>
+                                            <?php if ($admissionUrl): ?>
+                                                <a href="<?= h($admissionUrl) ?>" class="btn btn-xs btn-success">Lengkapi Registrasi</a>
+                                            <?php endif; ?>
+                                        <?php endif; ?>
+                                    </td>
                                 </tr>
 
                             <?php elseif ($tab === 'igd'): ?>
@@ -371,9 +433,18 @@ $baseUrl = ['controller' => 'PatientAdmissions', 'action' => 'index'];
                 <a href="#" class="btn btn-default btn-sm">JKN Master</a>
             </div>
             <div class="pa-pagination">
-                <?= $this->Paginator->counter('Halaman {{page}} / {{pages}}, total {{count}} data') ?>
-                <?= $this->Paginator->prev('‹', ['class' => 'btn btn-default btn-xs']) ?>
-                <?= $this->Paginator->next('›', ['class' => 'btn btn-default btn-xs']) ?>
+                <?php if (!empty($paCustomPagination)): ?>
+                    Halaman <?= h($paCustomPagination['page']) ?> / <?= h($paCustomPagination['pages']) ?>, total <?= h($paCustomPagination['count']) ?> data
+                    <?= $this->Html->link('‹', $baseUrl + ['?' => ['tab' => $tab, 'q' => $q, 'date_from' => $dateFrom, 'date_to' => $dateTo, 'page' => max(1, $paCustomPagination['page'] - 1)]], ['class' => 'btn btn-default btn-xs']) ?>
+                    <?= $this->Html->link('›', $baseUrl + ['?' => ['tab' => $tab, 'q' => $q, 'date_from' => $dateFrom, 'date_to' => $dateTo, 'page' => min($paCustomPagination['pages'], $paCustomPagination['page'] + 1)]], ['class' => 'btn btn-default btn-xs']) ?>
+                <?php else: ?>
+                    <?= $this->Paginator->counter(
+                        'Halaman {{page}} / {{pages}}, total {{count}} data',
+                        ['model' => 'Registrations']
+                    ) ?>
+                    <?= $this->Paginator->prev('‹', ['class' => 'btn btn-default btn-xs']) ?>
+                    <?= $this->Paginator->next('›', ['class' => 'btn btn-default btn-xs']) ?>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -565,11 +636,32 @@ html, body {
     font-size: 16px;
     color: #1e3a5f;
 }
+.pa-col-noantri {
+    width: 90px;
+    text-align: center;
+}
+.pa-col-namapasien {
+    min-width: 240px;
+    white-space: normal;
+}
+.pa-col-aksi {
+    width: 190px;
+    text-align: center;
+    white-space: nowrap;
+}
+
 .btn-xs {
     padding: 3px 7px;
     font-size: 11px;
     line-height: 1.5;
     border-radius: 4px;
+}
+
+.btn-panggil-admisi.is-calling,
+.btn-panggil-admisi:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 .btn-teal {
     background-color: #17a2b8;
@@ -619,4 +711,143 @@ html, body {
     setInterval(tick, 1000);
     tick();
 })();
+</script>
+
+<script>
+$(function () {
+    $('.datepicker-pa').datepicker({
+        format: 'yyyy-mm-dd',
+        autoclose: true,
+        todayHighlight: true,
+        orientation: 'bottom auto'
+    });
+});
+</script>
+
+<script>
+$(function () {
+    var idVoice = null;
+    function loadIndonesianVoice() {
+        if (!('speechSynthesis' in window)) return;
+        var voices = window.speechSynthesis.getVoices();
+        idVoice = voices.find(function (v) { return v.lang === 'id-ID'; })
+               || voices.find(function (v) { return v.lang && v.lang.toLowerCase().indexOf('id') === 0; })
+               || null;
+    }
+    if ('speechSynthesis' in window) {
+        loadIndonesianVoice();
+        window.speechSynthesis.onvoiceschanged = loadIndonesianVoice;
+    }
+
+    function speakText(text, onDone) {
+        if (!('speechSynthesis' in window) || !text) {
+            if (onDone) onDone();
+            return;
+        }
+        try {
+            window.speechSynthesis.cancel();
+            var utter = new SpeechSynthesisUtterance(text);
+            utter.lang = 'id-ID';
+            if (idVoice) utter.voice = idVoice;
+            utter.rate = 0.9;
+            utter.pitch = 1;
+            utter.onend = function () { if (onDone) onDone(); };
+            utter.onerror = function () { if (onDone) onDone(); };
+            window.speechSynthesis.speak(utter);
+        } catch (e) {
+            if (onDone) onDone();
+        }
+    }
+
+    function playCallChime() {
+        try {
+            var ctx = new (window.AudioContext || window.webkitAudioContext)();
+            var notes = [880, 1108.73];
+            notes.forEach(function (freq, i) {
+                var osc  = ctx.createOscillator();
+                var gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                var start = ctx.currentTime + i * 0.22;
+                gain.gain.setValueAtTime(0.0001, start);
+                gain.gain.exponentialRampToValueAtTime(0.3, start + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.2);
+                osc.connect(gain).connect(ctx.destination);
+                osc.start(start);
+                osc.stop(start + 0.22);
+            });
+        } catch (e) {}
+    }
+
+    var ADMISSION_DESTINATION = 'admisi satu';
+    var CALL_LOCK_DURATION = 7000;
+    var isAdmissionCallLocked = false;
+
+    function announceAdmissionCall(queueCode, onDone) {
+        playCallChime();
+        var text = queueCode
+            ? ('Nomor ' + queueCode + ', silakan menuju ' + ADMISSION_DESTINATION + '.')
+            : ('Pasien berikutnya, silakan menuju ' + ADMISSION_DESTINATION + '.');
+        setTimeout(function () {
+            speakText(text, onDone);
+        }, 600);
+    }
+
+    function lockAdmissionCallButtons() {
+        isAdmissionCallLocked = true;
+        $('.btn-panggil-admisi')
+            .addClass('is-calling')
+            .prop('disabled', true)
+            .attr('aria-disabled', 'true');
+    }
+
+    function unlockAdmissionCallButtons() {
+        isAdmissionCallLocked = false;
+        $('.btn-panggil-admisi')
+            .removeClass('is-calling')
+            .prop('disabled', false)
+            .removeAttr('aria-disabled');
+    }
+
+    $(document).on('click', '.btn-panggil-admisi', function (e) {
+        e.preventDefault();
+
+        if (isAdmissionCallLocked) {
+            return;
+        }
+
+        var $btn = $(this);
+        var queueCode = $btn.data('queue-code');
+        var formId = $btn.data('form-id');
+
+        if (!confirm('Panggil nomor ' + queueCode + '?')) {
+            return;
+        }
+
+        lockAdmissionCallButtons();
+
+        var $form = formId ? $('#' + formId) : $();
+        var hasSubmitted = false;
+
+        function submitOnce() {
+            if (hasSubmitted) return;
+            hasSubmitted = true;
+            if ($form.length) {
+                $.ajax({
+                    url: $form.attr('action'),
+                    method: 'POST',
+                    data: $form.serialize(),
+                    dataType: 'text'
+                }).fail(function () {
+                    console.error('Gagal memanggil nomor antrian.');
+                });
+            }
+        }
+
+        announceAdmissionCall(queueCode, submitOnce);
+        setTimeout(submitOnce, 6000);
+
+        setTimeout(unlockAdmissionCallButtons, CALL_LOCK_DURATION);
+    });
+});
 </script>

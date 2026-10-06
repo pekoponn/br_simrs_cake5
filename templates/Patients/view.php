@@ -239,7 +239,7 @@ function fmtPatientDate($val, $fmt = 'd-m-Y') {
                 <div class="rm"><?= $display($medicalRecordNo) ?></div>
                 <h3><?= $display($patient->full_name) ?></h3>
                 <div class="meta">
-                    Kode Pasien: <?= $display($patientCode) ?> |
+                   Kode Pasien: <?= $display($patientCode) ?> |
                     <?= $display($patient->identity_type) ?>
                     <?= !empty($patient->identity_number) ? ' - ' . h($patient->identity_number) : '' ?>
                     |
@@ -252,7 +252,7 @@ function fmtPatientDate($val, $fmt = 'd-m-Y') {
                         <div class="value"><?= $display($medicalRecordNo) ?></div>
                     </div>
                     <div class="patient-summary-item">
-                        <div class="label-text">Kode Pasien</div>
+                        <div class="label-text">Rekam Medis</div>
                         <div class="value"><?= $display($patientCode) ?></div>
                     </div>
                     <div class="patient-summary-item">
@@ -308,6 +308,9 @@ function fmtPatientDate($val, $fmt = 'd-m-Y') {
                                     <?= !empty($patient->identity_number) ? ' - ' . h($patient->identity_number) : '' ?>
                                 </div>
                             </div>
+                            <div class="patient-detail-item">
+                                <div class="label-text">No Kartu BPJS</div>
+                                <div class="value"><?= $display($patient->insurance_card_no) ?></div>
                             <div class="patient-detail-item">
                                 <div class="label-text">Golongan Darah</div>
                                 <div class="value"><?= $display($patient->blood_type) ?></div>

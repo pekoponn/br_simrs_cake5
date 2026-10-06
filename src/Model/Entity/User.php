@@ -73,7 +73,10 @@ class User extends Entity
      */
     protected $_accessible = [
         'branch_id' => true,
+        'hrga_employee_id' => true,
+        'user_team' => true,
         'radius_id' => true,
+        'zona' => true,
         'face' => true,
         'code' => true,
         'staff' => true,

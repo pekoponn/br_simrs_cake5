@@ -29,6 +29,12 @@ $bankincomes = (isset($checkUrl['bankincomes'])) ? $checkUrl['bankincomes'] : ar
 // $warehouseReceive = (isset($checkUrl['warehousereceives'])) ? $checkUrl['warehousereceives'] : array();
 $patient = (isset($checkUrl['patients'])) ? $checkUrl['patients'] : array();
 $medicine = (isset($checkUrl['medicines'])) ? $checkUrl['medicines'] : array();
+$order = (isset($checkUrl['orders'])) ? $checkUrl['orders'] : array();
+$rencanaPembelian = (isset($checkUrl['rencanapembelians'])) ? $checkUrl['rencanapembelians'] : array();
+$orderPembelian = (isset($checkUrl['orderpembelians'])) ? $checkUrl['orderpembelians'] : array();
+$returPembelian = (isset($checkUrl['returpembelians'])) ? $checkUrl['returpembelians'] : array();
+$invoice = (isset($checkUrl['invoices'])) ? $checkUrl['invoices'] : array();
+$medicineStock = (isset($checkUrl['medicinestocks'])) ? $checkUrl['medicinestocks'] : array();
 $doctor = (isset($checkUrl['doctors'])) ? $checkUrl['doctors'] : array();
 $doctorSchedule = (isset($checkUrl['doctorschedules'])) ? $checkUrl['doctorschedules'] : array();
 $healthFacility = (isset($checkUrl['healthfacilities'])) ? $checkUrl['healthfacilities'] : array();
@@ -36,9 +42,11 @@ $insurance = (isset($checkUrl['insurances'])) ? $checkUrl['insurances'] : array(
 $nutritionCombine = (isset($checkUrl['nutritioncombine'])) ? $checkUrl['nutritioncombine'] : array();
 $nutritionMenu = (isset($checkUrl['nutritionmenus'])) ? $checkUrl['nutritionmenus'] : array();
 $outpatientBilling = (isset($checkUrl['outpatientbillings'])) ? $checkUrl['outpatientbillings'] : array();
+$paymentHistory = (isset($checkUrl['paymenthistories'])) ? $checkUrl['paymenthistories'] : array();
 $pharmacyItem = (isset($checkUrl['pharmacyitems'])) ? $checkUrl['pharmacyitems'] : array();
 $polyclinic = (isset($checkUrl['polyclinics'])) ? $checkUrl['polyclinics'] : array();
 $masterTindakan = (isset($checkUrl['mastertindakan'])) ? $checkUrl['mastertindakan'] : array();
+$masterTenagaMedis = (isset($checkUrl['mastertenagamedis'])) ? $checkUrl['mastertenagamedis'] : array();
 $masterIcd9 = (isset($checkUrl['mastericd9'])) ? $checkUrl['mastericd9'] : array();
 $masterIcd10 = (isset($checkUrl['mastericd10'])) ? $checkUrl['mastericd10'] : array();
 $masterLaboratories = (isset($checkUrl['masterlaboratories'])) ? $checkUrl['masterlaboratories'] : array();
@@ -51,6 +59,7 @@ $rooms = (isset($checkUrl['rooms'])) ? $checkUrl['rooms'] : array();
 $beds = (isset($checkUrl['beds'])) ? $checkUrl['beds'] : array();
 $polyclinicQueue = (isset($checkUrl['polyclinicqueues'])) ? $checkUrl['polyclinicqueues'] : array();
 $registration = (isset($checkUrl['registrations'])) ? $checkUrl['registrations'] : array();
+$praregistrations = (isset($checkUrl['praregistrations'])) ? $checkUrl['praregistrations'] : array();
 $patientAdmission = (isset($checkUrl['patientadmissions'])) ? $checkUrl['patientadmissions'] : array();
 $outpatientVisit = (isset($checkUrl['outpatientvisits'])) ? $checkUrl['outpatientvisits'] : array();
 $outpatientLetter = (isset($checkUrl['outpatientletters'])) ? $checkUrl['outpatientletters'] : array();
@@ -65,6 +74,24 @@ $bankaccounts = (isset($checkUrl['bankaccounts'])) ? $checkUrl['bankaccounts'] :
 
 $settings = (isset($checkUrl['settings'])) ? $checkUrl['settings'] : array();
 $users = (isset($checkUrl['users'])) ? $checkUrl['users'] : array();
+
+//-------------------- HR --------------------//
+$absences =  (isset($checkUrl['absences'])) ? $checkUrl['absences'] : array();
+$hrgaemployees = (isset($checkUrl['hrgaemployees'])) ? $checkUrl['hrgaemployees'] : array();
+$leaves = (isset($checkUrl['leaves'])) ? $checkUrl['leaves'] : array();
+$licenseabsents =  (isset($checkUrl['licenseabsents'])) ? $checkUrl['licenseabsents'] : array();
+$licenseearlyleaves =  (isset($checkUrl['licenseearlyleaves'])) ? $checkUrl['licenseearlyleaves'] : array();
+$overtimes =  (isset($checkUrl['overtimes'])) ? $checkUrl['overtimes'] : array();
+$workorders = (isset($checkUrl['workorders'])) ? $checkUrl['workorders'] : array();
+$hrgaattendances = (isset($checkUrl['hrgaattendances'])) ? $checkUrl['hrgaattendances'] : array();
+$hrgaholidays = (isset($checkUrl['hrgaholidays'])) ? $checkUrl['hrgaholidays'] : array();
+$salaries =  (isset($checkUrl['salaries'])) ? $checkUrl['salaries'] : array();
+$permissionlates =  (isset($checkUrl['permissionlates'])) ? $checkUrl['permissionlates'] : array();
+$assignments = (isset($checkUrl['assignments'])) ? $checkUrl['assignments'] : array();
+$outpermits = (isset($checkUrl['outpermits'])) ? $checkUrl['outpermits'] : array();
+$absentissues = (isset($checkUrl['absentissues'])) ? $checkUrl['absentissues'] : array();
+$payrolls = (isset($checkUrl['payrolls'])) ? $checkUrl['payrolls'] : array();
+$reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['reportattendances'] : array();
 
 ?>
 <div class="sidebar-bg"></div>
@@ -263,6 +290,140 @@ $users = (isset($checkUrl['users'])) ? $checkUrl['users'] : array();
 					</ul>
 				</li>
 				<?php  
+				}
+				if($hrgaemployees['index'] == 1 || $leaves['index'] == 1 || $licenseabsents['index'] == 1 || $licenseearlyleaves['index'] == 1 || $overtimes['index'] == 1 || $hrgaattendances['index'] == 1 || $hrgaholidays['index'] == 1 || $salaries['index'] == 1 || $payrolls['index'] == 1 || ($reportattendances['index'] ?? 0) == 1 || $permissionlates['index'] == 1 || ($assignments['index'] ?? 0) == 1 || $outpermits['index'] == 1|| $absences['add']==1 || $workorders['index']==1 || $absentissues['index']==1) {
+					$menuHr = ($getController=='hrgaemployees' || $getController=='leaves' || $getController=='licenseabsents' || $getController=='licenseearlyleaves' || $getController=='overtimes' || $getController=='hrgaattendances' || $getController=='hrgaholidays' || $getController=='salaries'|| $getController=='payrolls' || $getController=='reportattendances' || $getController=='permissionlates' || $getController=='assignments' || $getController=='outpermits'|| $getController=='absences' || $getController=='workorders' || $getController=='absentissues') ? 'active' :'';
+
+					$menuHrgaEmployees = ($getController == 'hrgaemployees') ? 'class="active"' : '';
+
+					$menuHrIjin = ($getController == 'licenseabsents' || $getController == 'licenseearlyleaves' || $getController == 'permissionlates' || $getController == 'outpermits') ? 'class="active"' : '';
+					$menuHrLicenseAbsents = ($getController == 'licenseabsents') ? 'class="active"' : '';
+					$menuHrLicenseEarlyLeaves = ($getController == 'licenseearlyleaves') ? 'class="active"' : '';
+					$menuPermissionLates = ($getController == 'permissionlates') ? 'class="active"' : '';
+					$menuOutPermits = ($getController == 'outpermits') ? 'class="active"' : '';
+
+					$menuHrgaAttendances = ($getController == 'hrgaattendances') ? 'class="active"' : '';
+					$menuHrgaHolidays = ($getController == 'hrgaholidays') ? 'class="active"' : '';
+					$menuSalaries = ($getController == 'salaries') ? 'class="active"' : '';
+					$menuPayrolls = ($getController == 'payrolls') ? 'class="active"' : '';
+					$menuReportAttendances = ($getController == 'reportattendances') ? 'class="active"' : '';
+					$menuHrOvertimes = ($getController == 'overtimes') ? 'class="active"' : '';
+					$menuHrLeaves = ($getController == 'leaves') ? 'class="active"' : '';
+					$menuAssignments = ($getController == 'assignments') ? 'class="active"' : '';
+					$menuAbsencesAdd = ($getController == 'absences' && $getAction == 'add') ? ' class="active"' : '';
+					$menuAbsences = ($getController == 'absences' && $getAction == 'index') ? ' class="active"' : '';
+					$menuDataWorkOrder = ($getController == 'workorders') ? 'class="active"' : '';
+					$menuAbsenceIssues = ($getController == 'absentissues') ? 'class="active"' : '';
+				?>
+				<li class="has-sub <?= $menuHr ?>">
+					<a href="javascript:;">
+						<b class="caret pull-right"></b>
+						<i class="fas fa-users"></i>
+						<span>HR</span>
+					</a>
+					<ul class="sub-menu">
+						<?php
+						if($absences['add'] == 1) {
+						?>
+						<li <?= $menuAbsencesAdd?>><?= $this->Html->link('Absensi', ['prefix' => 'Hr', 'controller' => 'Absences', 'action' => 'add'], ['fullBase' => true, 'escape' => false]) ?></li>
+						<?php
+						}
+						if($absences['index'] == 1) {
+						?>
+						<li <?= $menuAbsences?>><?= $this->Html->link('Daftar Absensi', ['prefix' => 'Hr', 'controller' => 'Absences', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?></li>
+						<?php
+						}
+						if($hrgaemployees['index'] == 1) {
+						?>
+						<li <?= $menuHrgaEmployees ?>><?= $this->Html->link('Karyawan', ['prefix' => 'Hr', 'controller' => 'HrgaEmployees', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?></li>
+						<?php
+						}
+						if ($leaves['index'] == 1) {
+						?>
+						<li <?= $menuHrLeaves ?>><?= $this->Html->link('Cuti', ['prefix' => 'Hr', 'controller' => 'Leaves', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?></li>
+						<?php
+						}
+						if ($overtimes['index'] == 1) {
+						?>
+						<li <?= $menuHrOvertimes ?>><?= $this->Html->link('Lembur', ['prefix' => 'Hr', 'controller' => 'Overtimes', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?></li>
+						<?php
+						}
+						?>
+						<li class="has-sub <?= $menuHrIjin ?>">
+							<a href="javascript:;">
+							<b class="caret"></b>
+							Ijin
+							</a>
+							<ul class="sub-menu">
+								<?php
+								if ($licenseabsents['index'] == 1) {
+								?>
+								<li <?= $menuHrLicenseAbsents ?>><?= $this->Html->link('Tidak Masuk', ['prefix' => 'Hr', 'controller' => 'LicenseAbsents', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?></li>
+								<?php
+								}
+								if ($licenseearlyleaves['index'] == 1) {
+								?>
+								<li <?= $menuHrLicenseEarlyLeaves ?>><?= $this->Html->link('Pulang Cepat', ['prefix' => 'Hr', 'controller' => 'LicenseEarlyLeaves', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?></li>
+								<?php
+								}
+								if ($permissionlates['index'] == 1) {
+								?>
+								<li <?= $menuPermissionLates ?>><?= $this->Html->link('Terlambat', ['prefix' => 'Hr', 'controller' => 'PermissionLates', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?></li>
+								<?php
+								}
+								if ($outpermits['index'] == 1) {
+								?>
+								<li <?= $menuOutPermits ?>><?= $this->Html->link('Izin Keluar Sementara', ['prefix' => 'Hr', 'controller' => 'OutPermits', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?></li>
+								<?php
+								}
+								?>
+							</ul>
+						</li>
+						<?php
+						if($hrgaattendances['index'] == 1) {
+						?>
+						<li <?= $menuHrgaAttendances ?>><?= $this->Html->link('Kehadiran', ['prefix' => 'Hr', 'controller' => 'HrgaAttendances', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?></li>
+						<?php
+						}
+						if($hrgaholidays['index'] == 1) {
+						?>
+						<li <?= $menuHrgaHolidays ?>><?= $this->Html->link('Tanggal Libur', ['prefix' => 'Hr', 'controller' => 'HrgaHolidays', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?></li>
+						<?php
+						}
+						if($salaries['index'] == 1) {
+						?>
+						<li <?= $menuSalaries ?>><?= $this->Html->link('Gaji Pegawai', ['prefix' => 'Hr', 'controller' => 'Salaries', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?></li>
+						<?php
+						}
+						if($payrolls['index'] == 1) {
+						?>
+						<li <?= $menuPayrolls ?>><?= $this->Html->link('Payroll', ['prefix' => false, 'controller' => 'Payrolls', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?></li>
+						<?php
+						}
+						if(($reportattendances['index'] ?? 0) == 1) {
+						?>
+						<li <?= $menuReportAttendances ?>><?= $this->Html->link('Report Kehadiran', ['prefix' => 'Hr', 'controller' => 'ReportAttendances', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?></li>
+						<?php
+						}
+						if(($assignments['index'] ?? 0) == 1) {
+						?>
+						<li <?= $menuAssignments ?>><?= $this->Html->link('Penugasan', ['prefix' => 'Hr', 'controller' => 'Assignments', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?></li>
+						<?php
+						}
+						if($workorders['index']==1) {
+						?>
+						<li <?= $menuDataWorkOrder ?>><?= $this->Html->link('Surat Perintah Kerja Lembur', ['prefix' => 'Hr', 'controller' => 'WorkOrders', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?></li>
+						<?php
+						}
+						if($absentissues['index']==1) {
+						?>
+						<li <?= $menuAbsenceIssues ?>><?= $this->Html->link('Pengaduan Absensi', ['prefix' => 'Hr', 'controller' => 'AbsentIssues', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?></li>
+						<?php
+						}
+						?>
+					</ul>
+				</li>
+				<?php
 				} 
 				if ($purchaseOfGood['index'] == 1 || $placementOfGood['index'] == 1 || $mutation['index'] == 1 || $truckSchedule['index'] == 1 || $warehouseReceive['index'] == 1 || $submission['index'] == 1) {
 
@@ -361,11 +522,12 @@ $users = (isset($checkUrl['users'])) ? $checkUrl['users'] : array();
 					</li>
 				<?php
 				}
-				if (!empty($polyclinicQueue['index']) || !empty($registration['index']) || !empty($patientAdmission['index'])) {
+				if (!empty($polyclinicQueue['index']) || !empty($polyclinicQueue['kiosk']) || !empty($polyclinicQueue['kioskNew']) || !empty($registration['index']) || !empty($praregistrations['index']) || !empty($patientAdmission['index'])) {
 
-					$menuPolyclinicQueue = ($getController == 'polyclinicqueues' || $getController == 'registrations' || $getController == 'patientadmissions') ? 'active' : '';
+					$menuPolyclinicQueue = ($getController == 'polyclinicqueues' || $getController == 'registrations' || $getController == 'praregistrations' || $getController == 'patientadmissions') ? 'active' : '';
 					$menuPolyclinicQueueIndex = ($getController == 'polyclinicqueues') ? ' class="active"' : '';
 					$menuRegistrationIndex = ($getController == 'registrations') ? ' class="active"' : '';
+					$menuPraRegistrationIndex = ($getController == 'praregistrations') ? ' class="active"' : '';
 					$menuPatientAdmissionIndex = ($getController == 'patientadmissions') ? ' class="active"' : '';
 				?>
 					<li class="has-sub <?= $menuPolyclinicQueue ?>">
@@ -405,6 +567,19 @@ $users = (isset($checkUrl['users'])) ? $checkUrl['users'] : array();
 								) ?>
 							</li>
 
+							<?php if (!empty($polyclinicQueue['kioskNew'])): ?>
+								<li <?= ($getController == 'polyclinicqueues' && $action == 'kioskNew') ? 'class="active"' : '' ?>>
+									<?= $this->Html->link(
+										'Kiosk New',
+										[
+											'controller' => 'PolyclinicQueues',
+											'action' => 'kioskNew'
+										],
+										['fullBase' => true, 'escape' => false]
+									) ?>
+								</li>
+							<?php endif; ?>
+
 							<li <?= $menuRegistrationIndex ?>>
 								<?= $this->Html->link(
 									'Registration',
@@ -418,6 +593,26 @@ $users = (isset($checkUrl['users'])) ? $checkUrl['users'] : array();
 									]
 								) ?>
 							</li>
+
+							<?php
+							if (!empty($praregistrations['index'])) {
+							?>
+								<li <?= $menuPraRegistrationIndex ?>>
+									<?= $this->Html->link(
+										'Pra Registration',
+										[
+											'controller' => 'PraRegistrations',
+											'action' => 'index'
+										],
+										[
+											'fullBase' => true,
+											'escape' => false
+										]
+									) ?>
+								</li>
+							<?php
+							}
+							?>
 
 							<?php
 							if (!empty($patientAdmission['index'])) {
@@ -444,11 +639,12 @@ $users = (isset($checkUrl['users'])) ? $checkUrl['users'] : array();
 				<?php
 				}
 
-				if (!empty($outpatientVisit['index']) || !empty($outpatientBilling['index']) || !empty($medicalRecord['index']) || !empty($outpatientLetter['index'])) {
+				if (!empty($outpatientVisit['index']) || !empty($outpatientVisit['doctorQueue']) || !empty($outpatientVisit['display']) || !empty($outpatientVisit['displaySettings']) || !empty($medicalRecord['index']) || !empty($outpatientLetter['index'])) {
 
-					$menuOutpatientVisit = ($getController == 'outpatientvisits' || $getController == 'outpatientbillings' || $getController == 'medicalrecords' || $getController == 'outpatientletters') ? 'active' : '';
-					$menuOutpatientVisitIndex = ($getController == 'outpatientvisits') ? ' class="active"' : '';
-					$menuOutpatientBillingIndex = ($getController == 'outpatientbillings') ? ' class="active"' : '';
+					$menuOutpatientVisit = ($getController == 'outpatientvisits' || $getController == 'medicalrecords' || $getController == 'outpatientletters') ? 'active' : '';
+					$menuOutpatientVisitIndex = ($getController == 'outpatientvisits' && $action == 'index') ? ' class="active"' : '';
+					$menuOutpatientVisitDisplay = ($getController == 'outpatientvisits' && $action == 'display') ? ' class="active"' : '';
+					$menuOutpatientVisitDisplaySettings = ($getController == 'outpatientvisits' && $action == 'displaySettings') ? ' class="active"' : '';
 					$menuMedicalRecordIndex = ($getController == 'medicalrecords') ? ' class="active"' : '';
 					$menuOutpatientLetterIndex = ($getController == 'outpatientletters') ? ' class="active"' : '';
 				?>
@@ -460,28 +656,14 @@ $users = (isset($checkUrl['users'])) ? $checkUrl['users'] : array();
 						</a>
 
 						<ul class="sub-menu">
-							<li <?= $menuOutpatientVisitIndex ?>>
-								<?= $this->Html->link(
-									'Kunjungan Rawat Jalan',
-									[
-										'controller' => 'OutpatientVisits',
-										'action' => 'index'
-									],
-									[
-										'fullBase' => true,
-										'escape' => false
-									]
-								) ?>
-							</li>
-
 							<?php
-							if (!empty($outpatientBilling['index'])) {
+							if (!empty($outpatientVisit['index'])) {
 							?>
-								<li <?= $menuOutpatientBillingIndex ?>>
+								<li <?= $menuOutpatientVisitIndex ?>>
 									<?= $this->Html->link(
-										'Kasir Rawat Jalan',
+										'Kunjungan Rawat Jalan',
 										[
-											'controller' => 'OutpatientBillings',
+											'controller' => 'OutpatientVisits',
 											'action' => 'index'
 										],
 										[
@@ -490,9 +672,28 @@ $users = (isset($checkUrl['users'])) ? $checkUrl['users'] : array();
 										]
 									) ?>
 								</li>
+								<?php if (!empty($outpatientVisit['doctorQueue'])): ?><li <?= ($getController == 'outpatientvisits' && $action == 'doctorQueue') ? ' class="active"' : '' ?>>
+									<?= $this->Html->link('Menu Dokter - Daftar Pasien', ['controller' => 'OutpatientVisits', 'action' => 'doctorQueue'], ['fullBase' => true]) ?>
+								</li>
+								<?php endif; ?>
 							<?php
 							}
+							?>
 
+							<?php if (!empty($outpatientVisit['display'])) { ?>
+								<li <?= $menuOutpatientVisitDisplay ?>>
+									<?= $this->Html->link(
+										'Display Antrean Poli',
+										['controller' => 'OutpatientVisits', 'action' => 'display'],
+										['fullBase' => true, 'escape' => false]
+									) ?>
+								</li>
+							<?php } ?>
+							<?php if (!empty($outpatientVisit['displaySettings'])) { ?>
+								<li <?= $menuOutpatientVisitDisplaySettings ?>><?= $this->Html->link('Pengaturan Display', ['controller'=>'OutpatientVisits','action'=>'displaySettings']) ?></li>
+							<?php } ?>
+
+							<?php
 							if (!empty($medicalRecord['index'])) {
 							?>
 								<li <?= $menuMedicalRecordIndex ?>>
@@ -534,6 +735,62 @@ $users = (isset($checkUrl['users'])) ? $checkUrl['users'] : array();
 				<?php
 				}
 
+				if (!empty($outpatientBilling['index']) || !empty($paymentHistory['index'])) {
+
+					$menuKasir = ($getController == 'outpatientbillings' || $getController == 'paymenthistories') ? 'active' : '';
+					$menuKasirSentralIndex = ($getController == 'outpatientbillings') ? ' class="active"' : '';
+					$menuHistorisKasirIndex = ($getController == 'paymenthistories') ? ' class="active"' : '';
+				?>
+					<li class="has-sub <?= $menuKasir ?>">
+						<a href="javascript:;">
+							<b class="caret pull-right"></b>
+							<i class="fa fa-cash-register"></i>
+							<span>Kasir</span>
+						</a>
+
+						<ul class="sub-menu">
+							<?php
+							if (!empty($outpatientBilling['index'])) {
+							?>
+								<li <?= $menuKasirSentralIndex ?>>
+									<?= $this->Html->link(
+										'Kasir Sentral',
+										[
+											'controller' => 'OutpatientBillings',
+											'action' => 'index'
+										],
+										[
+											'fullBase' => true,
+											'escape' => false
+										]
+									) ?>
+								</li>
+							<?php
+							}
+
+							if (!empty($paymentHistory['index'])) {
+							?>
+								<li <?= $menuHistorisKasirIndex ?>>
+									<?= $this->Html->link(
+										'Historis Kasir',
+										[
+											'controller' => 'PaymentHistories',
+											'action' => 'index'
+										],
+										[
+											'fullBase' => true,
+											'escape' => false
+										]
+									) ?>
+								</li>
+							<?php
+							}
+							?>
+						</ul>
+					</li>
+				<?php
+				}
+
 				if (!empty($emergencyEntry['index'])) {
 
 					$menuEmergencyEntry = ($getController == 'emergencyentries') ? 'active' : '';
@@ -543,13 +800,13 @@ $users = (isset($checkUrl['users'])) ? $checkUrl['users'] : array();
 						<a href="javascript:;">
 							<b class="caret pull-right"></b>
 							<i class="fa fa-ambulance"></i>
-							<span>Rawat IGD</span>
+							<span>IGD</span>
 						</a>
 
 						<ul class="sub-menu">
 							<li <?= $menuEmergencyEntryIndex ?>>
 								<?= $this->Html->link(
-									'Instansi Rawat IGD',
+									'Daftar Pasien IGD',
 									[
 										'controller' => 'EmergencyEntries',
 										'action' => 'index'
@@ -607,10 +864,10 @@ $users = (isset($checkUrl['users'])) ? $checkUrl['users'] : array();
 					$insurance['index'] == 1 ||
 					$nutritionCombine['index'] == 1 ||
 					$nutritionMenu['index'] == 1 ||
-					$outpatientBilling['index'] == 1 ||
 					$pharmacyItem['index'] == 1 ||
 					$polyclinic['index'] == 1 ||
 					!empty($masterTindakan['index']) ||
+					!empty($masterTenagaMedis['index']) ||
 					!empty($masterIcd9['index']) ||
 					!empty($masterIcd10['index']) ||
 					!empty($masterRadiologies['index']) ||
@@ -628,6 +885,7 @@ $users = (isset($checkUrl['users'])) ? $checkUrl['users'] : array();
 						$getController == 'medicinegroups' ||
 						$getController == 'patients' ||
 						$getController == 'mastertindakan' ||
+						$getController == 'mastertenagamedis' ||
 						$getController == 'mastericd9' ||
 						$getController == 'mastericd10' ||
 						$getController == 'masterradiologies' ||
@@ -635,7 +893,6 @@ $users = (isset($checkUrl['users'])) ? $checkUrl['users'] : array();
 						$getController == 'masterpenjamins' ||
 						$getController == 'masterpatientreferrers' ||
 						$getController == 'mastertreatmentpackages' ||
-						$getController == 'outpatientbillings' ||
 						$getController == 'beds' ||
 						$getController == 'rooms' || $getController=='bankaccounts'
 					) ? 'active' : '';
@@ -654,7 +911,6 @@ $users = (isset($checkUrl['users'])) ? $checkUrl['users'] : array();
 					$menuMasterPenjamins = ($getController == 'masterpenjamins') ? ' class="active"' : '';
 					$menuMasterPatientReferrers = ($getController == 'masterpatientreferrers') ? ' class="active"' : '';
 					$menuMasterTreatmentPackages = ($getController == 'mastertreatmentpackages') ? ' class="active"' : '';
-					$menuOutpatientBilling = ($getController == 'outpatientbillings') ? ' class="active"' : '';
 					$menuPatientIndex = ($getController == 'patients') ? ' class="active"' : '';
 					$menuDoctorIndex = ($getController == 'doctors') ? ' class="active"' : '';
 					$menuDoctorScheduleIndex = ($getController == 'doctorschedules') ? ' class="active"' : '';
@@ -665,6 +921,7 @@ $users = (isset($checkUrl['users'])) ? $checkUrl['users'] : array();
 					$menuPharmacyItemIndex = ($getController == 'pharmacyitems') ? ' class="active"' : '';
 					$menuPolyclinicIndex = ($getController == 'polyclinics') ? ' class="active"' : '';
 					$menuMasterTindakanIndex = ($getController == 'mastertindakan') ? ' class="active"' : '';
+					$menuMasterTenagaMedisIndex = ($getController == 'mastertenagamedis') ? ' class="active"' : '';
 					$menuMasterIcd9Index = ($getController == 'mastericd9') ? ' class="active"' : '';
 					$menuMasterIcd10Index = ($getController == 'mastericd10') ? ' class="active"' : '';
 					$menuMasterRadiologiesIndex = ($getController == 'masterradiologies') ? ' class="active"' : '';
@@ -787,14 +1044,6 @@ $users = (isset($checkUrl['users'])) ? $checkUrl['users'] : array();
 							<?php
 							}
 
-							if ($outpatientBilling['index'] == 1) {
-							?>
-								<li <?= $menuOutpatientBilling ?>>
-									<?= $this->Html->link('Outpatient Billing', ['prefix' => false,'controller' => 'OutpatientBillings', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
-								</li>
-							<?php
-							}
-
 							if ($pharmacyItem['index'] == 1) {
 							?>
 								<li <?= $menuPharmacyItemIndex ?>>
@@ -807,6 +1056,13 @@ $users = (isset($checkUrl['users'])) ? $checkUrl['users'] : array();
 							?>
 								<li <?= $menuMasterTindakanIndex ?>>
 									<?= $this->Html->link('Master Tindakan', ['prefix' => false,'controller' => 'MasterTindakan', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+								</li>
+							<?php
+							}
+							if (!empty($masterTenagaMedis['index'])) {
+							?>
+								<li <?= $menuMasterTenagaMedisIndex ?>>
+									<?= $this->Html->link('Master Tenaga Medis', ['prefix' => false,'controller' => 'MasterTenagaMedis', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
 							<?php
 							}
@@ -911,6 +1167,8 @@ $users = (isset($checkUrl['users'])) ? $checkUrl['users'] : array();
 					$menuChangePassword = ($getController == 'users' && $getAction == 'changePassword') ? ' class="active"' : '';
 					$menuBranches = ($getController == 'branches' && $getAction == 'index') ? 'class="active"' : '';
 					$menuSettings = ($getController == 'settings' && $getAction == 'index') ? ' class="active"' : '';
+					$menuAddFace = ($getController=='users' && $getAction=='addFace')?' class="active"':'';	
+					$menuChangePin = ($getController == 'users' && $getAction == 'changePin') ? ' class="active"' : '';
 				?>
 
 					<li class="has-sub <?= $menuSetting ?>">
@@ -927,24 +1185,29 @@ $users = (isset($checkUrl['users'])) ? $checkUrl['users'] : array();
 					if ($users['index'] == 1) {
 					?>
 						<li<?= $menuUser ?>>
-							<?= $this->Html->link('User', ['prefix' => false, 'controller' => 'Users', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+						<?= $this->Html->link('User', ['prefix'=>false, 'controller' => 'Users', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+						</li>
+					<?php
+					}
+					if($users['addFace']==1 && (empty($getUser->face) || $getUser->face == null)){
+					?>
+					<li<?= $menuAddFace ?>><?= $this->Html->link('Tambah Wajah', ['prefix'=>false, 'controller' => 'Users', 'action' => 'addFace',$getUser->id], ['fullBase'=>true, 'escape' => false]) ?></li>
+					<?php
+					}
+					if ($branch['index'] == 1) {
+					?>
+						<li<?= $menuBranches ?>>
+							<?= $this->Html->link('Cabang', ['controller' => 'Branches', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 							</li>
 						<?php
 					}
-					if ($branch['index'] == 1) {
-						?>
-							<li<?= $menuBranches ?>>
-								<?= $this->Html->link('Cabang', ['prefix' => 'Master', 'controller' => 'Branches', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
-								</li>
-							<?php
-						}
-						if ($settings['index'] == 1) {
-							?>
-								<li<?= $menuSettings ?>>
-									<?= $this->Html->link('Perusahaan', ['prefix' => false, 'controller' => 'Settings', 'action' => 'edit/1'], ['fullBase' => true, 'escape' => false]) ?>
-									</li>
-								<?php } ?>
-		</ul>
+					if ($settings['index'] == 1) {
+					?>
+					<li<?= $menuSettings ?>>
+						<?= $this->Html->link('Perusahaan', ['controller' => 'Settings', 'action' => 'edit/1'], ['fullBase' => true, 'escape' => false]) ?>
+						</li>
+					<?php } ?>
+			</ul>
 		</li>
 	<?php } ?>
 	<li><a href="javascript:;" class="sidebar-minify-btn" data-click="sidebar-minify"><i

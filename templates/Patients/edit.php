@@ -49,23 +49,48 @@ $patientFieldValue = function (string $field, $fallback = '') use ($patient) {
         <div class="row">
             <div class="col-md-4">
                 <div class="form-group">
-                    <label>Kode Pasien</label>
+                    <label>Rekam Medis</label>
                     <?= $this->Form->control('code', [
                         'label'    => false,
                         'class'    => 'form-control',
                         'readonly' => true,
                     ]) ?>
-                    <small class="text-muted">Kode pasien otomatis, tidak bisa diubah.</small>
+                    <small class="text-muted">Rekam Medis otomatis, tidak bisa diubah.</small>
                 </div>
             </div>
 
-            <div class="col-md-8">
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label>Gelar</label>
+                    <?= $this->Form->control('title', [
+                        'type'    => 'select',
+                        'label'   => false,
+                        'options' => ['Tn' => 'Tn', 'Ny' => 'Ny', 'Nn' => 'Nn', 'An' => 'An', 'By' => 'By'],
+                        'empty'   => '-- Pilih --',
+                        'class'   => 'form-control select2Form',
+                    ]) ?>
+                </div>
+            </div>
+
+            <div class="col-md-6">
                 <div class="form-group">
                     <label>Nama Lengkap <span class="text-danger">*</span></label>
                     <?= $this->Form->control('full_name', [
                         'label'       => false,
                         'class'       => 'form-control',
                         'placeholder' => 'Nama lengkap pasien',
+                    ]) ?>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>No. Kartu (BPJS/Asuransi)</label>
+                    <?= $this->Form->control('insurance_card_no', [
+                        'label'       => false,
+                        'class'       => 'form-control',
+                        'placeholder' => 'Boleh dikosongkan',
+                        'required'    => false,
                     ]) ?>
                 </div>
             </div>
@@ -171,10 +196,12 @@ $patientFieldValue = function (string $field, $fallback = '') use ($patient) {
                         'type'    => 'select',
                         'label'   => false,
                         'options' => [
-                            'Islam'    => 'Islam',   'Kristen' => 'Kristen',
-                            'Katolik'  => 'Katolik', 'Hindu'   => 'Hindu',
-                            'Buddha'   => 'Buddha',  'Konghucu'=> 'Konghucu',
-                            'Lainnya'  => 'Lainnya',
+                            'ISLAM'     => 'Islam',
+                            'KRISTEN'   => 'Kristen',
+                            'KATOLIK'   => 'Katolik',
+                            'HINDU'     => 'Hindu',
+                            'BUDDHA'    => 'Buddha',
+                            'KONGHUCU'  => 'Konghucu',
                         ],
                         'empty' => '-- Pilih --',
                         'class' => 'form-control select2Form',
@@ -189,9 +216,18 @@ $patientFieldValue = function (string $field, $fallback = '') use ($patient) {
                         'type'    => 'select',
                         'label'   => false,
                         'options' => [
-                            'SD' => 'SD', 'SMP' => 'SMP', 'SMA/SMK' => 'SMA/SMK',
-                            'D3' => 'D3', 'S1' => 'S1', 'S2' => 'S2',
-                            'S3' => 'S3', 'Lainnya' => 'Lainnya',
+                            'TIDAK SEKOLAH' => 'Tidak Sekolah',
+                            'SD'            => 'SD',
+                            'SMP'           => 'SMP',
+                            'SMA / SMK'     => 'SMA / SMK',
+                            'D1'            => 'D1',
+                            'D2'            => 'D2',
+                            'D3'            => 'D3',
+                            'D4'            => 'D4',
+                            'S1'            => 'S1',
+                            'S2'            => 'S2',
+                            'S3'            => 'S3',
+                            'Lainnya' => 'Lainnya',
                         ],
                         'empty' => '-- Pilih --',
                         'class' => 'form-control select2Form',
@@ -206,10 +242,10 @@ $patientFieldValue = function (string $field, $fallback = '') use ($patient) {
                         'type'    => 'select',
                         'label'   => false,
                         'options' => [
-                            'Belum Menikah' => 'Belum Menikah',
-                            'Menikah'       => 'Menikah',
-                            'Cerai Hidup'   => 'Cerai Hidup',
-                            'Cerai Mati'    => 'Cerai Mati',
+                            'BELUM MENIKAH' => 'Belum Menikah',
+                            'MENIKAH'       => 'Menikah',
+                            'CERAI HIDUP'   => 'Cerai Hidup',
+                            'CERAI MATI'    => 'Cerai Mati',
                         ],
                         'empty' => '-- Pilih --',
                         'class' => 'form-control select2Form',

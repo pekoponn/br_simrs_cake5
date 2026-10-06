@@ -3,6 +3,14 @@
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\MasterTindakan $masterTindakan
  */
+
+$shareLabelMap = ['rs_dr' => 'RS+DR', 'rs' => 'RS', 'dr' => 'DR'];
+
+$priceGroups = [
+    'umum'    => ['label' => 'Umum',      'color' => '#155724', 'bg' => '#d4edda'],
+    'bpjs'    => ['label' => 'BPJS',      'color' => '#0c5460', 'bg' => '#cff4fc'],
+    'reimbes' => ['label' => 'Reimburse', 'color' => '#856404', 'bg' => '#fff3cd'],
+];
 ?>
 
 <?= $this->Krs->breadcrumb('Master Data', 'Detail Master Tindakan') ?>
@@ -31,7 +39,7 @@
             </span>
         </div>
 
-        <!-- Detail card -->
+        <!-- Kategori & Keterangan -->
         <div class="table-responsive mt-detail-wrap">
             <table class="table table-bordered mt-detail-table">
                 <tbody>
@@ -42,16 +50,6 @@
                                 <?= h($masterTindakan->kategori ?: '-') ?>
                             </span>
                         </td>
-                    </tr>
-                    <tr>
-                        <th><i class="fa fa-money-bill-wave"></i> Harga</th>
-                        <td class="mt-price">
-                            Rp <?= number_format($masterTindakan->harga ?? 0, 0, ',', '.') ?>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th><i class="fa fa-balance-scale"></i> Satuan</th>
-                        <td><?= h($masterTindakan->satuan ?: '-') ?></td>
                     </tr>
                     <tr>
                         <th><i class="fa fa-align-left"></i> Keterangan</th>
@@ -71,6 +69,52 @@
                     </tr>
                 </tbody>
             </table>
+        </div>
+
+        <!-- Harga per jenis jaminan -->
+        <div class="row">
+            <?php foreach ($priceGroups as $key => $g):
+                $harga  = $masterTindakan->{'harga_' . $key} ?? 0;
+                $persen = $masterTindakan->{'persen_dokter_' . $key} ?? 0;
+                $share  = $masterTindakan->{'share_type_' . $key} ?? 'rs_dr';
+                $komisi = $harga * $persen / 100;
+                $jasaRs = $harga - $komisi;
+            ?>
+                <div class="col-md-4">
+                    <div class="mt-price-card" style="border-top:3px solid <?= $g['color'] ?>;">
+                        <div class="mt-price-card-title" style="color:<?= $g['color'] ?>;">
+                            <?= h($g['label']) ?>
+                        </div>
+
+                        <div class="mt-price-main">
+                            Rp <?= number_format((float)$harga, 0, ',', '.') ?>
+                        </div>
+
+                        <div class="mt-price-sub">
+                            <span>% Dokter</span>
+                            <strong><?= number_format((float)$persen, 0) ?>%</strong>
+                        </div>
+                        <div class="mt-price-sub">
+                            <span>Share Type</span>
+                            <strong style="background:<?= $g['bg'] ?>; color:<?= $g['color'] ?>;
+                                         padding:1px 8px; border-radius:10px;">
+                                <?= $shareLabelMap[$share] ?? $share ?>
+                            </strong>
+                        </div>
+
+                        <div class="mt-price-result">
+                            <div>
+                                <span>Komisi Dokter</span>
+                                <strong>Rp <?= number_format($komisi, 0, ',', '.') ?></strong>
+                            </div>
+                            <div>
+                                <span>Jasa RS</span>
+                                <strong>Rp <?= number_format($jasaRs, 0, ',', '.') ?></strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
         </div>
 
         <div class="mt-actions">
@@ -144,11 +188,6 @@
     vertical-align:middle;
     font-size:13px;
 }
-.mt-price {
-    font-weight:800;
-    font-size:16px;
-    color:#198754;
-}
 .badge-category {
     background:#e9ecef;
     border:1px solid #ced4da;
@@ -176,5 +215,53 @@
     display:flex;
     justify-content:flex-end;
     gap:6px;
+    margin-top:16px;
 }
+
+.mt-price-card {
+    background:#fff;
+    border:1px solid #dee2e6;
+    border-radius:6px;
+    padding:12px 14px;
+    margin-bottom:14px;
+}
+.mt-price-card-title {
+    font-size:12px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+    margin-bottom:6px;
+}
+.mt-price-main {
+    font-size:20px;
+    font-weight:800;
+    color:#1e3a5f;
+    margin-bottom:8px;
+}
+.mt-price-sub {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size:12px;
+    color:#6c757d;
+    padding:3px 0;
+}
+.mt-price-sub strong {
+    font-size:11px;
+    font-weight:700;
+}
+.mt-price-result {
+    margin-top:10px;
+    background:#f8f9fa;
+    border-radius:4px;
+    padding:6px 8px;
+    font-size:11px;
+}
+.mt-price-result div {
+    display:flex;
+    justify-content:space-between;
+    padding:2px 0;
+}
+.mt-price-result span { color:#6c757d; }
+.mt-price-result strong { color:#1e3a5f; }
 </style>

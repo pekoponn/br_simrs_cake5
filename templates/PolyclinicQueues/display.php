@@ -30,6 +30,18 @@ $queueSource = function ($queue): string {
 };
 
 $currentStatus = $calledQueue ? 'Sedang dipanggil' : 'Belum ada panggilan';
+
+// Sebelum jam 14:00 tampilkan antrian A, mulai jam 14:00 tampilkan antrian B.
+$queueShiftPrefix = ((int)date('G') >= 14) ? 'B' : 'A';
+
+$waitingQueueList = array_values(array_filter(
+    !empty($waitingQueueList)
+        ? (is_array($waitingQueueList) ? $waitingQueueList : $waitingQueueList->toList())
+        : [],
+    function ($item) use ($queueShiftPrefix) {
+        return strtoupper(substr((string)($item->code ?? ''), 0, 1)) === $queueShiftPrefix;
+    }
+));
 ?>
 
 <script>
@@ -82,7 +94,7 @@ $currentStatus = $calledQueue ? 'Sedang dipanggil' : 'Belum ada panggilan';
         flex-direction: column;
         height: 100vh;
         overflow: hidden;
-        padding: 18px 28px;
+        padding: 10px 28px;
         color: #172033;
         background:
             linear-gradient(135deg, rgba(232, 245, 241, 0.96), rgba(236, 243, 252, 0.96)),
@@ -107,25 +119,25 @@ $currentStatus = $calledQueue ? 'Sedang dipanggil' : 'Belum ada panggilan';
     }
 
     .brand-logo {
-        width: 78px;
-        height: 78px;
-        padding: 8px;
-        border: 1px solid #d8e3ec;
-        border-radius: 18px;
-        background: #fff;
-        box-shadow: 0 10px 24px rgba(15, 118, 110, 0.16);
-    }
+    width: 52px;
+    height: 52px;
+    padding: 5px;
+    border: 1px solid #d8e3ec;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 10px 24px rgba(15, 118, 110, 0.16);
+}
 
-    .brand-logo img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-    }
+.brand-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
 
     .brand-title {
         margin: 0;
         color: #112136;
-        font-size: clamp(21px, 2vw, 31px);
+        font-size: clamp(17px, 1.5vw, 24px);
         font-weight: 900;
         line-height: 1.05;
         letter-spacing: 0;
@@ -134,13 +146,13 @@ $currentStatus = $calledQueue ? 'Sedang dipanggil' : 'Belum ada panggilan';
     .brand-subtitle {
         margin-top: 4px;
         color: #667085;
-        font-size: clamp(13px, 1.1vw, 16px);
+        font-size: clamp(11px, 0.9vw, 14px);
         font-weight: 800;
     }
 
     .time-panel {
-        min-width: 190px;
-        padding: 9px 14px;
+        min-width: 160px;
+        padding: 6px 12px;
         border: 1px solid #d8e3ec;
         border-radius: 18px;
         background: rgba(255, 255, 255, 0.86);
@@ -157,7 +169,7 @@ $currentStatus = $calledQueue ? 'Sedang dipanggil' : 'Belum ada panggilan';
     .time-clock {
         margin-top: 3px;
         color: #112136;
-        font-size: clamp(22px, 2.2vw, 32px);
+        font-size: clamp(18px, 1.7vw, 26px);
         font-weight: 900;
         line-height: 1;
     }
@@ -195,15 +207,15 @@ $currentStatus = $calledQueue ? 'Sedang dipanggil' : 'Belum ada panggilan';
             "current current"
             "online onsite";
         gap: 14px 20px;
-        width: min(760px, 100%);
+        width: min(900px, 100%);
         align-items: center;
         justify-items: center;
     }
 
     .display-card {
         width: 100%;
-        min-height: 145px;
-        padding: 14px 18px;
+        min-height: 200px;
+        padding: 20px 22px;
         border: 1px solid rgba(214, 226, 236, 0.94);
         border-radius: 15px;
         background: rgba(255, 255, 255, 0.94);
@@ -229,8 +241,8 @@ $currentStatus = $calledQueue ? 'Sedang dipanggil' : 'Belum ada panggilan';
 
     .current-card {
         grid-area: current;
-        width: min(360px, 100%);
-        min-height: 175px;
+        width: min(460px, 100%);
+        min-height: 250px;
         border-top: 6px solid #dc2626;
         background:
             linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 251, 251, 0.96));
@@ -279,7 +291,7 @@ $currentStatus = $calledQueue ? 'Sedang dipanggil' : 'Belum ada panggilan';
 
     .total-number {
         margin: 8px 0 0;
-        font-size: clamp(34px, 3.2vw, 48px);
+        font-size: clamp(44px, 4vw, 64px);
         font-weight: 900;
         line-height: 0.95;
     }
@@ -334,7 +346,7 @@ $currentStatus = $calledQueue ? 'Sedang dipanggil' : 'Belum ada panggilan';
     .current-number {
         margin: 6px 0 3px;
         color: #dc2626;
-        font-size: clamp(42px, 4.2vw, 64px);
+        font-size: clamp(56px, 5.5vw, 84px);
         font-weight: 900;
         line-height: 0.95;
         letter-spacing: 0;
@@ -722,7 +734,13 @@ $currentStatus = $calledQueue ? 'Sedang dipanggil' : 'Belum ada panggilan';
                 return;
             }
 
+
             items = Array.isArray(items) ? items : [];
+
+            var shiftPrefix = (new Date().getHours() >= 14) ? 'B' : 'A';
+            items = items.filter(function(item) {
+                return String(item.code || '').charAt(0).toUpperCase() === shiftPrefix;
+            });
 
             if (count) {
                 count.textContent = items.length;

@@ -1797,3 +1797,464 @@ CREATE TABLE `bank_topups` (
 COLLATE='latin1_swedish_ci'
 ENGINE=MyISAM
 ;
+
+CREATE TABLE IF NOT EXISTS `pra_registrations` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+
+    -- "NO RESERVASI" di kolom tabel / "No" di form Perjanjian
+    `reservation_code` VARCHAR(30) NOT NULL,
+
+    -- ==== Data pasien (masih manual, belum FK ke tabel patients) ====
+    `patient_id` INT UNSIGNED NULL COMMENT 'nanti di-FK ke patients.id',
+    `medical_record_no` VARCHAR(20) NULL COMMENT 'No. RM',
+    `patient_name` VARCHAR(150) NOT NULL,
+    `birth_date` DATE NULL,
+    `address` VARCHAR(255) NULL,
+    `phone_number` VARCHAR(20) NULL,
+    `nik` VARCHAR(20) NULL,
+
+    -- ==== Data dokter & pelayanan (masih manual, belum FK ke jadwal dokter) ====
+    `doctor_id` INT UNSIGNED NULL COMMENT 'nanti di-FK ke doctors.id / doctor_schedules.id',
+    `doctor_name` VARCHAR(150) NOT NULL,
+    `poly_name` VARCHAR(100) NOT NULL COMMENT 'Tujuan / Pelayanan',
+
+    -- ==== Jadwal ====
+    `appointment_date` DATE NOT NULL COMMENT 'Tanggal',
+    `appointment_day` VARCHAR(15) NULL COMMENT 'Hari, disimpan biar gampang ditampilkan',
+    `appointment_time` TIME NOT NULL COMMENT 'Jam',
+    `patient_queue_number` INT UNSIGNED NULL COMMENT 'Nomor Antri Pasien',
+
+    -- ==== Penjaminan / rujukan ====
+    `guarantor` VARCHAR(100) NULL COMMENT 'Penjamin, kosong = tunai',
+    `planned_action` VARCHAR(255) NULL COMMENT 'Rencana Tindakan',
+    `referral_type` ENUM('rujukan_fktp', 'rujukan_internal', 'kontrol', 'rujukan_antar_rs') NULL,
+    `card_number` VARCHAR(30) NULL COMMENT 'No Kartu (BPJS dll)',
+    `referral_number` VARCHAR(50) NULL COMMENT 'No Rujukan / Kontrol',
+
+    -- ==== Channel & keterangan ====
+    `channel` ENUM('telepon', 'sms', 'website', 'poli_spesialis', 'wa') NOT NULL DEFAULT 'wa' COMMENT 'Melalui',
+    `notes` VARCHAR(255) NULL COMMENT 'Keterangan',
+
+    -- ==== Status proses (filter Belum diproses / Sudah diproses / All) ====
+    `registration_status` ENUM('belum_diproses', 'sudah_diproses') NOT NULL DEFAULT 'belum_diproses',
+    `registered_at` DATETIME NULL COMMENT 'diisi saat tombol Daftarkan ditekan',
+
+    -- ==== Audit ====
+    `created` DATETIME NOT NULL,
+    `created_by` VARCHAR(100) NULL,
+    `modified` DATETIME NULL,
+    `modified_by` VARCHAR(100) NULL,
+
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_pra_registrations_reservation_code` (`reservation_code`),
+    KEY `idx_pra_registrations_appointment_date` (`appointment_date`),
+    KEY `idx_pra_registrations_status` (`registration_status`),
+    KEY `idx_pra_registrations_patient_name` (`patient_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+ALTER TABLE `pra_registrations`
+    ADD COLUMN `registration_id` INT NULL DEFAULT NULL AFTER `registration_status`;
+
+ALTER TABLE `pra_registrations`
+    ADD INDEX `idx_pra_registrations_registration_id` (`registration_id`);
+
+ALTER TABLE `patients`
+    ADD COLUMN `insurance_card_no` VARCHAR(30) NULL DEFAULT NULL
+    AFTER `identity_number`;
+
+ALTER TABLE pra_registrations
+MODIFY COLUMN registration_status ENUM('belum_diproses', 'diteruskan', 'sudah_diproses') 
+DEFAULT 'belum_diproses';
+
+ALTER TABLE pra_registrations
+MODIFY COLUMN registration_status ENUM('belum_diproses', 'diteruskan', 'sudah_diproses', 'batal')
+DEFAULT 'belum_diproses';
+
+CREATE TABLE IF NOT EXISTS `master_tenaga_medis` (
+    `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `kode`       VARCHAR(30)  NOT NULL COMMENT 'Kode pegawai, contoh: PWR0000101, PWT-00025, DRT-028',
+    `nama`       VARCHAR(150) NOT NULL COMMENT 'Nama lengkap tenaga kesehatan',
+    `status`     VARCHAR(50)  NOT NULL COMMENT 'Jenis/profesi: PERAWAT/SUSTER, BIDAN, UMUM, PENUNJANG MEDIS, ANALYST LABORATORIUM, dst',
+    `is_active`  TINYINT(1)   NOT NULL DEFAULT 1,
+    `created`    DATETIME     NULL DEFAULT NULL,
+    `modified`   DATETIME     NULL DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_master_tenaga_medis_kode` (`kode`),
+    KEY `idx_master_tenaga_medis_nama` (`nama`),
+    KEY `idx_master_tenaga_medis_status` (`status`),
+    KEY `idx_master_tenaga_medis_active` (`is_active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Master data tenaga kesehatan untuk pengisian CPPT';
+
+   ALTER TABLE master_tindakan
+    ADD COLUMN harga_umum DECIMAL(12,2) NOT NULL DEFAULT 0 AFTER kategori,
+    ADD COLUMN harga_bpjs DECIMAL(12,2) NOT NULL DEFAULT 0 AFTER harga_umum,
+    ADD COLUMN harga_reimbes DECIMAL(12,2) NOT NULL DEFAULT 0 AFTER harga_bpjs,
+    ADD COLUMN jasa_rs DECIMAL(12,2) NOT NULL DEFAULT 0 AFTER harga_reimbes,
+    ADD COLUMN komisi_dokter DECIMAL(12,2) NOT NULL DEFAULT 0 AFTER jasa_rs,
+    ADD COLUMN jenis_layanan ENUM('tindakan','konsultasi') NOT NULL DEFAULT 'tindakan' AFTER kategori,
+    ADD COLUMN share_type ENUM('rs_dr','rs','dr') NOT NULL DEFAULT 'rs_dr' AFTER komisi_dokter,
+    ADD COLUMN applies_rawat_jalan TINYINT(1) NOT NULL DEFAULT 1 AFTER share_type,
+    ADD COLUMN applies_rawat_inap TINYINT(1) NOT NULL DEFAULT 0 AFTER applies_rawat_jalan,
+    ADD COLUMN applies_igd TINYINT(1) NOT NULL DEFAULT 0 AFTER applies_rawat_inap;
+
+ALTER TABLE master_tindakan
+    ADD COLUMN persen_dokter_umum DECIMAL(5,2) NOT NULL DEFAULT 0 AFTER harga_umum,
+    ADD COLUMN persen_dokter_bpjs DECIMAL(5,2) NOT NULL DEFAULT 0 AFTER harga_bpjs,
+    ADD COLUMN persen_dokter_reimbes DECIMAL(5,2) NOT NULL DEFAULT 0 AFTER harga_reimbes;
+
+ALTER TABLE master_tindakan
+    DROP COLUMN jasa_rs,
+    DROP COLUMN komisi_dokter,
+    DROP COLUMN share_type;
+
+ALTER TABLE `master_tindakan`
+  DROP COLUMN `jenis_layanan`,
+  DROP COLUMN `harga`,
+  DROP COLUMN `satuan`;
+  
+ALTER TABLE doctors
+    MODIFY nik_login VARCHAR(50) NULL,
+    MODIFY nik VARCHAR(50) NULL,
+    MODIFY specialist VARCHAR(255) NULL,
+    MODIFY religion VARCHAR(255) NULL,
+    MODIFY sip_number VARCHAR(100) NULL,
+    MODIFY str_number VARCHAR(100) NULL,
+    MODIFY str_issue_date DATE NULL,
+    MODIFY str_expiry_date VARCHAR(50) NULL;
+
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE doctor_schedules;
+TRUNCATE TABLE doctors;
+SET FOREIGN_KEY_CHECKS = 1;
+
+INSERT INTO doctors (code, doctor_name, polyclinic_name, is_create, is_update, is_active, created) VALUES
+('DOK-0001', 'dr. Sofuan Effendi, Sp.OG', 'Poli Kandungan', 1, 0, 'Y', NOW()),
+('DOK-0002', 'Dr Danny Agus W, Sp.OG', 'Poli Kandungan', 1, 0, 'Y', NOW()),
+('DOK-0003', 'dr. Dahlia Ningrum, Sp.OG', 'Poli Kandungan', 1, 0, 'Y', NOW()),
+('DOK-0004', 'dr. Rizza Maulana Azmi, Sp.OG', 'Poli Kandungan', 1, 0, 'Y', NOW()),
+('DOK-0005', 'dr. Bambang Eko Winarno, Sp.OG', 'Poli Kandungan', 1, 0, 'Y', NOW()),
+('DOK-0006', 'dr. Agus Salim, Sp.A', 'Poli Anak', 1, 0, 'Y', NOW()),
+('DOK-0007', 'dr. Roedi Irawan, Sp.A(K)', 'Poli Anak', 1, 0, 'Y', NOW()),
+('DOK-0008', 'dr. Febrina Pradita, Sp.A', 'Poli Anak', 1, 0, 'Y', NOW()),
+('DOK-0009', 'dr. M. Vitanata, Sp.PD FINASIM KPTI', 'Poli Penyakit Dalam', 1, 0, 'Y', NOW()),
+('DOK-0010', 'dr. Prasetyaning Estu Pratiwi, Sp.PD', 'Poli Penyakit Dalam', 1, 0, 'Y', NOW()),
+('DOK-0011', 'dr. Musofa Rusli, Sp.PD', 'Poli Penyakit Dalam', 1, 0, 'Y', NOW()),
+('DOK-0012', 'dr. I Wayan Widharse, Sp.B', 'Poli Bedah Umum', 1, 0, 'Y', NOW()),
+('DOK-0013', 'dr. Sugeng, Sp.B', 'Poli Bedah Umum', 1, 0, 'Y', NOW()),
+('DOK-0014', 'dr. Chairun Nur Prasetya, Sp.B', 'Poli Bedah Umum', 1, 0, 'Y', NOW()),
+('DOK-0015', 'dr. Indra Tjahjono, Sp.RM-KFR', 'Poli Rehab Medik', 1, 0, 'Y', NOW()),
+('DOK-0016', 'dr. Irma Rizkika Marjianto, Sp.S', 'Poli Saraf', 1, 0, 'Y', NOW()),
+('DOK-0017', 'dr. Lefi Mikaningtyas, Sp.S', 'Poli Saraf', 1, 0, 'Y', NOW()),
+('DOK-0018', 'dr. Moch Wachid, Sp.THT-KL', 'Poli THT', 1, 0, 'Y', NOW()),
+('DOK-0019', 'dr. Samsul Islami, Sp.BU', 'Poli Urologi', 1, 0, 'Y', NOW()),
+('DOK-0020', 'dr. Garinda Alma Duta, Sp.P(K), FAPSR, FISR', 'Poli Paru', 1, 0, 'Y', NOW()),
+('DOK-0021', 'dr. Sari Mandayani, Sp.P', 'Poli Paru', 1, 0, 'Y', NOW()),
+('DOK-0022', 'dr. Triarto Budi Susanto, Sp.OT', 'Poli Orthopedi', 1, 0, 'Y', NOW()),
+('DOK-0023', 'drg. Tantri Wismayaning, Sp.KG', 'Poli Gigi Konservasi', 1, 0, 'Y', NOW()),
+('DOK-0024', 'drg. Zornya Arwidhyan, Sp.KG', 'Poli Gigi Konservasi', 1, 0, 'Y', NOW()),
+('DOK-0025', 'drg. Erlisa Saraswati H., Sp.BM', 'Poli Gigi Bedah Mulut', 1, 0, 'Y', NOW()),
+('DOK-0026', 'dr. Febryanti Hartono, Sp.JP', 'Poli Jantung', 1, 0, 'Y', NOW()),
+('DOK-0027', 'dr. I Putu Eka Sukayasa, Sp.KJ', 'Poli Jiwa', 1, 0, 'Y', NOW()),
+('DOK-0028', 'dr. Meydita Sinantryana W, Sp.KK', 'Poli Kulit Kelamin', 1, 0, 'Y', NOW()),
+('DOK-0029', 'dr. Putri Halla Shavira, Sp.DV', 'Poli Kulit Kelamin', 1, 0, 'Y', NOW()),
+('DOK-0030', 'dr. Adisti, SpM', 'Poli Mata', 1, 0, 'Y', NOW()),
+('DOK-0031', 'dr. Vita Pradiptya, Sp.M', 'Poli Mata', 1, 0, 'Y', NOW());
+
+INSERT INTO doctor_schedules (code, doctor_id, day, start_time, end_time, quota, quota_used, note, is_create, is_active) VALUES
+-- dr. Sofuan Effendi (doctor_id 1) - Poli Kandungan
+('DS-0001', 1, 'Senin',  '10:00:00', '12:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0002', 1, 'Selasa', '10:00:00', '12:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0003', 1, 'Rabu',   '13:00:00', '14:30:00', 10, 0, NULL, 1, 'Y'),
+('DS-0004', 1, 'Kamis',  '10:00:00', '12:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0005', 1, 'Minggu', '10:00:00', '12:00:00', 10, 0, 'On call', 1, 'Y'),
+
+-- Dr Danny Agus W (doctor_id 2)
+('DS-0006', 2, 'Rabu',  '15:00:00', '17:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0007', 2, 'Sabtu', '09:00:00', '11:00:00', 10, 0, NULL, 1, 'Y'),
+
+-- dr. Dahlia Ningrum (doctor_id 3)
+('DS-0008', 3, 'Selasa', '14:00:00', '16:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0009', 3, 'Kamis',  '14:00:00', '16:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0010', 3, 'Jumat',  '13:30:00', '15:30:00', 10, 0, NULL, 1, 'Y'),
+
+-- dr. Rizza Maulana Azmi (doctor_id 4)
+('DS-0011', 4, 'Selasa', '18:00:00', '20:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0012', 4, 'Jumat',  '18:00:00', '20:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0013', 4, 'Sabtu',  '11:00:00', '14:00:00', 10, 0, NULL, 1, 'Y'),
+
+-- dr. Bambang Eko Winarno (doctor_id 5)
+('DS-0014', 5, 'Senin', '18:00:00', '20:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0015', 5, 'Rabu',  '18:00:00', '20:00:00', 10, 0, NULL, 1, 'Y'),
+
+-- dr. Agus Salim (doctor_id 6) - Poli Anak
+('DS-0016', 6, 'Senin',  '19:00:00', '21:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0017', 6, 'Selasa', '19:00:00', '21:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0018', 6, 'Rabu',   '19:00:00', '21:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0019', 6, 'Kamis',  '19:00:00', '21:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0020', 6, 'Jumat',  '19:00:00', '21:00:00', 10, 0, NULL, 1, 'Y'),
+
+-- dr. Roedi Irawan (doctor_id 7)
+('DS-0021', 7, 'Senin',  '08:00:00', '09:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0022', 7, 'Selasa', '08:00:00', '09:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0023', 7, 'Rabu',   '08:00:00', '09:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0024', 7, 'Kamis',  '08:00:00', '09:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0025', 7, 'Jumat',  '08:00:00', '09:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0026', 7, 'Sabtu',  '08:00:00', '09:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0027', 7, 'Senin',  '18:00:00', '19:00:00', 10, 0, 'Khusus Tumbang', 1, 'Y'),
+('DS-0028', 7, 'Selasa', '18:00:00', '19:00:00', 10, 0, 'Khusus Tumbang', 1, 'Y'),
+
+-- dr. Febrina Pradita (doctor_id 8)
+('DS-0029', 8, 'Senin',  '10:00:00', '12:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0030', 8, 'Selasa', '10:00:00', '12:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0031', 8, 'Rabu',   '10:00:00', '12:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0032', 8, 'Kamis',  '10:00:00', '12:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0033', 8, 'Jumat',  '10:00:00', '12:00:00', 10, 0, NULL, 1, 'Y'),
+
+-- dr. M. Vitanata (doctor_id 9) - Poli Penyakit Dalam
+('DS-0034', 9, 'Senin',  '15:00:00', '20:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0035', 9, 'Kamis',  '15:00:00', '20:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0036', 9, 'Selasa', '18:00:00', '21:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0037', 9, 'Sabtu',  '08:00:00', '12:00:00', 10, 0, NULL, 1, 'Y'),
+
+-- dr. Prasetyaning Estu Pratiwi (doctor_id 10)
+('DS-0038', 10, 'Senin',  '08:00:00', '10:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0039', 10, 'Kamis',  '08:00:00', '10:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0040', 10, 'Selasa', '16:00:00', '18:00:00', 10, 0, NULL, 1, 'Y'),
+
+-- dr. Musofa Rusli (doctor_id 11)
+('DS-0041', 11, 'Rabu',  '16:00:00', '19:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0042', 11, 'Jumat', '16:00:00', '19:00:00', 10, 0, NULL, 1, 'Y'),
+
+-- dr. I Wayan Widharse (doctor_id 12) - Poli Bedah Umum
+('DS-0043', 12, 'Senin',  '12:00:00', '13:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0044', 12, 'Kamis',  '12:00:00', '13:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0045', 12, 'Rabu',   '11:00:00', '12:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0046', 12, 'Selasa', '11:00:00', '13:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0047', 12, 'Jumat',  '11:00:00', '13:00:00', 10, 0, NULL, 1, 'Y'),
+
+-- dr. Sugeng (doctor_id 13)
+('DS-0048', 13, 'Senin', '15:00:00', '17:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0049', 13, 'Kamis', '15:00:00', '17:00:00', 10, 0, NULL, 1, 'Y'),
+
+-- dr. Chairun Nur Prasetya (doctor_id 14)
+('DS-0050', 14, 'Selasa', '16:00:00', '18:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0051', 14, 'Rabu',   '16:00:00', '18:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0052', 14, 'Jumat',  '16:00:00', '18:00:00', 10, 0, NULL, 1, 'Y'),
+
+-- dr. Indra Tjahjono (doctor_id 15) - Poli Rehab Medik
+('DS-0053', 15, 'Senin',  '14:00:00', '17:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0054', 15, 'Rabu',   '14:00:00', '17:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0055', 15, 'Jumat',  '14:00:00', '17:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0056', 15, 'Selasa', '13:00:00', '17:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0057', 15, 'Kamis',  '13:00:00', '17:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0058', 15, 'Sabtu',  '08:00:00', '11:00:00', 10, 0, NULL, 1, 'Y'),
+
+-- dr. Irma Rizkika Marjianto (doctor_id 16) - Poli Saraf
+('DS-0059', 16, 'Selasa', '15:30:00', '17:30:00', 10, 0, NULL, 1, 'Y'),
+('DS-0060', 16, 'Kamis',  '18:30:00', '20:30:00', 10, 0, NULL, 1, 'Y'),
+
+-- dr. Lefi Mikaningtyas (doctor_id 17)
+('DS-0061', 17, 'Senin', '08:30:00', '10:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0062', 17, 'Jumat', '09:00:00', '11:00:00', 10, 0, NULL, 1, 'Y'),
+
+-- dr. Moch Wachid (doctor_id 18) - Poli THT
+('DS-0063', 18, 'Senin',  '08:00:00', '10:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0064', 18, 'Selasa', '08:00:00', '10:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0065', 18, 'Rabu',   '08:00:00', '10:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0066', 18, 'Kamis',  '08:00:00', '10:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0067', 18, 'Jumat',  '07:00:00', '09:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0068', 18, 'Sabtu',  '07:00:00', '09:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0069', 18, 'Selasa', '15:30:00', '17:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0070', 18, 'Kamis',  '15:30:00', '17:00:00', 10, 0, NULL, 1, 'Y'),
+
+-- dr. Samsul Islami (doctor_id 19) - Poli Urologi
+('DS-0071', 19, 'Senin', '15:30:00', '16:30:00', 10, 0, NULL, 1, 'Y'),
+('DS-0072', 19, 'Rabu',  '15:30:00', '16:30:00', 10, 0, NULL, 1, 'Y'),
+('DS-0073', 19, 'Jumat', '15:30:00', '16:30:00', 10, 0, NULL, 1, 'Y'),
+
+-- dr. Garinda Alma Duta (doctor_id 20) - Poli Paru
+('DS-0074', 20, 'Selasa', '18:00:00', '20:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0075', 20, 'Kamis',  '18:00:00', '20:00:00', 10, 0, NULL, 1, 'Y'),
+
+-- dr. Sari Mandayani (doctor_id 21)
+('DS-0076', 21, 'Senin', '14:30:00', '16:30:00', 10, 0, NULL, 1, 'Y'),
+('DS-0077', 21, 'Jumat', '13:30:00', '15:30:00', 10, 0, NULL, 1, 'Y'),
+
+-- dr. Triarto Budi Susanto (doctor_id 22) - Poli Orthopedi
+('DS-0078', 22, 'Senin', '15:00:00', '16:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0079', 22, 'Jumat', '15:00:00', '16:00:00', 10, 0, NULL, 1, 'Y'),
+
+-- drg. Tantri Wismayaning (doctor_id 23) - Poli Gigi Konservasi
+('DS-0080', 23, 'Senin',  '09:00:00', '11:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0081', 23, 'Selasa', '09:00:00', '11:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0082', 23, 'Rabu',   '09:00:00', '11:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0083', 23, 'Kamis',  '09:00:00', '11:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0084', 23, 'Sabtu',  '09:00:00', '11:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0085', 23, 'Senin',  '16:30:00', '18:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0086', 23, 'Jumat',  '16:30:00', '18:00:00', 10, 0, NULL, 1, 'Y'),
+
+-- drg. Zornya Arwidhyan (doctor_id 24)
+('DS-0087', 24, 'Rabu',  '13:00:00', '15:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0088', 24, 'Jumat', '09:00:00', '11:00:00', 10, 0, NULL, 1, 'Y'),
+
+-- drg. Erlisa Saraswati H. (doctor_id 25) - Poli Gigi Bedah Mulut
+('DS-0089', 25, 'Kamis', '15:00:00', '18:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0090', 25, 'Sabtu', '09:00:00', '11:00:00', 10, 0, NULL, 1, 'Y'),
+
+-- dr. Febryanti Hartono (doctor_id 26) - Poli Jantung
+('DS-0091', 26, 'Senin', '15:00:00', '17:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0092', 26, 'Kamis', '15:00:00', '17:00:00', 10, 0, NULL, 1, 'Y'),
+
+-- dr. I Putu Eka Sukayasa (doctor_id 27) - Poli Jiwa
+('DS-0093', 27, 'Senin',  '15:30:00', '18:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0094', 27, 'Selasa', '15:30:00', '18:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0095', 27, 'Rabu',   '15:30:00', '18:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0096', 27, 'Kamis',  '15:30:00', '18:00:00', 10, 0, NULL, 1, 'Y'),
+
+('DS-0097', 28, 'Senin', '09:00:00', '10:30:00', 10, 0, NULL, 1, 'Y'),
+('DS-0098', 28, 'Jumat', '14:30:00', '16:00:00', 10, 0, NULL, 1, 'Y'),
+
+('DS-0099', 29, 'Selasa', '08:00:00', '10:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0100', 29, 'Jumat',  '08:00:00', '10:00:00', 10, 0, NULL, 1, 'Y'),
+
+('DS-0101', 30, 'Senin', '07:00:00', '08:30:00', 10, 0, NULL, 1, 'Y'),
+('DS-0102', 30, 'Rabu',  '07:00:00', '08:30:00', 10, 0, NULL, 1, 'Y'),
+
+('DS-0103', 31, 'Senin', '15:00:00', '18:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0104', 31, 'Rabu',  '15:00:00', '18:00:00', 10, 0, NULL, 1, 'Y'),
+('DS-0105', 31, 'Jumat', '15:00:00', '18:00:00', 10, 0, NULL, 1, 'Y');
+
+ALTER TABLE `pra_registrations`
+    ADD COLUMN `polyclinic_queue_id` INT NULL DEFAULT NULL AFTER `registration_status`;
+
+ALTER TABLE polyclinic_queues
+    ADD COLUMN patient_id INT NULL AFTER patients_name,
+    ADD COLUMN medical_record_no VARCHAR(50) NULL AFTER patient_id,
+    ADD COLUMN doctor_id INT NULL AFTER medical_record_no,
+    ADD COLUMN doctor_name VARCHAR(255) NULL AFTER doctor_id;
+
+ALTER TABLE doctor_schedules 
+ADD COLUMN estimated_minutes INT NULL DEFAULT NULL AFTER quota;
+
+ALTER TABLE `outpatient_billings`
+    ADD COLUMN `insurance_partner_name` VARCHAR(100) NULL COMMENT 'Nama Rekanan, cth. BPJS Kesehatan' AFTER `insurance_type`,
+    ADD COLUMN `policy_no`              VARCHAR(50)  NULL COMMENT 'No. Polis / No. SEP' AFTER `insurance_partner_name`,
+    ADD COLUMN `receipt_no`             VARCHAR(30)  NULL COMMENT 'No. Kwitansi' AFTER `billing_no`,
+    ADD COLUMN `admin_fee`              DECIMAL(15,2) NOT NULL DEFAULT 0 COMMENT 'Adm Rp' AFTER `total_other`,
+    ADD COLUMN `inacbg_amount`          DECIMAL(15,2) NOT NULL DEFAULT 0 COMMENT 'Inacbg Rp' AFTER `admin_fee`,
+    ADD COLUMN `cbg_code`               VARCHAR(20)  NULL COMMENT 'Kode Briging CBG' AFTER `inacbg_amount`,
+    ADD COLUMN `guarantor2_name`        VARCHAR(100) NULL COMMENT 'Nama Rekanan (2)' AFTER `cbg_code`,
+    ADD COLUMN `guarantor2_amount`      DECIMAL(15,2) NOT NULL DEFAULT 0 COMMENT 'Total dijamin Rekanan (2)' AFTER `guarantor2_name`,
+    ADD COLUMN `guarantor3_name`        VARCHAR(100) NULL COMMENT 'Nama Rekanan (3)' AFTER `guarantor2_amount`,
+    ADD COLUMN `guarantor3_amount`      DECIMAL(15,2) NOT NULL DEFAULT 0 COMMENT 'Total dijamin Rekanan (3)' AFTER `guarantor3_name`,
+    ADD COLUMN `uncollectible_amount`   DECIMAL(15,2) NOT NULL DEFAULT 0 COMMENT 'Selisih Tak Tertagih' AFTER `guarantor3_amount`,
+    ADD COLUMN `paid_by`                VARCHAR(100) NULL COMMENT 'Dibayar Oleh (nama kasir)' AFTER `cashier_name`,
+    ADD COLUMN `ready_to_transfer`      TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Sudah siap ditransfer ke rawat inap' AFTER `is_inpatient`;
+
+
+//28-09-2026
+
+ALTER TABLE outpatient_billings
+    ADD COLUMN transfer_card_no VARCHAR(100) NULL AFTER uncollectible_amount,
+    ADD COLUMN transfer_bank_auth_no VARCHAR(100) NULL AFTER transfer_card_no,
+    ADD COLUMN transfer_card_type VARCHAR(20) NULL AFTER transfer_bank_auth_no,
+    ADD COLUMN transfer_admin_percent DECIMAL(5,2) NOT NULL DEFAULT 0 AFTER transfer_card_type,
+    ADD COLUMN transfer_bank_dest VARCHAR(100) NULL AFTER transfer_admin_percent;
+
+    ALTER TABLE outpatient_billings
+    ADD COLUMN reopen_reason TEXT NULL,
+    ADD COLUMN reopened_at DATETIME NULL,
+    ADD COLUMN reopened_by INT NULL,
+    ADD COLUMN reopen_count INT NOT NULL DEFAULT 0;
+
+    ALTER TABLE `emergency_entries`
+    ADD COLUMN `nurse_id` INT NULL AFTER `doctor_name`,
+    ADD COLUMN `nurse_name` VARCHAR(255) NULL AFTER `nurse_id`,
+
+    ADD COLUMN `allergy_status` VARCHAR(10) NULL DEFAULT 'tidak' AFTER `chief_complaint`,
+    ADD COLUMN `allergy_detail` VARCHAR(255) NULL AFTER `allergy_status`,
+
+    ADD COLUMN `perilaku` VARCHAR(255) NULL AFTER `allergy_detail`,
+
+    ADD COLUMN `gcs_e` TINYINT NULL AFTER `triage_notes`,
+    ADD COLUMN `gcs_v` TINYINT NULL AFTER `gcs_e`,
+    ADD COLUMN `gcs_m` TINYINT NULL AFTER `gcs_v`,
+
+    ADD COLUMN `pupil_kanan` VARCHAR(20) NULL AFTER `gcs_m`,
+    ADD COLUMN `pupil_kiri` VARCHAR(20) NULL AFTER `pupil_kanan`,
+    ADD COLUMN `reflex_kanan` VARCHAR(20) NULL AFTER `pupil_kiri`,
+    ADD COLUMN `reflex_kiri` VARCHAR(20) NULL AFTER `reflex_kanan`,
+
+    ADD COLUMN `nadi_jenis` VARCHAR(20) NULL DEFAULT 'reguler' AFTER `pulse`,
+    ADD COLUMN `akral` VARCHAR(50) NULL AFTER `nadi_jenis`,
+    ADD COLUMN `pain_scale` TINYINT NULL DEFAULT 0 AFTER `akral`,
+
+    ADD COLUMN `flacc_wajah` TINYINT NULL DEFAULT 0 AFTER `pain_scale`,
+    ADD COLUMN `flacc_kaki` TINYINT NULL DEFAULT 0 AFTER `flacc_wajah`,
+    ADD COLUMN `flacc_aktifitas` TINYINT NULL DEFAULT 0 AFTER `flacc_kaki`,
+    ADD COLUMN `flacc_menangis` TINYINT NULL DEFAULT 0 AFTER `flacc_aktifitas`,
+    ADD COLUMN `flacc_bersuara` TINYINT NULL DEFAULT 0 AFTER `flacc_menangis`,
+    ADD COLUMN `flacc_total` TINYINT NULL DEFAULT 0 AFTER `flacc_bersuara`,
+
+    ADD KEY `idx_nurse_id` (`nurse_id`);
+
+    ALTER TABLE `emergency_entries`
+    ADD COLUMN `triase_no` VARCHAR(50) NULL AFTER `registration_no`;
+
+    ALTER TABLE `medical_resumes` ADD COLUMN `letter_type` VARCHAR(30) NULL AFTER `return_reason`;
+
+    ALTER TABLE `medical_resumes` MODIFY `outpatient_visit_id` INT NULL;
+
+    CREATE TABLE IF NOT EXISTS `emergency_actions` (
+    `id`              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `registration_id` INT UNSIGNED NOT NULL,
+    `action_code`     VARCHAR(50)  NULL,
+    `action_name`     VARCHAR(255) NOT NULL,
+    `action_category` VARCHAR(30)  NOT NULL DEFAULT 'tindakan_medis',
+    `quantity`        INT          NOT NULL DEFAULT 1,
+    `unit_price`      DECIMAL(15,2) NOT NULL DEFAULT 0,
+    `total_price`     DECIMAL(15,2) NOT NULL DEFAULT 0,
+    `notes`           TEXT         NULL,
+    `created`         DATETIME     NULL,
+    `modified`        DATETIME     NULL,
+    PRIMARY KEY (`id`),
+    KEY `idx_emergency_actions_registration` (`registration_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+// REVO 30-09-2026
+
+CREATE TABLE `outpatient_display_devices` (
+	`id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+	`device_code` VARCHAR(50) NOT NULL COLLATE 'utf8mb4_0900_ai_ci',
+	`device_name` VARCHAR(100) NULL DEFAULT NULL COLLATE 'utf8mb4_0900_ai_ci',
+	`polyclinic_name` VARCHAR(150) NOT NULL COLLATE 'utf8mb4_0900_ai_ci',
+	`is_active` CHAR(1) NOT NULL DEFAULT 'Y' COLLATE 'utf8mb4_0900_ai_ci',
+	`created` DATETIME NULL DEFAULT NULL,
+	`modified` DATETIME NULL DEFAULT NULL,
+	PRIMARY KEY (`id`) USING BTREE,
+	UNIQUE INDEX `uq_outpatient_display_device_code` (`device_code`) USING BTREE
+)
+COLLATE='utf8mb4_0900_ai_ci'
+ENGINE=InnoDB
+AUTO_INCREMENT=3
+;
+
+// REVO 02/10/2026
+
+CREATE TABLE IF NOT EXISTS `emergency_actions` (
+    `id`              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `registration_id` INT UNSIGNED NOT NULL,
+    `action_code`     VARCHAR(50)  NULL,
+    `action_name`     VARCHAR(255) NOT NULL,
+    `action_category` VARCHAR(30)  NOT NULL DEFAULT 'tindakan_medis',
+    `quantity`        INT          NOT NULL DEFAULT 1,
+    `unit_price`      DECIMAL(15,2) NOT NULL DEFAULT 0,
+    `total_price`     DECIMAL(15,2) NOT NULL DEFAULT 0,
+    `notes`           TEXT         NULL,
+    `created`         DATETIME     NULL,
+    `modified`        DATETIME     NULL,
+    PRIMARY KEY (`id`),
+    KEY `idx_emergency_actions_registration` (`registration_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

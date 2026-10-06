@@ -149,7 +149,7 @@ $resolvePatientName = function ($bed) {
                         $checkOutTime = $fmtDate($bed->check_out_date ?? null, 'H:i');
                         ?>
                         <tr>
-                            <td class="text-center"><?= $no++ ?></td>
+                            <td class="text-center"><?= $no ?></td>
                             <td class="text-center"><code><?= h($bed->code) ?></code></td>
                             <td><?= h($bed->room->room_name ?? '-') ?></td>
                             <td class="text-center"><strong><?= h($bed->bed_no) ?></strong></td>
@@ -271,7 +271,7 @@ $resolvePatientName = function ($bed) {
                         <label>Cari Pasien <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <span class="input-group-addon"><i class="fa fa-search"></i></span>
-                            <input type="text" id="modal-patient-search" class="form-control" placeholder="Ketik nama / kode pasien..." autocomplete="off">
+                            <input type="text" id="modal-patient-search" class="form-control" placeholder="Ketik nama / rekam medis..." autocomplete="off">
                         </div>
                         <div id="patient-dropdown" class="bed-patient-dropdown"></div>
                         <input type="hidden" id="modal-patient-id">

@@ -364,7 +364,7 @@ $isAktif = $statusLower === 'aktif' || $statusLower === '';
                         <div class="form-card-body">
                             <?php if ($patient): ?>
                                 <div class="row">
-                                    <?php regField('Kode Pasien', $patient->code ?? '', 'col-md-4') ?>
+                                    <?php regField('Rekam Medis', $patient->code ?? '', 'col-md-4') ?>
                                     <?php regField('Identitas', $patient->identity_type ?? '', 'col-md-3') ?>
                                     <?php regField('No Identitas', $patient->identity_number ?? '', 'col-md-5') ?>
 

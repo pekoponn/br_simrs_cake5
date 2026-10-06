@@ -16,8 +16,12 @@ use Cake\ORM\Entity;
  * @property string|null $doctor2_name
  * @property string|null $doctor3_name
  * @property string|null $doctor4_name
+ * @property string|null $doctor5_name
  * @property string|null $consultant1_name
  * @property string|null $consultant2_name
+ * @property string|null $sender_name
+ * @property \Cake\I18n\FrozenDate|null $planned_discharge_date
+ * @property string|null $risk_note
  * @property string|null $summary_history
  * @property string|null $inpatient_indication
  * @property string|null $physical_exam
@@ -33,6 +37,7 @@ use Cake\ORM\Entity;
  * @property string|null $medical_action
  * @property string|null $condition_on_discharge
  * @property string|null $prognosis
+ * @property string|null $letter_type
  * @property string|null $follow_up_treatment
  * @property \Cake\I18n\FrozenDate|null $control_date
  * @property string|null $control_note
@@ -46,7 +51,7 @@ use Cake\ORM\Entity;
  * @property \App\Model\Entity\OutpatientVisit $outpatient_visit
  * @property \App\Model\Entity\Registration $registration
  * @property \App\Model\Entity\Patient $patient
- * @property \App\Model\Entity\Doctor1 $doctor1
+ * @property \App\Model\Entity\Doctor $doctor
  */
 class MedicalResume extends Entity
 {
@@ -67,8 +72,12 @@ class MedicalResume extends Entity
         'doctor2_name' => true,
         'doctor3_name' => true,
         'doctor4_name' => true,
+        'doctor5_name' => true,
         'consultant1_name' => true,
         'consultant2_name' => true,
+        'sender_name' => true,
+        'planned_discharge_date' => true,
+        'risk_note' => true,
         'summary_history' => true,
         'inpatient_indication' => true,
         'physical_exam' => true,
@@ -96,6 +105,7 @@ class MedicalResume extends Entity
         'outpatient_visit' => true,
         'registration' => true,
         'patient' => true,
-        'doctor1' => true,
+        'doctor' => true,
+        'letter_type' => true,
     ];
 }

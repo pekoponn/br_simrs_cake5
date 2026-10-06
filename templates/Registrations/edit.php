@@ -344,10 +344,10 @@ $patient = $registration->patient ?? null;
 
                                 <div class="row">
                                     <div class="col-md-4">
-                                        <label>Kode Pasien</label>
+                                        <label>Rekam Medis</label>
                                         <div class="input-group">
                                             <input type="text" id="view-patient-code" class="form-control" readonly
-                                                placeholder="Kode pasien otomatis / cari pasien"
+                                                placeholder="Rekam Medis otomatis / cari pasien"
                                                 value="<?= h($patient->code ?? '') ?>">
                                             <span class="input-group-btn">
                                                 <button type="button" class="btn btn-primary" data-toggle="modal"
@@ -380,7 +380,7 @@ $patient = $registration->patient ?? null;
                                         <select id="view-patient-title" name="patient_title" class="form-control select2Form">
                                             <option value="">-- Pilih --</option>
                                             <?php foreach (['Tn', 'Ny', 'Nn', 'An', 'By'] as $title): ?>
-                                                <option value="<?= $title ?>" <?= ($registration->patient_title ?? '') === $title ? 'selected' : '' ?>><?= $title ?></option>
+                                                <option value="<?= $title ?>" <?= ($patient->title ?? '') === $title ? 'selected' : '' ?>><?= $title ?></option>
                                             <?php endforeach; ?>
                                         </select>
                                     </div>
@@ -1047,7 +1047,7 @@ $patient = $registration->patient ?? null;
                            id="modal-search-patient"
                            class="form-control patient-search-input"
                            autocomplete="off"
-                           placeholder="Ketik kode pasien / nama pasien / NIK / no telepon">
+                           placeholder="Ketik rekam medis / nama pasien / NIK / no telepon">
                     <small class="patient-search-help">
                         Klik 1x baris pasien untuk memilih dan mengisi form registrasi.
                     </small>
@@ -1058,7 +1058,7 @@ $patient = $registration->patient ?? null;
                         <thead>
                             <tr>
                                 <th width="35">OK</th>
-                                <th width="120">Kode Pasien</th>
+                                <th width="120">Rekam Medis</th>
                                 <th>Nama Pasien</th>
                                 <th width="90">Identitas</th>
                                 <th width="155">No Identitas</th>
@@ -1306,7 +1306,7 @@ $patient = $registration->patient ?? null;
                         '<td colspan="9" class="text-center patient-empty">' +
                             '<div style="font-size:28px; margin-bottom:6px;">🔎</div>' +
                             '<div style="font-weight:700;">Pasien tidak ditemukan.</div>' +
-                            '<div style="font-size:11px; margin-top:3px;">Coba cari dengan kode pasien, nama, NIK, atau no telepon lain.</div>' +
+                            '<div style="font-size:11px; margin-top:3px;">Coba cari dengan rekam medis, nama, NIK, atau no telepon lain.</div>' +
                         '</td>' +
                     '</tr>'
                 );

@@ -87,18 +87,20 @@ $summaryUrl = $this->Url->build(['action' => 'getSummary']);
                     <option value="rawat_inap"   <?= $currentSvc === 'rawat_inap'   ? 'selected' : '' ?>>Rawat Inap</option>
                 </select>
 
-                <input type="date"
+                <input type="text"
                     name="date_from"
-                    class="form-control form-control-sm"
+                    class="form-control form-control-sm datepicker-filter"
                     style="width:150px;"
+                    autocomplete="off"
                     value="<?= h($this->request->getQuery('date_from', date('Y-m-d'))) ?>">
 
                 <span>-</span>
 
-                <input type="date"
+                <input type="text"
                     name="date_to"
-                    class="form-control form-control-sm"
+                    class="form-control form-control-sm datepicker-filter"
                     style="width:150px;"
+                    autocomplete="off"
                     value="<?= h($this->request->getQuery('date_to', date('Y-m-d'))) ?>">
 
                 <select id="filter-payment-method" name="payment_method" class="form-control select2Form select2-submit"
@@ -282,7 +284,7 @@ $summaryUrl = $this->Url->build(['action' => 'getSummary']);
                             <div style="display:flex; gap:4px; justify-content:center; flex-wrap:wrap;">
 
                                 <?= $this->Html->link('<i class="fa fa-eye"></i>',
-                                    ['action' => 'view', $registration->id],
+                                    ['action' => 'resumeMedis', $registration->id],
                                     ['escape' => false, 'class' => 'btn btn-info btn-xs',
                                      'title' => 'Lihat Detail', 'data-toggle' => 'tooltip']) ?>
 
@@ -341,22 +343,30 @@ $summaryUrl = $this->Url->build(['action' => 'getSummary']);
 .label-default { background:#e9ecef; color:#495057; }
 .label-badge   { display:inline-block; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:600; }
 .btn-xs        { padding:3px 8px; font-size:12px; line-height:1.5; border-radius:4px; }
-table thead th {
+
+.table-responsive table thead th {
     background: #2c3e50 !important;
     color: #fff !important;
     border-color: #2c3e50 !important;
 }
 
-.table thead th a,
-.table thead th a:hover,
-.table thead th a:focus,
-.table thead th a:visited {
+.table-responsive table thead th a,
+.table-responsive table thead th a:hover,
+.table-responsive table thead th a:focus,
+.table-responsive table thead th a:visited {
     background: transparent !important;
     color: #fff !important;
     text-decoration: none !important;
     box-shadow: none !important;
     border: none !important;
     padding: 0 !important;
+}
+
+.datepicker table thead th,
+.datepicker-dropdown thead th {
+    background: #fff !important;
+    color: #333 !important;
+    border-color: #ddd !important;
 }
 </style>
 
@@ -426,7 +436,6 @@ $('#search-form').on('submit', function () {
     $('#btn-search').html('<i class="fa fa-search"></i>');
 });
 
-// ── Init ──────────────────────────────────────────────────────────────────────
 $(document).ready(function () {
 
     $('[data-toggle="tooltip"]').tooltip();
@@ -440,11 +449,19 @@ $(document).ready(function () {
         $('#search-form').submit();
     });
 
+    $('.datepicker-filter').datepicker({
+        format: 'yyyy-mm-dd',
+        autoclose: true,
+        todayHighlight: true,
+        orientation: 'bottom auto'
+    }).on('changeDate', function () {
+        $('#search-form').submit();
+    });
+
     // Langsung fetch summary pertama kali
     fetchSummary();
 
     // Polling setiap 15 detik
     setInterval(fetchSummary, 15000);
-    
 });
 </script>

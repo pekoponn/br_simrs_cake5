@@ -3,79 +3,51 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
-use Cake\ORM\Query;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
 
-/**
- * OutpatientBillings Model
- *
- * @property \App\Model\Table\OutpatientVisitsTable&\Cake\ORM\Association\BelongsTo $OutpatientVisits
- * @property \App\Model\Table\RegistrationsTable&\Cake\ORM\Association\BelongsTo $Registrations
- * @property \App\Model\Table\PatientsTable&\Cake\ORM\Association\BelongsTo $Patients
- * @property \App\Model\Table\DoctorsTable&\Cake\ORM\Association\BelongsTo $Doctors
- * @property \App\Model\Table\CashiersTable&\Cake\ORM\Association\BelongsTo $Cashiers
- *
- * @method \App\Model\Entity\OutpatientBilling newEmptyEntity()
- * @method \App\Model\Entity\OutpatientBilling newEntity(array $data, array $options = [])
- * @method \App\Model\Entity\OutpatientBilling[] newEntities(array $data, array $options = [])
- * @method \App\Model\Entity\OutpatientBilling get($primaryKey, $options = [])
- * @method \App\Model\Entity\OutpatientBilling findOrCreate($search, ?callable $callback = null, $options = [])
- * @method \App\Model\Entity\OutpatientBilling patchEntity(\Cake\Datasource\EntityInterface $entity, array $data, array $options = [])
- * @method \App\Model\Entity\OutpatientBilling[] patchEntities(iterable $entities, array $data, array $options = [])
- * @method \App\Model\Entity\OutpatientBilling|false save(\Cake\Datasource\EntityInterface $entity, $options = [])
- * @method \App\Model\Entity\OutpatientBilling saveOrFail(\Cake\Datasource\EntityInterface $entity, $options = [])
- * @method \App\Model\Entity\OutpatientBilling[]|\Cake\Datasource\ResultSetInterface|false saveMany(iterable $entities, $options = [])
- * @method \App\Model\Entity\OutpatientBilling[]|\Cake\Datasource\ResultSetInterface saveManyOrFail(iterable $entities, $options = [])
- * @method \App\Model\Entity\OutpatientBilling[]|\Cake\Datasource\ResultSetInterface|false deleteMany(iterable $entities, $options = [])
- * @method \App\Model\Entity\OutpatientBilling[]|\Cake\Datasource\ResultSetInterface deleteManyOrFail(iterable $entities, $options = [])
- *
- * @mixin \Cake\ORM\Behavior\TimestampBehavior
- */
 class OutpatientBillingsTable extends Table
 {
-    /**
-     * Initialize method
-     *
-     * @param array $config The configuration for the Table.
-     * @return void
-     */
     public function initialize(array $config): void
     {
         parent::initialize($config);
 
         $this->setTable('outpatient_billings');
-        $this->setDisplayField('id');
+        $this->setDisplayField('billing_no');
         $this->setPrimaryKey('id');
 
         $this->addBehavior('Timestamp');
 
         $this->belongsTo('OutpatientVisits', [
             'foreignKey' => 'outpatient_visit_id',
-            'joinType' => 'INNER',
         ]);
+
         $this->belongsTo('Registrations', [
             'foreignKey' => 'registration_id',
         ]);
+
         $this->belongsTo('Patients', [
             'foreignKey' => 'patient_id',
-            'joinType' => 'INNER',
         ]);
+
         $this->belongsTo('Doctors', [
             'foreignKey' => 'doctor_id',
         ]);
-        $this->belongsTo('Cashiers', [
-            'foreignKey' => 'cashier_id',
+
+        $this->hasMany('OutpatientBillingItems', [
+            'foreignKey' => 'billing_id',
+            'dependent' => true,
+            'cascadeCallbacks' => true,
+        ]);
+        
+        $this->hasMany('OutpatientBillingPayments', [
+            'foreignKey' => 'billing_id',
+            'dependent' => true,
+            'cascadeCallbacks' => true,
         ]);
     }
 
-    /**
-     * Default validation rules.
-     *
-     * @param \Cake\Validation\Validator $validator Validator instance.
-     * @return \Cake\Validation\Validator
-     */
     public function validationDefault(Validator $validator): Validator
     {
         $validator
@@ -87,12 +59,30 @@ class OutpatientBillingsTable extends Table
             ->maxLength('billing_no', 30)
             ->requirePresence('billing_no', 'create')
             ->notEmptyString('billing_no')
-            ->add('billing_no', 'unique', ['rule' => 'validateUnique', 'provider' => 'table']);
+            ->add('billing_no', 'unique', [
+                'rule' => 'validateUnique',
+                'provider' => 'table',
+            ]);
+
+        $validator
+            ->nonNegativeInteger('outpatient_visit_id')
+            ->allowEmptyString('outpatient_visit_id');
+
+        $validator
+            ->nonNegativeInteger('registration_id')
+            ->allowEmptyString('registration_id');
+
+        $validator
+            ->nonNegativeInteger('patient_id')
+            ->allowEmptyString('patient_id');
+
+        $validator
+            ->nonNegativeInteger('doctor_id')
+            ->allowEmptyString('doctor_id');
 
         $validator
             ->date('visit_date')
-            ->requirePresence('visit_date', 'create')
-            ->notEmptyDate('visit_date');
+            ->allowEmptyDate('visit_date');
 
         $validator
             ->scalar('polyclinic_name')
@@ -111,59 +101,95 @@ class OutpatientBillingsTable extends Table
 
         $validator
             ->scalar('status')
-            ->notEmptyString('status');
+            ->maxLength('status', 30)
+            ->allowEmptyString('status');
 
         $validator
             ->decimal('total_action')
-            ->notEmptyString('total_action');
+            ->allowEmptyString('total_action');
 
         $validator
             ->decimal('total_medicine')
-            ->notEmptyString('total_medicine');
+            ->allowEmptyString('total_medicine');
 
         $validator
             ->decimal('total_lab')
-            ->notEmptyString('total_lab');
+            ->allowEmptyString('total_lab');
 
         $validator
             ->decimal('total_radiology')
-            ->notEmptyString('total_radiology');
+            ->allowEmptyString('total_radiology');
 
         $validator
             ->decimal('total_other')
-            ->notEmptyString('total_other');
+            ->allowEmptyString('total_other');
+
+        $validator
+            ->scalar('transfer_card_no')
+            ->maxLength('transfer_card_no', 100)
+            ->allowEmptyString('transfer_card_no');
+
+        $validator
+            ->scalar('transfer_bank_auth_no')
+            ->maxLength('transfer_bank_auth_no', 100)
+            ->allowEmptyString('transfer_bank_auth_no');
+
+        $validator
+            ->scalar('transfer_card_type')
+            ->maxLength('transfer_card_type', 20)
+            ->allowEmptyString('transfer_card_type');
+
+        $validator
+            ->decimal('transfer_admin_percent')
+            ->allowEmptyString('transfer_admin_percent');
+
+        $validator
+            ->scalar('transfer_bank_dest')
+            ->maxLength('transfer_bank_dest', 100)
+            ->allowEmptyString('transfer_bank_dest');
+
+        $validator
+            ->scalar('payment_proof')
+            ->maxLength('payment_proof', 255)
+            ->allowEmptyString('payment_proof');
 
         $validator
             ->decimal('subtotal')
-            ->notEmptyString('subtotal');
+            ->allowEmptyString('subtotal');
+
+        $validator
+            ->decimal('subtotal')
+            ->allowEmptyString('subtotal');
 
         $validator
             ->scalar('discount_type')
+            ->maxLength('discount_type', 20)
             ->allowEmptyString('discount_type');
 
         $validator
             ->decimal('discount_value')
-            ->notEmptyString('discount_value');
+            ->allowEmptyString('discount_value');
 
         $validator
             ->decimal('discount_amount')
-            ->notEmptyString('discount_amount');
+            ->allowEmptyString('discount_amount');
 
         $validator
             ->decimal('grand_total')
-            ->notEmptyString('grand_total');
+            ->allowEmptyString('grand_total');
 
         $validator
             ->scalar('payment_method')
+            ->maxLength('payment_method', 30)
             ->allowEmptyString('payment_method');
 
         $validator
             ->decimal('paid_amount')
-            ->notEmptyString('paid_amount');
+            ->allowEmptyString('paid_amount');
 
         $validator
             ->decimal('change_amount')
-            ->notEmptyString('change_amount');
+            ->allowEmptyString('change_amount');
 
         $validator
             ->dateTime('paid_at')
@@ -176,7 +202,7 @@ class OutpatientBillingsTable extends Table
 
         $validator
             ->boolean('is_referred')
-            ->notEmptyString('is_referred');
+            ->allowEmptyString('is_referred');
 
         $validator
             ->scalar('referred_to')
@@ -185,7 +211,7 @@ class OutpatientBillingsTable extends Table
 
         $validator
             ->boolean('is_inpatient')
-            ->notEmptyString('is_inpatient');
+            ->allowEmptyString('is_inpatient');
 
         $validator
             ->scalar('inpatient_referral_no')
@@ -237,21 +263,23 @@ class OutpatientBillingsTable extends Table
         return $validator;
     }
 
-    /**
-     * Returns a rules checker object that will be used for validating
-     * application integrity.
-     *
-     * @param \Cake\ORM\RulesChecker $rules The rules object to be modified.
-     * @return \Cake\ORM\RulesChecker
-     */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
-        $rules->add($rules->isUnique(['billing_no']), ['errorField' => 'billing_no']);
-        $rules->add($rules->existsIn(['outpatient_visit_id'], 'OutpatientVisits'), ['errorField' => 'outpatient_visit_id']);
-        $rules->add($rules->existsIn(['registration_id'], 'Registrations'), ['errorField' => 'registration_id']);
-        $rules->add($rules->existsIn(['patient_id'], 'Patients'), ['errorField' => 'patient_id']);
-        $rules->add($rules->existsIn(['doctor_id'], 'Doctors'), ['errorField' => 'doctor_id']);
-        $rules->add($rules->existsIn(['cashier_id'], 'Cashiers'), ['errorField' => 'cashier_id']);
+        $rules->add($rules->isUnique(['billing_no']), [
+            'errorField' => 'billing_no',
+        ]);
+
+        $rules->add($rules->existsIn(['registration_id'], 'Registrations'), [
+            'errorField' => 'registration_id',
+        ]);
+
+        $rules->add($rules->existsIn(['patient_id'], 'Patients'), [
+            'errorField' => 'patient_id',
+        ]);
+
+        $rules->add($rules->existsIn(['doctor_id'], 'Doctors'), [
+            'errorField' => 'doctor_id',
+        ]);
 
         return $rules;
     }

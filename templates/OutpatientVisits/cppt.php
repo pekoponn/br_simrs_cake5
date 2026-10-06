@@ -19,10 +19,12 @@ function cpptText($value) {
 }
 ?>
 
-<div class="outpatient-visits cppt cppt-page">
+<?= $this->Krs->breadcrumb('Outpatient Visits', 'CPPT — Catatan Perkembangan Pasien') ?>
+
+<div class="outpatient-visits cppt content">
 
     <!-- Header sama nuansa EMR -->
-    <div class="cppt-page-toolbar" style="display:flex; justify-content:space-between; align-items:center;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
         <h4 style="margin:0; font-weight:700; color:#1e3a5f;">
             <i class="fa fa-clipboard-list"></i> CPPT — Catatan Perkembangan Pasien Terintegrasi
         </h4>
@@ -108,26 +110,33 @@ function cpptText($value) {
                     <div class="row cppt-form-row">
                         <label class="col-xs-3">Tenaga Kesehatan</label>
                         <div class="col-xs-8">
-                            <input type="text" name="health_worker_name" id="cppt-health-worker-name" class="form-control input-sm cppt-entry-field" placeholder="Nama tenaga kesehatan..." <?= $isDone ? 'readonly' : '' ?>>
+                            <input type="hidden" name="health_worker_id" id="cppt-health-worker-id" value="">
+                            <input type="text" name="health_worker_name" id="cppt-health-worker-name"
+                                class="form-control input-sm cppt-entry-field"
+                                placeholder="Klik ikon cari untuk pilih tenaga kesehatan..." readonly>
                         </div>
-                        <div class="col-xs-1 cppt-search-col"><i class="fa fa-search"></i></div>
+                        <div class="col-xs-1 cppt-search-col" id="btn-pilih-tenaga-kesehatan"
+                            style="cursor:<?= $isDone ? 'not-allowed' : 'pointer' ?>;">
+                            <i class="fa fa-search"></i>
+                        </div>
                     </div>
 
                     <div class="row cppt-form-row">
                         <label class="col-xs-3">Dokter</label>
                         <div class="col-xs-8">
-                            <input type="hidden" name="doctor_id" value="<?= h($visit->doctor_id ?? '') ?>">
-                            <input type="text" name="doctor_name" id="cppt-doctor-name" class="form-control input-sm cppt-entry-field" value="<?= h($d->doctor_name ?? '') ?>" <?= $isDone ? 'readonly' : '' ?>>
+                            <input type="hidden" name="doctor_id" id="cppt-doctor-id" value="<?= h($visit->doctor_id ?? '') ?>">
+                            <input type="text" name="doctor_name" id="cppt-doctor-name" class="form-control input-sm cppt-entry-field" value="<?= h($d->doctor_name ?? '') ?>" placeholder="Klik ikon cari untuk pilih dokter..." readonly>
                         </div>
-                        <div class="col-xs-1 cppt-search-col"><i class="fa fa-search"></i></div>
+                        <div class="col-xs-1 cppt-search-col" id="btn-pilih-dokter" style="cursor:<?= $isDone ? 'not-allowed' : 'pointer' ?>;"><i class="fa fa-search"></i></div>
                     </div>
 
                     <div class="row cppt-form-row">
                         <label class="col-xs-3">Perawat (PPJA)</label>
                         <div class="col-xs-8">
-                            <input type="text" name="nurse_name" id="cppt-nurse-name" class="form-control input-sm cppt-entry-field" placeholder="Nama perawat..." <?= $isDone ? 'readonly' : '' ?>>
+                            <input type="hidden" name="nurse_id" id="cppt-nurse-id" value="">
+                            <input type="text" name="nurse_name" id="cppt-nurse-name" class="form-control input-sm cppt-entry-field" placeholder="Klik ikon cari untuk pilih perawat..." readonly>
                         </div>
-                        <div class="col-xs-1 cppt-search-col"><i class="fa fa-search"></i></div>
+                        <div class="col-xs-1 cppt-search-col" id="btn-pilih-perawat" style="cursor:<?= $isDone ? 'not-allowed' : 'pointer' ?>;"><i class="fa fa-search"></i></div>
                     </div>
                 </div>
             </div>
@@ -179,10 +188,11 @@ function cpptText($value) {
                                     $dt = $note->noted_at ?? $note->created ?? null;
                                     $dtObj = is_object($dt) ? $dt : (!empty($dt) ? new \DateTime($dt) : null);
                                 ?>
-                                <tr class="cppt-history-row"
+                               <tr class="cppt-history-row"
                                     data-note-date="<?= $dtObj ? h($dtObj->format('Y-m-d')) : '' ?>"
                                     data-note-time="<?= $dtObj ? h($dtObj->format('H:i:s')) : '' ?>"
                                     data-health-worker="<?= h($note->health_worker_name ?? '') ?>"
+                                    data-health-worker-id="<?= h($note->health_worker_id ?? '') ?>"
                                     data-doctor-name="<?= h($note->doctor_name ?? ($d->doctor_name ?? '')) ?>"
                                     data-nurse-name="<?= h($note->nurse_name ?? '') ?>"
                                     data-assessment="<?= h($note->assessment_text ?? '') ?>"
@@ -228,22 +238,112 @@ function cpptText($value) {
             <input type="hidden" name="noted_at" id="cppt-noted-at" value="<?= h($nowDateTime) ?>">
         </div>
     </div>
+    <div class="modal fade" id="modalTenagaKesehatan" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#1e3a5f;color:#fff;">
+                <button type="button" class="close" data-dismiss="modal" style="color:#fff;opacity:.8;">&times;</button>
+                <h4 class="modal-title"><i class="fa fa-user-nurse"></i> Pilih Tenaga Kesehatan</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <input type="text" id="tk-search-input" class="form-control"
+                           placeholder="Cari nama / kode tenaga kesehatan...">
+                </div>
+                <div class="table-responsive" style="max-height:350px; overflow-y:auto;">
+                    <table class="table table-hover table-bordered" id="tk-result-table">
+                        <thead>
+                            <tr>
+                                <th style="width:110px;">Kode</th>
+                                <th>Nama</th>
+                                <th style="width:130px;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="3" class="text-center text-muted">Ketik untuk mencari...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalDokter" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#1e3a5f;color:#fff;">
+                <button type="button" class="close" data-dismiss="modal" style="color:#fff;opacity:.8;">&times;</button>
+                <h4 class="modal-title"><i class="fa fa-user-md"></i> Pilih Dokter</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <input type="text" id="dr-search-input" class="form-control"
+                           placeholder="Cari nama / kode dokter...">
+                </div>
+                <div class="table-responsive" style="max-height:350px; overflow-y:auto;">
+                    <table class="table table-hover table-bordered" id="dr-result-table">
+                        <thead>
+                            <tr>
+                                <th style="width:90px;">Kode</th>
+                                <th>Nama Dokter</th>
+                                <th style="width:150px;">Spesialis</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="3" class="text-center text-muted">Ketik untuk mencari...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalPerawat" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#1e3a5f;color:#fff;">
+                <button type="button" class="close" data-dismiss="modal" style="color:#fff;opacity:.8;">&times;</button>
+                <h4 class="modal-title"><i class="fa fa-user-nurse"></i> Pilih Perawat (PPJA)</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <input type="text" id="pw-search-input" class="form-control"
+                           placeholder="Cari nama / kode perawat...">
+                </div>
+                <div class="table-responsive" style="max-height:350px; overflow-y:auto;">
+                    <table class="table table-hover table-bordered" id="pw-result-table">
+                        <thead>
+                            <tr>
+                                <th style="width:110px;">Kode</th>
+                                <th>Nama</th>
+                                <th style="width:130px;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="3" class="text-center text-muted">Ketik untuk mencari...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
 
     <?= $this->Form->end() ?>
 </div>
 
 <style>
-.outpatient-visits.cppt.cppt-page {
-    width: 100%;
-    max-width: none;
-    margin: 0;
-    padding: 0;
-}
-
-.outpatient-visits.cppt.cppt-page > .cppt-page-toolbar {
-    margin-bottom: 12px;
-}
-
 /* =========================================================
    CPPT - BASE PANEL
    ========================================================= */
@@ -616,20 +716,22 @@ $(function () {
     }
 
     function clearFormForNew() {
-        $('.cppt-history-row').removeClass('active');
+    $('.cppt-history-row').removeClass('active');
 
-        $('#cppt-note-date').val(defaultNoteDate);
-        $('#cppt-note-time').val(defaultNoteTime);
-        $('#cppt-health-worker-name').val('');
-        $('#cppt-doctor-name').val(defaultDoctorName);
-        $('#cppt-nurse-name').val('');
-        $('#cppt-assessment-text').val('');
-        $('#cppt-instruction').val('');
-        $('#cppt-fasting-instruction').prop('checked', false);
-        $('#cppt-noted-at').val(defaultNotedAt);
+    $('#cppt-note-date').val(defaultNoteDate);
+    $('#cppt-note-time').val(defaultNoteTime);
+    $('#cppt-health-worker-name').val('');
+    $('#cppt-health-worker-id').val('');
+    $('#cppt-doctor-name').val(defaultDoctorName);
+    $('#cppt-doctor-id').val(<?= json_encode($visit->doctor_id ?? '') ?>);
+    $('#cppt-nurse-name').val('');
+    $('#cppt-nurse-id').val('');
+    $('#cppt-assessment-text').val('');
+    $('#cppt-instruction').val('');
+    $('#cppt-fasting-instruction').prop('checked', false);
+    $('#cppt-noted-at').val(defaultNotedAt);
 
-        setFormReadonly(false);
-        $('#cppt-health-worker-name').focus();
+    setFormReadonly(false);
     }
 
     $('#btn-cppt-new-top, #btn-cppt-new-bottom').on('click', function () {
@@ -637,21 +739,166 @@ $(function () {
     });
 
     $('.cppt-history-row').on('click', function () {
-        var row = $(this);
+    var row = $(this);
 
-        $('.cppt-history-row').removeClass('active');
-        row.addClass('active');
+    $('.cppt-history-row').removeClass('active');
+    row.addClass('active');
 
-        $('#cppt-note-date').val(row.data('note-date') || '');
-        $('#cppt-note-time').val(row.data('note-time') || '');
-        $('#cppt-health-worker-name').val(row.data('health-worker') || '');
-        $('#cppt-doctor-name').val(row.data('doctor-name') || '');
-        $('#cppt-nurse-name').val(row.data('nurse-name') || '');
-        $('#cppt-assessment-text').val(row.data('assessment') || '');
-        $('#cppt-instruction').val(row.data('instruction') || '');
-        $('#cppt-fasting-instruction').prop('checked', String(row.data('fasting')) === '1');
+    $('#cppt-note-date').val(row.data('note-date') || '');
+    $('#cppt-note-time').val(row.data('note-time') || '');
+    $('#cppt-health-worker-name').val(row.data('health-worker') || '');
+    $('#cppt-health-worker-id').val(row.data('health-worker-id') || '');
+    $('#cppt-doctor-name').val(row.data('doctor-name') || '');
+    $('#cppt-nurse-name').val(row.data('nurse-name') || '');
+    $('#cppt-assessment-text').val(row.data('assessment') || '');
+    $('#cppt-instruction').val(row.data('instruction') || '');
+    $('#cppt-fasting-instruction').prop('checked', String(row.data('fasting')) === '1');
 
-        setFormReadonly(true);
+    setFormReadonly(true);
+    });
+
+    // ==== MODAL TENAGA KESEHATAN ====
+    var TK_SEARCH_URL = <?= json_encode($this->Url->build(['controller' => 'MasterTenagaMedis', 'action' => 'searchModal'])) ?>;
+    var tkSearchTimer = null;
+
+    function loadTenagaKesehatan(keyword) {
+        $('#tk-result-table tbody').html('<tr><td colspan="3" class="text-center text-muted">Memuat...</td></tr>');
+        $.get(TK_SEARCH_URL, { q: keyword }, function (data) {
+            if (!data || data.length === 0) {
+                $('#tk-result-table tbody').html('<tr><td colspan="3" class="text-center text-muted">Data tidak ditemukan</td></tr>');
+                return;
+            }
+            var rows = '';
+            $.each(data, function (i, row) {
+                var namaEscaped = $('<div>').text(row.nama).html();
+                var statusEscaped = $('<div>').text(row.status || '-').html();
+                var displayLabel = namaEscaped + (row.status ? ' - ' + statusEscaped : '');
+                rows += '<tr class="tk-row" style="cursor:pointer" data-id="' + row.id + '" data-nama="' + namaEscaped + '" data-label="' + displayLabel + '">'
+                    + '<td>' + row.kode + '</td>'
+                    + '<td>' + namaEscaped + '</td>'
+                    + '<td>' + statusEscaped + '</td>'
+                    + '</tr>';
+            });
+            $('#tk-result-table tbody').html(rows);
+        }).fail(function () {
+            $('#tk-result-table tbody').html('<tr><td colspan="3" class="text-center text-danger">Gagal memuat data</td></tr>');
+        });
+    }
+
+    $('#btn-pilih-tenaga-kesehatan').on('click', function () {
+        if (isDone) return;
+        $('#modalTenagaKesehatan').modal('show');
+        $('#tk-search-input').val('');
+        loadTenagaKesehatan('');
+        setTimeout(function () { $('#tk-search-input').focus(); }, 300);
+    });
+
+    $('#tk-search-input').on('keyup', function () {
+        var keyword = $(this).val();
+        clearTimeout(tkSearchTimer);
+        tkSearchTimer = setTimeout(function () {
+            loadTenagaKesehatan(keyword);
+        }, 300);
+    });
+
+    $(document).on('click', '.tk-row', function () {
+        $('#cppt-health-worker-name').val($(this).data('label'));
+        $('#cppt-health-worker-id').val($(this).data('id'));
+        $('#modalTenagaKesehatan').modal('hide');
+    });
+
+    // ==== MODAL DOKTER ====
+    var DR_SEARCH_URL = <?= json_encode($this->Url->build(['controller' => 'Doctors', 'action' => 'searchModal'])) ?>;
+    var drSearchTimer = null;
+
+    function loadDokter(keyword) {
+        $('#dr-result-table tbody').html('<tr><td colspan="3" class="text-center text-muted">Memuat...</td></tr>');
+        $.get(DR_SEARCH_URL, { q: keyword }, function (data) {
+            if (!data || data.length === 0) {
+                $('#dr-result-table tbody').html('<tr><td colspan="3" class="text-center text-muted">Data tidak ditemukan</td></tr>');
+                return;
+            }
+            var rows = '';
+            $.each(data, function (i, row) {
+                var namaEscaped = $('<div>').text(row.doctor_name).html();
+                var specEscaped = $('<div>').text(row.specialist || '-').html();
+                rows += '<tr class="dr-row" style="cursor:pointer" data-id="' + row.id + '" data-nama="' + namaEscaped + '">'
+                    + '<td>' + row.code + '</td>'
+                    + '<td>' + namaEscaped + '</td>'
+                    + '<td>' + specEscaped + '</td>'
+                    + '</tr>';
+            });
+            $('#dr-result-table tbody').html(rows);
+        }).fail(function () {
+            $('#dr-result-table tbody').html('<tr><td colspan="3" class="text-center text-danger">Gagal memuat data</td></tr>');
+        });
+    }
+
+    $('#btn-pilih-dokter').on('click', function () {
+        if (isDone) return;
+        $('#modalDokter').modal('show');
+        $('#dr-search-input').val('');
+        loadDokter('');
+        setTimeout(function () { $('#dr-search-input').focus(); }, 300);
+    });
+
+    $('#dr-search-input').on('keyup', function () {
+        var keyword = $(this).val();
+        clearTimeout(drSearchTimer);
+        drSearchTimer = setTimeout(function () { loadDokter(keyword); }, 300);
+    });
+
+    $(document).on('click', '.dr-row', function () {
+        $('#cppt-doctor-name').val($(this).data('nama'));
+        $('#cppt-doctor-id').val($(this).data('id'));
+        $('#modalDokter').modal('hide');
+    });
+
+    // ==== MODAL PERAWAT ====
+    var PW_SEARCH_URL = <?= json_encode($this->Url->build(['controller' => 'MasterTenagaMedis', 'action' => 'searchModal', '?' => ['kategori' => 'Perawat']])) ?>;
+    var pwSearchTimer = null;
+
+    function loadPerawat(keyword) {
+        $('#pw-result-table tbody').html('<tr><td colspan="3" class="text-center text-muted">Memuat...</td></tr>');
+        $.get(PW_SEARCH_URL, { q: keyword }, function (data) {
+            if (!data || data.length === 0) {
+                $('#pw-result-table tbody').html('<tr><td colspan="3" class="text-center text-muted">Data tidak ditemukan</td></tr>');
+                return;
+            }
+            var rows = '';
+            $.each(data, function (i, row) {
+                var namaEscaped = $('<div>').text(row.nama).html();
+                var statusEscaped = $('<div>').text(row.status || '-').html();
+                rows += '<tr class="pw-row" style="cursor:pointer" data-id="' + row.id + '" data-nama="' + namaEscaped + '">'
+                    + '<td>' + row.kode + '</td>'
+                    + '<td>' + namaEscaped + '</td>'
+                    + '<td>' + statusEscaped + '</td>'
+                    + '</tr>';
+            });
+            $('#pw-result-table tbody').html(rows);
+        }).fail(function () {
+            $('#pw-result-table tbody').html('<tr><td colspan="3" class="text-center text-danger">Gagal memuat data</td></tr>');
+        });
+    }
+
+    $('#btn-pilih-perawat').on('click', function () {
+        if (isDone) return;
+        $('#modalPerawat').modal('show');
+        $('#pw-search-input').val('');
+        loadPerawat('');
+        setTimeout(function () { $('#pw-search-input').focus(); }, 300);
+    });
+
+    $('#pw-search-input').on('keyup', function () {
+        var keyword = $(this).val();
+        clearTimeout(pwSearchTimer);
+        pwSearchTimer = setTimeout(function () { loadPerawat(keyword); }, 300);
+    });
+
+    $(document).on('click', '.pw-row', function () {
+        $('#cppt-nurse-name').val($(this).data('nama'));
+        $('#cppt-nurse-id').val($(this).data('id'));
+        $('#modalPerawat').modal('hide');
     });
 });
 </script>

@@ -264,6 +264,43 @@ foreach ($allQueues as $queue) {
         padding-top: 12px;
     }
 
+    .queue-session-tabs {
+        display: flex;
+        gap: 6px;
+        margin: 16px 0 10px;
+    }
+
+    .queue-session-tab-btn {
+        flex: 1;
+        text-align: center;
+        padding: 10px 14px;
+        border: none;
+        border-radius: 8px;
+        background: #e0f2fe;
+        color: #0369a1;
+        font-weight: 700;
+        font-size: 13px;
+        cursor: pointer;
+        transition: .15s;
+    }
+
+    .queue-session-tab-btn:hover {
+        background: #bae6fd;
+    }
+
+    .queue-session-tab-btn.active {
+        background: #2d353c;
+        color: #fff;
+    }
+
+    .queue-session-pane {
+        display: none;
+    }
+
+    .queue-session-pane.active {
+        display: block;
+    }
+
     @media (max-width: 991px) {
         .queue-filter .row > div {
             margin-bottom: 10px;
@@ -349,6 +386,15 @@ foreach ($allQueues as $queue) {
                 </div>
             </div>
 
+            <div class="queue-session-tabs">
+                <button type="button" class="queue-session-tab-btn active" data-target="queue-pane-pagi">
+                    <i class="fa fa-sun"></i> Antrian Pagi
+                </button>
+                <button type="button" class="queue-session-tab-btn" data-target="queue-pane-sore">
+                    <i class="fa fa-cloud-sun"></i> Antrian Sore
+                </button>
+            </div>
+
             <?= $this->Form->create(null, ['type' => 'get']) ?>
                 <div class="queue-filter">
                     <div class="row row-space-10">
@@ -390,25 +436,29 @@ foreach ($allQueues as $queue) {
                 </div>
             <?= $this->Form->end() ?>
 
-            <?= $this->element('polyclinic_queue_index_table', [
-                'title' => 'Antrian Pagi',
-                'queues' => $morningQueues,
-                'emptyMessage' => 'Data antrian pagi tidak ditemukan',
-                'buildWhatsAppLink' => $buildWhatsAppLink,
-                'isMobileJknQueue' => $isMobileJknQueue,
-                'isReferralQueue' => $isReferralQueue,
-                'canRegisterQueue' => $canRegisterQueue,
-            ]) ?>
+            <div id="queue-pane-pagi" class="queue-session-pane active">
+                <?= $this->element('polyclinic_queue_index_table', [
+                    'title' => 'Antrian Pagi',
+                    'queues' => $morningQueues,
+                    'emptyMessage' => 'Data antrian pagi tidak ditemukan',
+                    'buildWhatsAppLink' => $buildWhatsAppLink,
+                    'isMobileJknQueue' => $isMobileJknQueue,
+                    'isReferralQueue' => $isReferralQueue,
+                    'canRegisterQueue' => $canRegisterQueue,
+                ]) ?>
+            </div>
 
-            <?= $this->element('polyclinic_queue_index_table', [
-                'title' => 'Antrian Sore',
-                'queues' => $afternoonQueues,
-                'emptyMessage' => 'Data antrian sore tidak ditemukan',
-                'buildWhatsAppLink' => $buildWhatsAppLink,
-                'isMobileJknQueue' => $isMobileJknQueue,
-                'isReferralQueue' => $isReferralQueue,
-                'canRegisterQueue' => $canRegisterQueue,
-            ]) ?>
+            <div id="queue-pane-sore" class="queue-session-pane">
+                <?= $this->element('polyclinic_queue_index_table', [
+                    'title' => 'Antrian Sore',
+                    'queues' => $afternoonQueues,
+                    'emptyMessage' => 'Data antrian sore tidak ditemukan',
+                    'buildWhatsAppLink' => $buildWhatsAppLink,
+                    'isMobileJknQueue' => $isMobileJknQueue,
+                    'isReferralQueue' => $isReferralQueue,
+                    'canRegisterQueue' => $canRegisterQueue,
+                ]) ?>
+            </div>
 
             <?php foreach ($allQueues as $queue): ?>
                 <?= $this->element('polyclinic_queue_index_modal', [
@@ -526,6 +576,16 @@ function announceQueueCall(queueCode, onDone) {
             .prop('disabled', false)
             .removeAttr('aria-disabled');
     }
+
+    // Switch tab Antrian Pagi / Antrian Sore
+    $(document).on('click', '.queue-session-tab-btn', function () {
+        var $btn = $(this);
+        $('.queue-session-tab-btn').removeClass('active');
+        $('.queue-session-pane').removeClass('active');
+
+        $btn.addClass('active');
+        $('#' + $btn.data('target')).addClass('active');
+    });
 
     $(document).on('click', '.btn-panggil-queue', function (e) {
         e.preventDefault();

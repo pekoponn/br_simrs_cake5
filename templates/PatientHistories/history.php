@@ -831,7 +831,7 @@ $renderIntegrationTable = function (array $rows) {
 
                 <div class="patient-meta-grid">
                     <div class="patient-meta-item"><span>No Rekam Medis</span><strong><?= $display($PatientHistoryNo) ?></strong></div>
-                    <div class="patient-meta-item"><span>Kode Pasien</span><strong><?= $display($patient->code ?? null) ?></strong></div>
+                    <div class="patient-meta-item"><span>Rekam Medis</span><strong><?= $display($patient->code ?? null) ?></strong></div>
                     <div class="patient-meta-item"><span>Telephone</span><strong><?= $display($patient->phone_number ?? null) ?></strong></div>
                     <div class="patient-meta-item"><span>Alamat</span><strong><?= $display($patient->address ?? null) ?></strong></div>
                     <div class="patient-meta-item"><span>Jenis Kelamin</span><strong><?= $display($patient->gender ?? null) ?></strong></div>

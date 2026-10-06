@@ -108,11 +108,11 @@ Router::prefix('acc', function (RouteBuilder $routes) {
     $routes->fallbacks(DashedRoute::class);
 });
 
-// // prefix HRGA 
-// Router::prefix('hga', function (RouteBuilder $routes) {
-//     $routes->connect('/', ['controller' => 'Hga', 'action' => 'index']);
-//     $routes->fallbacks(DashedRoute::class);
-// });
+// prefix HR
+Router::prefix('hr', function (RouteBuilder $routes) {
+    $routes->connect('/', ['controller' => 'Hr', 'action' => 'index']);
+    $routes->fallbacks(DashedRoute::class);
+});
 
 // // prefix HSE 
 // Router::prefix('hse', function (RouteBuilder $routes) {

@@ -86,7 +86,7 @@ $todayLabel = date('d F Y');
 
     .kiosk-shell {
         width: 100%;
-        max-width: 1180px;
+        max-width: 1440px;
         height: 100%;
         margin: 0 auto;
         display: flex;
@@ -217,8 +217,8 @@ $todayLabel = date('d F Y');
 
     .poli-grid {
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 8px;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 6px;
     }
 
     .poli-card-sessions {
@@ -229,20 +229,19 @@ $todayLabel = date('d F Y');
 }
 
 .poli-session-line {
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 700;
     color: #475569;
     line-height: 1.3;
 }
-
 .poli-session-tag {
     display: inline-block;
-    padding: 1px 6px;
+    padding: 1px 5px;
     border-radius: 999px;
-    font-size: 9px;
+    font-size: 8.5px;
     font-weight: 800;
     text-transform: uppercase;
-    margin-right: 5px;
+    margin-right: 4px;
 }
 
 .poli-session-tag.morning {
@@ -286,12 +285,12 @@ $todayLabel = date('d F Y');
     cursor: not-allowed;
 }
 
-    .poli-card {
-        min-height: 66px;
+      .poli-card {
+        min-height: 56px;
         width: 100%;
-        padding: 9px 11px;
+        padding: 7px 8px;
         border: 2px solid #dce6ef;
-        border-radius: 12px;
+        border-radius: 10px;
         background: #fff;
         color: #172033;
         text-align: left;
@@ -314,29 +313,38 @@ $todayLabel = date('d F Y');
     }
 
     .poli-card.is-featured {
-        grid-column: span 2;
-        min-height: 66px;
-        border-color: #bfe4d8;
-        background: linear-gradient(135deg, #ecfdf7, #ffffff);
+    grid-column: span 2;
+    min-height: 76px;
+    padding: 12px 14px;
+    border-color: #bfe4d8;
+    background: linear-gradient(135deg, #ecfdf7, #ffffff);
+    }
+
+    .poli-card.is-featured .poli-card-name {
+        font-size: 17px;
+    }
+
+    .poli-card.is-featured .poli-session-line {
+        font-size: 12px;
     }
 
     .poli-card-name {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 10px;
-        font-size: 15px;
+        gap: 6px;
+        font-size: 13px;
         font-weight: 800;
-        line-height: 1.15;
+        line-height: 1.2;
     }
 
     .poli-card-doctor {
         display: block;
-        margin-top: 4px;
+        margin-top: 3px;
         color: #344054;
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 800;
-        line-height: 1.15;
+        line-height: 1.2;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -355,13 +363,13 @@ $todayLabel = date('d F Y');
     .poli-card-help {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        margin-top: 5px;
-        padding: 3px 7px;
+        gap: 4px;
+        margin-top: 3px;
+        padding: 2px 6px;
         border-radius: 999px;
         background: #f2f7fb;
         color: #667085;
-        font-size: 11px;
+        font-size: 9.5px;
         font-weight: 800;
     }
 
@@ -543,7 +551,7 @@ $todayLabel = date('d F Y');
 
     @media (max-width: 1200px) {
         .poli-grid {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(5, minmax(0, 1fr));
         }
     }
 
@@ -639,9 +647,78 @@ $todayLabel = date('d F Y');
             font-size: 18px;
         }
 
-        .queue-modal-code {
+                .queue-modal-code {
             font-size: 64px;
         }
+    }
+
+    .print-receipt {
+        display: none;
+    }
+
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        .print-receipt,
+        .print-receipt * {
+            visibility: visible;
+        }
+        .print-receipt {
+            display: block !important;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 58mm;
+            padding: 4mm;
+            font-family: "Courier New", monospace;
+            color: #000;
+        }
+        @page {
+            size: 58mm auto;
+            margin: 0;
+        }
+    }
+
+    .print-receipt-center {
+        text-align: center;
+    }
+    .print-receipt-title {
+        font-size: 15px;
+        font-weight: 800;
+        margin: 0 0 2px;
+    }
+    .print-receipt-sub {
+        font-size: 11px;
+        margin: 0 0 8px;
+    }
+    .print-receipt-divider {
+        border-top: 1px dashed #000;
+        margin: 6px 0;
+    }
+    .print-receipt-code {
+        font-size: 42px;
+        font-weight: 900;
+        text-align: center;
+        margin: 10px 0;
+        line-height: 1;
+        letter-spacing: 1px;
+        white-space: nowrap;
+    }
+    .print-receipt-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        margin: 6px 0 2px;
+    }
+    .print-receipt-value {
+        font-size: 15px;
+        font-weight: 700;
+        margin: 0 0 4px;
+    }
+    .print-receipt-footer {
+        font-size: 10px;
+        text-align: center;
+        margin-top: 10px;
     }
 </style>
 
@@ -665,21 +742,11 @@ $todayLabel = date('d F Y');
         </div>
 
         <div class="kiosk-card">
-            <div class="kiosk-card-header">
-                <h2 class="kiosk-title">Ambil Nomor Antrian</h2>
-                <p class="kiosk-description">Pilih poli tujuan lalu tekan tombol antrian sesuai sesi kunjungan.</p>
-            </div>
-
             <div class="kiosk-card-body">
                 <?= $this->Flash->render() ?>
 
                 <?= $this->Form->create(null, ['id' => 'kiosk-queue-form']) ?>
                     <input type="hidden" name="poly_name" id="selected-poly" value="<?= h($selectedPoly) ?>">
-
-                    <div class="section-label">
-                        <i class="fa fa-clinic-medical"></i>
-                        Pilih Poli Tujuan
-                    </div>
 
             <div class="poli-grid" role="listbox" aria-label="Pilihan poli tujuan">
                 <?php foreach ($polyclinics as $poly): ?>
@@ -770,9 +837,29 @@ $todayLabel = date('d F Y');
                     <div class="queue-modal-label">Tanggal Kunjungan</div>
                     <div class="queue-modal-poli"><?= h(date('d-m-Y', strtotime((string)$queueVisitDate))) ?></div>
                 <?php endif; ?>
-                <p class="queue-modal-note">Silakan menunggu panggilan petugas.</p>
+                <p class="queue-modal-note">Struk sedang dicetak. Silakan tunggu panggilan petugas.</p>
                 <button type="button" class="btn-finish" id="btn-finish-queue">Selesai</button>
             </div>
+        </div>
+
+        <div class="print-receipt">
+            <div class="print-receipt-center">
+                <p class="print-receipt-title">RS BHAKTI RAHAYU</p>
+                <p class="print-receipt-sub">Nomor Antrian Loket</p>
+            </div>
+            <div class="print-receipt-divider"></div>
+            <div class="print-receipt-code"><?= h($queueCode) ?></div>
+            <div class="print-receipt-divider"></div>
+            <div class="print-receipt-label">Tujuan Poli</div>
+            <div class="print-receipt-value"><?= h($this->request->getData('poly_name')) ?></div>
+            <?php if (!empty($queueVisitDate)): ?>
+                <div class="print-receipt-label">Tanggal Kunjungan</div>
+                <div class="print-receipt-value"><?= h(date('d-m-Y', strtotime((string)$queueVisitDate))) ?></div>
+            <?php endif; ?>
+            <div class="print-receipt-label">Dicetak</div>
+            <div class="print-receipt-value"><?= h(date('d-m-Y H:i:s')) ?></div>
+            <div class="print-receipt-divider"></div>
+            <p class="print-receipt-footer">Mohon simpan struk ini.<br>Terima kasih.</p>
         </div>
     <?php endif; ?>
 </div>
@@ -875,12 +962,21 @@ $todayLabel = date('d F Y');
 
         updateClock();
         setInterval(updateClock, 1000);
+        setInterval(function() {
+            if (!document.querySelector('.queue-modal')) {
+                window.location.reload();
+            }
+        }, 3 * 60 * 1000);
 
-        if (finishButton) {
+                if (finishButton) {
             finishButton.addEventListener('click', closeQueueModal);
         }
 
         if (queueModal) {
+            setTimeout(function () {
+                window.print();
+            }, 400);
+
             setTimeout(closeQueueModal, 10000);
         }
     })();

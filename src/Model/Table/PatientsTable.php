@@ -57,6 +57,13 @@ class PatientsTable extends Table
         ]);
     }
 
+    /**
+     * @deprecated Sudah tidak dipakai. No. Rekam Medis (patients.code)
+     * sekarang di-generate lewat generatePatientCode() (format Ymd+Ymd,
+     * tanpa dash), bukan format "P000001" seperti method ini. Dibiarkan
+     * di sini (tidak dihapus) supaya tidak memutus kode lain yang mungkin
+     * masih memanggilnya, tapi jangan dipakai untuk generate code baru.
+     */
     public function generateCode()
     {
         $lastPatient = $this->find()
@@ -75,6 +82,47 @@ class PatientsTable extends Table
         return 'P' . str_pad((string) $newNumber, 6, '0', STR_PAD_LEFT);
     }
 
+    /**
+     * Generate No. Rekam Medis (disimpan sebagai patients.code) dari
+     * gabungan tanggal lahir + tanggal data pasien dibuat, format ymd+ymd
+     * (2 digit tahun) tanpa pemisah -> total 12 digit.
+     * Contoh: lahir 29-04-2008, didaftarkan 11-08-2026 -> "080429260811"
+     * (080429 = tahun/bulan/tanggal lahir, 260811 = tahun/bulan/tanggal dibuat).
+     * Kalau kombinasi ini sudah dipakai pasien lain (lahir & didaftarkan di
+     * hari yang sama), ditambah angka urut di belakang tanpa dash supaya
+     * tetap unik.
+     *
+     * Dipanggil dari PatientsController (tambah/edit pasien langsung) dan
+     * dari RegistrationsController (saat bikin pasien baru sambil
+     * registrasi), supaya logic-nya satu sumber, tidak dobel.
+     *
+     * @param string|null $birthDate Tanggal lahir pasien, format Y-m-d.
+     * @return string
+     */
+    public function generatePatientCode(?string $birthDate): string
+    {
+        $birthPart = '000000';
+        if (!empty($birthDate)) {
+            $ts = strtotime($birthDate);
+            if ($ts !== false) {
+                $birthPart = date('ymd', $ts);
+            }
+        }
+
+        $createdPart = date('ymd');
+        $base = $birthPart . $createdPart;
+
+        $code = $base;
+        $suffix = 1;
+
+        while ($this->exists(['code' => $code])) {
+            $suffix++;
+            $code = $base . $suffix;
+        }
+
+        return $code;
+    }
+
     public function buildRules(\Cake\ORM\RulesChecker $rules): \Cake\ORM\RulesChecker
     {
         $rules->add(
@@ -83,9 +131,16 @@ class PatientsTable extends Table
                 'No identitas sudah terdaftar'
             )
         );
-    
+
+        $rules->add(
+            $rules->isUnique(
+                ['code'],
+                'No. Rekam Medis ini sudah dipakai pasien lain'
+            )
+        );
+
         return $rules;
-    }   
+    }
 
     /**
      * Default validation rules.
@@ -118,6 +173,11 @@ class PatientsTable extends Table
             ->scalar('identity_number')
             ->maxLength('identity_number', 50)
             ->notEmptyString('identity_number');
+
+        $validator
+            ->scalar('insurance_card_no')
+            ->maxLength('insurance_card_no', 30)
+            ->allowEmptyString('insurance_card_no');
 
         $validator
             ->scalar('gender')

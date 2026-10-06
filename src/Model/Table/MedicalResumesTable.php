@@ -6,6 +6,7 @@ namespace App\Model\Table;
 use Cake\ORM\Query;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
+use Cake\ORM\Rule\ExistsIn;
 use Cake\Validation\Validator;
 
 /**
@@ -14,7 +15,7 @@ use Cake\Validation\Validator;
  * @property \App\Model\Table\OutpatientVisitsTable&\Cake\ORM\Association\BelongsTo $OutpatientVisits
  * @property \App\Model\Table\RegistrationsTable&\Cake\ORM\Association\BelongsTo $Registrations
  * @property \App\Model\Table\PatientsTable&\Cake\ORM\Association\BelongsTo $Patients
- * @property \App\Model\Table\Doctor1sTable&\Cake\ORM\Association\BelongsTo $Doctor1s
+ * @property \App\Model\Table\DoctorsTable&\Cake\ORM\Association\BelongsTo $Doctors
  *
  * @method \App\Model\Entity\MedicalResume newEmptyEntity()
  * @method \App\Model\Entity\MedicalResume newEntity(array $data, array $options = [])
@@ -52,7 +53,7 @@ class MedicalResumesTable extends Table
 
         $this->belongsTo('OutpatientVisits', [
             'foreignKey' => 'outpatient_visit_id',
-            'joinType' => 'INNER',
+            'joinType' => 'LEFT',
         ]);
         $this->belongsTo('Registrations', [
             'foreignKey' => 'registration_id',
@@ -60,7 +61,7 @@ class MedicalResumesTable extends Table
         $this->belongsTo('Patients', [
             'foreignKey' => 'patient_id',
         ]);
-        $this->belongsTo('Doctor1s', [
+        $this->belongsTo('Doctors', [
             'foreignKey' => 'doctor1_id',
         ]);
     }
@@ -91,6 +92,30 @@ class MedicalResumesTable extends Table
             ->scalar('doctor4_name')
             ->maxLength('doctor4_name', 150)
             ->allowEmptyString('doctor4_name');
+
+                $validator
+            ->scalar('doctor5_name')
+            ->maxLength('doctor5_name', 150)
+            ->allowEmptyString('doctor5_name');
+
+        $validator
+            ->scalar('sender_name')
+            ->maxLength('sender_name', 150)
+            ->allowEmptyString('sender_name');
+
+        $validator
+            ->date('planned_discharge_date')
+            ->allowEmptyDate('planned_discharge_date');
+
+        $validator
+            ->scalar('risk_note')
+            ->maxLength('risk_note', 255)
+            ->allowEmptyString('risk_note');
+
+        $validator
+            ->scalar('letter_type')
+            ->maxLength('letter_type', 30)
+            ->allowEmptyString('letter_type');
 
         $validator
             ->scalar('consultant1_name')
@@ -205,10 +230,13 @@ class MedicalResumesTable extends Table
      */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
-        $rules->add($rules->existsIn(['outpatient_visit_id'], 'OutpatientVisits'), ['errorField' => 'outpatient_visit_id']);
+        $rules->add(
+            new ExistsIn(['outpatient_visit_id'], 'OutpatientVisits', ['allowNullableNulls' => true]),
+            ['errorField' => 'outpatient_visit_id', 'message' => 'This value does not exist']
+        );
         $rules->add($rules->existsIn(['registration_id'], 'Registrations'), ['errorField' => 'registration_id']);
         $rules->add($rules->existsIn(['patient_id'], 'Patients'), ['errorField' => 'patient_id']);
-        $rules->add($rules->existsIn(['doctor1_id'], 'Doctor1s'), ['errorField' => 'doctor1_id']);
+        $rules->add($rules->existsIn(['doctor1_id'], 'Doctors'), ['errorField' => 'doctor1_id']);
 
         return $rules;
     }

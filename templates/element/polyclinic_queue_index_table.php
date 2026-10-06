@@ -210,7 +210,7 @@
                                                 '<i class="fa fa-user-plus"></i>',
                                                 [
                                                     'controller' => 'Registrations',
-                                                    'action' => 'add',
+                                                    'action' => 'addTemp',
                                                     '?' => [
                                                         'queue_id' => $queue->id,
                                                         'queue_number' => $queue->queue_number,

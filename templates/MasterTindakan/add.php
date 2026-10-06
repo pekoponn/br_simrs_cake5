@@ -4,23 +4,15 @@
  * @var \App\Model\Entity\MasterTindakan $masterTindakan
  */
 
-// Mapping kategori → prefix kode
-$kategoriPrefix = [
-    'Konsultasi'    => 'KON',
-    'Tindakan'      => 'TIN',
-    'Laboratorium'  => 'LAB',
-    'Radiologi'     => 'RAD',
-    'Farmasi'       => 'FAR',
-    'Operasi'       => 'OPR',
-    'Rawat Inap'    => 'RIN',
-    'Rawat Jalan'   => 'RJL',
-    'IGD'           => 'IGD',
-    'Lainnya'       => 'LAN',
+$kategoriConfig = [
+    'Konsultasi'            => ['prefix' => 'KON', 'rj' => 1, 'ri' => 0, 'igd' => 0],
+    'Tindakan Rawat Jalan'  => ['prefix' => 'TRJ', 'rj' => 1, 'ri' => 0, 'igd' => 0],
+    'Tindakan Rawat Inap'   => ['prefix' => 'TRI', 'rj' => 0, 'ri' => 1, 'igd' => 0],
 ];
 
 $kategoriOptions = array_merge(['' => '-- Pilih Kategori --'], array_combine(
-    array_keys($kategoriPrefix),
-    array_keys($kategoriPrefix)
+    array_keys($kategoriConfig),
+    array_keys($kategoriConfig)
 ));
 ?>
 
@@ -53,6 +45,9 @@ $kategoriOptions = array_merge(['' => '-- Pilih Kategori --'], array_combine(
                         'class'    => 'form-control select2Form',
                         'value'    => $masterTindakan->kategori ?? '',
                     ]) ?>
+                    <div class="mt-hint" style="margin-top:4px;">
+                        Menentukan format kode & jenis kunjungan (RJ/RI/IGD) secara otomatis.
+                    </div>
                 </div>
 
                 <!-- Kode -->
@@ -84,28 +79,74 @@ $kategoriOptions = array_merge(['' => '-- Pilih Kategori --'], array_combine(
                     ]) ?>
                 </div>
 
-                <!-- Harga -->
-                <div class="col-md-4">
-                    <label class="mt-label"><i class="fa fa-money-bill-wave"></i> Harga</label>
-                    <div class="input-group">
-                        <span class="input-group-addon">Rp</span>
-                        <input type="text" id="harga-display" class="form-control" placeholder="0"
-                               value="<?= $masterTindakan->harga ? number_format($masterTindakan->harga, 0, ',', '.') : '' ?>">
-                    </div>
-                    <?= $this->Form->hidden('harga', ['id' => 'harga', 'value' => $masterTindakan->harga ?? 0]) ?>
-                </div>
+                <?php
+                $priceGroups = [
+                    'umum'    => ['label' => 'Umum',      'color' => '#155724'],
+                    'bpjs'    => ['label' => 'BPJS',      'color' => '#0c5460'],
+                    'reimbes' => ['label' => 'Reimburse', 'color' => '#856404'],
+                ];
+                ?>
+                <div class="col-md-12">
+                    <div class="row">
+                    <?php foreach ($priceGroups as $key => $g): ?>
+                        <div class="col-md-4">
+                            <div class="mt-price-card" style="border-top:3px solid <?= $g['color'] ?>;">
+                                <div class="mt-price-card-title" style="color:<?= $g['color'] ?>;">
+                                    <?= h($g['label']) ?>
+                                </div>
 
-                <!-- Satuan -->
-                <div class="col-md-4">
-                    <label class="mt-label"><i class="fa fa-balance-scale"></i> Satuan</label>
-                    <?= $this->Form->select('satuan',
-                        ['' => '-- Pilih Satuan --', 'Kali' => 'Kali', 'Paket' => 'Paket', 'Hari' => 'Hari', 'Item' => 'Item', 'Unit' => 'Unit'],
-                        [
-                            'id'    => 'satuan',
-                            'class' => 'form-control select2Form',
-                            'value' => $masterTindakan->satuan ?? 'Kali',
-                        ]
-                    ) ?>
+                                <label class="mt-label" style="margin-top:6px;">Harga (Cost ke Pasien)</label>
+                                <div class="input-group">
+                                    <span class="input-group-addon">Rp</span>
+                                    <input type="text" id="harga-<?= $key ?>-display" class="form-control mt-harga-input" placeholder="0"
+                                           value="<?= $masterTindakan->{'harga_' . $key} ? number_format($masterTindakan->{'harga_' . $key}, 0, ',', '.') : '' ?>">
+                                </div>
+                                <?= $this->Form->hidden('harga_' . $key, ['id' => 'harga_' . $key, 'value' => $masterTindakan->{'harga_' . $key} ?? 0]) ?>
+
+                                <label class="mt-label" style="margin-top:8px;">% Dokter</label>
+                                <div class="input-group">
+                                    <?= $this->Form->number('persen_dokter_' . $key, [
+                                        'id'    => 'persen_dokter_' . $key,
+                                        'class' => 'form-control mt-persen-input',
+                                        'min'   => 0,
+                                        'max'   => 100,
+                                        'step'  => 0.01,
+                                        'value' => $masterTindakan->{'persen_dokter_' . $key} ?? 0,
+                                    ]) ?>
+                                    <span class="input-group-addon">%</span>
+                                </div>
+
+                                <label class="mt-label" style="margin-top:8px;">Share Type</label>
+                                <div class="mt-share-toggle">
+                                    <?php
+                                    $shareOptions = ['rs_dr' => 'RS+DR', 'rs' => 'RS', 'dr' => 'DR'];
+                                    $shareValue   = $masterTindakan->{'share_type_' . $key} ?? 'rs_dr';
+                                    foreach ($shareOptions as $sval => $slabel):
+                                    ?>
+                                        <label class="mt-share-option">
+                                            <input type="radio"
+                                                   name="share_type_<?= $key ?>"
+                                                   value="<?= $sval ?>"
+                                                   <?= $shareValue === $sval ? 'checked' : '' ?>>
+                                            <span class="mt-share-badge"><?= $slabel ?></span>
+                                        </label>
+                                    <?php endforeach; ?>
+                                </div>
+
+                                <div class="mt-price-result">
+                                    <div>
+                                        <span>Komisi Dokter</span>
+                                        <strong id="komisi-<?= $key ?>-display">Rp 0</strong>
+                                    </div>
+                                    <div>
+                                        <span>Jasa RS</span>
+                                        <strong id="jasars-<?= $key ?>-display">Rp 0</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                    </div>
                 </div>
 
                 <!-- Status -->
@@ -122,19 +163,6 @@ $kategoriOptions = array_merge(['' => '-- Pilih Kategori --'], array_combine(
                         </label>
                     </div>
                 </div>
-
-                <!-- Keterangan -->
-                <div class="col-md-12">
-                    <label class="mt-label"><i class="fa fa-align-left"></i> Keterangan</label>
-                    <?= $this->Form->textarea('keterangan', [
-                        'id'          => 'keterangan',
-                        'rows'        => 3,
-                        'class'       => 'form-control',
-                        'value'       => $masterTindakan->keterangan ?? '',
-                        'placeholder' => 'Deskripsi singkat (opsional)',
-                    ]) ?>
-                </div>
-
             </div>
         </div>
 
@@ -211,23 +239,154 @@ $kategoriOptions = array_merge(['' => '-- Pilih Kategori --'], array_combine(
     border-top:1px solid #dee2e6;
     padding-top:14px;
 }
+
+.mt-price-card {
+    background:#fff;
+    border:1px solid #dee2e6;
+    border-radius:6px;
+    padding:10px 12px;
+    margin-bottom:10px;
+}
+.mt-price-card-title {
+    font-size:12px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+}
+.mt-price-result {
+    margin-top:10px;
+    background:#f8f9fa;
+    border-radius:4px;
+    padding:6px 8px;
+    font-size:11px;
+}
+.mt-price-result div {
+    display:flex;
+    justify-content:space-between;
+    padding:2px 0;
+}
+.mt-price-result span { color:#6c757d; }
+.mt-price-result strong { color:#1e3a5f; }
+
+.mt-persen-input[readonly] {
+    background:#f1f3f5;
+    color:#495057;
+    cursor:not-allowed;
+}
+
+.mt-share-toggle {
+    display:flex;
+    gap:6px;
+    margin-top:6px;
+}
+.mt-share-option {
+    cursor:pointer;
+    margin:0;
+    flex:1;
+}
+.mt-share-option input {
+    display:none;
+}
+.mt-share-badge {
+    display:block;
+    text-align:center;
+    padding:5px 4px;
+    border-radius:14px;
+    font-size:10px;
+    font-weight:700;
+    color:#6c757d;
+    background:#f1f3f5;
+    border:1px solid #dee2e6;
+    transition:all .15s ease;
+}
+.mt-share-option input:checked + .mt-share-badge {
+    background:#1e3a5f;
+    color:#fff;
+    border-color:#1e3a5f;
+}
 </style>
 
 <script>
 (function () {
     console.log('[DEBUG] Script master-tindakan/add mulai jalan');
 
-    var prefixMap   = <?= json_encode($kategoriPrefix) ?>;
-    var nextKodeUrl = '<?= $this->Url->build(['action' => 'getNextKode']) ?>';
+    var kategoriConfig = <?= json_encode($kategoriConfig) ?>;
+    var nextKodeUrl     = '<?= $this->Url->build(['action' => 'getNextKode']) ?>';
 
     console.log('[DEBUG] nextKodeUrl =', nextKodeUrl);
-    console.log('[DEBUG] prefixMap =', prefixMap);
 
     var elKategori    = document.getElementById('kategori');
     var elKode        = document.getElementById('kode');
     var elKodePreview = document.getElementById('kode-preview');
-    var elHargaDisp   = document.getElementById('harga-display');
-    var elHarga       = document.getElementById('harga');
+    var priceKeys = ['umum', 'bpjs', 'reimbes'];
+
+    function formatRupiah(n) {
+        return 'Rp ' + Math.round(n).toLocaleString('id-ID');
+    }
+
+    function recalcCommission(key) {
+        var harga  = parseFloat(document.getElementById('harga_' + key).value) || 0;
+        var persen = parseFloat(document.getElementById('persen_dokter_' + key).value) || 0;
+        var komisi = harga * persen / 100;
+        var jasaRs = harga - komisi;
+
+        document.getElementById('komisi-' + key + '-display').textContent = formatRupiah(komisi);
+        document.getElementById('jasars-' + key + '-display').textContent = formatRupiah(jasaRs);
+    }
+
+    // Terapkan aturan otomatis %Dokter berdasarkan Share Type yang dipilih:
+    // - DR    -> %Dokter dikunci 100 (komisi dokter = harga penuh)
+    // - RS    -> %Dokter dikunci 0   (jasa RS = harga penuh)
+    // - RS+DR -> %Dokter kembali bisa diisi manual oleh user
+    function applyShareTypeToPersen(key, shareValue) {
+        var elPersen = document.getElementById('persen_dokter_' + key);
+
+        if (shareValue === 'dr') {
+            elPersen.value = 100;
+            elPersen.readOnly = true;
+        } else if (shareValue === 'rs') {
+            elPersen.value = 0;
+            elPersen.readOnly = true;
+        } else {
+            // rs_dr -> bebas diisi manual
+            elPersen.readOnly = false;
+        }
+
+        recalcCommission(key);
+    }
+
+    priceKeys.forEach(function (key) {
+        var elDisplay = document.getElementById('harga-' + key + '-display');
+        var elHidden  = document.getElementById('harga_' + key);
+        var elPersen  = document.getElementById('persen_dokter_' + key);
+        var elShareRadios = document.querySelectorAll('input[name="share_type_' + key + '"]');
+
+        elDisplay.addEventListener('input', function () {
+            var raw = this.value.replace(/\D/g, '');
+            this.value      = raw ? parseInt(raw, 10).toLocaleString('id-ID') : '';
+            elHidden.value   = raw || '0';
+            recalcCommission(key);
+        });
+
+        elPersen.addEventListener('input', function () {
+            recalcCommission(key);
+        });
+
+        elShareRadios.forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                if (this.checked) {
+                    applyShareTypeToPersen(key, this.value);
+                }
+            });
+        });
+
+        var checkedRadio = document.querySelector('input[name="share_type_' + key + '"]:checked');
+        if (checkedRadio) {
+            applyShareTypeToPersen(key, checkedRadio.value);
+        } else {
+            recalcCommission(key);
+        }
+    });
 
     console.log('[DEBUG] elKategori ditemukan?', !!elKategori, 'value awal =', elKategori ? elKategori.value : null);
     console.log('[DEBUG] elKode ditemukan?', !!elKode);
@@ -235,7 +394,7 @@ $kategoriOptions = array_merge(['' => '-- Pilih Kategori --'], array_combine(
     function fetchNextKode(kategori) {
         console.log('[DEBUG] fetchNextKode dipanggil dengan kategori =', kategori);
 
-        if (!kategori || !prefixMap[kategori]) {
+        if (!kategori || !kategoriConfig[kategori]) {
             console.log('[DEBUG] kategori kosong atau tidak ada di prefixMap, keluar');
             elKode.value = '';
             elKodePreview.textContent = '';
@@ -275,12 +434,6 @@ $kategoriOptions = array_merge(['' => '-- Pilih Kategori --'], array_combine(
             fetchNextKode(this.value);
         });
     }
-
-    elHargaDisp.addEventListener('input', function () {
-        var raw = this.value.replace(/\D/g, '');
-        this.value    = raw ? parseInt(raw, 10).toLocaleString('id-ID') : '';
-        elHarga.value = raw || '0';
-    });
 
     $(function () {
         console.log('[DEBUG] $(document).ready jalan, elKategori.value =', elKategori.value, 'elKode.value =', elKode.value);

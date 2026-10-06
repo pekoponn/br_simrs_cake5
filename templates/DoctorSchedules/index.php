@@ -6,6 +6,8 @@
 ?>
 
 <style>
+
+
     .ds-page {
         background: #f4f7fb;
         padding: 18px;
@@ -303,6 +305,31 @@
         background: #eff6ff !important;
     }
 
+.ds-table tbody tr {
+    transition: background .1s ease;
+}
+
+.ds-table tbody tr {
+    transition: background .1s ease;
+}
+
+.ds-group-row {
+    background: var(--group-bg, transparent);
+}
+
+.ds-group-row:hover {
+    background: var(--group-bg-hover, #f8fafc) !important;
+}
+
+.ds-group-start td:first-child {
+    box-shadow: inset 4px 0 0 var(--group-color, transparent);
+}
+
+.ds-today-row,
+.ds-today-row:hover {
+    background: #eff6ff !important;
+}
+
     .ds-code {
         background: #eef4ff;
         color: #1d4ed8;
@@ -470,7 +497,24 @@
         'Minggu' => '#475569',
     ];
 
+    $groupPalette = [
+    ['solid' => '#2563eb', 'bg' => '#eff6ff', 'bgHover' => '#dbeafe'],
+    ['solid' => '#16a34a', 'bg' => '#f0fdf4', 'bgHover' => '#dcfce7'],
+    ['solid' => '#ea580c', 'bg' => '#fff7ed', 'bgHover' => '#ffedd5'],
+    ['solid' => '#7c3aed', 'bg' => '#f5f3ff', 'bgHover' => '#ede9fe'],
+    ['solid' => '#0891b2', 'bg' => '#ecfeff', 'bgHover' => '#cffafe'],
+    ['solid' => '#dc2626', 'bg' => '#fef2f2', 'bgHover' => '#fee2e2'],
+    ['solid' => '#ca8a04', 'bg' => '#fefce8', 'bgHover' => '#fef9c3'],
+];
     $hasActiveFilter = $q || ($dayFilter !== null && $dayFilter !== '') || ($activeFilter !== null && $activeFilter !== '');
+    $groupedSchedules = [];
+    foreach ($doctorSchedules as $ds) {
+        $doctorKey = $ds->doctor_id ?? ('unknown-' . $ds->id);
+        if (!isset($groupedSchedules[$doctorKey])) {
+            $groupedSchedules[$doctorKey] = [];
+        }
+        $groupedSchedules[$doctorKey][] = $ds;
+    }
     ?>
 
     <div class="ds-header">
@@ -532,7 +576,7 @@
 
                 <div>
                     <label class="ds-filter-label">Filter Status</label>
-                    <select name="is_active" class="form-control ds-input">
+                    <select id="filter-is-active" name="is_active" class="form-control ds-input select2Form">
                         <option value="">Semua Status</option>
                         <option value="1" <?= $activeFilter === '1' ? 'selected' : '' ?>>Aktif</option>
                         <option value="0" <?= $activeFilter === '0' ? 'selected' : '' ?>>Tidak Aktif</option>
@@ -582,8 +626,7 @@
             <line x1="3" y1="10" x2="21" y2="10"></line>
         </svg>
         <span>
-            Hari ini: <strong><?= h($todayName) ?>, <?= date('d F Y') ?></strong>.
-            Jadwal hari ini akan diberi background biru muda.
+            Hari ini: <strong><?= h($todayName) ?>, <?= date('d F Y') ?></strong>
         </span>
     </div>
 
@@ -598,153 +641,166 @@
                     <th><?= $this->Paginator->sort('day', 'Hari') ?></th>
                     <th>Jam Praktik</th>
                     <th style="min-width:190px;">Kuota</th>
+                    <th style="white-space:nowrap;">Estimasi</th>
                     <th><?= $this->Paginator->sort('is_active', 'Status') ?></th>
                     <th style="text-align:center; width:125px;">Aksi</th>
                 </tr>
             </thead>
 
-            <tbody>
-                <?php if (!empty($doctorSchedules) && $doctorSchedules->count() > 0): ?>
-                    <?php
-                    $page = (int)$this->request->getQuery('page', 1);
-                    $limit = 20;
-                    $no = (($page - 1) * $limit) + 1;
-                    ?>
-
-                    <?php foreach ($doctorSchedules as $ds): ?>
+                    <tbody>
+                <?php if (!empty($groupedSchedules)): ?>
+                    <?php $no = 1; ?>
+                    <?php $groupIndex = 0; ?>
+                    <?php foreach ($groupedSchedules as $doctorId => $scheduleGroup): ?>
+                        <?php $rowspan = count($scheduleGroup); ?>
                         <?php
-                        $isToday = ($ds->day === $todayName);
-                        $isActive = in_array($ds->is_active ?? null, ['Y', 1, '1', true], true);
-
-                        $quotaTotal = (int)($ds->quota ?? 0);
-                        $quotaUsed = (int)($ds->effective_quota_used ?? $ds->quota_used ?? 0);
-                        $quotaLeft = max(0, $quotaTotal - $quotaUsed);
-                        $pct = $quotaTotal > 0 ? min(100, round($quotaUsed / $quotaTotal * 100)) : 0;
-
-                        if ($pct >= 100) {
-                            $barColor = '#dc2626';
-                            $barText = 'Penuh';
-                        } elseif ($pct >= 75) {
-                            $barColor = '#ea580c';
-                            $barText = 'Hampir Penuh';
-                        } elseif ($pct >= 50) {
-                            $barColor = '#ca8a04';
-                            $barText = 'Sisa ' . $quotaLeft;
-                        } else {
-                            $barColor = '#16a34a';
-                            $barText = 'Sisa ' . $quotaLeft;
-                        }
-
-                        $dayColor = $dayColors[$ds->day] ?? '#64748b';
+                            $groupColors = $groupPalette[$groupIndex % count($groupPalette)];
+                            $groupIndex++;
                         ?>
+                        <?php foreach ($scheduleGroup as $i => $ds): ?>
+                            <?php
+                            $isActive = in_array($ds->is_active ?? null, ['Y', 1, '1', true], true);
 
-                        <tr class="<?= $isToday ? 'ds-today-row' : '' ?>">
-                            <td style="text-align:center; color:#64748b; font-weight:700;">
-                                <?= $no++ ?>
-                            </td>
+                            $quotaTotal = (int)($ds->quota ?? 0);
+                            $quotaUsed = (int)($ds->effective_quota_used ?? $ds->quota_used ?? 0);
+                            $quotaLeft = max(0, $quotaTotal - $quotaUsed);
+                            $pct = $quotaTotal > 0 ? min(100, round($quotaUsed / $quotaTotal * 100)) : 0;
 
-                            <td>
-                                <span class="ds-code"><?= h($ds->code ?? '-') ?></span>
+                            if ($pct >= 100) {
+                                $barColor = '#dc2626';
+                                $barText = 'Penuh';
+                            } elseif ($pct >= 75) {
+                                $barColor = '#ea580c';
+                                $barText = 'Hampir Penuh';
+                            } elseif ($pct >= 50) {
+                                $barColor = '#ca8a04';
+                                $barText = 'Sisa ' . $quotaLeft;
+                            } else {
+                                $barColor = '#16a34a';
+                                $barText = 'Sisa ' . $quotaLeft;
+                            }
 
-                                <?php if ($isToday): ?>
-                                    <span class="ds-badge" style="background:#2563eb; color:#fff; margin-left:5px; font-size:10px;">
-                                        Hari Ini
+                            $dayColor = $dayColors[$ds->day] ?? '#64748b';
+                            $isFirstRowOfGroup = ($i === 0);
+                            ?>
+
+                            <tr class="ds-group-row <?= $isFirstRowOfGroup ? 'ds-group-start' : '' ?>"
+                            style="--group-color: <?= h($groupColors['solid']) ?>; --group-bg: <?= h($groupColors['bg']) ?>; --group-bg-hover: <?= h($groupColors['bgHover']) ?>;">
+
+                                <?php if ($isFirstRowOfGroup): ?>
+                                    <td style="text-align:center; color:#64748b; font-weight:700;" rowspan="<?= $rowspan ?>">
+                                        <?= $no++ ?>
+                                    </td>
+                                <?php endif; ?>
+
+                                <td>
+                                    <span class="ds-code"><?= h($ds->code ?? '-') ?></span>
+                                </td>
+
+                                <?php if ($isFirstRowOfGroup): ?>
+                                    <td rowspan="<?= $rowspan ?>">
+                                        <?php if ($ds->has('doctor') && $ds->doctor): ?>
+                                            <strong><?= h($ds->doctor->doctor_name ?? $ds->doctor->name ?? '-') ?></strong>
+                                        <?php else: ?>
+                                            <span style="color:#94a3b8;">-</span>
+                                        <?php endif; ?>
+                                    </td>
+
+                                    <td rowspan="<?= $rowspan ?>">
+                                        <?php if ($ds->has('doctor') && $ds->doctor && !empty($ds->doctor->polyclinic_name)): ?>
+                                            <span class="ds-badge" style="background:#eef4ff; color:#1d4ed8;">
+                                                <?= h($ds->doctor->polyclinic_name) ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span style="color:#94a3b8;">-</span>
+                                        <?php endif; ?>
+                                    </td>
+                                <?php endif; ?>
+
+                                <td>
+                                    <span class="ds-badge" style="background:<?= h($dayColor) ?>; color:#fff;">
+                                        <?= h($ds->day ?? '-') ?>
                                     </span>
-                                <?php endif; ?>
-                            </td>
+                                </td>
 
-                            <td>
-                                <?php if ($ds->has('doctor') && $ds->doctor): ?>
-                                    <strong><?= h($ds->doctor->doctor_name ?? $ds->doctor->name ?? '-') ?></strong>
-                                <?php else: ?>
-                                    <span style="color:#94a3b8;">-</span>
-                                <?php endif; ?>
-                            </td>
-
-                            <td>
-                                <?php if ($ds->has('doctor') && $ds->doctor && !empty($ds->doctor->polyclinic_name)): ?>
-                                    <span class="ds-badge" style="background:#eef4ff; color:#1d4ed8;">
-                                        <?= h($ds->doctor->polyclinic_name) ?>
+                                <td>
+                                    <span class="ds-time">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="9"></circle>
+                                            <polyline points="12 7 12 12 15.5 14"></polyline>
+                                        </svg>
+                                        <?= h(substr((string)($ds->start_time ?? ''), 0, 5)) ?>
+                                        &ndash;
+                                        <?= h(substr((string)($ds->end_time ?? ''), 0, 5)) ?>
                                     </span>
-                                <?php else: ?>
-                                    <span style="color:#94a3b8;">-</span>
-                                <?php endif; ?>
-                            </td>
+                                </td>
 
-                            <td>
-                                <span class="ds-badge" style="background:<?= h($dayColor) ?>; color:#fff;">
-                                    <?= h($ds->day ?? '-') ?>
-                                </span>
-                            </td>
-
-                            <td>
-                                <span class="ds-time">
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <circle cx="12" cy="12" r="9"></circle>
-                                        <polyline points="12 7 12 12 15.5 14"></polyline>
-                                    </svg>
-                                    <?= h(substr((string)($ds->start_time ?? ''), 0, 5)) ?>
-                                    &ndash;
-                                    <?= h(substr((string)($ds->end_time ?? ''), 0, 5)) ?>
-                                </span>
-                            </td>
-
-                            <td>
-                                <div style="display:flex; align-items:center; gap:8px;">
-                                    <div class="ds-quota-track">
-                                        <div class="ds-quota-fill" style="width:<?= $pct ?>%; background:<?= h($barColor) ?>;"></div>
+                                <td>
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <div class="ds-quota-track">
+                                            <div class="ds-quota-fill" style="width:<?= $pct ?>%; background:<?= h($barColor) ?>;"></div>
+                                        </div>
+                                        <span style="white-space:nowrap; font-size:12px; font-weight:800; color:<?= h($barColor) ?>;">
+                                            <?= $quotaUsed ?>/<?= $quotaTotal ?> - <?= h($barText) ?>
+                                        </span>
                                     </div>
+                                </td>
 
-                                    <span style="white-space:nowrap; font-size:12px; font-weight:800; color:<?= h($barColor) ?>;">
-                                        <?= $quotaUsed ?>/<?= $quotaTotal ?> - <?= h($barText) ?>
-                                    </span>
-                                </div>
-                            </td>
+                                <td>
+                                    <?php if (!empty($ds->estimated_minutes)): ?>
+                                        <span class="ds-badge" style="background:#eef4ff; color:#1d4ed8;">
+                                            <?= (int)$ds->estimated_minutes ?> menit/pasien
+                                        </span>
+                                    <?php else: ?>
+                                        <span style="color:#94a3b8;">-</span>
+                                    <?php endif; ?>
+                                </td>
 
-                            <td style="text-align:center;">
-                                <?php if ($isActive): ?>
-                                    <span class="ds-badge ds-status-active">
-                                        <span class="ds-dot"></span> Aktif
-                                    </span>
-                                <?php else: ?>
-                                    <span class="ds-badge ds-status-off">
-                                        <span class="ds-dot"></span> Tidak Aktif
-                                    </span>
-                                <?php endif; ?>
-                            </td>
+                                <td style="text-align:center;">
+                                    <?php if ($isActive): ?>
+                                        <span class="ds-badge ds-status-active">
+                                            <span class="ds-dot"></span> Aktif
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="ds-badge ds-status-off">
+                                            <span class="ds-dot"></span> Tidak Aktif
+                                        </span>
+                                    <?php endif; ?>
+                                </td>
 
-                            <td>
-                                <div class="ds-row-actions">
-                                    <?= $this->Html->link(
-                                        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>',
-                                        ['action' => 'view', $ds->id],
-                                        ['escape' => false, 'class' => 'ds-icon-btn view', 'title' => 'Lihat']
-                                    ) ?>
+                                <td>
+                                    <div class="ds-row-actions">
+                                        <?= $this->Html->link(
+                                            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>',
+                                            ['action' => 'view', $ds->id],
+                                            ['escape' => false, 'class' => 'ds-icon-btn view', 'title' => 'Lihat']
+                                        ) ?>
 
-                                    <?= $this->Html->link(
-                                        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>',
-                                        ['action' => 'edit', $ds->id],
-                                        ['escape' => false, 'class' => 'ds-icon-btn edit', 'title' => 'Edit']
-                                    ) ?>
+                                        <?= $this->Html->link(
+                                            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>',
+                                            ['action' => 'edit', $ds->id],
+                                            ['escape' => false, 'class' => 'ds-icon-btn edit', 'title' => 'Edit']
+                                        ) ?>
 
-                                    <?= $this->Form->postLink(
-                                        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>',
-                                        ['action' => 'delete', $ds->id],
-                                        [
-                                            'escape' => false,
-                                            'class' => 'ds-icon-btn delete',
-                                            'title' => 'Hapus',
-                                            'confirm' => __('Yakin hapus jadwal # {0}?', $ds->id),
-                                        ]
-                                    ) ?>
-                                </div>
-                            </td>
-                        </tr>
+                                        <?= $this->Form->postLink(
+                                            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>',
+                                            ['action' => 'delete', $ds->id],
+                                            [
+                                                'escape' => false,
+                                                'class' => 'ds-icon-btn delete',
+                                                'title' => 'Hapus',
+                                                'confirm' => __('Yakin hapus jadwal # {0}?', $ds->id),
+                                            ]
+                                        ) ?>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
                     <?php endforeach; ?>
 
                 <?php else: ?>
                     <tr>
-                        <td colspan="9">
+                        <td colspan="10">
                             <div class="ds-empty-state">
                                 <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                                     <rect x="3" y="4" width="18" height="18" rx="3"></rect>

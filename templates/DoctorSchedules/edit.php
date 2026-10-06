@@ -220,6 +220,32 @@ $days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
         position: relative;
     }
 
+    .ds-estimasi-wrap {
+        position: relative;
+    }
+
+    .ds-estimasi-wrap input {
+        background: #f8fafc !important;
+        color: #1d4ed8;
+        font-weight: 800;
+        cursor: not-allowed;
+    }
+
+    .ds-estimasi-wrap .ds-estimasi-tag {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: #94a3b8;
+        background: #eef2f7;
+        padding: 3px 8px;
+        border-radius: 999px;
+        pointer-events: none;
+    }
+
     .ds-poli-wrap input {
         background: #f8fafc !important;
         color: #1d4ed8;
@@ -340,6 +366,7 @@ $days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
                     'label' => false,
                     'value' => fmtDsTimeForInput($doctorSchedule->start_time),
                     'class' => 'form-control ds-form-control',
+                    'id' => 'ds-start-time',
                     'templates' => ['inputContainer' => '{{content}}'],
                 ]) ?>
             </div>
@@ -351,12 +378,13 @@ $days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
                     'label' => false,
                     'value' => fmtDsTimeForInput($doctorSchedule->end_time),
                     'class' => 'form-control ds-form-control',
+                    'id' => 'ds-end-time',
                     'templates' => ['inputContainer' => '{{content}}'],
                 ]) ?>
             </div>
         </div>
 
-        <div class="ds-form-grid">
+        <div class="ds-form-grid ds-grid-3">
             <div class="ds-form-group">
                 <label class="ds-form-label">Kuota</label>
                 <?= $this->Form->control('quota', [
@@ -365,8 +393,24 @@ $days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
                     'min' => 0,
                     'class' => 'form-control ds-form-control',
                     'placeholder' => 'Jumlah kuota pasien',
+                    'id' => 'ds-quota',
                     'templates' => ['inputContainer' => '{{content}}'],
                 ]) ?>
+            </div>
+
+            <div class="ds-form-group">
+                <label class="ds-form-label">Estimasi per Pasien</label>
+                <div class="ds-estimasi-wrap">
+                    <input
+                        type="text"
+                        id="ds-estimasi-display"
+                        class="form-control ds-form-control"
+                        value="<?= !empty($doctorSchedule->estimated_minutes) ? h($doctorSchedule->estimated_minutes) . ' menit/pasien' : '' ?>"
+                        placeholder="Otomatis dihitung dari jam & kuota"
+                        readonly
+                    >
+                    <span class="ds-estimasi-tag">Auto</span>
+                </div>
             </div>
 
             <div class="ds-form-group full">
@@ -440,4 +484,50 @@ $days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
             jQuery(doctorSelect).on('select2:select select2:clear', updatePoli);
         }
     })();
+
+    (function () {
+    var startInput = document.getElementById('ds-start-time');
+    var endInput = document.getElementById('ds-end-time');
+    var quotaInput = document.getElementById('ds-quota');
+    var estimasiInput = document.getElementById('ds-estimasi-display');
+
+    if (!startInput || !endInput || !quotaInput || !estimasiInput) {
+        return;
+    }
+
+    function updateEstimasi() {
+        var start = startInput.value;
+        var end = endInput.value;
+        var quota = parseInt(quotaInput.value, 10);
+
+        if (!start || !end || !quota || quota <= 0) {
+            estimasiInput.value = '';
+            return;
+        }
+
+        var startParts = start.split(':');
+        var endParts = end.split(':');
+
+        if (startParts.length < 2 || endParts.length < 2) {
+            estimasiInput.value = '';
+            return;
+        }
+
+        var startMinutes = (parseInt(startParts[0], 10) * 60) + parseInt(startParts[1], 10);
+        var endMinutes = (parseInt(endParts[0], 10) * 60) + parseInt(endParts[1], 10);
+        var totalMinutes = endMinutes - startMinutes;
+
+        if (totalMinutes <= 0) {
+            estimasiInput.value = 'Jam tidak valid';
+            return;
+        }
+
+        var perPatient = Math.round(totalMinutes / quota);
+        estimasiInput.value = perPatient + ' menit/pasien';
+    }
+
+    startInput.addEventListener('change', updateEstimasi);
+    endInput.addEventListener('change', updateEstimasi);
+    quotaInput.addEventListener('input', updateEstimasi);
+})();
 </script>

@@ -16,6 +16,27 @@ use Cake\ORM\Entity;
  * @property string|null $patient_name
  * @property int|null $doctor_id
  * @property string|null $doctor_name
+ * @property int|null $nurse_id
+ * @property string|null $nurse_name
+ * @property string|null $allergy_status
+ * @property string|null $allergy_detail
+ * @property string|null $perilaku
+ * @property int|null $gcs_e
+ * @property int|null $gcs_v
+ * @property int|null $gcs_m
+ * @property string|null $pupil_kanan
+ * @property string|null $pupil_kiri
+ * @property string|null $reflex_kanan
+ * @property string|null $reflex_kiri
+ * @property string|null $nadi_jenis
+ * @property string|null $akral
+ * @property int|null $pain_scale
+ * @property int|null $flacc_wajah
+ * @property int|null $flacc_kaki
+ * @property int|null $flacc_aktifitas
+ * @property int|null $flacc_menangis
+ * @property int|null $flacc_bersuara
+ * @property int|null $flacc_total
  * @property \Cake\I18n\FrozenDate|null $service_date
  * @property \Cake\I18n\Time|null $service_time
  * @property string|null $chief_complaint
@@ -51,11 +72,33 @@ class EmergencyEntry extends Entity
     protected $_accessible = [
         'registration_id' => true,
         'registration_no' => true,
+        'triase_no' => true,
         'patient_id' => true,
         'patient_rm' => true,
         'patient_name' => true,
         'doctor_id' => true,
         'doctor_name' => true,
+        'nurse_id' => true,
+        'nurse_name' => true,
+        'allergy_status' => true,
+        'allergy_detail' => true,
+        'perilaku' => true,
+        'gcs_e' => true,
+        'gcs_v' => true,
+        'gcs_m' => true,
+        'pupil_kanan' => true,
+        'pupil_kiri' => true,
+        'reflex_kanan' => true,
+        'reflex_kiri' => true,
+        'nadi_jenis' => true,
+        'akral' => true,
+        'pain_scale' => true,
+        'flacc_wajah' => true,
+        'flacc_kaki' => true,
+        'flacc_aktifitas' => true,
+        'flacc_menangis' => true,
+        'flacc_bersuara' => true,
+        'flacc_total' => true,
         'service_date' => true,
         'service_time' => true,
         'chief_complaint' => true,
@@ -75,5 +118,6 @@ class EmergencyEntry extends Entity
         'registration' => true,
         'patient' => true,
         'doctor' => true,
+        'master_tenaga_medi' => true,
     ];
 }

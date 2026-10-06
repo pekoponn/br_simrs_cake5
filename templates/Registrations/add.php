@@ -22,7 +22,7 @@
 ?>
 
 <?php
-// Default variable agar add.php tidak notice ketika proses save gagal / return dari controller.
+
 $registration = $registration ?? null;
 $fromQueue = $fromQueue ?? false;
 $fromPlannedInpatient = $fromPlannedInpatient ?? false;
@@ -34,6 +34,14 @@ $queuePatientId = $queuePatientId ?? null;
 $queueDoctorId = $queueDoctorId ?? null;
 $queueDoctorScheduleId = $queueDoctorScheduleId ?? null;
 $queuePatientData = $queuePatientData ?? [];
+$fromPraRegistration = $fromPraRegistration ?? false;
+$praApptDate = $praApptDate ?? null;
+$praApptTime = $praApptTime ?? null;
+$praReferralNo = $praReferralNo ?? null;
+$praSkdpNo = $praSkdpNo ?? null;
+$praGuarantor = $praGuarantor ?? null;
+$praInsuranceType = $praInsuranceType ?? null;
+$praReferralType = $praReferralType ?? null;
 $queuePatientName = $queuePatientName ?? '';
 $queuePhoneNumber = $queuePhoneNumber ?? '';
 $queueIdentityNumber = $queueIdentityNumber ?? '';
@@ -47,10 +55,11 @@ $provinces = $provinces ?? [];
 $masterPenjamins = $masterPenjamins ?? [];
 $masterTreatmentPackages = $masterTreatmentPackages ?? [];
 $masterPatientReferrers = $masterPatientReferrers ?? [];
-
 $currentServiceType = $this->request->getData('service_type') ?? ($registration->service_type ?? 'rawat_jalan');
 if ($fromPlannedInpatient) {
     $currentServiceType = 'rawat_inap';
+} elseif ($fromPraRegistration && empty($this->request->getData('service_type'))) {
+    $currentServiceType = 'rawat_jalan';
 }
 $currentQueueNumber = $this->request->getData('queue_number')
     ?? $this->request->getData('queue_no')
@@ -182,6 +191,70 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
         text-align: right;
         margin-bottom: 20px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .submit-card-toolbar {
+        display: flex;
+        align-items: stretch;
+        gap: 10px;
+        text-align: left;
+    }
+
+    .toolbar-left {
+        display: flex;
+        align-items: stretch;
+        flex-wrap: nowrap;
+        gap: 8px;
+        flex: 1 1 auto;
+    }
+
+    .toolbar-btn {
+        flex: 1 1 0;
+        height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 0 10px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #495057;
+        background: #f1f3f5;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+
+    .toolbar-btn:hover {
+        background: #e9ecef;
+        color: #1e3a5f;
+    }
+
+    .toolbar-btn i {
+        font-size: 12px;
+        color: #6c757d;
+    }
+
+    .toolbar-right {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+    }
+
+    .toolbar-right .btn-primary {
+        height: 38px;
+    }
+
+    @media (max-width: 992px) {
+        .submit-card-toolbar {
+            flex-wrap: wrap;
+        }
+        .toolbar-left {
+            flex-wrap: wrap;
+        }
+        .toolbar-btn {
+            flex: 1 1 auto;
+        }
     }
 
     .queue-info-box {
@@ -485,10 +558,10 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
 
                                 <div class="row">
                                     <div class="col-md-4">
-                                        <label>Kode Pasien</label>
+                                        <label>Rekam Medis</label>
                                         <div class="input-group">
                                             <input type="text" id="view-patient-code" class="form-control" readonly
-                                                placeholder="Kode pasien otomatis / cari pasien"
+                                                placeholder="No Rekam Medis otomatis / cari pasien"
                                                 value="<?= h($this->request->getData('patient.code') ?? ($queuePatientData['code'] ?? '')) ?>">
                                             <span class="input-group-btn">
                                                 <button type="button" class="btn btn-primary" data-toggle="modal"
@@ -557,7 +630,17 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                                             <option value="O" <?= $vBloodType === 'O' ? 'selected' : '' ?>>O</option>
                                         </select>
                                     </div>
-
+                                    <div class="col-md-3">
+                                        <label>
+                                            Alergi
+                                            <small style="color:#888;">(diisi di EMR)</small>
+                                        </label>
+                                        <input type="text" id="view-allergy" name="patient[allergy]" class="form-control"
+                                            placeholder="Diisi lewat EMR saat pemeriksaan"
+                                            value="<?= h($patientFieldValue('allergy')) ?>"
+                                            readonly
+                                            style="background-color:#e9ecef; color:#6c757d; cursor:not-allowed;">
+                                    </div>
                                     <div class="col-md-3">
                                         <label>Tanggal Lahir</label>
                                         <input type="text" id="view-birth-date" name="patient[birth_date]" class="form-control datepicker-autoclose" autocomplete="off"
@@ -816,14 +899,14 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                                         <label>Tanggal Masuk</label>
                                         <input type="text" name="registration_date" class="form-control datepicker-autoclose" autocomplete="off"
                                             placeholder="Pilih tanggal masuk"
-                                            value="<?= h($this->request->getData('registration_date') ?? date('Y-m-d')) ?>">
+                                            value="<?= h($this->request->getData('registration_date') ?? ($praApptDate ?? date('Y-m-d'))) ?>">
                                     </div>
 
                                     <div class="col-md-4">
                                         <label>Jam Masuk</label>
                                         <input type="time" name="admission_time" id="admission-time" class="form-control" autocomplete="off" step="60" onclick="if (this.showPicker) this.showPicker();" onfocus="if (this.showPicker) this.showPicker();"
                                             placeholder="Pilih jam masuk"
-                                            value="<?= h($this->request->getData('admission_time') ?? date('H:i')) ?>">
+                                            value="<?= h($this->request->getData('admission_time') ?? ($praApptTime ?? date('H:i'))) ?>">
                                     </div>
 
                                     <div class="col-md-12">
@@ -831,18 +914,20 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                                             Pelayanan
                                             <?php if ($fromQueue): ?>
                                                 <small style="color:#888;">(otomatis Rawat Jalan dari antrian)</small>
-                                                <?php elseif ($fromPlannedInpatient): ?>
+                                            <?php elseif ($fromPlannedInpatient): ?>
                                                 <small style="color:#888;">(otomatis Rawat Inap dari rencana rawat inap)</small>
+                                            <?php elseif ($fromPraRegistration): ?>
+                                                <small style="color:#888;">(otomatis Rawat Jalan dari pra registrasi)</small>
                                             <?php endif; ?>
                                         </label><br>
                                         <?php
                                             $lockRawatJalan = $fromPlannedInpatient;
-                                            $lockIgd        = $fromQueue || $fromPlannedInpatient;
-                                            $lockRawatInap  = $fromQueue;
+                                            $lockIgd        = $fromQueue || $fromPlannedInpatient || $fromPraRegistration;
+                                            $lockRawatInap  = $fromQueue || $fromPraRegistration;
                                         ?>
                                         <label style="margin-right:20px; <?= $lockRawatJalan ? 'color:#adb5bd;' : '' ?>">
                                             <input type="radio" name="service_type" value="rawat_jalan"
-                                                <?= (($fromQueue || $currentServiceType === 'rawat_jalan') && !$fromPlannedInpatient) ? 'checked' : '' ?>
+                                                <?= (($fromQueue || $fromPraRegistration || $currentServiceType === 'rawat_jalan') && !$fromPlannedInpatient) ? 'checked' : '' ?>
                                                 <?= $lockRawatJalan ? 'disabled' : '' ?>>
                                             Rawat Jalan
                                         </label>
@@ -865,16 +950,18 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                                             Poli / Unit
                                             <?php if ($fromQueue): ?>
                                                 <small style="color:#888;">(dari antrian)</small>
+                                            <?php elseif ($fromPraRegistration): ?>
+                                                <small style="color:#888;">(otomatis dari pra registrasi)</small>
                                             <?php endif; ?>
                                         </label>
 
-                                        <?php if ($fromQueue): ?>
+                                        <?php if ($fromQueue || $fromPraRegistration): ?>
 
                                             <input type="text"
                                                 name="polyclinic_name"
                                                 id="polyclinic-name"
                                                 class="form-control"
-                                                placeholder="Poli / unit dari antrian"
+                                                placeholder="<?= $fromQueue ? 'Poli / unit dari antrian' : 'Poli / unit dari pra registrasi' ?>"
                                                 value="<?= h($polyclinicName ?? '') ?>"
                                                 readonly
                                                 style="background-color:#e9ecef; color:#6c757d; cursor:not-allowed;">
@@ -930,11 +1017,14 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                                         <?php endif; ?>
                                     </div>
 
+                                   <?php $lockDoctorField = ($fromQueue || $fromPraRegistration) && !empty($currentDoctorId); ?>
                                    <div class="col-md-4">
                                         <label>
                                             Dokter
                                             <?php if ($fromQueue && !empty($currentDoctorId)): ?>
                                                 <small style="color:#888;">(dari jadwal)</small>
+                                            <?php elseif ($fromPraRegistration && !empty($currentDoctorId)): ?>
+                                                <small style="color:#888;">(otomatis dari pra registrasi)</small>
                                             <?php endif; ?>
                                         </label>
                                         <?= $this->Form->select('doctor_id', $doctors ?? [], [
@@ -942,20 +1032,20 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                                             'id'    => 'doctor-id',
                                             'value' => $currentDoctorId,
                                             'class' => 'form-control select2Form',
-                                            'disabled' => ($fromQueue && !empty($currentDoctorId)),
+                                            'disabled' => $lockDoctorField,
                                         ]) ?>
-                                        <?php if ($fromQueue && !empty($currentDoctorId)): ?>
+                                        <?php if ($lockDoctorField): ?>
                                             <input type="hidden" name="doctor_id" value="<?= h($currentDoctorId) ?>">
                                         <?php endif; ?>
                                     </div>
 
                                     <div class="col-md-4">
                                         <label>Jadwal Dokter</label>
-                                        <select id="doctor-schedule-id" class="form-control select2Form" <?= ($fromQueue && !empty($currentDoctorId)) ? 'disabled' : 'name="doctor_schedule_id"' ?>>
+                                        <select id="doctor-schedule-id" class="form-control select2Form" <?= $lockDoctorField ? 'disabled' : 'name="doctor_schedule_id"' ?>>
                                             <option value="">-- Pilih Jadwal Dokter --</option>
                                         </select>
                                         <small id="schedule-quota-info" style="display:block;margin-top:4px;color:#888;"></small>
-                                        <?php if ($fromQueue && !empty($currentDoctorId)): ?>
+                                        <?php if ($lockDoctorField): ?>
                                             <input type="hidden" name="doctor_schedule_id" id="doctor-schedule-id-hidden" value="<?= h($currentDoctorScheduleId) ?>">
                                         <?php endif; ?>
                                     </div>
@@ -1050,7 +1140,11 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                                         <label>Jenis Pasien *</label>
                                         <?php
                                         $selectedPaymentMethod = $this->request->getData('payment_method')
-                                            ?? (($queueSource ?? '') === 'Mobile JKN' ? 'ASURANSI' : '');
+                                            ?? (($queueSource ?? '') === 'Mobile JKN' ? 'ASURANSI' : '')
+                                            ?? '';
+                                        if ($selectedPaymentMethod === '' && !empty($praGuarantor)) {
+                                            $selectedPaymentMethod = 'ASURANSI';
+                                        }
                                         ?>
                                         <select name="payment_method" id="payment-method" class="form-control select2Form" required>
                                             <option value="">-- Pilih Jenis Pasien --</option>
@@ -1062,8 +1156,12 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                                     </div>
 
                                     <div class="col-md-4 payment-detail-field" style="display:none;">
-                                        <label>Jenis Asuransi</label>
-                                        <?php $selectedInsuranceType = $this->request->getData('insurance_type') ?? ''; ?>
+                                        <label>
+                                            Jenis Asuransi
+                                            <?php if ($fromPraRegistration && !empty($praInsuranceType)): ?>
+                                            <?php endif; ?>
+                                        </label>
+                                        <?php $selectedInsuranceType = $this->request->getData('insurance_type') ?? ($praInsuranceType ?? ''); ?>
                                         <select name="insurance_type" id="insurance-type" class="form-control select2Form">
                                             <option value="">-- Pilih Jenis Asuransi --</option>
                                             <?php foreach (($masterPenjamins ?? []) as $value => $label): ?>
@@ -1083,24 +1181,22 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                                         <label>No Rujukan/Kontrol</label>
                                         <input type="text" name="refferal_no" id="refferal-no" class="form-control"
                                             placeholder="Masukkan nomor rujukan / kontrol"
-                                            value="<?= h($this->request->getData('refferal_no') ?? '') ?>">
+                                            value="<?= h($this->request->getData('refferal_no') ?? ($praReferralNo ?? '')) ?>">
                                     </div>
 
                                     <div class="col-md-4 payment-detail-field perorangan-field" style="display:none;">
-                                        <label>SKDP/NO KONTROL</label>
-                                        <input type="text" name="skdp_no" id="skdp-no" class="form-control"
-                                            placeholder="Masukkan nomor SKDP / kontrol"
-                                            value="<?= h($this->request->getData('skdp_no') ?? ($registration->skdp_no ?? '')) ?>">
-                                    </div>
-
-                                    <div class="col-md-4 payment-detail-field perorangan-field" style="display:none;">
-                                        <label>Jenis Referensi</label>
+                                        <label>
+                                            Jenis Rujukan
+                                            <?php if ($fromPraRegistration && !empty($praReferralType)): ?>
+                                            <?php endif; ?>
+                                        </label>
+                                        <?php $currentReferenceType = $this->request->getData('reference_type') ?? ($praReferralType ?? ''); ?>
                                         <select name="reference_type" id="reference-type" class="form-control select2Form">
-                                            <option value="">-- Pilih Jenis Referensi --</option>
-                                            <option value="RUJUKAN FKTP" <?= $this->request->getData('reference_type') === 'RUJUKAN FKTP' ? 'selected' : '' ?>>RUJUKAN FKTP</option>
-                                            <option value="RUJUKAN INTERNAL" <?= $this->request->getData('reference_type') === 'RUJUKAN INTERNAL' ? 'selected' : '' ?>>RUJUKAN INTERNAL</option>
-                                            <option value="KONTROL" <?= $this->request->getData('reference_type') === 'KONTROL' ? 'selected' : '' ?>>KONTROL</option>
-                                            <option value="RUJUKAN ANTAR RS" <?= $this->request->getData('reference_type') === 'RUJUKAN ANTAR RS' ? 'selected' : '' ?>>RUJUKAN ANTAR RS</option>
+                                            <option value="">-- Pilih Jenis Rujukan --</option>
+                                            <option value="RUJUKAN FKTP" <?= $currentReferenceType === 'RUJUKAN FKTP' ? 'selected' : '' ?>>RUJUKAN FKTP</option>
+                                            <option value="RUJUKAN INTERNAL" <?= $currentReferenceType === 'RUJUKAN INTERNAL' ? 'selected' : '' ?>>RUJUKAN INTERNAL</option>
+                                            <option value="KONTROL" <?= $currentReferenceType === 'KONTROL' ? 'selected' : '' ?>>KONTROL</option>
+                                            <option value="RUJUKAN ANTAR RS" <?= $currentReferenceType === 'RUJUKAN ANTAR RS' ? 'selected' : '' ?>>RUJUKAN ANTAR RS</option>
                                         </select>
                                     </div>
 
@@ -1169,13 +1265,16 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                                     <div class="col-md-12">
                                         <label>Perawatan</label><br>
                                         <label style="margin-right:20px;">
-                                            <input type="radio" name="treatment_type" value="BIASA"
+                                            <input type="radio" name="treatment_type" id="treatment-type-biasa" value="BIASA"
                                                 <?= ($this->request->getData('treatment_type') ?? 'BIASA') === 'BIASA' ? 'checked' : '' ?>> Biasa
                                         </label>
-                                        <label>
-                                            <input type="radio" name="treatment_type" value="PAKET"
+                                        <label id="treatment-type-paket-label">
+                                            <input type="radio" name="treatment_type" id="treatment-type-paket" value="PAKET"
                                                 <?= $this->request->getData('treatment_type') === 'PAKET' ? 'checked' : '' ?>> Paket
                                         </label>
+                                        <small id="treatment-type-paket-note" style="display:none; margin-left:8px; color:#888;">
+                                            (khusus Rawat Inap)
+                                        </small>
                                     </div>
 
                                     <div class="col-md-8 package-field" style="display:none;">
@@ -1288,12 +1387,38 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
 
             </fieldset>
 
-            <div class="submit-card">
-                <?= $this->Form->button('Simpan Registrasi', [
-                    'type' => 'submit',
-                    'class' => 'btn btn-primary',
-                    'id' => 'btn-save-registration'
-                ]) ?>
+            <div class="submit-card submit-card-toolbar">
+
+                <div class="toolbar-left">
+                    <button type="button" class="btn btn-default btn-sm toolbar-btn" id="btn-label-pasien">
+                        <i class="fa fa-tag"></i> Label Pasien
+                    </button>
+
+                    <button type="button" class="btn btn-default btn-sm toolbar-btn" id="btn-dokumen-klaim">
+                        <i class="fa fa-file-text-o"></i> Dokumen Klaim
+                    </button>
+
+                    <button type="button" class="btn btn-default btn-sm toolbar-btn" id="btn-riwayat-kunjungan">
+                        <i class="fa fa-undo"></i> Riwayat Kunjungan
+                    </button>
+
+                    <button type="button" class="btn btn-default btn-sm toolbar-btn" id="btn-riwayat-resep">
+                        <i class="fa fa-undo"></i> Riwayat Resep
+                    </button>
+
+                    <button type="button" class="btn btn-default btn-sm toolbar-btn" id="btn-jkn-task">
+                        <i class="fa fa-list-alt"></i> JKN Task
+                    </button>
+                </div>
+
+                <div class="toolbar-right">
+                    <?= $this->Form->button('Simpan Registrasi', [
+                        'type' => 'submit',
+                        'class' => 'btn btn-primary',
+                        'id' => 'btn-save-registration'
+                    ]) ?>
+                </div>
+
             </div>
 
             <?= $this->Form->end() ?>
@@ -1321,7 +1446,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                            id="modal-search-patient"
                            class="form-control patient-search-input"
                            autocomplete="off"
-                           placeholder="Ketik kode pasien / nama pasien / NIK / no telepon">
+                           placeholder="Ketik Rekam Medis / nama pasien / NIK / no telepon">
                     <small class="patient-search-help">
                         Klik 1x baris pasien untuk memilih dan mengisi form registrasi.
                     </small>
@@ -1332,7 +1457,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                         <thead>
                             <tr>
                                 <th width="35">OK</th>
-                                <th width="120">Kode Pasien</th>
+                                <th width="120">Rekam Medis</th>
                                 <th>Nama Pasien</th>
                                 <th width="90">Identitas</th>
                                 <th width="155">No Identitas</th>
@@ -1564,7 +1689,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                         '<td colspan="9" class="text-center patient-empty">' +
                             '<div style="font-size:28px; margin-bottom:6px;">🔎</div>' +
                             '<div style="font-weight:700;">Pasien tidak ditemukan.</div>' +
-                            '<div style="font-size:11px; margin-top:3px;">Coba cari dengan kode pasien, nama, NIK, atau no telepon lain.</div>' +
+                            '<div style="font-size:11px; margin-top:3px;">Coba cari dengan Rekam Medis, nama, NIK, atau no telepon lain.</div>' +
                         '</td>' +
                     '</tr>'
                 );
@@ -1581,7 +1706,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                 html += '<tr class="load-patient" title="Klik untuk memilih pasien"';
 
                 var fields = ['id', 'code', 'title', 'full_name', 'identity_type', 'identity_number', 'gender',
-                    'blood_type', 'birth_date', 'address', 'father_name', 'mother_name',
+                    'blood_type', 'allergy', 'birth_date', 'address', 'father_name', 'mother_name',
                     'phone_number', 'nationality', 'citizenship',
                     'id_prov', 'id_kab', 'id_kec', 'id_kel',
                     'province', 'city', 'district', 'subdistrict',
@@ -1654,6 +1779,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
             $('#view-identity-number').val(patient.identity_number || '');
             setSelectValue('#view-gender', patient.gender || '');
             setSelectValue('#view-blood-type', patient.blood_type || '');
+            $('#view-allergy').val(patient.allergy || '');
             $('#view-birth-date').val(patient.birth_date || '');
             $('#view-age').val(calculateAge(patient.birth_date || ''));
             $('#view-address').val(patient.address || '');
@@ -1738,6 +1864,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                 identity_number: $btn.data('identity-number'),
                 gender: $btn.data('gender'),
                 blood_type: $btn.data('blood-type'),
+                allergy: $btn.data('allergy'),
                 birth_date: $btn.data('birth-date'),
                 address: $btn.data('address'),
                 father_name: $btn.data('father-name'),
@@ -1798,11 +1925,34 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
             $('#view-age').val(calculateAge($(this).val()));
         });
 
+        // Hitung umur langsung saat halaman selesai dimuat, kalau tanggal
+        // lahir sudah terisi otomatis dari server (mis. dari data pra
+        // registrasi / antrian) tapi belum sempat memicu event change di
+        // datepicker. Tanpa ini, Umur baru muncul setelah tanggal lahir
+        // diklik/dipilih ulang secara manual oleh user.
+        if ($('#view-birth-date').val() && !$('#view-age').val()) {
+            $('#view-age').val(calculateAge($('#view-birth-date').val()));
+        }
+
+        function setPaketAvailability(type) {
+            var isRawatInap = type === 'rawat_inap';
+
+            $('#treatment-type-paket').prop('disabled', !isRawatInap);
+            $('#treatment-type-paket-label').css('color', isRawatInap ? '' : '#adb5bd');
+            $('#treatment-type-paket-note').toggle(!isRawatInap);
+
+            if (!isRawatInap && $('#treatment-type-paket').is(':checked')) {
+                $('#treatment-type-biasa').prop('checked', true).trigger('change');
+            }
+        }
+
         // ── Toggle Pelayanan ──────────────────────────────────────────────────────
         function setServiceForm(type) {
             var $poli = $('#polyclinic-name');
             var $queue = $('#queue-number');
             var $queueNoHidden = $('#queue-no-hidden');
+
+            setPaketAvailability(type);
 
             if (type === 'rawat_inap') {
                 $('.rawat-inap-field').show();
@@ -2413,6 +2563,25 @@ document.addEventListener('DOMContentLoaded', function () {
     btn.closest('form').addEventListener('submit', function () {
         btn.disabled = true;
         btn.innerHTML = 'Menyimpan...';
+    });
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+    var btnRiwayat = document.getElementById('btn-riwayat-kunjungan');
+    if (!btnRiwayat) return;
+
+    btnRiwayat.addEventListener('click', function () {
+        var patientCode = document.getElementById('view-patient-code').value.trim();
+
+        if (!patientCode) {
+            alert('Pilih atau cari pasien terlebih dahulu sebelum membuka riwayat kunjungan.');
+            return;
+        }
+
+        var url = <?= json_encode($this->Url->build(['controller' => 'MedicalRecords', 'action' => 'index'])) ?>
+            + '?q=' + encodeURIComponent(patientCode);
+
+        window.open(url, '_blank');
     });
 });
 </script>

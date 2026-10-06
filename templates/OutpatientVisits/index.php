@@ -21,14 +21,8 @@ $statusCfg = [
     'cancelled'   => ['label' => 'Batal',      'bg' => '#f8d7da', 'color' => '#721c24',  'dot' => '#dc3545'],
 ];
 
-$medicalRecordsByRegistration = $medicalRecordsByRegistration ?? [];
-
-$getNoRekamMedis = function ($v) use ($medicalRecordsByRegistration) {
-    $mr = !empty($v->registration_id) ? ($medicalRecordsByRegistration[$v->registration_id] ?? null) : null;
-    if ($mr && !empty($mr->medical_record_no)) {
-        return $mr->medical_record_no;
-    }
-    return $v->registration_no ?? ($v->patient->code ?? '-');
+$getNoRekamMedis = function ($v) {
+    return $v->patient->code ?? '-';
 };
 
 // Helper: build URL dengan mempertahankan date_from & date_to
@@ -42,6 +36,32 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
         'q'         => $q,
     ], $extra), fn($v) => $v !== null && $v !== '');
 };
+
+$mainPoliTabs = [
+    'Poli Umum'   => 'Poli Umum',
+    'Bidan/KIA'   => 'Bidan/KIA',
+    'Executive'   => 'Executive',
+];
+
+$spesialisPoli = [
+    'Poli Kandungan'         => 'Poli Kandungan',
+    'Poli Anak'              => 'Poli Anak',
+    'Poli Penyakit Dalam'    => 'Poli Penyakit Dalam (Internis)',
+    'Poli Bedah Umum'        => 'Poli Bedah Umum',
+    'Poli Rehab Medik'       => 'Poli Rehab Medik',
+    'Poli Saraf'             => 'Poli Saraf',
+    'Poli THT'               => 'Poli THT',
+    'Poli Urologi'           => 'Poli Urologi',
+    'Poli Paru'              => 'Poli Paru',
+    'Poli Orthopedi'         => 'Poli Orthopedi',
+    'Poli Gigi Konservasi'   => 'Poli Gigi Konservasi / Endodonsi',
+    'Poli Gigi Bedah Mulut'  => 'Poli Gigi & Bedah Mulut',
+    'Poli Jantung'           => 'Poli Jantung & Pembuluh Darah',
+    'Poli Jiwa'              => 'Poli Jiwa',
+    'Poli Kulit Kelamin'     => 'Poli Kulit & Kelamin',
+    'Poli Mata'              => 'Poli Mata',
+    'PPDP'                   => 'PPDP',
+];
 ?>
 
 <?= $this->Krs->breadcrumb('Outpatient Visits', 'Antrian Rawat Jalan') ?>
@@ -106,10 +126,74 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
             </div>
         </div>
 
+        <div class="poli-tabs" style="display:flex; align-items:stretch; gap:6px;">
+
+            <?php foreach ($mainPoliTabs as $poliVal => $poliLabel):
+                $isActive = ($filterPoli === $poliVal);
+            ?>
+                <a href="<?= $this->Url->build(['action' => 'index', '?' => $urlParams(['poli' => $poliVal])]) ?>"
+                   class="poli-tab-btn<?= $isActive ? ' active' : '' ?>"
+                   style="flex:1; text-align:center;">
+                    <?= h($poliLabel) ?>
+                </a>
+            <?php endforeach; ?>
+
+            <?php
+                $isSpesialisActive = isset($filterPoli) && array_key_exists($filterPoli, $spesialisPoli);
+                $spesialisBtnLabel = $isSpesialisActive ? $spesialisPoli[$filterPoli] : 'Spesialis';
+            ?>
+            <details class="poli-tab-dropdown" style="flex:1;" <?= $isSpesialisActive ? 'open' : '' ?>>
+                <summary class="poli-tab-btn<?= $isSpesialisActive ? ' active' : '' ?>"
+                         style="display:block; text-align:center; cursor:pointer; list-style:none;">
+                    <?= h($spesialisBtnLabel) ?> <span class="caret"></span>
+                </summary>
+            </details>
+
+        </div>
+
+        <?php if ($isSpesialisActive || true): ?>
+        <!-- Panel spesialis: muncul di bawah tab, ikut mendorong konten (bukan overlay) -->
+        <div class="poli-spesialis-panel" style="display:none; flex-wrap:wrap; gap:6px;
+                    background:#f8f9fa; border:1px solid #dee2e6; border-radius:8px;
+                    padding:10px; margin-top:6px;">
+            <?php foreach ($spesialisPoli as $poliVal => $poliLabel):
+                $isActive = ($filterPoli === $poliVal);
+            ?>
+                <a href="<?= $this->Url->build(['action' => 'index', '?' => $urlParams(['poli' => $poliVal])]) ?>"
+                   class="poli-tab-btn<?= $isActive ? ' active' : '' ?>"
+                   style="font-size:12px; padding:6px 12px;">
+                    <?= h($poliLabel) ?>
+                </a>
+            <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+
+        <style>
+        .poli-tab-dropdown summary::-webkit-details-marker { display: none; }
+        .poli-tab-dropdown summary::marker { content: ""; }
+        </style>
+
+        <script>
+        (function () {
+            var det = document.querySelector('.poli-tab-dropdown');
+            var panel = document.querySelector('.poli-spesialis-panel');
+            if (det && panel) {
+                if (det.open) { panel.style.display = 'flex'; }
+                det.addEventListener('toggle', function () {
+                    panel.style.display = det.open ? 'flex' : 'none';
+                });
+            }
+        })();
+        </script>
+
        <!-- ── FILTER BAR ── -->
         <div style="background:#f8f9fa; border:1px solid #dee2e6; border-radius:8px;
                     padding:10px 12px; margin-bottom:14px;">
             <?= $this->Form->create(null, ['type' => 'get', 'style' => 'margin:0;']) ?>
+
+            <!-- Poli filter dipertahankan di URL lewat tab di atas, jadi tetap disertakan sebagai hidden field
+                 supaya submit form (Cari/filter lain) tidak menghapus poli yang sedang aktif. -->
+            <input type="hidden" name="poli" value="<?= h($filterPoli ?? '') ?>">
 
             <div class="row" style="display:flex; align-items:flex-end;">
 
@@ -129,28 +213,7 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
                         value="<?= h($filterDateTo) ?>">
                 </div>
 
-                <div class="col-md-2">
-                    <label style="font-size:11px; font-weight:600; color:#555;">
-                        <i class="fa fa-hospital"></i> Poli
-                    </label>
-                    <select id="filter-poli" name="poli" class="form-control select2Form">
-                        <option value="">Semua Poli</option>
-
-                        <option value="Poli Umum" <?= $filterPoli == 'Poli Umum' ? 'selected' : '' ?>>Poli Umum</option>
-                        <option value="Poli Gigi" <?= $filterPoli == 'Poli Gigi' ? 'selected' : '' ?>>Poli Gigi</option>
-                        <option value="Poli Anak" <?= $filterPoli == 'Poli Anak' ? 'selected' : '' ?>>Poli Anak</option>
-                        <option value="Poli Kandungan" <?= $filterPoli == 'Poli Kandungan' ? 'selected' : '' ?>>Poli Kandungan</option>
-                        <option value="Poli Penyakit Dalam" <?= $filterPoli == 'Poli Penyakit Dalam' ? 'selected' : '' ?>>Poli Penyakit Dalam</option>
-                        <option value="Poli Mata" <?= $filterPoli == 'Poli Mata' ? 'selected' : '' ?>>Poli Mata</option>
-                        <option value="Poli THT" <?= $filterPoli == 'Poli THT' ? 'selected' : '' ?>>Poli THT</option>
-                        <option value="Poli Bedah" <?= $filterPoli == 'Poli Bedah' ? 'selected' : '' ?>>Poli Bedah</option>
-                        <option value="Poli Saraf" <?= $filterPoli == 'Poli Saraf' ? 'selected' : '' ?>>Poli Saraf</option>
-                        <option value="Poli Kulit" <?= $filterPoli == 'Poli Kulit' ? 'selected' : '' ?>>Poli Kulit</option>
-                        <option value="Poli Jantung" <?= $filterPoli == 'Poli Jantung' ? 'selected' : '' ?>>Poli Jantung</option>
-                    </select>
-                </div>
-
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <label style="font-size:11px; font-weight:600; color:#555;">
                         <i class="fa fa-user-md"></i> Dokter
                     </label>
@@ -164,7 +227,7 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
                     </select>
                 </div>
 
-                <div class="col-md-1">
+                <div class="col-md-2">
                     <label style="font-size:11px; font-weight:600; color:#555;">
                         <i class="fa fa-filter"></i> Status
                     </label>
@@ -194,7 +257,7 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
                             <i class="fa fa-search"></i>
                         </button>
 
-                        <a href="<?= $this->Url->build(['action' => 'index']) ?>"
+                        <a href="<?= $this->Url->build(['action' => 'index', '?' => array_filter(['poli' => $filterPoli], fn($v) => $v !== null && $v !== '')]) ?>"
                         class="btn btn-default btn-sm" title="Reset">
                             <i class="fa fa-times"></i>
                         </a>
@@ -206,21 +269,16 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
             <?= $this->Form->end() ?>
         </div>
 
-        <!-- ── TOOLBAR TAMBAH ── -->
+        <!-- ── TOOLBAR TANGGAL ── -->
         <div style="margin-bottom:10px; display:flex; gap:8px; align-items:center;">
-            <?= $this->Html->link(
-                '<i class="fa fa-plus"></i> Tambah Kunjungan',
-                ['action' => 'add'],
-                ['class' => 'btn btn-inverse btn-sm', 'escape' => false]
-            ) ?>
             <span style="font-size:12px; color:#6c757d;">
                 <i class="fa fa-calendar-day"></i>
                 <?php if ($filterDateFrom === $filterDateTo): ?>
-                    Tanggal: <strong><?= date('l, d F Y', strtotime($filterDateFrom)) ?></strong>
+                    Tanggal: <strong><?= $this->Krs->tanggalIndoLengkap($filterDateFrom, true) ?></strong>
                 <?php else: ?>
-                    Periode: <strong><?= date('d F Y', strtotime($filterDateFrom)) ?></strong>
+                    Periode: <strong><?= $this->Krs->tanggalIndoLengkap($filterDateFrom, false) ?></strong>
                     &nbsp;—&nbsp;
-                    <strong><?= date('d F Y', strtotime($filterDateTo)) ?></strong>
+                    <strong><?= $this->Krs->tanggalIndoLengkap($filterDateTo, false) ?></strong>
                 <?php endif; ?>
             </span>
         </div>
@@ -250,14 +308,34 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
                             <div style="font-size:36px; margin-bottom:8px;">🏥</div>
                             <div style="font-weight:600;">Tidak ada kunjungan untuk periode ini</div>
                             <div style="font-size:11px; margin-top:4px;">
-                                Tambah kunjungan baru atau ubah filter tanggal
+                                Ubah filter tanggal atau pilih poli lain
                             </div>
                         </td>
                     </tr>
-                <?php else: ?>
-                    <?php foreach ($visits as $v):
-                        $sc     = $statusCfg[$v->status] ?? $statusCfg['waiting'];
-                        $isDone = in_array($v->status, ['done', 'cancelled']);
+            <?php else: ?>
+                <?php $lastVisitDate = null; ?>
+                <?php foreach ($visits as $v):
+                    $rowVisitDateRaw = $v->visit_date ?? null;
+                    $rowVisitDateKey = null;
+                    if (!empty($rowVisitDateRaw)) {
+                        $rowVisitDateKey = is_object($rowVisitDateRaw)
+                            ? $rowVisitDateRaw->format('Y-m-d')
+                            : date('Y-m-d', strtotime((string)$rowVisitDateRaw));
+                    }
+
+                    if ($rowVisitDateKey !== null && $rowVisitDateKey !== $lastVisitDate):
+                        $lastVisitDate = $rowVisitDateKey;
+                ?>
+                    <tr class="date-separator-row">
+                        <td colspan="11">
+                            <i class="fa fa-calendar-day"></i>
+                            <?= $this->Krs->tanggalIndoLengkap($rowVisitDateKey, true) ?>
+                        </td>
+                    </tr>
+                <?php endif; ?>
+                <?php
+                    $sc     = $statusCfg[$v->status] ?? $statusCfg['waiting'];
+                    $isDone = in_array($v->status, ['done', 'cancelled']);
 
                         $rowBgs = [
                             'waiting'     => '',
@@ -424,21 +502,6 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
                                 <?php endif; ?>
 
                                 <?= $this->Html->link(
-                                    '<i class="fa fa-folder-open"></i> Rekam Medis',
-                                    [
-                                        'controller' => 'MedicalRecords',
-                                        'action'     => 'index',
-                                        '?'          => ['q' => $pCode],
-                                    ],
-                                    [
-                                        'escape'      => false,
-                                        'class'       => 'btn btn-xs btn-rm',
-                                        'data-toggle' => 'tooltip',
-                                        'title'       => 'Buka Rekam Medis Pasien'
-                                    ]
-                                ) ?>
-
-                                <?= $this->Html->link(
                                     '<i class="fa fa-history"></i> Riwayat',
                                     [
                                         'controller' => 'PatientHistories',
@@ -561,6 +624,15 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
     text-align: center;
 }
 .table-outpatient > tbody > tr:hover { background:#f0f9ff !important; }
+.date-separator-row td {
+    background: #eef2f7 !important;
+    color: #1e3a5f;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 8px 12px !important;
+    border-top: 2px solid #1e3a5f !important;
+    border-bottom: 1px solid #dbe3ee !important;
+}
 .btn-xs { padding:3px 7px; font-size:11px; line-height:1.5; border-radius:4px; }
 
 .btn-teal {
@@ -634,6 +706,43 @@ $urlParams = function(array $extra = []) use ($filterDateFrom, $filterDateTo, $f
 .auto-refresh-off {
     background:#fff5f5 !important;
     border-color:#f5c2c7 !important;
+}
+
+/* ── Tab Poli (satu bar menyatu, seperti nav-tab) ── */
+.poli-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.12);
+}
+.poli-tab-btn {
+    flex: 1 1 0;
+    display: block;
+    text-align: center;
+    white-space: nowrap;
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    background: #1e3a5f;
+    border-right: 1px solid rgba(255,255,255,.15);
+    text-decoration: none;
+    transition: background .15s ease-in-out;
+}
+.poli-tab-btn:last-child {
+    border-right: none;
+}
+.poli-tab-btn:hover {
+    background: #66A3BF;
+    color: #fff;
+    text-decoration: none;
+}
+.poli-tab-btn.active {
+    background: #66A3BF;
+    color: #fff;
 }
 
 @keyframes blink {
@@ -712,8 +821,6 @@ function speakText(text) {
         // Text-to-Speech tidak didukung — abaikan saja
     }
 }
-
-// ── Gabungan: chime lalu ucapkan nomor antrian + poli + ruang ────────────────
 
 var TITLE_MAP = {
     'tn': 'Tuan',

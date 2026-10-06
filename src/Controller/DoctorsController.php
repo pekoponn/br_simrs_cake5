@@ -11,6 +11,33 @@ namespace App\Controller;
  */
 class DoctorsController extends AppController
 {
+    public function searchModal()
+    {
+        $this->request->allowMethod(['get']);
+        $this->autoRender = false;
+
+        $keyword = trim((string)$this->request->getQuery('q'));
+
+        $query = $this->Doctors->find()
+            ->select(['id', 'code', 'doctor_name', 'specialist', 'polyclinic_name'])
+            ->order(['doctor_name' => 'ASC'])
+            ->limit(50);
+
+        if ($keyword !== '') {
+            $query->where([
+                'OR' => [
+                    'doctor_name LIKE' => '%' . $keyword . '%',
+                    'code LIKE' => '%' . $keyword . '%',
+                ],
+            ]);
+        }
+
+        $this->response = $this->response
+            ->withType('application/json')
+            ->withStringBody(json_encode($query->toArray()));
+
+        return $this->response;
+    }
     public function index()
     {
         $key = $this->request->getQuery('key');

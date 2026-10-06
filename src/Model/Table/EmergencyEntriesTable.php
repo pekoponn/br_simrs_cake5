@@ -14,6 +14,7 @@ use Cake\Validation\Validator;
  * @property \App\Model\Table\RegistrationsTable&\Cake\ORM\Association\BelongsTo $Registrations
  * @property \App\Model\Table\PatientsTable&\Cake\ORM\Association\BelongsTo $Patients
  * @property \App\Model\Table\DoctorsTable&\Cake\ORM\Association\BelongsTo $Doctors
+ * @property \App\Model\Table\MasterTenagaMedisTable&\Cake\ORM\Association\BelongsTo $MasterTenagaMedis
  *
  * @method \App\Model\Entity\EmergencyEntry newEmptyEntity()
  * @method \App\Model\Entity\EmergencyEntry newEntity(array $data, array $options = [])
@@ -58,6 +59,9 @@ class EmergencyEntriesTable extends Table
         $this->belongsTo('Doctors', [
             'foreignKey' => 'doctor_id',
         ]);
+        $this->belongsTo('MasterTenagaMedis', [
+            'foreignKey' => 'nurse_id',
+        ]);
     }
 
     /**
@@ -78,6 +82,11 @@ class EmergencyEntriesTable extends Table
             ->allowEmptyString('registration_no');
 
         $validator
+            ->scalar('triase_no')
+            ->maxLength('triase_no', 50)
+            ->allowEmptyString('triase_no');
+
+        $validator
             ->scalar('patient_rm')
             ->maxLength('patient_rm', 50)
             ->allowEmptyString('patient_rm');
@@ -91,6 +100,96 @@ class EmergencyEntriesTable extends Table
             ->scalar('doctor_name')
             ->maxLength('doctor_name', 255)
             ->allowEmptyString('doctor_name');
+
+        $validator
+            ->scalar('nurse_name')
+            ->maxLength('nurse_name', 255)
+            ->allowEmptyString('nurse_name');
+
+        $validator
+            ->scalar('allergy_status')
+            ->maxLength('allergy_status', 10)
+            ->allowEmptyString('allergy_status');
+
+        $validator
+            ->scalar('allergy_detail')
+            ->maxLength('allergy_detail', 255)
+            ->allowEmptyString('allergy_detail');
+
+        $validator
+            ->scalar('perilaku')
+            ->maxLength('perilaku', 255)
+            ->allowEmptyString('perilaku');
+
+        $validator
+            ->integer('gcs_e')
+            ->allowEmptyString('gcs_e');
+
+        $validator
+            ->integer('gcs_v')
+            ->allowEmptyString('gcs_v');
+
+        $validator
+            ->integer('gcs_m')
+            ->allowEmptyString('gcs_m');
+
+        $validator
+            ->scalar('pupil_kanan')
+            ->maxLength('pupil_kanan', 20)
+            ->allowEmptyString('pupil_kanan');
+
+        $validator
+            ->scalar('pupil_kiri')
+            ->maxLength('pupil_kiri', 20)
+            ->allowEmptyString('pupil_kiri');
+
+        $validator
+            ->scalar('reflex_kanan')
+            ->maxLength('reflex_kanan', 20)
+            ->allowEmptyString('reflex_kanan');
+
+        $validator
+            ->scalar('reflex_kiri')
+            ->maxLength('reflex_kiri', 20)
+            ->allowEmptyString('reflex_kiri');
+
+        $validator
+            ->scalar('nadi_jenis')
+            ->maxLength('nadi_jenis', 20)
+            ->allowEmptyString('nadi_jenis');
+
+        $validator
+            ->scalar('akral')
+            ->maxLength('akral', 50)
+            ->allowEmptyString('akral');
+
+        $validator
+            ->integer('pain_scale')
+            ->allowEmptyString('pain_scale');
+
+        $validator
+            ->integer('flacc_wajah')
+            ->allowEmptyString('flacc_wajah');
+
+        $validator
+            ->integer('flacc_kaki')
+            ->allowEmptyString('flacc_kaki');
+
+        $validator
+            ->integer('flacc_aktifitas')
+            ->allowEmptyString('flacc_aktifitas');
+
+        $validator
+            ->integer('flacc_menangis')
+            ->allowEmptyString('flacc_menangis');
+
+        $validator
+            ->integer('flacc_bersuara')
+            ->allowEmptyString('flacc_bersuara');
+
+        $validator
+            ->integer('flacc_total')
+            ->allowEmptyString('flacc_total');
 
         $validator
             ->date('service_date')
@@ -170,6 +269,7 @@ class EmergencyEntriesTable extends Table
         $rules->add($rules->existsIn(['registration_id'], 'Registrations'), ['errorField' => 'registration_id']);
         $rules->add($rules->existsIn(['patient_id'], 'Patients'), ['errorField' => 'patient_id']);
         $rules->add($rules->existsIn(['doctor_id'], 'Doctors'), ['errorField' => 'doctor_id']);
+        $rules->add($rules->existsIn(['nurse_id'], 'MasterTenagaMedis'), ['errorField' => 'nurse_id']);
 
         return $rules;
     }

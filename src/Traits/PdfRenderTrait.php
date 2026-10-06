@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Controller\Traits;
+namespace App\Traits;
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -16,7 +16,7 @@ use Dompdf\Options;
  *   composer require dompdf/dompdf
  *
  * Cara pakai di controller:
- *   use App\Controller\Traits\PdfRenderTrait;
+ *   use App\Traits\PdfRenderTrait;
  *   class OutpatientLettersController extends AppController
  *   {
  *       use PdfRenderTrait;

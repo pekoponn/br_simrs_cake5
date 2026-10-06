@@ -1,0 +1,31 @@
+/* Judul, label, dan header tidak bisa diseleksi / tidak ada garis ketik */
+.modal label,
+.modal .modal-title,
+.modal th,
+.panel-title,
+.panel-heading,
+.table > thead > tr > th,
+.control-label {
+    -webkit-user-select: none;
+    user-select: none;
+    caret-color: transparent;
+    cursor: default;
+}
+
+/* Label yang berfungsi sebagai tombol / pilihan tetap kursor tangan */
+.modal label:has(input[type="radio"]),
+.modal label:has(input[type="checkbox"]),
+.modal .radio-inline,
+.modal .checkbox-inline,
+.triase-cat-btn,
+.nadi-jenis-btn,
+.kajian-tag-option {
+    cursor: pointer;
+}
+
+/* Kolom isian tetap normal */
+input, textarea, select {
+    -webkit-user-select: text;
+    user-select: text;
+    caret-color: auto;
+}

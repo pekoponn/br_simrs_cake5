@@ -182,9 +182,14 @@ class UsersController extends AppController
                 'medicalresumes=index:0,view:0,add:0,edit:0,delete:0',
                 'patients=index:0,add:0,edit:0,view:0,delete:0,getKabupatens:0,getKecamatans:0,getKelurahans:0',
                 'registrations=index:0,getSummary:0,view:0,add:0,edit:0,delete:0,searchPatients:0,getKabupatens:0,getKecamatans:0,getKelurahans:0,getBedClass:0,getAvailableBeds:0,getDoctorSchedules:0',
+                'praregistrations=index:0,view:0,add:0,edit:0,delete:0,register:0',
                 'patientadmissions=index:0',
                 'patienthistories=index:0,searchPatients:0,periksa:0,history:0',
-                'outpatientvisits=index:0,view:0,add:0,edit:0,cppt:0,emr:0,resumeMedis:0,selesai:0,panggil:0,batal:0,getSummary:0,liveData:0,searchIcd10:0,searchIcd9:0,selesaiPeriksa:0,hasilPemeriksaan:0,delete:0',
+                'outpatientvisits=index:0,view:0,add:0,edit:0,cppt:0,emr:0,resumeMedis:0,doctorQueue:0,selesai:0,panggil:0,batal:0,getSummary:0,liveData:0,searchIcd10:0,searchIcd9:0,selesaiPeriksa:0,hasilPemeriksaan:0,delete:0',
+                'outpatientbillings=index:0,kasir:0,kwitansi:0,tambahItem:0,hapusItem:0,toggleReadyTransfer:0,prosesBayar:0',
+                'paymenthistories=index:0,searchPatients:0',
+                'reportattendances=index:0,view:0,excel:0,excelSummary:0,getReport:1',
+                'assignments=index:0,add:0,edit:0,delete:0,view:0,approve:0,knowing:0,getHistory:1',
                 'outpatientvisitemr=emr:0',
                 'outpatientletters=index:0,view:0,add:0,edit:0,delete:0,getSuratSakit:0,simpanSuratSakit:0,getSuratKonsultasi:0,simpanSuratKonsultasi:0,getSuratJawabanKonsultasi:0,simpanSuratJawabanKonsultasi:0,cetakSuratKonsultasi:0,cetakSuratSakit:0',
                 'outpatientcpptnotes=index:0,view:0,add:0,edit:0,delete:0',
@@ -345,7 +350,8 @@ class UsersController extends AppController
 
         if ($this->request->is(['patch', 'post', 'put'])) {
             $dataRow = $this->request->getData();
-
+            // pr($dataRow['Rules']);
+            // die;
             $isUser = $dataRow['user_id'];
 
             $dataUserId = [
@@ -353,15 +359,19 @@ class UsersController extends AppController
             ];
 
             $dataProject = [
-                'project' => $dataRow['project']
+                'project' => $dataRow['project'] ?? $users->project
             ];
 
             $dataUbs = [
-                'ubs' => $dataRow['ubs']
+                'ubs' => $dataRow['ubs'] ?? $users->ubs
             ];
 
             $dataProjectStatus = [
-                'project_status' => $dataRow['projectStatus']
+                'project_status' => $dataRow['projectStatus'] ?? $users->project_status
+            ];
+
+            $dataRadius = [
+                'radius_id' => $dataRow['radius_id'] ?? $users->radius_id
             ];
 
             $auditLog = $this->Krs->auditLog(
@@ -374,7 +384,43 @@ class UsersController extends AppController
             $oldRules = $this->Krs->_rule($users->rules);
             $newRules = $dataRow['Rules'] ?? [];
 
+            // Checkbox yang tidak dicentang bisa tidak ikut terkirim.
+            // Untuk group yang dikirim form, action yang tidak ada harus dianggap 0,
+            // bukan mempertahankan nilai permission lama.
+            foreach ($newRules as $controller => $actions) {
+                if (!isset($oldRules[$controller]) || !is_array($actions)) {
+                    continue;
+                }
+
+                foreach ($oldRules[$controller] as $action => $value) {
+                    if (!array_key_exists($action, $actions)) {
+                        $newRules[$controller][$action] = 0;
+                    }
+                }
+            }
+
+            $ruleDefaults = [
+                'reportattendances' => [
+                    'index' => 0,
+                    'view' => 0,
+                    'excel' => 0,
+                    'excelSummary' => 0,
+                    'getReport' => 1,
+                ],
+                'assignments' => [
+                    'index' => 0,
+                    'add' => 0,
+                    'edit' => 0,
+                    'delete' => 0,
+                    'view' => 0,
+                    'approve' => 0,
+                    'knowing' => 0,
+                    'getHistory' => 1,
+                ],
+            ];
+
             $mergedRules = array_replace_recursive(
+                $ruleDefaults,
                 $oldRules,
                 $newRules
             );
@@ -396,6 +442,7 @@ class UsersController extends AppController
                     $dataProject,
                     $dataUbs,
                     $dataProjectStatus,
+                    $dataRadius,
                     $dataAuditLog,
                     $dataRule
                 )
@@ -429,5 +476,162 @@ class UsersController extends AppController
         }
 
         return $this->redirect(['action' => 'index']);
+    }
+
+    public function addFace($id = null)
+    {
+        $user = $this->Users->get($id);
+
+        if ($this->request->is(['post', 'put'])) {
+            $dataRow = $this->request->getData();
+            $faceImage = trim((string)($dataRow['face_image'] ?? ''));
+
+            if ($faceImage === '') {
+                $this->Flash->error('Foto wajah belum diambil.');
+                $this->set(compact('user'));
+                return;
+            }
+
+            if (!preg_match('/^data:image\/(png|jpeg|jpg);base64,/', $faceImage, $matches)) {
+                $this->Flash->error('Format foto tidak valid.');
+                $this->set(compact('user'));
+                return;
+            }
+
+            $extension = strtolower($matches[1] === 'jpeg' ? 'jpg' : $matches[1]);
+            $faceImage = substr($faceImage, strpos($faceImage, ',') + 1);
+            $binaryImage = base64_decode(str_replace(' ', '+', $faceImage), true);
+
+            if ($binaryImage === false) {
+                $this->Flash->error('Foto wajah tidak bisa diproses.');
+                $this->set(compact('user'));
+                return;
+            }
+
+            $targetDir = WWW_ROOT . 'uploads' . DS . 'faces' . DS;
+            if (!is_dir($targetDir)) {
+                mkdir($targetDir, 0775, true);
+            }
+
+            $filename = 'user-' . $id . '-' . time() . '.' . $extension;
+            $relativePath = 'uploads/faces/' . $filename;
+
+            if (file_put_contents($targetDir . $filename, $binaryImage) === false) {
+                $this->Flash->error('Foto wajah gagal disimpan ke folder upload.');
+                $this->set(compact('user'));
+                return;
+            }
+
+            $oldRelativePath = (string)$user->face;
+            $user = $this->Users->patchEntity($user, [
+                'face' => $relativePath,
+            ]);
+
+            // This action only changes the face path. Do not block it with
+            // unrelated user-form validation rules such as password fields.
+            if ($this->Users->save($user, ['validate' => false])) {
+                if ($oldRelativePath !== '' && $oldRelativePath !== $relativePath) {
+                    $oldPath = WWW_ROOT . str_replace(
+                        ['/', '\\'],
+                        DS,
+                        ltrim($oldRelativePath, '/\\')
+                    );
+                    if (is_file($oldPath)) {
+                        unlink($oldPath);
+                    }
+                }
+
+                $this->Flash->success('Foto wajah berhasil disimpan.');
+
+                // return $this->redirect(['action' => 'index']);
+                return $this->redirect(['controller' => 'dashboard']);
+            }
+
+            // Avoid leaving an orphaned upload when the database update fails.
+            $newPath = $targetDir . $filename;
+            if (is_file($newPath)) {
+                unlink($newPath);
+            }
+            $this->Flash->error('Maaf, foto wajah tidak dapat disimpan.');
+        }
+
+        $this->set(compact('user'));
+    }
+
+    public function resetFace($id = null)
+    {
+        $this->request->allowMethod(['post', 'get']);
+        $user = $this->Users->get($id);
+        $isUser = $this->Authentication->getIdentity()->id;
+        $auditLog = $this->Krs->auditLog($this->request->getParam('controller'), $id, $isUser, "Reset Face");
+
+        $dataAuditLog = ['is_log' => $auditLog];
+        if (!empty($user->face)) {
+            $path = WWW_ROOT . str_replace(
+                ['/', '\\'],
+                DS,
+                ltrim((string)$user->face, '/\\')
+            );
+            if (is_file($path)) {
+                unlink($path);
+            }
+        }
+        $dataSave = ['face' => null];
+        $user = $this->Users->patchEntity($user, array_merge($dataSave, $dataAuditLog));
+        if ($this->Users->save($user, ['validate' => false])) {
+            $this->Flash->success(__('Data wajah berhasil dihapus.'));
+
+        } else {
+            $this->Flash->error(__('Data wajah gagal dihapus.'));
+        }
+        return $this->redirect(['action' => 'index']);
+    }
+
+    public function getSelect($typeUser=null)
+    {
+        $this->autoRender = false;
+
+        $search = $this->request->getQuery('search');
+        // $typeUser = ($typeUser=='Marketing') ? :;
+        $dataWhere = array();
+        if (!empty($search)) {
+            if($typeUser=='Marketing') {
+                $dataWhere['Users.marketing_code IS NOT'] = NULL;
+            }
+
+            $dataWhere['Users.name like'] = '%' . $search . '%';
+            $dataRow = $this->Users->find('all')->contain([])->select(['id', 'code', 'name'])->where([$dataWhere])->toList();           
+        } else {
+            $dataRow = array();
+        }
+
+        $result = array();
+        foreach ($dataRow as $key => $data) {
+            $result[$key]['id'] = $this->Krs->fEncode((int) $data['id'].'^'.$data['code']);
+            $result[$key]['text'] = $data['code'];
+        }
+
+        return $this->response->withType("application/json")->withStringBody(json_encode($result));
+    }
+    
+    public function getUsers()
+    {
+        $this->request->is(['get']); 
+
+        $query = $this->request->getQuery('q'); 
+        $user = $this->Users->find()
+            ->select(['id', 'name'])
+            ->where([
+                'name LIKE' => '%' . $query . '%',
+                'is_active' => 'Y'
+            ])
+            ->limit(20)
+            ->all()
+            ->toList();
+
+        return $this->response->withType('application/json')->withStringBody(json_encode([
+            'success' => true,
+            'data' => $user
+        ]));
     }
 }

@@ -478,6 +478,15 @@ $currentCycleLabel = !empty($currentCycleDate)
                 </div>
 
                 <div class="ds-info-item">
+                    <span class="ds-info-label">Estimasi per Pasien</span>
+                    <span class="ds-info-value">
+                        <?= !empty($doctorSchedule->estimated_minutes)
+                            ? h($doctorSchedule->estimated_minutes) . ' menit'
+                            : '—' ?>
+                    </span>
+                </div>
+
+                <div class="ds-info-item">
                     <span class="ds-info-label">Dibuat</span>
                     <span class="ds-info-value"><?= fmtDsDate($doctorSchedule->created) ?></span>
                 </div>

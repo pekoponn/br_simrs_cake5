@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 namespace App\Controller;
-use App\Controller\Traits\PdfRenderTrait;
+use App\Traits\PdfRenderTrait;
 
 /**
  * OutpatientLetters Controller

@@ -234,13 +234,6 @@ $firstRegistrationId = $firstRegistration->id ?? null;
             <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modalCariPasien" id="btn-cari-pasien">
                 <i class="fa fa-search"></i> Cari Pasien
             </button>
-            <?php if (!empty($patient)): ?>
-                <?= $this->Html->link(
-                    '<i class="fa fa-notes-medical"></i> EMR History',
-                    ['controller' => 'PatientHistories', 'action' => 'index', '?' => ['q' => $patient->code ?? '']],
-                    ['escape' => false, 'class' => 'btn btn-warning btn-sm']
-                ) ?>
-            <?php endif; ?>
             <button type="button" class="btn btn-default btn-sm" onclick="window.location.reload()">
                 <i class="fa fa-sync"></i> Refresh
             </button>
@@ -264,7 +257,7 @@ $firstRegistrationId = $firstRegistration->id ?? null;
             <?php else: ?>
                 <div class="row" style="margin-bottom:5px;">
                     <div class="col-md-2">
-                        <small>Kode Pasien</small><br>
+                        <small>Rekam Medis</small><br>
                         <strong><?= h($patient->code ?? '-') ?></strong>
                     </div>
                     <div class="col-md-3">
@@ -324,7 +317,7 @@ $firstRegistrationId = $firstRegistration->id ?? null;
                         <table class="table table-bordered table-sm" style="font-size:11px; margin-bottom:0;">
                             <thead>
                                 <tr style="background:#dbeafe;">
-                                    <th>No Rekam Medis</th>
+                                    <th>No Registrasi</th>
                                     <th style="width:78px;">Tgl Masuk</th>
                                     <th style="width:78px;">Tgl Keluar</th>
                                     <th>Dokter</th>
@@ -337,7 +330,7 @@ $firstRegistrationId = $firstRegistration->id ?? null;
                                         data-service-type="<?= h($getServiceType($registration)) ?>"
                                         style="cursor:pointer;">
                                         <td>
-                                            <strong><?= h($getNoRekamMedis($registration)) ?></strong>
+                                            <strong><?= h($getNoKunjungan($registration)) ?></strong>
                                             <br>
                                             <span class="mr-service-type-badge <?= h($getServiceTypeBadgeClass($registration)) ?>"><?= h($getServiceTypeLabel($registration)) ?></span>
                                         </td>
@@ -699,7 +692,7 @@ $firstRegistrationId = $firstRegistration->id ?? null;
                         <i class="fa fa-search"></i>
                     </span>
                     <input type="text" id="patient-search-modal-input" class="form-control"
-                           placeholder="Ketik kode pasien / nama / NIK / telepon / alamat" autocomplete="off">
+                           placeholder="Ketik rekam medis / nama / NIK / telepon / alamat" autocomplete="off">
                 </div>
                 <div style="max-height:360px; overflow-y:auto; border:1px solid #dee2e6; border-radius:4px;">
                     <table class="table table-bordered table-sm" style="font-size:11px; margin-bottom:0;">

@@ -6,6 +6,123 @@ namespace App\Controller;
 
 class OutpatientVisitsController extends AppController
 {
+    /** Tampilan display antrean per poli. */
+    public function display()
+    {
+        $deviceCode = strtoupper(trim((string)$this->request->getQuery('device', '')));
+        $polyclinic = trim((string)$this->request->getQuery('poli', 'Poli Umum'));
+        if ($deviceCode !== '') {
+            $this->loadModel('OutpatientDisplayDevices');
+            $device = $this->OutpatientDisplayDevices->find()->where(['device_code' => $deviceCode, 'is_active' => 'Y'])->first();
+            if ($device) {
+                $polyclinic = (string)$device->polyclinic_name;
+            }
+        }
+        $query = $this->OutpatientVisits->find()
+            ->contain(['Patients'])
+            ->where([
+                'OutpatientVisits.visit_date' => date('Y-m-d'),
+                'OutpatientVisits.polyclinic_name' => $polyclinic,
+                'OutpatientVisits.status IN' => ['waiting', 'called', 'in_progress'],
+            ])
+            ->order([
+                'OutpatientVisits.queue_number' => 'ASC',
+                'OutpatientVisits.id' => 'ASC',
+            ]);
+
+        $visits = $query->all();
+        $currentVisit = null;
+        foreach ($visits as $visit) {
+            if (in_array((string)$visit->status, ['called', 'in_progress'], true)) {
+                // Ambil panggilan paling baru, bukan nomor antrean terkecil.
+                if ($currentVisit === null || (string)($visit->called_at ?? '') > (string)($currentVisit->called_at ?? '')) {
+                    $currentVisit = $visit;
+                }
+            }
+        }
+        if ($this->request->getQuery('ajax') === '1') {
+            $rows = [];
+            foreach ($visits as $visit) {
+                $rows[] = [
+                    'queue_number' => $visit->queue_number,
+                    'medical_record_no' => $visit->patient->code ?? '-',
+                    'patient_name' => $visit->patient->full_name ?? '-',
+                ];
+            }
+            return $this->response->withType('application/json')->withStringBody(json_encode([
+                'polyclinic' => $polyclinic,
+                'device_code' => $deviceCode,
+                'rows' => $rows,
+                'current' => $currentVisit ? [
+                    'queue_number' => $currentVisit->queue_number,
+                    'medical_record_no' => $currentVisit->patient->code ?? '-',
+                    'patient_name' => $currentVisit->patient->full_name ?? '-',
+                    'status' => $currentVisit->status,
+                    'called_at' => $currentVisit->called_at ? (string)$currentVisit->called_at : null,
+                ] : null,
+            ]));
+        }
+
+        $this->set(compact('visits', 'currentVisit', 'polyclinic', 'deviceCode'));
+    }
+
+    /** Pengaturan terpusat poli yang ditampilkan oleh setiap PC display. */
+    public function displaySettings()
+    {
+        $this->loadModel('OutpatientDisplayDevices');
+        if ($this->request->is('post')) {
+            $code = strtoupper(trim((string)$this->request->getData('device_code')));
+            $polyclinic = trim((string)$this->request->getData('polyclinic_name'));
+            if ($code === '' || $polyclinic === '') {
+                $this->Flash->error(__('Kode perangkat dan poli wajib diisi.'));
+            } else {
+                $device = $this->OutpatientDisplayDevices->find()->where(['device_code' => $code])->first()
+                    ?: $this->OutpatientDisplayDevices->newEmptyEntity();
+                $device = $this->OutpatientDisplayDevices->patchEntity($device, [
+                    'device_code' => $code,
+                    'device_name' => trim((string)$this->request->getData('device_name')),
+                    'polyclinic_name' => $polyclinic,
+                    'is_active' => 'Y',
+                ]);
+                if ($this->OutpatientDisplayDevices->save($device)) {
+                    $this->Flash->success(__('Pengaturan display berhasil disimpan.'));
+                    return $this->redirect(['action' => 'displaySettings']);
+                }
+                $this->Flash->error(__('Pengaturan display gagal disimpan.'));
+            }
+        }
+        $devices = $this->OutpatientDisplayDevices->find()->order(['device_code' => 'ASC'])->all();
+        $this->set(compact('devices'));
+    }
+
+    /** Halaman kerja dokter untuk memanggil dan menyelesaikan antrean pasien. */
+    public function doctorQueue()
+    {
+        $polyclinic = trim((string)$this->request->getQuery('poli', 'Poli Umum'));
+        $visits = $this->OutpatientVisits->find()
+            ->contain(['Patients'])
+            ->where([
+                'OutpatientVisits.visit_date' => date('Y-m-d'),
+                'OutpatientVisits.polyclinic_name' => $polyclinic,
+                'OutpatientVisits.status IN' => ['waiting', 'called', 'in_progress'],
+            ])
+            ->order([
+                'OutpatientVisits.queue_number' => 'ASC',
+                'OutpatientVisits.id' => 'ASC',
+            ])
+            ->all();
+
+        $this->set(compact('visits', 'polyclinic'));
+    }
+
+    private function queueActionRedirect()
+    {
+        if ((string)$this->request->getQuery('return') === 'doctorQueue') {
+            return $this->redirect(['action' => 'doctorQueue', '?' => ['poli' => $this->request->getQuery('poli', 'Poli Umum')]]);
+        }
+        return $this->redirect(['action' => 'index']);
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // INDEX — Daftar antrian rawat jalan
     // ─────────────────────────────────────────────────────────────────────────
@@ -13,7 +130,7 @@ class OutpatientVisitsController extends AppController
     {
         $filterDateFrom = $this->request->getQuery('date_from', date('Y-m-d'));
         $filterDateTo   = $this->request->getQuery('date_to',   date('Y-m-d'));
-        $filterPoli     = $this->request->getQuery('poli');
+        $filterPoli     = $this->request->getQuery('poli', 'Poli Umum');
         $filterDoctor   = $this->request->getQuery('doctor_id');
         $filterStatus   = $this->request->getQuery('status');
         $q              = $this->request->getQuery('q');
@@ -79,50 +196,34 @@ class OutpatientVisitsController extends AppController
         ])->limit(200)->all()->toArray();
 
         // ── Summary counts ────────────────────────────────────────────────────
+        // Summary sekarang mengikuti poli yang sedang dipilih (tab aktif),
+        // jadi kartu Total/Menunggu/Dipanggil/Diperiksa/Selesai menampilkan
+        // jumlah khusus untuk poli tersebut, bukan seluruh rawat jalan.
+        $summaryConditions = [
+            'OutpatientVisits.visit_date >=' => $filterDateFrom,
+            'OutpatientVisits.visit_date <=' => $filterDateTo,
+        ];
+
+        if (!empty($filterPoli)) {
+            $summaryConditions['OutpatientVisits.polyclinic_name'] = $filterPoli;
+        }
+
         $base = $this->OutpatientVisits->find()
-            ->where([
-                'OutpatientVisits.visit_date >=' => $filterDateFrom,
-                'OutpatientVisits.visit_date <=' => $filterDateTo,
-            ]);
+            ->where($summaryConditions);
 
         $summary = [
-    'waiting'     => (clone $base)->where(['status' => 'waiting'])->count(),
-    'called'      => (clone $base)->where(['status' => 'called'])->count(),
-    'in_progress' => (clone $base)->where(['status' => 'in_progress'])->count(),
-    'done'        => (clone $base)->where(['status' => 'done'])->count(),
-    'total'       => (clone $base)->count(),
-];
+            'waiting'     => (clone $base)->where(['status' => 'waiting'])->count(),
+            'called'      => (clone $base)->where(['status' => 'called'])->count(),
+            'in_progress' => (clone $base)->where(['status' => 'in_progress'])->count(),
+            'done'        => (clone $base)->where(['status' => 'done'])->count(),
+            'total'       => (clone $base)->count(),
+        ];
 
-// ── No Rekam Medis: ambil dari tabel MedicalRecords berdasarkan registration_id ──
-$medicalRecordsByRegistration = [];
-$registrationIds = [];
-foreach ($visits as $v) {
-    if (!empty($v->registration_id)) {
-        $registrationIds[] = $v->registration_id;
-    }
-}
-$registrationIds = array_unique($registrationIds);
-
-if (!empty($registrationIds)) {
-    try {
-        $this->loadModel('MedicalRecords');
-        $mrRows = $this->MedicalRecords->find()
-            ->where(['registration_id IN' => $registrationIds])
-            ->all();
-        foreach ($mrRows as $mr) {
-            $medicalRecordsByRegistration[$mr->registration_id] = $mr;
-        }
-    } catch (\Throwable $e) {
-        $medicalRecordsByRegistration = [];
-    }
-}
-
-$this->set(compact(
-    'visits', 'summary', 'poliList', 'doctors',
-    'filterDateFrom', 'filterDateTo',
-    'filterPoli', 'filterDoctor', 'filterStatus', 'q',
-    'medicalRecordsByRegistration'
-));
+        $this->set(compact(
+            'visits', 'summary', 'poliList', 'doctors',
+            'filterDateFrom', 'filterDateTo',
+            'filterPoli', 'filterDoctor', 'filterStatus', 'q'
+        ));
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -310,7 +411,7 @@ $this->set(compact(
     {
         if (empty($id)) {
             $this->Flash->error(__('ID kunjungan tidak ditemukan.'));
-            return $this->redirect(['action' => 'index']);
+            return $this->queueActionRedirect();
         }
 
         $this->loadModel('OutpatientCpptNotes');
@@ -333,7 +434,7 @@ $this->set(compact(
 
         if (empty($id)) {
             $this->Flash->error(__('ID kunjungan tidak ditemukan.'));
-            return $this->redirect(['action' => 'index']);
+            return $this->queueActionRedirect();
         }
 
         $this->loadModel('OutpatientCpptNotes');
@@ -386,6 +487,7 @@ $this->set(compact(
 
         return $this->redirect(['action' => 'cppt', $id]);
     }
+    
     public function deleteCppt($noteId = null)
     {
         $this->request->allowMethod(['post', 'delete']);
@@ -420,7 +522,7 @@ $this->set(compact(
             $this->Flash->error(__('Gagal menandai selesai.'));
         }
 
-        return $this->redirect(['action' => 'index']);
+        return $this->queueActionRedirect();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -464,7 +566,7 @@ $this->set(compact(
             $this->Flash->error(__('Gagal memanggil pasien.'));
         }
 
-        return $this->redirect(['action' => 'index']);
+        return $this->queueActionRedirect();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -483,7 +585,7 @@ public function datang($id = null)
                 ->withStringBody(json_encode(['success' => false, 'message' => 'Status tidak valid untuk ditandai datang']));
         }
         $this->Flash->error(__('Status pasien tidak valid.'));
-        return $this->redirect(['action' => 'index']);
+        return $this->queueActionRedirect();
     }
 
     $visit->status = 'in_progress';
@@ -510,7 +612,7 @@ public function datang($id = null)
         $this->Flash->error(__('Gagal memperbarui status pasien.'));
     }
 
-    return $this->redirect(['action' => 'index']);
+    return $this->queueActionRedirect();
 }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -542,12 +644,19 @@ public function datang($id = null)
 
         $dateFrom = $this->request->getQuery('date_from', date('Y-m-d'));
         $dateTo   = $this->request->getQuery('date_to',   date('Y-m-d'));
+        $poli     = $this->request->getQuery('poli');
+
+        $conditions = [
+            'OutpatientVisits.visit_date >=' => $dateFrom,
+            'OutpatientVisits.visit_date <=' => $dateTo,
+        ];
+
+        if (!empty($poli)) {
+            $conditions['OutpatientVisits.polyclinic_name'] = $poli;
+        }
 
         $base = $this->OutpatientVisits->find()
-            ->where([
-                'OutpatientVisits.visit_date >=' => $dateFrom,
-                'OutpatientVisits.visit_date <=' => $dateTo,
-            ]);
+            ->where($conditions);
 
         $summary = [
             'waiting'     => (clone $base)->where(['status' => 'waiting'])->count(),
@@ -583,15 +692,21 @@ public function datang($id = null)
             ],
         ]);
 
-        // ── Ambil data EMR yang sudah diisi dokter — inilah sumber auto-fill ──
-        // Sebelumnya variabel $emr dipakai di bawah (ICD, obat, prognosis, dll)
-        // dan juga di view resume_medis.php, tapi tidak pernah diquery di sini,
-        // sehingga semua field yang seharusnya auto-fill dari EMR selalu kosong.
+        $this->loadModel('OutpatientBillings');
+        $billing = $this->OutpatientBillings->find()
+            ->select(['id', 'status'])
+            ->where(['outpatient_visit_id' => $visit->id])
+            ->first();
+
+        $isBillingLocked = $billing && in_array($billing->status, ['paid', 'void', 'cancelled'], true);
+
         $this->loadModel('OutpatientVisitEmr');
 
         $emr = $this->OutpatientVisitEmr->find()
-            ->where(['outpatient_visit_id' => $visit->id])
-            ->first();
+        ->where(['outpatient_visit_id' => $visit->id])
+        ->order(['id' => 'DESC'])
+        ->first();
+
 
         if (!$emr) {
             $emr = $this->OutpatientVisitEmr->newEmptyEntity();
@@ -713,99 +828,9 @@ public function datang($id = null)
         $icd10Items = $normalizeIcdItems($emr->icd10_items ?? []);
         $icd9Items  = $normalizeIcdItems($emr->icd9_items ?? []);
 
-        // Obat/Terapi lanjutan hanya ambil dari order resep/master obat, bukan dari Tindakan & Tarif.
         $medicineItems = [];
 
-        $appendMedicine = function ($rx) use (&$medicineItems) {
-            $medicine = $rx->medicine ?? null;
-
-            $name = trim((string)(
-                $rx->medicine_name ??
-                $rx->drug_name ??
-                $rx->nama_obat ??
-                $rx->name ??
-                $rx->item_name ??
-                $rx->prescription_name ??
-                ($medicine->medicine_name ?? null) ??
-                ($medicine->name ?? null) ??
-                ($medicine->generic_name ?? null) ??
-                ''
-            ));
-
-            if ($name === '') {
-                return;
-            }
-
-            $medicineItems[] = [
-                'name'  => $name,
-                'qty'   => $rx->quantity ?? $rx->qty ?? '',
-                'dose'  => $rx->dose ?? $rx->dosis ?? '',
-                'route' => $rx->route ?? $rx->cara_pemberian ?? $rx->instruction ?? $rx->notes ?? '',
-            ];
-        };
-
-        // Cara 1: lewat Orders -> OrderPrescriptions -> Medicines
-        try {
-            $this->loadModel('Orders');
-
-            $ordersQuery = $this->Orders->find();
-
-            if (!empty($visit->registration_id)) {
-                $ordersQuery->where(['Orders.registration_id' => $visit->registration_id]);
-            } elseif (!empty($visit->registration_no)) {
-                $ordersQuery->where(['Orders.registration_no' => $visit->registration_no]);
-            } else {
-                $ordersQuery->where(['Orders.patient_id' => $visit->patient_id]);
-            }
-
-            try {
-                $ordersQuery->contain(['OrderPrescriptions' => ['Medicines']]);
-            } catch (\Throwable $e) {
-                try {
-                    $ordersQuery->contain(['OrderPrescriptions']);
-                } catch (\Throwable $e2) {
-                }
-            }
-
-            foreach ($ordersQuery->all() as $order) {
-                foreach (($order->order_prescriptions ?? []) as $rx) {
-                    $appendMedicine($rx);
-                }
-            }
-        } catch (\Throwable $e) {
-        }
-
-        // Cara 2: langsung dari OrderPrescriptions kalau asosiasi Orders belum jalan.
-        if (empty($medicineItems)) {
-            try {
-                $this->loadModel('OrderPrescriptions');
-
-                $rxQuery = $this->OrderPrescriptions->find();
-
-                if (!empty($visit->registration_id)) {
-                    $rxQuery->where(['OrderPrescriptions.registration_id' => $visit->registration_id]);
-                } elseif (!empty($visit->registration_no)) {
-                    $rxQuery->where(['OrderPrescriptions.registration_no' => $visit->registration_no]);
-                } else {
-                    $rxQuery->where(['OrderPrescriptions.patient_id' => $visit->patient_id]);
-                }
-
-                try {
-                    $rxQuery->contain(['Medicines']);
-                } catch (\Throwable $e) {
-                }
-
-                foreach ($rxQuery->all() as $rx) {
-                    $appendMedicine($rx);
-                }
-            } catch (\Throwable $e) {
-            }
-        }
-
-
-        // Fallback terakhir: kalau belum ada tabel resep/order, ambil dari prescription_notes agar tidak kosong.
-        // Nanti kalau order resep sudah tersambung penuh, bagian ini tetap aman karena hanya jalan saat medicineItems kosong.
-        if (empty($medicineItems) && !empty($emr->prescription_notes)) {
+        if (!empty($emr->prescription_notes)) {
             $lines = preg_split('/\r\n|\r|\n/', (string)$emr->prescription_notes);
             foreach ($lines as $line) {
                 $line = trim($line);
@@ -953,12 +978,8 @@ public function datang($id = null)
             ->first();
     
         if ($existing) {
-            $this->Flash->success('Pemeriksaan sudah selesai. Tagihan sudah ada.');
-            return $this->redirect([
-                'controller' => 'OutpatientBillings',
-                'action' => 'kasir',
-                $existing->id,
-            ]);
+            $this->Flash->success('Pemeriksaan sudah selesai. Tagihan sudah ada dan sudah dikirim ke kasir.');
+            return $this->redirect(['action' => 'index']);
         }
     
         $conn = $this->OutpatientBillings->getConnection();
@@ -1039,13 +1060,9 @@ public function datang($id = null)
             }
         });
     
-        $this->Flash->success('Pemeriksaan selesai. Tagihan berhasil dibuat.');
+        $this->Flash->success('Pemeriksaan selesai. Tagihan berhasil dibuat dan sudah dikirim ke kasir.');
     
-        return $this->redirect([
-            'controller' => 'OutpatientBillings',
-            'action' => 'kasir',
-            $billingId,
-        ]);
+        return $this->redirect(['action' => 'index']);
     }
 
     public function hasilPemeriksaan($id = null)

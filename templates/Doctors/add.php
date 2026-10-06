@@ -5,12 +5,12 @@
  * @var array $polyclinics
  * @var array $religions
  * @var array $specialists
+ * @var array $regions
  */
 
 $dataChild = $this->Html->link('Doctor', ['action' => 'index'], ['full_base' => true]);
 $polyclinics = $polyclinics ?? $this->Krs->polyclinics();
 $religions = $religions ?? $this->Krs->religions();
-$specialists = $specialists ?? $this->Krs->specialists();
 $regions = $regions ?? $this->Krs->regions();
 ?>
 
@@ -93,14 +93,14 @@ $regions = $regions ?? $this->Krs->regions();
 
         </div>
 
-        <!-- ROW 2 -->
+                <!-- ROW 2 -->
         <div class="form-group row m-b-15">
 
             <label class="col-form-label col-md-1">
                 Nama*
             </label>
 
-            <div class="col-md-5">
+            <div class="col-md-11">
 
                 <?php
                 echo $this->Form->control('doctor_name', [
@@ -114,31 +114,13 @@ $regions = $regions ?? $this->Krs->regions();
 
             </div>
 
-            <label class="col-form-label col-md-1">
-                Spesialis
-            </label>
-
-            <div class="col-md-5">
-
-                <?php
-                echo $this->Form->control('specialist', [
-                    'type' => 'select',
-                    'label' => false,
-                    'class' => 'form-control select2Form',
-                    'options' => $specialists,
-                    'empty' => '-- Pilih Spesialis --'
-                ]);
-                ?>
-
-            </div>
-
         </div>
 
         <!-- ROW 3 -->
         <div class="form-group row m-b-15">
 
             <label class="col-form-label col-md-1">
-                Polyklinik
+                Poliklinik
             </label>
 
             <div class="col-md-3">
@@ -148,7 +130,7 @@ $regions = $regions ?? $this->Krs->regions();
                     'label' => false,
                     'class' => 'form-control select2Form',
                     'options' => $polyclinics,
-                    'empty' => '-- Pilih Polyklinik --',
+                    'empty' => '-- Pilih Poliklinik --',
                     'required' => true
                 ]);
                 ?>
@@ -208,7 +190,7 @@ $regions = $regions ?? $this->Krs->regions();
                 echo $this->Form->control('sip_number', [
                     'label' => false,
                     'class' => 'form-control',
-                    'placeholder' => 'SIP Number...'
+                    'placeholder' => 'Nomor SIP...'
                 ]);
                 ?>
 
@@ -224,14 +206,14 @@ $regions = $regions ?? $this->Krs->regions();
                 echo $this->Form->control('str_number', [
                     'label' => false,
                     'class' => 'form-control',
-                    'placeholder' => 'STR Number...'
+                    'placeholder' => 'Nomor STR...'
                 ]);
                 ?>
 
             </div>
 
             <label class="col-form-label col-md-1">
-                Nomor Telepon
+                Telepon
             </label>
 
             <div class="col-md-3">
@@ -259,16 +241,18 @@ $regions = $regions ?? $this->Krs->regions();
 
                 <?php
                 echo $this->Form->control('str_issue_date', [
-                    'type' => 'date',
+                    'type' => 'text',
                     'label' => false,
-                    'class' => 'form-control'
+                    'class' => 'form-control datepicker',
+                    'placeholder' => 'dd/mm/yyyy',
+                    'autocomplete' => 'off'
                 ]);
                 ?>
 
             </div>
 
             <label class="col-form-label col-md-1">
-                Expired STR
+                Kadaluarsa STR
             </label>
 
             <div class="col-md-2">
@@ -282,7 +266,7 @@ $regions = $regions ?? $this->Krs->regions();
 
             <div class="col-md-2">
 
-                <input type="date" id="str-expiry-date-picker" class="form-control">
+                <input type="text" id="str-expiry-date-picker" class="form-control datepicker" placeholder="dd/mm/yyyy" autocomplete="off">
 
                 <?php
                 echo $this->Form->hidden('str_expiry_date', [
@@ -298,7 +282,7 @@ $regions = $regions ?? $this->Krs->regions();
         <div class="form-group row m-b-15">
 
             <label class="col-form-label col-md-1">
-                Login NIK
+                NIK Login
             </label>
 
             <div class="col-md-5">
@@ -356,9 +340,16 @@ $regions = $regions ?? $this->Krs->regions();
 
 <script type="text/javascript">
 
-    $(document).ready(function () {
+        $(document).ready(function () {
 
         $(".select2Form").select2();
+
+        $(".datepicker").datepicker({
+            format: 'dd/mm/yyyy',
+            autoclose: true,
+            todayHighlight: true,
+            orientation: 'bottom auto'
+        });
 
         var confirmTitle = "Apakah anda ingin menyimpan data tersebut ?";
 
@@ -406,7 +397,7 @@ $regions = $regions ?? $this->Krs->regions();
 
     });
 
-    $('#str-expiry-date-picker').change(function () {
+        $('#str-expiry-date-picker').on('changeDate', function () {
 
         $('#str-expiry-date').val($(this).val());
 

@@ -5,7 +5,7 @@ use Cake\Controller\Component;
 use Cake\ORM\TableRegistry; //Memanggil table model
 
 class KrsComponent extends Component
-{
+{	
     // Add your code to override the core AuthComponent
 	public function _unit($value=null){
 		$data = array('pcs'=>'Pcs', 'ton'=>'Ton', 'drum'=>'Drum', 'm3'=>'M3', 'kg'=>'Kg', 'liter'=>'Liter', 'truk'=>'Truk', 'hari'=>'Hari', 'lumpsum'=>'Lumpsum', '1 bulan'=>'1 Bulan', '2 bulan'=>'2 Bulan', '3 bulan'=>'3 Bulan', '4 bulan'=>'4 Bulan', 'bulan'=>'Bulan', 'tahun'=>'Tahun');
@@ -240,5 +240,17 @@ class KrsComponent extends Component
 	{
 		$result = preg_replace('/[^a-zA-Z0-9 ]/', '', $value);
 		return $result;
+	}
+
+	function getTimezoneUser($zona = 'WIB')
+	{
+		switch ($zona) {
+			case 'WITA':
+				return 'Asia/Makassar';
+			case 'WIT':
+				return 'Asia/Jayapura';
+			default:
+				return 'Asia/Jakarta';
+		}
 	}
 }

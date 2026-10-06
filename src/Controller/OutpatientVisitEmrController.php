@@ -35,8 +35,9 @@ class OutpatientVisitEmrController extends AppController
 
         // ── Cari data EMR yang sudah ada untuk kunjungan ini, atau siapkan baru ──
         $emr = $this->OutpatientVisitEmr->find()
-            ->where(['outpatient_visit_id' => $visit->id])
-            ->first();
+        ->where(['outpatient_visit_id' => $visit->id])
+        ->order(['id' => 'DESC'])
+        ->first();
 
         if (!$emr) {
             $emr = $this->OutpatientVisitEmr->newEmptyEntity();
@@ -165,11 +166,12 @@ class OutpatientVisitEmrController extends AppController
                 }
             }
 
-            // ── Pastikan foreign key selalu ikut ke-set ───────────────────────
             $data['outpatient_visit_id'] = $visit->id;
 
-            if (empty($emr->created_by_user_id)) {
+            if ($emr->isNew()) {
                 $data['created_by_user_id'] = $this->getCurrentUserId();
+            } else {
+                $data['modified_by_user_id'] = $this->getCurrentUserId();
             }
 
             $emr = $this->OutpatientVisitEmr->patchEntity($emr, $data);
@@ -235,7 +237,7 @@ class OutpatientVisitEmrController extends AppController
             }
 
             if ($saved) {
-                $this->syncExistingKajianVitals((int)$visit->id, $emr);
+                $this->_syncActionsToBilling($visit);
                 $this->Flash->success(__('EMR berhasil disimpan.'));
                 return $this->redirect(['action' => 'emr', $visit->id]);
             }
@@ -247,10 +249,218 @@ class OutpatientVisitEmrController extends AppController
             $this->Flash->error(__('Gagal menyimpan EMR. Error: ' . $err));
         }
 
-        $this->set(compact('visit', 'emr'));
+        $isBillingLocked = false; // TODO: isi logic pengecekan billing terkunci kalau diperlukan nanti
+        $this->set(compact('visit', 'emr', 'isBillingLocked'));
     }
 
-    public function createReferralQueue()
+    /**
+     * Simpan HANYA Tanda Vital + Gizi secara terpisah (AJAX), sebagai syarat
+     * sebelum field EMR lainnya bisa diisi. Dipanggil dari tombol
+     * "Simpan Tanda Vital & Gizi" di halaman emr.php.
+     *
+     * @param string|null $visitId outpatient_visit_id
+     * @return \Cake\Http\Response
+     */
+
+        protected function _syncActionsToBilling($visit): void
+    {
+        $this->loadModel('OutpatientBillings');
+        $this->loadModel('OutpatientBillingItems');
+
+        $billing = $this->OutpatientBillings->find()
+            ->where(['outpatient_visit_id' => $visit->id])
+            ->first();
+
+        if (!$billing) {
+            return;
+        }
+
+        $this->OutpatientBillingItems->deleteAll([
+            'billing_id' => $billing->id,
+            'item_type' => 'tindakan',
+        ]);
+
+        $actions = $this->OutpatientVisits->OutpatientActions->find()
+            ->where(['outpatient_visit_id' => $visit->id])
+            ->all();
+
+        foreach ($actions as $action) {
+            $qty   = (int)($action->quantity ?? 1);
+            $price = (float)($action->unit_price ?? 0);
+            $total = $qty * $price;
+
+            if ($total <= 0) {
+                continue;
+            }
+
+            $item = $this->OutpatientBillingItems->newEntity([
+                'billing_id'      => $billing->id,
+                'item_type'       => 'tindakan',
+                'item_code'       => $action->action_code ?? null,
+                'item_name'       => $action->action_name ?? 'Tindakan',
+                'quantity'        => $qty,
+                'unit_price'      => $price,
+                'total_price'     => $total,
+                'discount_amount' => 0,
+                'final_price'     => $total,
+                'is_delete'       => 0,
+            ]);
+
+            $this->OutpatientBillingItems->save($item);
+        }
+
+        $this->_recalcBillingTotalsWithPaymentCheck($billing->id);
+    }
+
+    protected function _recalcBillingTotalsWithPaymentCheck(int $billingId): void
+    {
+        $this->loadModel('OutpatientBillings');
+        $this->loadModel('OutpatientBillingItems');
+        $this->loadModel('OutpatientBillingPayments');
+
+        $billing = $this->OutpatientBillings->get($billingId);
+
+        $items = $this->OutpatientBillingItems->find()
+            ->where(['billing_id' => $billingId, 'is_delete' => 0])
+            ->all();
+
+        $totalAction = 0; $totalMed = 0; $totalLab = 0; $totalRad = 0; $totalOther = 0;
+
+        foreach ($items as $item) {
+            switch ($item->item_type) {
+                case 'tindakan':      $totalAction += $item->final_price; break;
+                case 'obat':          $totalMed    += $item->final_price; break;
+                case 'laboratorium':  $totalLab    += $item->final_price; break;
+                case 'radiologi':     $totalRad    += $item->final_price; break;
+                default:              $totalOther  += $item->final_price; break;
+            }
+        }
+
+        $adminFee   = (float)($billing->admin_fee ?? 0);
+        $subtotal   = $totalAction + $totalMed + $totalLab + $totalRad + $totalOther + $adminFee;
+        $grandTotal = max(0, $subtotal - (float)($billing->discount_amount ?? 0));
+
+        $paidRow = $this->OutpatientBillingPayments->find()
+            ->where(['billing_id' => $billingId])
+            ->select(['total' => $this->OutpatientBillingPayments->find()->func()->sum('amount')])
+            ->enableHydration(false)
+            ->first();
+        $totalPaidSoFar = (float)($paidRow['total'] ?? 0);
+
+        $billing->total_action    = $totalAction;
+        $billing->total_medicine  = $totalMed;
+        $billing->total_lab       = $totalLab;
+        $billing->total_radiology = $totalRad;
+        $billing->total_other     = $totalOther;
+        $billing->subtotal        = $subtotal;
+        $billing->grand_total     = $grandTotal;
+
+        if ($grandTotal > $totalPaidSoFar + 0.01) {
+            $billing->status = 'waiting_payment';
+        } elseif ($totalPaidSoFar > 0) {
+            $billing->status = 'paid';
+        }
+
+        $this->OutpatientBillings->save($billing, ['checkRules' => false]);
+    }
+    
+    public function saveVitalSigns($visitId = null)
+    {
+        $this->request->allowMethod(['post']);
+        $this->autoRender = false;
+
+        if (empty($visitId)) {
+            return $this->jsonResponse([
+                'success' => false,
+                'message' => 'ID kunjungan tidak ditemukan.',
+            ], 422);
+        }
+
+        $emr = $this->OutpatientVisitEmr->find()
+            ->where(['outpatient_visit_id' => $visitId])
+            ->first();
+
+        if (!$emr) {
+            $emr = $this->OutpatientVisitEmr->newEmptyEntity();
+            $emr->outpatient_visit_id = (int)$visitId;
+            $emr->created_by_user_id = $this->getCurrentUserId();
+        } else {
+            $emr->modified_by_user_id = $this->getCurrentUserId();
+        }
+
+        $data = $this->request->getData();
+
+        // Field yang WAJIB terisi sebelum boleh disimpan: Tanda Vital + Gizi.
+        $requiredFields = ['pulse', 'respiratory_rate', 'blood_pressure', 'temperature', 'weight', 'height'];
+        foreach ($requiredFields as $f) {
+            if (!isset($data[$f]) || trim((string)$data[$f]) === '') {
+                return $this->jsonResponse([
+                    'success' => false,
+                    'message' => 'Lengkapi semua Tanda Vital (Nadi, Pernapasan, Tekanan Darah, Suhu Badan) dan Gizi (Berat Badan, Tinggi Badan) terlebih dahulu.',
+                ], 422);
+            }
+        }
+
+        $payload = [];
+        foreach (['pulse', 'respiratory_rate', 'blood_pressure', 'temperature', 'oxygen_saturation', 'pain_scale', 'weight', 'height'] as $f) {
+            if (isset($data[$f]) && $data[$f] !== '') {
+                $payload[$f] = $data[$f];
+            }
+        }
+
+        foreach (['pulse', 'respiratory_rate', 'oxygen_saturation', 'pain_scale'] as $f) {
+            if (isset($payload[$f])) {
+                $payload[$f] = (int)$payload[$f];
+            }
+        }
+        foreach (['weight', 'height', 'temperature'] as $f) {
+            if (isset($payload[$f])) {
+                $payload[$f] = (float)$payload[$f];
+            }
+        }
+
+        // Hitung BMI otomatis (sama seperti di emr()).
+        $hm  = $payload['height'] / 100;
+        $bmi = round($payload['weight'] / ($hm * $hm), 2);
+        $payload['bmi'] = $bmi;
+        if ($bmi < 18.5) {
+            $payload['bmi_category'] = 'Underweight';
+        } elseif ($bmi < 25.0) {
+            $payload['bmi_category'] = 'NormalWeight';
+        } elseif ($bmi < 30.0) {
+            $payload['bmi_category'] = 'Overweight';
+        } else {
+            $payload['bmi_category'] = 'Obese';
+        }
+
+        $emr = $this->OutpatientVisitEmr->patchEntity($emr, $payload, ['validate' => false]);
+
+        if (!$this->OutpatientVisitEmr->save($emr, ['checkRules' => false])) {
+            return $this->jsonResponse([
+                'success' => false,
+                'message' => 'Gagal menyimpan tanda vital.',
+                'errors' => $emr->getErrors(),
+            ], 422);
+        }
+
+        // Tandai kunjungan mulai diperiksa, sama seperti saat EMR utama disimpan pertama kali.
+        $this->loadModel('OutpatientVisits');
+        $visit = $this->OutpatientVisits->get($visitId);
+        if (in_array($visit->status, ['waiting', 'called'])) {
+            $visit->status = 'in_progress';
+            $visit->start_time = date('Y-m-d H:i:s');
+            $this->OutpatientVisits->save($visit, ['checkRules' => false]);
+        }
+
+        return $this->jsonResponse([
+            'success' => true,
+            'message' => 'Tanda vital & gizi berhasil disimpan.',
+            'bmi' => $emr->bmi,
+            'bmi_category' => $emr->bmi_category,
+        ]);
+    }
+    
+        public function createReferralQueue()
     {
         $this->request->allowMethod(['post']);
         $this->autoRender = false;
@@ -370,24 +580,15 @@ class OutpatientVisitEmrController extends AppController
         }
     }
 
-    /**
-     * Simpan gambar anatomi pasien dari canvas Fabric.js.
-     *
-     * @param int|null $visitId ID kunjungan rawat jalan.
-     * @return \Cake\Http\Response
-     */
-    public function saveAnatomy($visitId = null): \Cake\Http\Response
+        public function saveAnatomy($visitId = null): \Cake\Http\Response
     {
         $this->request->allowMethod(['post']);
         $this->autoRender = false;
 
-        $this->loadModel('OutpatientInitialMedicalAssessments');
         $side = (string)$this->request->getData('side');
-        $source = (string)$this->request->getData('source', 'emr');
         $imageData = (string)$this->request->getData('image');
         $allowedSides = ['front' => 'anatomy_front', 'back' => 'anatomy_back'];
 
-        // Validasi sisi anatomi agar hanya field yang disiapkan yang bisa diubah.
         if (empty($visitId) || !array_key_exists($side, $allowedSides)) {
             return $this->jsonResponse([
                 'success' => false,
@@ -395,7 +596,6 @@ class OutpatientVisitEmrController extends AppController
             ], 422);
         }
 
-        // Pastikan kolom database sudah ditambahkan sebelum mencoba menyimpan nama file.
         $schema = $this->OutpatientVisitEmr->getSchema();
         $field = $allowedSides[$side];
         if (!$schema->hasColumn($field)) {
@@ -405,7 +605,6 @@ class OutpatientVisitEmrController extends AppController
             ], 422);
         }
 
-        // Terima hanya PNG data URL dari canvas.toDataURL().
         if (!preg_match('/^data:image\/png;base64,/', $imageData)) {
             return $this->jsonResponse([
                 'success' => false,
@@ -425,7 +624,6 @@ class OutpatientVisitEmrController extends AppController
             ->where(['outpatient_visit_id' => $visitId])
             ->first();
 
-        // Jika dokter menyimpan anatomi sebelum form EMR utama disimpan, buat row EMR minimal.
         if (!$emr) {
             $emr = $this->OutpatientVisitEmr->newEmptyEntity();
             $emr->outpatient_visit_id = (int)$visitId;
@@ -442,7 +640,6 @@ class OutpatientVisitEmrController extends AppController
             ], 500);
         }
 
-        // Nama file dibuat unik agar cache browser tidak menampilkan gambar lama setelah edit ulang.
         $fileName = sprintf(
             'visit_%s_%s_%s.png',
             (int)$visitId,
@@ -472,29 +669,7 @@ class OutpatientVisitEmrController extends AppController
             ], 422);
         }
 
-        if ($source === 'kajian') {
 
-            $assessment = $this->OutpatientInitialMedicalAssessments
-                ->find()
-                ->where([
-                    'outpatient_visit_id' => $visitId
-                ])
-                ->first();
-
-            if ($assessment) {
-
-                $assessment->{$field} = $fileName;
-
-                $this->OutpatientInitialMedicalAssessments
-                    ->save($assessment, [
-                        'validate' => false
-                    ]);
-
-            }
-
-        }
-
-        // Hapus file versi lama setelah database berhasil diarahkan ke file baru.
         if ($oldFileName !== '' && $oldFileName !== $fileName) {
             $oldFilePath = $directory . basename($oldFileName);
             if (is_file($oldFilePath)) {
@@ -526,14 +701,6 @@ class OutpatientVisitEmrController extends AppController
             ->where(['outpatient_visit_id' => $visit->id])
             ->first();
 
-        $emr = $this->OutpatientVisitEmr->find()
-            ->where(['outpatient_visit_id' => $visit->id])
-            ->first();
-        $dataDasar = $this->syncKajianVitalsFromEmr(
-            $this->decodeAssessmentSection($assessment->data_dasar ?? null),
-            $emr
-        );
-
         return $this->jsonResponse([
             'success' => true,
             'data' => [
@@ -541,7 +708,7 @@ class OutpatientVisitEmrController extends AppController
                 'assessment_no' => $assessment->assessment_no ?? $this->buildKajianAwalNo((int)$visit->id),
                 'assessment_date' => $this->formatAssessmentDate($assessment->assessment_date ?? null),
                 'assessment_time' => $this->formatAssessmentTime($assessment->assessment_time ?? null),
-                'data_dasar' => $dataDasar,
+                'data_dasar' => $this->decodeAssessmentSection($assessment->data_dasar ?? null),
                 'subjektif' => $this->decodeAssessmentSection($assessment->subjektif ?? null),
                 'observasi' => $this->decodeAssessmentSection($assessment->observasi ?? null),
             ],
@@ -586,33 +753,7 @@ class OutpatientVisitEmrController extends AppController
         $assessment->subjektif = $this->encodeAssessmentSection($data['subjektif'] ?? []);
         $assessment->observasi = $this->encodeAssessmentSection($data['observasi'] ?? []);
 
-        $emr = $this->OutpatientVisitEmr->find()
-            ->where(['outpatient_visit_id' => $visit->id])
-            ->first();
-        if (!$emr) {
-            $emr = $this->OutpatientVisitEmr->newEmptyEntity();
-            $emr->outpatient_visit_id = $visit->id;
-            $emr->created_by_user_id = $this->getCurrentUserId();
-        }
-        $this->applyKajianVitalsToEmr($emr, $data['data_dasar'] ?? []);
-
-        $saved = false;
-        $conn = $this->OutpatientInitialMedicalAssessments->getConnection();
-        try {
-            $conn->transactional(function () use (&$saved, $assessment, $emr) {
-                if (!$this->OutpatientInitialMedicalAssessments->save($assessment, ['checkRules' => false])) {
-                    throw new \Exception('assessment');
-                }
-                if (!$this->OutpatientVisitEmr->save($emr, ['checkRules' => false])) {
-                    throw new \Exception('emr');
-                }
-                $saved = true;
-            });
-        } catch (\Throwable $e) {
-            $saved = false;
-        }
-
-        if ($saved) {
+        if ($this->OutpatientInitialMedicalAssessments->save($assessment, ['checkRules' => false])) {
             return $this->jsonResponse([
                 'success' => true,
                 'message' => 'Kajian medis awal berhasil disimpan.',
@@ -626,107 +767,6 @@ class OutpatientVisitEmrController extends AppController
             'message' => 'Gagal menyimpan kajian medis awal.',
             'errors' => $assessment->getErrors(),
         ], 422);
-    }
-
-    private function syncExistingKajianVitals(int $visitId, $emr): void
-    {
-        $this->loadModel('OutpatientInitialMedicalAssessments');
-
-        $assessment = $this->OutpatientInitialMedicalAssessments->find()
-            ->where(['outpatient_visit_id' => $visitId])
-            ->first();
-        if (!$assessment) {
-            return;
-        }
-
-        $dataDasar = $this->syncKajianVitalsFromEmr(
-            $this->decodeAssessmentSection($assessment->data_dasar ?? null),
-            $emr
-        );
-        $assessment->data_dasar = $this->encodeAssessmentSection($dataDasar);
-        $assessment->modified_by_user_id = $this->getCurrentUserId();
-
-        $this->OutpatientInitialMedicalAssessments->save($assessment, ['checkRules' => false]);
-    }
-
-    private function syncKajianVitalsFromEmr(array $dataDasar, $emr): array
-    {
-        if (!$emr) {
-            return $dataDasar;
-        }
-
-        $map = [
-            'tekanan_darah' => 'blood_pressure',
-            'nadi' => 'pulse',
-            'napas' => 'respiratory_rate',
-            'suhu' => 'temperature',
-            'bb' => 'weight',
-            'tb' => 'height',
-            'spo2' => 'oxygen_saturation',
-            'skala_nyeri' => 'pain_scale',
-        ];
-
-        foreach ($map as $kajianField => $emrField) {
-            $value = $emr->{$emrField} ?? null;
-            if ($value !== null && $value !== '') {
-                $dataDasar[$kajianField] = $value;
-            }
-        }
-
-        return $dataDasar;
-    }
-
-    private function applyKajianVitalsToEmr($emr, array $dataDasar): void
-    {
-        $map = [
-            'tekanan_darah' => ['field' => 'blood_pressure', 'type' => 'string'],
-            'nadi' => ['field' => 'pulse', 'type' => 'int'],
-            'napas' => ['field' => 'respiratory_rate', 'type' => 'int'],
-            'suhu' => ['field' => 'temperature', 'type' => 'float'],
-            'bb' => ['field' => 'weight', 'type' => 'float'],
-            'tb' => ['field' => 'height', 'type' => 'float'],
-            'spo2' => ['field' => 'oxygen_saturation', 'type' => 'int'],
-            'skala_nyeri' => ['field' => 'pain_scale', 'type' => 'int'],
-        ];
-
-        foreach ($map as $kajianField => $emrMeta) {
-            if (!array_key_exists($kajianField, $dataDasar)) {
-                continue;
-            }
-
-            $value = trim((string)$dataDasar[$kajianField]);
-            if ($value === '') {
-                $emr->{$emrMeta['field']} = null;
-                continue;
-            }
-
-            if ($emrMeta['type'] === 'int') {
-                $emr->{$emrMeta['field']} = (int)$value;
-            } elseif ($emrMeta['type'] === 'float') {
-                $emr->{$emrMeta['field']} = (float)$value;
-            } else {
-                $emr->{$emrMeta['field']} = $value;
-            }
-        }
-
-        if (!empty($emr->weight) && !empty($emr->height)) {
-            $hm = $emr->height / 100;
-            $emr->bmi = round($emr->weight / ($hm * $hm), 2);
-            if ($emr->bmi < 18.5) {
-                $emr->bmi_category = 'Underweight';
-            } elseif ($emr->bmi < 25.0) {
-                $emr->bmi_category = 'NormalWeight';
-            } elseif ($emr->bmi < 30.0) {
-                $emr->bmi_category = 'Overweight';
-            } else {
-                $emr->bmi_category = 'Obese';
-            }
-        } else {
-            $emr->bmi = null;
-            $emr->bmi_category = null;
-        }
-
-        $emr->modified_by_user_id = $this->getCurrentUserId();
     }
 
     private function buildKajianAwalNo(int $visitId): string

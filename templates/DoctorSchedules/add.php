@@ -4,7 +4,9 @@
  * @var \App\Model\Entity\DoctorSchedule $doctorSchedule
  * @var array $doctors
  * @var array $doctorPolyclinics
+ * @var array $weekDays
  */
+$weekDays = $weekDays ?? ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
 ?>
 
 <style>
@@ -123,7 +125,6 @@
     .dsf-field select,
     .dsf-field textarea,
     .dsf-field input[type="text"],
-    .dsf-field input[type="time"],
     .dsf-field input[type="number"] {
         width: 100%;
         height: 42px;
@@ -140,6 +141,38 @@
         height: auto;
         padding: 10px 12px;
         resize: vertical;
+    }
+
+    .dsf-field .input-group {
+        display: flex;
+        align-items: stretch;
+    }
+
+    .dsf-field .input-group .input {
+        flex: 1 1 auto;
+        width: auto !important;
+        min-width: 0;
+        border-top-right-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+        border-right: 0 !important;
+    }
+
+    .dsf-field .input-group-addon {
+        flex: 0 0 auto;
+    }
+
+    .dsf-field .input-group-addon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 12px;
+        border: 1px solid #d7dee8;
+        border-left: 0;
+        border-top-right-radius: 10px;
+        border-bottom-right-radius: 10px;
+        background: #f8fafc;
+        color: #64748b;
+        cursor: pointer;
     }
 
     .dsf-field select:focus,
@@ -215,9 +248,89 @@
         transform: translateY(-1px);
     }
 
+        .dsf-week-table {
+        border: 1px solid #d7dee8;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .dsf-week-table table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    .dsf-week-table thead th {
+        background: #f8fafc;
+        color: #475569;
+        font-size: 11.5px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+        padding: 10px 12px;
+        text-align: left;
+        border-bottom: 1px solid #e3e8ef;
+    }
+
+    .dsf-week-table tbody td {
+        padding: 8px 12px;
+        border-bottom: 1px solid #eef2f7;
+        vertical-align: middle;
+    }
+
+    .dsf-week-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .dsf-week-table tbody tr.is-day-active {
+        background: #eff6ff;
+    }
+
+    .dsf-week-checkbox {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+    }
+
+    .dsf-week-table input.input {
+        height: 38px;
+        font-size: 13px;
+        width: 100%;
+        border-radius: 8px !important;
+        border: 1px solid #d7dee8 !important;
+        padding: 0 10px;
+        box-sizing: border-box;
+    }
+
+    .dsf-week-table input[data-day-estimasi] {
+    background: #f8fafc;
+    color: #2563eb;
+    font-weight: 800;
+    text-align: center;
+    cursor: not-allowed;
+    }
+
+    .dsf-week-table input.input:disabled {
+        background: #f1f5f9;
+        color: #94a3b8;
+        cursor: not-allowed;
+    }
+
+    .dsf-week-table input[type="number"] {
+        width: 90px;
+    }
+
     @media (max-width: 720px) {
         .dsf-grid {
             grid-template-columns: 1fr;
+        }
+
+        .dsf-week-table {
+            overflow-x: auto;
+        }
+
+        .dsf-week-table table {
+            min-width: 560px;
         }
     }
 </style>
@@ -288,28 +401,7 @@
                 </div>
             </div>
 
-            <div class="dsf-field">
-                <?= $this->Form->control('day', [
-                    'label' => 'Hari',
-                    'type' => 'select',
-                    'options' => [
-                        'Senin' => 'Senin',
-                        'Selasa' => 'Selasa',
-                        'Rabu' => 'Rabu',
-                        'Kamis' => 'Kamis',
-                        'Jumat' => 'Jumat',
-                        'Sabtu' => 'Sabtu',
-                        'Minggu' => 'Minggu'
-                    ],
-                    'empty' => '-- Pilih Hari --',
-                    'class' => 'input select2Form',
-                    'templates' => [
-                        'inputContainer' => '{{content}}',
-                    ],
-                ]) ?>
-            </div>
-
-            <div class="dsf-field">
+                        <div class="dsf-field">
                 <?= $this->Form->control('is_active', [
                     'label' => 'Status',
                     'type' => 'select',
@@ -324,37 +416,86 @@
                 ]) ?>
             </div>
 
-            <div class="dsf-field">
-                <?= $this->Form->control('start_time', [
-                    'label' => 'Jam Mulai',
-                    'type' => 'time',
-                    'class' => 'input',
-                    'templates' => [
-                        'inputContainer' => '{{content}}',
-                    ],
-                ]) ?>
-            </div>
-
-            <div class="dsf-field">
-                <?= $this->Form->control('end_time', [
-                    'label' => 'Jam Selesai',
-                    'type' => 'time',
-                    'class' => 'input',
-                    'templates' => [
-                        'inputContainer' => '{{content}}',
-                    ],
-                ]) ?>
-            </div>
-
-            <div class="dsf-field">
-                <?= $this->Form->control('quota', [
-                    'label' => 'Kuota Pasien',
-                    'type' => 'number',
-                    'class' => 'input',
-                    'templates' => [
-                        'inputContainer' => '{{content}}',
-                    ],
-                ]) ?>
+            <div class="dsf-field dsf-full">
+                <label>Jadwal Per Hari (centang hari yang ada praktik)</label>
+                <div class="dsf-week-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:70px;">Aktif</th>
+                                <th>Hari</th>
+                                <th style="width:170px;">Jam Mulai</th>
+                                <th style="width:170px;">Jam Selesai</th>
+                                <th style="width:110px;">Kuota</th>
+                                <th style="width:150px;">Estimasi/Pasien</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($weekDays as $dayName): ?>
+                                <tr class="dsf-week-row" data-day-row>
+                                    <td>
+                                        <input
+                                            type="checkbox"
+                                            class="dsf-week-checkbox"
+                                            name="days[<?= h($dayName) ?>][checked]"
+                                            value="1"
+                                            data-day-checkbox
+                                            data-day="<?= h($dayName) ?>"
+                                        >
+                                    </td>
+                                    <td><strong><?= h($dayName) ?></strong></td>
+                                    <td>
+                                        <div class="input-group clockpicker">
+                                            <input
+                                                type="text"
+                                                name="days[<?= h($dayName) ?>][start_time]"
+                                                class="input"
+                                                autocomplete="off"
+                                                placeholder="--:--"
+                                                disabled
+                                                data-day-input
+                                            >
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group clockpicker">
+                                            <input
+                                                type="text"
+                                                name="days[<?= h($dayName) ?>][end_time]"
+                                                class="input"
+                                                autocomplete="off"
+                                                placeholder="--:--"
+                                                disabled
+                                                data-day-input
+                                            >
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <input
+                                            type="number"
+                                            name="days[<?= h($dayName) ?>][quota]"
+                                            class="input"
+                                            min="0"
+                                            value="0"
+                                            disabled
+                                            data-day-input
+                                        >
+                                    </td>
+                                    <td>
+                                        <input
+                                            type="text"
+                                            class="input"
+                                            data-day-estimasi
+                                            readonly
+                                            placeholder="—"
+                                            tabindex="-1"
+                                        >
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <div class="dsf-field dsf-full">
@@ -388,31 +529,249 @@
 </div>
 
 <script>
-
 $(document).ready(function () {
+
+    /* =========================================================
+     * SELECT2
+     * ========================================================= */
     $('.select2Form').select2({
         width: '100%',
         minimumResultsForSearch: 0
     });
-});
-(function () {
-    // Mapping doctor_id => nama poli, dikirim dari controller (Doctors->polyclinic_name)
-    var doctorPolyclinics = <?= json_encode($doctorPolyclinics ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+
+
+        /* =========================================================
+     * JADWAL MINGGUAN - toggle enable/disable per hari
+     * ========================================================= */
+    $('[data-day-checkbox]').on('change', function () {
+        var $row = $(this).closest('.dsf-week-row');
+        var checked = $(this).is(':checked');
+
+        $row.toggleClass('is-day-active', checked);
+
+        $row.find('[data-day-input]').each(function () {
+            $(this).prop('disabled', !checked);
+
+            if (checked) {
+                $(this).attr('required', 'required');
+            } else {
+                $(this).removeAttr('required');
+                $(this).val($(this).attr('type') === 'number' ? 0 : '');
+            }
+        });
+    });
+
+    function calcEstimasi($row) {
+        var start = $row.find('input[name$="[start_time]"]').val();
+        var end = $row.find('input[name$="[end_time]"]').val();
+        var quota = parseInt($row.find('input[name$="[quota]"]').val(), 10);
+        var $estimasi = $row.find('[data-day-estimasi]');
+
+        if (!start || !end || !quota || quota <= 0) {
+            $estimasi.val('');
+            return;
+        }
+
+        var startParts = start.split(':');
+        var endParts = end.split(':');
+
+        if (startParts.length < 2 || endParts.length < 2) {
+            $estimasi.val('');
+            return;
+        }
+
+        var startMinutes = (parseInt(startParts[0], 10) * 60) + parseInt(startParts[1], 10);
+        var endMinutes = (parseInt(endParts[0], 10) * 60) + parseInt(endParts[1], 10);
+        var totalMinutes = endMinutes - startMinutes;
+
+        if (totalMinutes <= 0) {
+            $estimasi.val('Jam tidak valid');
+            return;
+        }
+
+        var perPatient = Math.round(totalMinutes / quota);
+        $estimasi.val(perPatient + ' menit/pasien');
+    }
+
+    // Hitung ulang setiap kali jam / kuota berubah (termasuk dari clockpicker)
+    $(document).on('change keyup', '[data-day-input]', function () {
+        calcEstimasi($(this).closest('.dsf-week-row'));
+    });
+
+    // Saat checkbox dimatikan, kosongkan juga estimasinya
+    $('[data-day-checkbox]').on('change', function () {
+        if (!$(this).is(':checked')) {
+            $(this).closest('.dsf-week-row').find('[data-day-estimasi]').val('');
+        }
+    });
+
+    /* =========================================================
+     * CLOCKPICKER
+     * ========================================================= */
+
+    // Inisialisasi clockpicker untuk Jam Mulai dan Jam Selesai
+    $('.clockpicker').clockpicker({
+        autoclose: true,
+        placement: 'bottom',
+        align: 'left',
+        default: 'now'
+    });
+
+
+    /*
+     * Simpan input clockpicker yang sedang diklik.
+     */
+    var $activeClockGroup = null;
+
+
+    /*
+     * Atur posisi popup berdasarkan input
+     * yang sedang aktif.
+     */
+    function positionClockpickerPopover() {
+
+        var $popover = $('.popover.clockpicker-popover:visible');
+
+        if (!$popover.length) {
+            return;
+        }
+
+        if (!$activeClockGroup || !$activeClockGroup.length) {
+            return;
+        }
+
+        var offset = $activeClockGroup.offset();
+
+        if (!offset) {
+            return;
+        }
+
+        var groupHeight = $activeClockGroup.outerHeight();
+        var popoverWidth = $popover.outerWidth();
+        var windowWidth = $(window).width();
+
+        /*
+         * Posisi default:
+         * tepat di bawah input yang diklik.
+         */
+        var left = offset.left;
+        var top = offset.top + groupHeight + 5;
+
+
+        /*
+         * Kalau popup terlalu ke kanan,
+         * geser ke kiri supaya tetap terlihat.
+         */
+        if (left + popoverWidth > windowWidth - 15) {
+            left = windowWidth - popoverWidth - 15;
+        }
+
+
+        /*
+         * Jangan sampai keluar dari sisi kiri.
+         */
+        if (left < 15) {
+            left = 15;
+        }
+
+
+        $popover.css({
+            position: 'absolute',
+            top: top + 'px',
+            left: left + 'px',
+            zIndex: 99999
+        });
+    }
+
+
+    /*
+     * Ketika input Jam Mulai / Jam Selesai diklik,
+     * tentukan clockpicker mana yang aktif.
+     */
+    $(document).on(
+        'click',
+        '.clockpicker .input, .clockpicker .input-group-addon',
+        function () {
+
+            $activeClockGroup = $(this).closest('.input-group');
+
+            /*
+             * Tunggu sampai clockpicker selesai
+             * membuat popup-nya.
+             */
+            setTimeout(function () {
+                positionClockpickerPopover();
+            }, 10);
+
+            setTimeout(function () {
+                positionClockpickerPopover();
+            }, 50);
+
+            setTimeout(function () {
+                positionClockpickerPopover();
+            }, 150);
+
+            setTimeout(function () {
+                positionClockpickerPopover();
+            }, 300);
+        }
+    );
+
+
+    /*
+     * Ketika input mendapatkan focus.
+     */
+    $(document).on(
+        'focus',
+        '.clockpicker .input',
+        function () {
+
+            $activeClockGroup = $(this).closest('.input-group');
+
+            setTimeout(function () {
+                positionClockpickerPopover();
+            }, 50);
+        }
+    );
+
+
+    /*
+     * Kalau window di-resize,
+     * posisi popup dihitung ulang.
+     */
+    $(window).on('resize', function () {
+        positionClockpickerPopover();
+    });
+
+
+    /* =========================================================
+     * POLI OTOMATIS BERDASARKAN DOKTER
+     * ========================================================= */
+
+    var doctorPolyclinics = <?= json_encode(
+        $doctorPolyclinics ?? [],
+        JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT
+    ) ?>;
 
     var doctorSelect = document.getElementById('ds-doctor-id');
     var poliInput = document.getElementById('ds-poli-display');
 
-    if (!doctorSelect || !poliInput) {
-        return;
+
+    if (doctorSelect && poliInput) {
+
+        function updatePoli() {
+
+            var selectedId = doctorSelect.value;
+            var poli = doctorPolyclinics[selectedId];
+
+            poliInput.value = poli ? poli : '';
+        }
+
+
+        $(doctorSelect).on('change', updatePoli);
+
+        updatePoli();
     }
 
-    function updatePoli() {
-        var selectedId = doctorSelect.value;
-        var poli = doctorPolyclinics[selectedId];
-        poliInput.value = poli ? poli : '';
-    }
-
-    $(doctorSelect).on('change', updatePoli);
-    updatePoli();
-})();
+});
 </script>

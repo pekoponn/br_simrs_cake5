@@ -49,18 +49,33 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
         <div class="row">
             <div class="col-md-4">
                 <div class="form-group">
-                    <label>Kode Pasien</label>
+                    <label>Rekam Medis</label>
                     <?= $this->Form->control('code', [
                         'label'    => false,
                         'class'    => 'form-control',
+                        'id'       => 'patient-code',
                         'value'    => $previewCode ?? ($patient->code ?? ''),
                         'readonly' => true,
+                        'placeholder' => 'Terisi otomatis setelah Tanggal Lahir diisi',
                     ]) ?>
-                    <small class="text-muted">Kode pasien otomatis, tidak perlu diisi manual.</small>
+                    <small class="text-muted">Nomor Rekam Medis otomatis dari Tanggal Lahir + Tanggal Dibuat (format YYMMDD+YYMMDD).</small>
                 </div>
             </div>
 
-            <div class="col-md-8">
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label>Gelar</label>
+                    <?= $this->Form->control('title', [
+                        'type'    => 'select',
+                        'label'   => false,
+                        'options' => ['Tn' => 'Tn', 'Ny' => 'Ny', 'Nn' => 'Nn', 'An' => 'An', 'By' => 'By'],
+                        'empty'   => '-- Pilih --',
+                        'class'   => 'form-control select2Form',
+                    ]) ?>
+                </div>
+            </div>
+
+            <div class="col-md-6">
                 <div class="form-group">
                     <label>Nama Lengkap <span class="text-danger">*</span></label>
                     <?= $this->Form->control('full_name', [
@@ -86,6 +101,18 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                         ],
                         'empty'   => '-- Pilih Jenis --',
                         'class'   => 'form-control select2Form',
+                    ]) ?>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>No. Kartu (BPJS/Asuransi)</label>
+                    <?= $this->Form->control('insurance_card_no', [
+                        'label'       => false,
+                        'class'       => 'form-control',
+                        'placeholder' => 'Boleh dikosongkan',
+                        'required'    => false,
                     ]) ?>
                 </div>
             </div>
@@ -181,13 +208,12 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                         'type'    => 'select',
                         'label'   => false,
                         'options' => [
-                            'Islam'     => 'Islam',
-                            'Kristen'   => 'Kristen',
-                            'Katolik'   => 'Katolik',
-                            'Hindu'     => 'Hindu',
-                            'Buddha'    => 'Buddha',
-                            'Konghucu'  => 'Konghucu',
-                            'Lainnya'   => 'Lainnya',
+                            'ISLAM'     => 'Islam',
+                            'KRISTEN'   => 'Kristen',
+                            'KATOLIK'   => 'Katolik',
+                            'HINDU'     => 'Hindu',
+                            'BUDDHA'    => 'Buddha',
+                            'KONGHUCU'  => 'Konghucu',
                         ],
                         'empty' => '-- Pilih --',
                         'class' => 'form-control select2Form',
@@ -202,14 +228,17 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                         'type'    => 'select',
                         'label'   => false,
                         'options' => [
-                            'SD'        => 'SD',
-                            'SMP'       => 'SMP',
-                            'SMA/SMK'   => 'SMA/SMK',
-                            'D3'        => 'D3',
-                            'S1'        => 'S1',
-                            'S2'        => 'S2',
-                            'S3'        => 'S3',
-                            'Lainnya'   => 'Lainnya',
+                            'TIDAK SEKOLAH' => 'Tidak Sekolah',
+                            'SD'            => 'SD',
+                            'SMP'           => 'SMP',
+                            'SMA / SMK'     => 'SMA / SMK',
+                            'D1'            => 'D1',
+                            'D2'            => 'D2',
+                            'D3'            => 'D3',
+                            'D4'            => 'D4',
+                            'S1'            => 'S1',
+                            'S2'            => 'S2',
+                            'S3'            => 'S3',
                         ],
                         'empty' => '-- Pilih --',
                         'class' => 'form-control select2Form',
@@ -224,10 +253,10 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
                         'type'    => 'select',
                         'label'   => false,
                         'options' => [
-                            'Belum Menikah' => 'Belum Menikah',
-                            'Menikah'       => 'Menikah',
-                            'Cerai Hidup'   => 'Cerai Hidup',
-                            'Cerai Mati'    => 'Cerai Mati',
+                            'BELUM MENIKAH' => 'Belum Menikah',
+                            'MENIKAH'       => 'Menikah',
+                            'CERAI HIDUP'   => 'Cerai Hidup',
+                            'CERAI MATI'    => 'Cerai Mati',
                         ],
                         'empty' => '-- Pilih --',
                         'class' => 'form-control select2Form',
@@ -656,5 +685,33 @@ $(function() {
         $('#hidden-subdistrict').val(idKel || '');
         $('#hidden-subdistrict-name').val(idKel ? selectedText : '');
     });
+
+    function updateRmPreview() {
+        var birth = $('#birth_date').val();
+        if (!birth) {
+            $('#patient-code').val('');
+            return;
+        }
+        var parts = birth.split('-'); // format input date: YYYY-MM-DD
+        if (parts.length !== 3) {
+            $('#patient-code').val('');
+            return;
+        }
+
+        var birthYear2 = parts[0].slice(-2);
+        var birthMonth = parts[1];
+        var birthDay = parts[2];
+        var birthPart = birthYear2 + birthMonth + birthDay;
+        
+        var today = new Date();
+        var createdYear2 = String(today.getFullYear()).slice(-2);
+        var createdMonth = String(today.getMonth() + 1).padStart(2, '0');
+        var createdDay = String(today.getDate()).padStart(2, '0');
+        var createdPart = createdYear2 + createdMonth + createdDay;
+        $('#patient-code').val(birthPart + createdPart);
+    }
+
+    $('#birth_date').on('change', updateRmPreview);
+    updateRmPreview();
 });
 </script>

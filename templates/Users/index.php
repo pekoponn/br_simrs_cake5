@@ -59,6 +59,7 @@
                                 $btnAction = $this->Krs->btn('access', $linkPreview);
                                 $btnAction .= $this->Krs->btn('edit', $linkEdit);
                                 $btnAction .= $this->Krs->btn('resetPassword', $linkResetPassword, $user->name);
+                                $btnAction .= $this->Html->link('<i class="fa fa-user-times"></i>', ['action' => 'resetFace', $user->id], ['class' => 'btn btn-pink btn-sm m-r-5 p-l-15 p-r-15 btn-reset-face', 'escape' => false, 'data-name' => $user->name, 'data-url' => $this->Url->build(['action' => 'resetFace', $user->id]), 'title' => 'Reset Wajah','data-original-title' => 'Reset Wajah']);
                                 ?>
                             <tr>
                                 <td><?= h($user->code) ?></td>

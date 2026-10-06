@@ -228,11 +228,11 @@ class KrsHelper extends Helper
 		return $result;
 	}
 
-	public function devision()
-	{
-		$view = array('KEU' => 'Accounting', 'WWH' => 'Gudang', 'HSE' => 'HSE', 'MKT' => 'Marketing', 'TRS' => 'Transport', 'GA' => 'HRD & GA', 'IT' => 'IT', 'FNC' => 'Finance');
-		return $view;
-	}
+	// public function devision()
+	// {
+	// 	$view = array('KEU' => 'Accounting', 'WWH' => 'Gudang', 'HSE' => 'HSE', 'MKT' => 'Marketing', 'TRS' => 'Transport', 'GA' => 'HRD & GA', 'IT' => 'IT', 'FNC' => 'Finance');
+	// 	return $view;
+	// }
 
 	public function position($data = null)
 	{
@@ -1126,35 +1126,46 @@ class KrsHelper extends Helper
 		return $result;
 	}
 
-	public function polyclinics()
+	public function polyclinics($value = null)
 	{
-		return [
+		$view = [
 			'Poli Umum' => 'Poli Umum',
-			'Poli Gigi' => 'Poli Gigi',
-			'Poli Anak' => 'Poli Anak',
 			'Poli Kandungan' => 'Poli Kandungan',
-			'Poli Penyakit Dalam' => 'Poli Penyakit Dalam',
-			'Poli Mata' => 'Poli Mata',
-			'Poli THT' => 'Poli THT',
-			'Poli Bedah' => 'Poli Bedah',
+			'Poli Anak' => 'Poli Anak',
+			'Poli Penyakit Dalam' => 'Poli Penyakit Dalam (Internis)',
+			'Poli Bedah Umum' => 'Poli Bedah Umum',
+			'Poli Rehab Medik' => 'Poli Rehab Medik',
 			'Poli Saraf' => 'Poli Saraf',
-			'Poli Kulit' => 'Poli Kulit',
-			'Poli Jantung' => 'Poli Jantung',
+			'Poli THT' => 'Poli THT',
+			'Poli Urologi' => 'Poli Urologi',
+			'Poli Paru' => 'Poli Paru',
+			'Poli Orthopedi' => 'Poli Orthopedi',
+			'Poli Gigi Konservasi' => 'Poli Gigi Konservasi / Endodonsi',
+			'Poli Gigi Bedah Mulut' => 'Poli Gigi & Bedah Mulut',
+			'Poli Jantung' => 'Poli Jantung & Pembuluh Darah',
+			'Poli Jiwa' => 'Poli Jiwa',
+			'Poli Kulit Kelamin' => 'Poli Kulit & Kelamin',
+			'Poli Mata' => 'Poli Mata',
+			'PPDP' => 'PPDP',
+			'Executive' => 'Executive',
+			'Bidan/KIA' => 'Bidan/KIA',
 		];
+		$result = (empty($value)) ? $view : ($view[$value] ?? $value);
+		return $result;
 	}
 
-	public function religions()
-	{
-		return [
-			'Islam' => 'Islam',
-			'Kristen' => 'Kristen',
-			'Katolik' => 'Katolik',
-			'Hindu' => 'Hindu',
-			'Buddha' => 'Buddha',
-			'Konghucu' => 'Konghucu',
-			'Lainnya' => 'Lainnya',
-		];
-	}
+	// public function religions()
+	// {
+	// 	return [
+	// 		'Islam' => 'Islam',
+	// 		'Kristen' => 'Kristen',
+	// 		'Katolik' => 'Katolik',
+	// 		'Hindu' => 'Hindu',
+	// 		'Buddha' => 'Buddha',
+	// 		'Konghucu' => 'Konghucu',
+	// 		'Lainnya' => 'Lainnya',
+	// 	];
+	// }
 
 	public function classes()
 	{
@@ -1448,6 +1459,275 @@ class KrsHelper extends Helper
 		
 		$result = (empty($data)) ? $view : $view[$data];
 		
+		return $result;
+	}
+	public function referralTypes($value = null)
+	{
+		$data = [
+			'rujukan_fktp' => 'Rujukan FKTP',
+			'rujukan_internal' => 'Rujukan Internal',
+			'kontrol' => 'Kontrol',
+			'rujukan_antar_rs' => 'Rujukan Antar RS',
+		];
+
+		return $value !== null ? ($data[$value] ?? $value) : $data;
+	}
+
+	/**
+	 * Pilihan "Melalui" (kanal masuknya pra registrasi/antrian) pada modul
+	 * Pra Registrasi / Antrian Poliklinik. Dipakai lewat $this->Krs->referralChannels()
+	 * untuk mengisi opsi dropdown.
+	 */
+	public function referralChannels($value = null)
+	{
+		$data = [
+			'telepon' => 'Telepon',
+			'sms' => 'SMS',
+			'website' => 'Website',
+			'poli_spesialis' => 'Poli Spesialis',
+			'wa' => 'WA',
+		];
+
+		return $value !== null ? ($data[$value] ?? $value) : $data;
+	}
+	public function tenagaMedisKategori($value = null)
+	{
+		$data = [
+			'PERAWAT/SUSTER'   => 'Perawat/Suster',
+			'BIDAN'            => 'Bidan',
+			'ANALIS LABORATORIUM' => 'Analis Laboratorium',
+			'PENUNJANG MEDIS'  => 'Penunjang Medis',
+			'RADIOGRAFER'      => 'Radiografer',
+			'FISIOTERAPIS'     => 'Fisioterapis',
+			'AHLI GIZI'        => 'Ahli Gizi',
+			'APOTEKER'         => 'Apoteker',
+			'TENAGA TEKNIS KEFARMASIAN' => 'Tenaga Teknis Kefarmasian',
+			'UMUM'             => 'Umum',
+		];
+
+		return $value !== null ? ($data[$value] ?? $value) : $data;
+	}
+
+	public function tenagaMedisKodePrefix($value = null)
+	{
+		$data = [
+			'PERAWAT/SUSTER'   => 'PWT',
+			'BIDAN'            => 'BDN',
+			'ANALIS LABORATORIUM' => 'ANL',
+			'PENUNJANG MEDIS'  => 'PNJ',
+			'RADIOGRAFER'      => 'RAD',
+			'FISIOTERAPIS'     => 'FIS',
+			'AHLI GIZI'        => 'GZI',
+			'APOTEKER'         => 'APT',
+			'TENAGA TEKNIS KEFARMASIAN' => 'TTK',
+			'UMUM'             => 'UMM',
+		];
+
+		return $value !== null ? ($data[$value] ?? 'TMD') : $data;
+	}
+
+	protected $hariIndo = [
+		'Sunday'    => 'Minggu',
+		'Monday'    => 'Senin',
+		'Tuesday'   => 'Selasa',
+		'Wednesday' => 'Rabu',
+		'Thursday'  => 'Kamis',
+		'Friday'    => 'Jumat',
+		'Saturday'  => 'Sabtu',
+	];
+
+	protected $bulanIndoFull = [
+		'January'   => 'Januari',
+		'February'  => 'Februari',
+		'March'     => 'Maret',
+		'April'     => 'April',
+		'May'       => 'Mei',
+		'June'      => 'Juni',
+		'July'      => 'Juli',
+		'August'    => 'Agustus',
+		'September' => 'September',
+		'October'   => 'Oktober',
+		'November'  => 'November',
+		'December'  => 'Desember',
+	];
+
+	public function dayNameIndo($timestampOrString)
+	{
+		$ts = is_int($timestampOrString) ? $timestampOrString : strtotime((string)$timestampOrString);
+		return $this->hariIndo[date('l', $ts)] ?? date('l', $ts);
+	}
+
+	public function monthNameIndo($timestampOrString)
+	{
+		$ts = is_int($timestampOrString) ? $timestampOrString : strtotime((string)$timestampOrString);
+		return $this->bulanIndoFull[date('F', $ts)] ?? date('F', $ts);
+	}
+
+	public function tanggalIndoLengkap($timestampOrString, $withDay = true)
+	{
+		$ts = is_int($timestampOrString) ? $timestampOrString : strtotime((string)$timestampOrString);
+		$hari  = $this->dayNameIndo($ts);
+		$bulan = $this->monthNameIndo($ts);
+		$tgl   = date('d', $ts);
+		$thn   = date('Y', $ts);
+
+		return $withDay
+			? "{$hari}, {$tgl} {$bulan} {$thn}"
+			: "{$tgl} {$bulan} {$thn}";
+	}
+
+	public function zona ($data = null)
+    {
+        $view = array('WIB' => 'WIB', 'WITA' => 'WITA', 'WIT' => 'WIT');
+        $result = (empty($data)) ? $view : $view[$data];
+        return $result;
+    }
+	public function longlat($data=null)
+	{
+		$view = array('-7.311801688608039, 112.7229403294435' => 'RS Bhakti Rahayu Surabaya', '-7.3681686992348405, 112.69680335232351' => 'PT Aksata Nusantara Infosysjaya');
+		$result = (empty($data)) ? $view : $view[$data];
+		return $result;
+	}
+
+	public function religions($data = null)
+    {
+        $view = array("Islam" => "Islam", "Kristen" => "Kristen", "Katolik" => "Katolik", "Hindu" => "Hindu", "Buddha" => "Buddha", "Khonghucu" => "Khonghucu");
+        $result = (empty($data)) ? $view : $view[$data];
+        return $result;
+    }
+	public function family($value = null)
+    {
+        $data = array('Suami' => 'Suami', 'Istri' => 'Istri', 'Anak 1' => 'Anak 1', 'Anak 2' => 'Anak 2', 'Anak 3' => 'Anak 3', 'Anak 4' => 'Anak 4', 'Anak 5' => 'Anak 5', 'Anak 6' => 'Anak 6');
+        $result = ($value) ? $data[$value] : $data;
+        return $result;
+    }
+
+    public function statusTanggungan($data = null)
+    {
+        $view = array('TK/0' => 'Tidak Kawin', 'K/0' => 'Kawin Tidak Punya Anak', 'K/1' => 'Kawin Anak 1', 'K/2' => 'Kawin Anak 2', 'K/3' => 'Kawin Anak 3', 'K/4' => 'Kawin Anak 4', 'K/5' => 'Kawin Anak 5', 'K/6' => 'Kawin Anak 6');
+        $result = (empty($data)) ? $view : $view[$data];
+        return $result;
+    }
+
+	public function employeeStatus($data = null)
+    {
+        $view = array("1" => "Kontrak 1 (3 bulan)", "2" => "Kontrak 1 (6 bulan)", "3" => "Kontrak 1 (12 bulan)", "4" => "Kontrak 2 (3 bulan)", "5" => "Kontrak 2 (6 bulan)", "6" => "Kontrak 2 (12 bulan)", "7" => "Kontrak 3 (3 bulan)", "8" => "Kontrak 3 (6 bulan)", "9" => "Kontrak 3 (12 bulan)", "tetap" => "Tetap", "Non-Aktif" => "Non-Aktif", "Resign" => "Resign", "PHK" => "PHK", "Pensiun" => "Pensiun");
+        //$view = array("tetap" => "Tetap", "1-3" => "Kontrak Ke-1 ( 3 Bulan)", "1-6" => "Kontrak Ke-1 ( 6 Bulan)", "1-12" => "Kontrak Ke-1 ( 12 Bulan)", "2-3" => "Kontrak Ke-2 ( 3 Bulan)", "2-6" => "Kontrak Ke-2 ( 6 Bulan)", "2-12" => "Kontrak Ke-2 ( 12 Bulan)", "3-3" => "Kontrak Ke-3 ( 3 Bulan)", "3-6" => "Kontrak Ke-3 ( 6 Bulan)", "3-12" => "Kontrak Ke-3 ( 12 Bulan)");
+        $result = (empty($data)) ? $view : $view[$data];
+        return $result;
+    }
+
+	public function subDivision($data = null)
+	{
+		$view = [
+			'PAJAK' => [
+				'PAJAK^Pajak' => 'PAJAK',
+			],
+			'SEKPEM GROUP NUSANTARA'=> [
+				'SEKPEM GROUP NUSANTARA^ADMIN' => 'ADMIN',
+				'SEKPEM GROUP NUSANTARA^OPERASIONAL' => 'OPERASIONAL'
+			], 
+			'SEKPEM GROUP WILAYAH TIMUR (SG-Tim)'=> [
+				'SEKPEM GROUP WILAYAH TIMUR (SG-Tim)^ADMIN' => 'ADMIN',
+				'SEKPEM GROUP WILAYAH TIMUR (SG-Tim)^OPERASIONAL' => 'OPERASIONAL'
+			],
+			'SEKPEM GROUP WILAYAH (SG-Teng)'=> [
+				'SEKPEM GROUP WILAYAH (SG-Teng)^ADMIN' => 'ADMIN',
+				'SEKPEM GROUP WILAYAH (SG-Teng)^OPERASIONAL' => 'OPERASIONAL'
+			],
+			'SEKPEM GROUP WILAYAH BARAT (SG-B)'=> [
+				'SEKPEM GROUP WILAYAH BARAT (SG-B)^ADMIN' => 'ADMIN',
+				'SEKPEM GROUP WILAYAH BARAT (SG-B)^OPERASIONAL' => 'OPERASIONAL'
+			],
+			'SPI GROUP NUSANTARA'=> [
+				'SPI GROUP NUSANTARA^SPI GROUP NUSANTARA' => 'SPI GROUP NUSANTARA',
+			],
+			'SPI GROUP WILAYAH TIMUR (SPI G-Tim)'=> [
+				'SPI GROUP WILAYAH TIMUR (SPI G-Tim)^SPI GROUP WILAYAH TIMUR (SPI G-Tim)' => 'SPI GROUP WILAYAH TIMUR (SPI G-Tim)',
+			],
+			'SPI GROUP WILAYAH TENGAH (SPI G-Teng)'=> [
+				'SPI GROUP WILAYAH TENGAH (SPI G-Teng)^SPI GROUP WILAYAH TENGAH (SPI G-Teng)' => 'SPI GROUP WILAYAH TENGAH (SPI G-Teng)',
+			],
+			'SPI GROUP WILAYAH BARAT (SPI G-B)'=> [
+				'SPI GROUP WILAYAH BARAT (SPI G-B)^SPI GROUP WILAYAH BARAT (SPI G-B)' => 'SPI GROUP WILAYAH BARAT (SPI G-B)',
+			],
+			'LIMBAH PADAT'=> [
+				'LIMBAH PADAT^KADIV SAMPAH SPESIFIK' => 'KADIV SAMPAH SPESIFIK',
+				'LIMBAH PADAT^KADIV SAMPAH DOMESTIK / RUMAH TANGGA' => 'KADIV SAMPAH DOMESTIK / RUMAH TANGGA',
+			],'BIDANG CAIR, UDARA & PENUNJANG'=> [
+				'BIDANG CAIR, UDARA & PENUNJANG^KADIV CAIR & UDARA ' => 'KADIV CAIR & UDARA',
+				'BIDANG CAIR, UDARA & PENUNJANG^KADIV SAMPAH UDARA' => 'KADIV SAMPAH UDARA',
+				'BIDANG CAIR, UDARA & PENUNJANG^KADIV PENUNJANG' => 'KADIV PENUNJANG',
+			], 
+			'SDM & UMUM'=> [
+				'SDM & UMUM^PERSONALIA' => 'PERSONALIA',
+				'SDM & UMUM^HUMAN RESOURCE (HR)' => 'HUMAN RESOURCE (HR)',
+				'SDM & UMUM^UMUM' => 'UMUM'
+			],
+			'KEUANGAN'=> [
+				'KEUANGAN^KEUANGAN' => 'KEUANGAN',
+				'KEUANGAN^LOGISTIK' => 'LOGISTIK',
+				'KEUANGAN^ACCOUNTING & HUTANG PIUTANG' => 'ACCOUNTING & HUTANG PIUTANG',
+			], 
+			'TEKNIK'=> [
+				'TEKNIK^TEKNIK' => 'TEKNIK',
+			],
+			'BUSSINESS DEVELOPMENT'=> [
+				'BUSSINESS DEVELOPMENT^WILAYAH TIMUR (Marketing)' => 'WILAYAH TIMUR (Marketing)',
+				'BUSSINESS DEVELOPMENT^WILAYAH TIMUR (Customer Care)' => 'WILAYAH TIMUR (Customer Care)',
+				'BUSSINESS DEVELOPMENT^WILAYAH TENGAH (Marketing)' => 'WILAYAH TENGAH (Marketing)',
+				'BUSSINESS DEVELOPMENT^WILAYAH TENGAH (Customer Care)' => 'WILAYAH TENGAH (Customer Care)',
+				'BUSSINESS DEVELOPMENT^WILAYAH BARAT (Marketing)' => 'WILAYAH BARAT (Marketing)',
+				'BUSSINESS DEVELOPMENT^WILAYAH BARAT (Customer Care)' => 'WILAYAH BARAT (Customer Care)',
+			],
+			'KONSULTAN LEGAL'=> [
+				'KONSULTAN LEGAL^KONSULTAN LEGAL' => 'KONSULTAN LEGAL',
+			]
+		];
+
+		if (empty($data)) {
+			return $view;
+		}
+
+		foreach ($view as $key => $val) {
+			if (is_array($val)) {
+				if (isset($val[$data])) {
+					return $val[$data];
+				}
+			} elseif ($key === $data) {
+				return $val;
+			}
+		}
+
+		return null;
+	}
+
+	public function devision($data=null){
+		$view = array('PAJAK'=>'PAJAK', 'SEKPEM GROUP NUSANTARA' => 'SEKPEM GROUP NUSANTARA', 'SEKPEM GROUP WILAYAH TIMUR (SG-Tim)' => 'SEKPEM GROUP WILAYAH TIMUR (SG-Tim)', 'SEKPEM GROUP WILAYAH (SG-Teng)' => 'SEKPEM GROUP WILAYAH (SG-Teng)', 'SEKPEM GROUP WILAYAH BARAT (SG-B)' => 'SEKPEM GROUP WILAYAH BARAT (SG-B)', 'SPI GROUP NUSANTARA' => 'SPI GROUP NUSANTARA', 'SPI GROUP WILAYAH TIMUR (SPI G-Tim)'=>'SPI GROUP WILAYAH TIMUR (SPI G-Tim)', 'SPI GROUP WILAYAH TENGAH (SPI G-Teng)'=>'SPI GROUP WILAYAH TENGAH (SPI G-Teng)','SPI GROUP WILAYAH BARAT (SPI G-B)'=>'SPI GROUP WILAYAH BARAT (SPI G-B)', 'LIMBAH PADAT'=> 'LIMBAH PADAT', 'BIDANG CAIR, UDARA & PENUNJANG' => 'BIDANG CAIR, UDARA & PENUNJANG', 'SDM & UMUM' => 'SDM & UMUM', 'KEUANGAN' => 'KEUANGAN', 'TEKNIK' => 'TEKNIK', 'BUSSINESS DEVELOPMENT' => 'BUSSINESS DEVELOPMENT', 'KONSULTAN LEGAL' => 'KONSULTAN LEGAL', "Triata" => "Triata", "Artama Bali" => "Artama Bali", "Artama Ambon" => "Artama Ambon", "Bhakti Bumi Berseri" => "Bhakti Bumi Berseri", "RSU Bhakti Rahayu (Tabanan)" => "RSU Bhakti Rahayu (Tabanan)", "RSU Bhakti Rahayu (Denpasar)" => "RSU Bhakti Rahayu (Denpasar)", "Wilwatikta" => "Wilwatikta", "Pratama Jaya" => "Pratama Jaya", "BWC" => "BWC", "CTBL" => "CTBL", "Damar" => "PT. Damar", "CV Damar"=>"CV Damar", "KARFA" => "KARFA", "Koperasi" => "Koperasi", "MBDU" => "MBDU Bali", "Citra Gama Sakti" => "Citra Gama Sakti", "Klin" => "Klin", "Satria Buana Cemerlang Transportasi" => "Satria Buana Cemerlang Transportasi", "Satria Buana Cemerlang Dokling" => "Satria Buana Cemerlang Dokling & Ipal", "Satria Buana Cemerlang Makassar" => "Satria Buana Cemerlang Makassar", "Satria Buana Cemerlang Ambon" => "Satria Buana Cemerlang Ambon","Unilab" => "Unilab", "ANI" =>"Aksata Nusantara Infosysjaya", "Manunggal Bumi Lestari" => "Manunggal Bumi Lestari", "Satya Pratama Jaya" => "Satya Pratama Jaya", "Wilwa Developer" => "Wilwa Developer", "MBDU Surabaya" => "MBDU Surabaya", "PT. Satya Pratama Jaya Surabaya" => "PT. Satya Pratama Jaya Surabaya", "CV. Gotong Royong Jaya" => "CV. Gotong Royong Jaya", "CV. Angin Selatan" => "CV. Angin Selatan", "PT Unitlab Adi Cakra" => "PT Unitlab Adi Cakra", "Investasi" => "Investasi", "CV. Bakti Bumi Berseri" => "CV. Bakti Bumi Berseri");
+		return (empty($data)) ? $view : $view[$data];
+		// ,"Satria Buana Cemerlang Surabaya" => "Satria Buana Cemerlang Surabaya"
+	}
+	
+
+	public function level($data = null)
+    {
+        $view = array("Basic" => "Basic", "Intermediate" => "Intermediate", "Advance" => "Advance", "Pro" => "Pro");
+        $result = (empty($data)) ? $view : $view[$data];
+        return $result;
+    }
+
+	public function sized($data = null)
+    {
+        $view = array("XS" => "XS", "S" => "S", "M" => "M", "L" => "L", "XL" => "XL", "XXL" => "XXL");
+        $result = (empty($data)) ? $view : $view[$data];
+        return $result;
+    }
+
+	public function descLeaves($data=null)
+	{
+		$view = array('Pernikahan^3'=>'Pernikahan (3 hari)', 'Baptis Khitan^2'=>'Baptis/Khitan anak (2 hari)', 'Meninggal^2'=>'Orang tua/anak/istri/suami/mertua meninggal (2 hari)', 'Anggota lain meninggal^1'=>'Anggota keluarga lainnya yang serumah meninggal (1 hari)', 'Pernikahan Anak^2'=>'Pernikahan anak (2 hari)', 'Istri Melahirkan Keguguran^2'=>'Istri melahirkan/keguguran (2 hari)', 'Jaga Sakit^3'=>'Menjaga Orang tua/anak/istri/suami/mertua (3 hari)', 'Lain Lain^1'=>'Lain-lain');
+		
+		$result = (empty($data)) ? $view : $view[$data];
 		return $result;
 	}
 

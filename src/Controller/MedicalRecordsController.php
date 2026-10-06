@@ -109,7 +109,6 @@ class MedicalRecordsController extends AppController
                         ->contain([
                             'MedicalRecordInpatients',
                             'MedicalRecordOutpatientIgds',
-                            'MedicalRecordDiagnoses',
                         ])
                         ->where([
                             'MedicalRecords.registration_id' => (int)$registration->id,

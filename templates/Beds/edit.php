@@ -214,7 +214,7 @@ if (!empty($bed->room) && !empty($bed->room->room_name)) {
                         <div class="input-group">
                             <span class="input-group-addon"><i class="fa fa-search"></i></span>
                             <input type="text" id="edit-patient-search" class="form-control"
-                                   placeholder="Ketik nama / kode pasien..."
+                                   placeholder="Ketik nama / rekam medis..."
                                    autocomplete="off"
                                    value="<?= (!empty($currentPatientId) ? '' : h($currentPatientName)) ?>">
                         </div>

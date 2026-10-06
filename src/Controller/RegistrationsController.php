@@ -39,7 +39,7 @@ $conditions['DATE(Registrations.registration_date) <='] = $filterDateTo;
         ],
         'conditions' => $conditions,
         'order' => [
-            'Registrations.id' => 'DESC'
+            'Registrations.id' => 'ASC'
         ],
         'limit' => 25,
     ];
@@ -120,6 +120,257 @@ $conditions['DATE(Registrations.registration_date) <='] = $filterDateTo;
     $queuePatientData = [];
     $queueDoctorId = null;
     $queueDoctorScheduleId = null;
+
+    $fromPlannedInpatient = false;
+    $sourceRegistrationId = $this->request->getQuery('source_registration_id');
+
+    if ($this->request->getQuery('from_planned_inpatient') && !empty($sourceRegistrationId)) {
+        $fromPlannedInpatient = true;
+
+        $this->loadModel('Patients');
+        $sourceRegistration = $this->Registrations->find()
+            ->where(['Registrations.id' => (int)$sourceRegistrationId])
+            ->first();
+
+        if ($sourceRegistration) {
+            $polyclinicName = $sourceRegistration->polyclinic_name ?? $polyclinicName;
+            $queueDoctorId = $sourceRegistration->doctor_id ?? null;
+
+            if (!empty($sourceRegistration->patient_id)) {
+                $queuePatientId = (int)$sourceRegistration->patient_id;
+
+                $patientSchema = $this->Patients->getSchema();
+                $queuePatientFields = [
+                    'id', 'code', 'title', 'full_name', 'identity_type', 'identity_number',
+                    'gender', 'blood_type', 'allergy', 'birth_date', 'address', 'father_name', 'mother_name',
+                    'phone_number', 'nationality', 'citizenship', 'occupation', 'religion',
+                    'education', 'ethnic_group', 'marital_status',
+                    'province', 'city', 'district', 'subdistrict',
+                    'id_prov', 'id_kab', 'id_kec', 'id_kel',
+                ];
+                $queuePatientFields = array_values(array_filter(
+                    $queuePatientFields,
+                    fn ($f) => $patientSchema->hasColumn($f)
+                ));
+
+                $sourcePatient = $this->Patients->find()
+                    ->select(array_values(array_unique($queuePatientFields)))
+                    ->where(['Patients.id' => $queuePatientId])
+                    ->first();
+
+                if ($sourcePatient) {
+                    $queuePatientName = $sourcePatient->full_name ?? '';
+                    $queuePhoneNumber = $sourcePatient->phone_number ?? '';
+                    $queueIdentityNumber = $sourcePatient->identity_number ?? '';
+
+                    foreach ($queuePatientFields as $field) {
+                        $value = $sourcePatient->{$field} ?? '';
+                        $queuePatientData[$field] = is_object($value) && method_exists($value, 'format')
+                            ? $value->format('Y-m-d')
+                            : (string)$value;
+                    }
+                }
+            }
+        }
+    }
+
+    $fromPraRegistration = false;
+    $sourcePraRegistrationId = $this->request->getQuery('source_pra_registration_id');
+    $praApptDate = null;
+    $praApptTime = null;
+    $praReferralNo = null;
+    $praSkdpNo = null;
+    $praGuarantor = null;
+    $praInsuranceType = null;
+    $praReferralType = null;
+
+    if ($this->request->getQuery('from_pra_registration') && !empty($sourcePraRegistrationId)) {
+        $this->loadModel('PraRegistrations');
+
+        $sourcePraRegistration = $this->PraRegistrations->find()
+            ->where(['PraRegistrations.id' => (int)$sourcePraRegistrationId])
+            ->first();
+
+        if ($sourcePraRegistration) {
+            $fromPraRegistration = true;
+
+            $polyclinicName = $sourcePraRegistration->poly_name ?? $polyclinicName;
+            $queuePatientName = $sourcePraRegistration->patient_name ?? '';
+            $queuePhoneNumber = $sourcePraRegistration->phone_number ?? '';
+            $queueIdentityNumber = $sourcePraRegistration->nik ?? '';
+            $queueBpjsNumber = $sourcePraRegistration->card_number ?? '';
+
+            $praApptDate = !empty($sourcePraRegistration->appointment_date)
+                ? (is_object($sourcePraRegistration->appointment_date) ? $sourcePraRegistration->appointment_date->format('Y-m-d') : (string)$sourcePraRegistration->appointment_date)
+                : null;
+            $praApptTime = !empty($sourcePraRegistration->appointment_time)
+                ? (is_object($sourcePraRegistration->appointment_time) ? $sourcePraRegistration->appointment_time->format('H:i') : substr((string)$sourcePraRegistration->appointment_time, 0, 5))
+                : null;
+
+            if (!empty($sourcePraRegistration->doctor_id)) {
+                $queueDoctorId = (int)$sourcePraRegistration->doctor_id;
+            } elseif (!empty($sourcePraRegistration->doctor_name)) {
+                $this->loadModel('Doctors');
+
+                $praDoctorNameNormalized = strtolower(trim((string)$sourcePraRegistration->doctor_name));
+
+                $allDoctorsForMatch = $this->Doctors->find()
+                    ->select(['id', 'doctor_name'])
+                    ->enableHydration(false)
+                    ->all();
+
+                foreach ($allDoctorsForMatch as $candidateDoctor) {
+                    $candidateNameNormalized = strtolower(trim((string)($candidateDoctor['doctor_name'] ?? '')));
+                    if ($candidateNameNormalized === $praDoctorNameNormalized) {
+                        $queueDoctorId = (int)$candidateDoctor['id'];
+                        break;
+                    }
+                }
+            }
+
+            if (!empty($sourcePraRegistration->patient_id)) {
+                $queuePatientId = (int)$sourcePraRegistration->patient_id;
+
+                $this->loadModel('Patients');
+                $patientSchema = $this->Patients->getSchema();
+                $queuePatientFields = array_values(array_filter([
+                    'id', 'code', 'title', 'full_name', 'identity_type', 'identity_number',
+                    'gender', 'blood_type', 'allergy', 'birth_date', 'address', 'father_name', 'mother_name',
+                    'phone_number', 'nationality', 'citizenship', 'occupation', 'religion',
+                    'education', 'ethnic_group', 'marital_status',
+                    'province', 'city', 'district', 'subdistrict',
+                    'id_prov', 'id_kab', 'id_kec', 'id_kel',
+                ], fn ($f) => $patientSchema->hasColumn($f)));
+
+                $sourcePatient = $this->Patients->find()
+                    ->select(array_values(array_unique($queuePatientFields)))
+                    ->where(['Patients.id' => $queuePatientId])
+                    ->first();
+
+                if ($sourcePatient) {
+                    $queuePatientName = $sourcePatient->full_name ?? $queuePatientName;
+                    $queuePhoneNumber = $sourcePatient->phone_number ?? $queuePhoneNumber;
+                    $queueIdentityNumber = $sourcePatient->identity_number ?? $queueIdentityNumber;
+
+                    foreach ($queuePatientFields as $field) {
+                        $value = $sourcePatient->{$field} ?? '';
+                        $queuePatientData[$field] = is_object($value) && method_exists($value, 'format')
+                            ? $value->format('Y-m-d')
+                            : (string)$value;
+                    }
+                }
+            }
+
+            if (empty($queuePatientData)) {
+                $queuePatientData = array_filter([
+                    'full_name' => $sourcePraRegistration->patient_name ?? '',
+                    'identity_number' => $sourcePraRegistration->nik ?? '',
+                    'phone_number' => $sourcePraRegistration->phone_number ?? '',
+                    'address' => $sourcePraRegistration->address ?? '',
+                    'birth_date' => !empty($sourcePraRegistration->birth_date)
+                        ? (is_object($sourcePraRegistration->birth_date) ? $sourcePraRegistration->birth_date->format('Y-m-d') : (string)$sourcePraRegistration->birth_date)
+                        : '',
+                ], fn ($v) => $v !== '');
+            }
+
+            if (!empty($queueDoctorId)) {
+                $this->loadModel('DoctorSchedules');
+
+                $candidateSchedules = $this->DoctorSchedules->find()
+                    ->where([
+                        'DoctorSchedules.doctor_id' => $queueDoctorId,
+                        'DoctorSchedules.is_active' => 'Y',
+                    ])
+                    ->all();
+
+                $praDayName = '';
+                if (!empty($praApptDate)) {
+                    $praDayTimestamp = strtotime($praApptDate);
+                    if ($praDayTimestamp) {
+                        $praDayName = [
+                            'Monday'    => 'Senin',
+                            'Tuesday'   => 'Selasa',
+                            'Wednesday' => 'Rabu',
+                            'Thursday'  => 'Kamis',
+                            'Friday'    => 'Jumat',
+                            'Saturday'  => 'Sabtu',
+                            'Sunday'    => 'Minggu',
+                        ][date('l', $praDayTimestamp)] ?? '';
+                    }
+                }
+
+                $sameDaySchedules = [];
+                foreach ($candidateSchedules as $candidateSchedule) {
+                    $scheduleDay = trim((string)($candidateSchedule->day ?? ''));
+                    if ($praDayName === '' || strcasecmp($scheduleDay, $praDayName) === 0) {
+                        $sameDaySchedules[] = $candidateSchedule;
+                    }
+                }
+
+                $schedulesToCheck = !empty($sameDaySchedules) ? $sameDaySchedules : iterator_to_array($candidateSchedules);
+
+                if (!empty($praApptTime)) {
+                    // Tahap 1: cocokkan jam mulai persis sama.
+                    foreach ($schedulesToCheck as $candidateSchedule) {
+                        $candidateStartTime = !empty($candidateSchedule->start_time)
+                            ? (is_object($candidateSchedule->start_time) ? $candidateSchedule->start_time->format('H:i') : substr((string)$candidateSchedule->start_time, 0, 5))
+                            : '';
+
+                        if ($candidateStartTime === $praApptTime) {
+                            $queueDoctorScheduleId = (int)$candidateSchedule->id;
+                            break;
+                        }
+                    }
+                    if (empty($queueDoctorScheduleId)) {
+                        foreach ($schedulesToCheck as $candidateSchedule) {
+                            $candidateStartTime = !empty($candidateSchedule->start_time)
+                                ? (is_object($candidateSchedule->start_time) ? $candidateSchedule->start_time->format('H:i') : substr((string)$candidateSchedule->start_time, 0, 5))
+                                : '';
+                            $candidateEndTime = !empty($candidateSchedule->end_time)
+                                ? (is_object($candidateSchedule->end_time) ? $candidateSchedule->end_time->format('H:i') : substr((string)$candidateSchedule->end_time, 0, 5))
+                                : '';
+
+                            if ($candidateStartTime !== '' && $candidateEndTime !== '' && $praApptTime >= $candidateStartTime && $praApptTime < $candidateEndTime) {
+                                $queueDoctorScheduleId = (int)$candidateSchedule->id;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (empty($queueDoctorScheduleId) && count($schedulesToCheck) === 1) {
+                    $queueDoctorScheduleId = (int)$schedulesToCheck[0]->id;
+                }
+            }
+
+            $praReferralNo = $sourcePraRegistration->referral_number ?? null;
+            $praSkdpNo = $sourcePraRegistration->planned_action ?? null;
+            $praGuarantor = $sourcePraRegistration->guarantor ?? null;
+
+            if (!empty($praGuarantor)) {
+                $this->loadModel('MasterPenjamins');
+                $matchedPenjamin = $this->MasterPenjamins->find()
+                    ->where(['MasterPenjamins.code' => $praGuarantor])
+                    ->first();
+                $praInsuranceType = $matchedPenjamin->name ?? $praGuarantor;
+            }
+
+            if (!empty($sourcePraRegistration->referral_type)) {
+                $normalizedReferralType = strtolower(trim((string)$sourcePraRegistration->referral_type));
+
+                if (strpos($normalizedReferralType, 'fktp') !== false) {
+                    $praReferralType = 'RUJUKAN FKTP';
+                } elseif (strpos($normalizedReferralType, 'internal') !== false) {
+                    $praReferralType = 'RUJUKAN INTERNAL';
+                } elseif (strpos($normalizedReferralType, 'kontrol') !== false) {
+                    $praReferralType = 'KONTROL';
+                } elseif (strpos($normalizedReferralType, 'antar') !== false) {
+                    $praReferralType = 'RUJUKAN ANTAR RS';
+                } else {
+                    $praReferralType = strtoupper((string)$sourcePraRegistration->referral_type);
+                }
+            }
+        }
+    }
 
     if (empty($polyclinicName)) {
         $polyclinicName = $this->request->getQuery('poly_name');
@@ -278,7 +529,7 @@ $conditions['DATE(Registrations.registration_date) <='] = $filterDateTo;
         $fromQueue = true;
     }
 
-$registrationNo = $this->_generateRegistrationNo('rawat_jalan');
+$registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_inap' : 'rawat_jalan');
 
     if ($this->request->is('post')) {
         $data = $this->request->getData();
@@ -297,6 +548,10 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
 
         if (!empty($data['polyclinic_queue_id'])) {
             $data['service_type'] = 'rawat_jalan';
+        }
+
+        if ($this->request->getQuery('from_planned_inpatient')) {
+            $data['service_type'] = 'rawat_inap';
         }
 
         $data['registration_no'] = $this->_generateRegistrationNo($data['service_type']);
@@ -483,6 +738,15 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
                 }
             }
 
+            // No. Kartu asuransi/BPJS disimpan juga ke master pasien (bukan
+            // cuma di registrasi), supaya pasien tidak perlu isi ulang tiap
+            // kali daftar. Field ini top-level di form ("insurance_card_no"),
+            // bukan di bawah patient[], jadi diambil terpisah dari $data.
+            if ($patientSchema->hasColumn('insurance_card_no')) {
+                $cardNoInput = trim((string)($data['insurance_card_no'] ?? ''));
+                $patientData['insurance_card_no'] = $cardNoInput !== '' ? $cardNoInput : null;
+            }
+
             // Normalisasi field kosong ('' / hanya spasi) jadi null supaya tidak bentrok
             // dengan unique index di database.
             foreach ($patientData as $pField => $pValue) {
@@ -579,7 +843,6 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
 
         unset(
             $data['patient'],
-            // $data['patient_title'],
             $data['person_responsible'],
             $data['poly_name']
         );
@@ -636,13 +899,20 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
             $isNewPatient,
             $newPatientData,
             $patientInputForMerge,
-            $patientFields
+            $patientFields,
+            $fromPlannedInpatient,
+            $sourceRegistrationId,
+            $fromPraRegistration,
+            $sourcePraRegistrationId
         ) {
 
             if ($isNewPatient) {
-                $newPatientData['code'] = $this->Patients->generateCode();
+                $newPatientData['code'] = $this->Patients->generatePatientCode($newPatientData['birth_date'] ?? null);
                 $patient = $this->Patients->newEmptyEntity();
                 $patient = $this->Patients->patchEntity($patient, $newPatientData);
+                if (array_key_exists('title', $newPatientData)) {
+                    $patient->title = $newPatientData['title'];
+                }
 
                 try {
                     $patientSaved = $this->Patients->save($patient);
@@ -685,6 +955,18 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
                     $titleInput = trim((string)($data['patient_title'] ?? ''));
                     if ($titleInput !== '') {
                         $patient->title = $titleInput;
+                    }
+                }
+
+                // No. Kartu asuransi/BPJS: kalau diisi di form registrasi ini,
+                // update ke master pasien juga (bukan cuma sebagai isian
+                // sekali pakai di tabel registrations). Sengaja selalu
+                // overwrite ke nilai terbaru (bukan cuma kalau kosong),
+                // karena nomor kartu bisa berganti/diperbarui.
+                if ($patientSchema->hasColumn('insurance_card_no')) {
+                    $cardNoInput = trim((string)($data['insurance_card_no'] ?? ''));
+                    if ($cardNoInput !== '') {
+                        $patient->insurance_card_no = $cardNoInput;
                     }
                 }
 
@@ -810,16 +1092,40 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
                 );
             }
 
+            if ($fromPlannedInpatient && !empty($sourceRegistrationId)) {
+                $this->Registrations->updateAll(
+                    ['status' => 'diproses_rawat_inap'],
+                    ['id' => (int)$sourceRegistrationId]
+                );
+            }
+
+            if ($fromPraRegistration && !empty($sourcePraRegistrationId)) {
+                $this->loadModel('PraRegistrations');
+                $this->PraRegistrations->updateAll(
+                    [
+                        'registration_id' => (int)$registration->id,
+                        'registration_status' => 'sudah_diproses',
+                        'registered_at' => date('Y-m-d H:i:s'),
+                    ],
+                    ['id' => (int)$sourcePraRegistrationId]
+                );
+            }
+
             return true;
         });
 
-        if ($saved) {
+                if ($saved) {
             if (($registration->service_type ?? '') === 'rawat_jalan') {
                 try {
                     $this->_syncOutpatientVisitFromRegistration($registration);
                 } catch (\Throwable $e) {
-                    // Registrasi tetap berhasil. Kunjungan rawat jalan bisa diperbaiki belakangan.
                     $this->Flash->warning(__('Registrasi tersimpan, tetapi sinkron Instansi Rawat Jalan gagal: ' . $e->getMessage()));
+                }
+
+                try {
+                    $this->_syncOutpatientBillingFromRegistration($registration, $isNewPatient);
+                } catch (\Throwable $e) {
+                    $this->Flash->warning(__('Registrasi tersimpan, tetapi sinkron billing rawat jalan gagal: ' . $e->getMessage()));
                 }
             }
 
@@ -845,7 +1151,6 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
     // agar form tidak terlihat kosong dan error validasi bisa dibaca.
     if ($this->request->is('post') && !empty($data) && is_array($data)) {
         $safeDataForEntity = $data;
-        // unset($safeDataForEntity['patient'], $safeDataForEntity['patient_title'], $safeDataForEntity['person_responsible'], $safeDataForEntity['poly_name']);
         unset($safeDataForEntity['patient'], $safeDataForEntity['person_responsible'], $safeDataForEntity['poly_name']);
         $registrationColumnsForEntity = array_flip($this->Registrations->getSchema()->columns());
         $safeDataForEntity = array_intersect_key($safeDataForEntity, $registrationColumnsForEntity);
@@ -903,6 +1208,8 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
         'provinces',
         'registrationNo',
         'fromQueue',
+        'fromPlannedInpatient',
+        'fromPraRegistration',
         'queueId',
         'queueNumber',
         'queueCode',
@@ -918,7 +1225,14 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
         'queueDoctorScheduleId',
         'masterPenjamins',
         'masterTreatmentPackages',
-        'masterPatientReferrers'
+        'masterPatientReferrers',
+        'praApptDate',
+        'praApptTime',
+        'praReferralNo',
+        'praSkdpNo',
+        'praGuarantor',
+        'praInsuranceType',
+        'praReferralType'
     ));
 }
 
@@ -934,6 +1248,442 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
         }
 
         return empty($value);
+    }
+
+    /**
+     * Legacy duplicate kept temporarily for reference; the action implementation
+     * is the addTemp() method immediately above. It must not be public, otherwise
+     * PHP raises a fatal "Cannot redeclare ...::addTemp()" and every request gets
+     * HTTP 500 before authorization is even evaluated.
+     */
+    public function addTemp()
+    {
+        $registration = $this->Registrations->newEmptyEntity();
+
+        $fromQueue = false;
+        $queueId = $this->request->getQuery('queue_id');
+        $queueNumber = null;
+        $queueCode = null;
+        $polyclinicName = $this->request->getQuery('polyclinic_name');
+        $queueDoctorId = null;
+        $queueDoctorScheduleId = null;
+
+        $this->loadModel('PolyclinicQueues');
+
+        if (!empty($queueId)) {
+            $queue = $this->PolyclinicQueues->find()
+                ->where(['PolyclinicQueues.id' => (int)$queueId])
+                ->first();
+
+            if ($queue) {
+                $fromQueue = true;
+                $queueNumber = $queue->queue_number ?? ($queue->queue_no ?? '');
+                $queueCode = $queue->code;
+                $polyclinicName = $queue->poly_name;
+
+                if (!empty($polyclinicName)) {
+                    $this->loadModel('DoctorSchedules');
+                    $todayName = [
+                        'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu',
+                        'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu', 'Sunday' => 'Minggu',
+                    ][date('l')] ?? '';
+
+                    $todaySchedule = $this->DoctorSchedules->find()
+                        ->contain(['Doctors'])
+                        ->where([
+                            'DoctorSchedules.day' => $todayName,
+                            'DoctorSchedules.is_active' => 'Y',
+                            'Doctors.polyclinic_name' => $polyclinicName,
+                        ])
+                        ->first();
+
+                    if ($todaySchedule) {
+                        $queueDoctorId = $todaySchedule->doctor_id;
+                        $queueDoctorScheduleId = $todaySchedule->id;
+                    }
+                }
+            }
+        }
+
+        $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
+
+        if ($this->request->is('post')) {
+            $data = $this->request->getData();
+
+            $patientCode = trim((string)($data['patient_code'] ?? ''));
+            $patientName = trim((string)($data['patient_name'] ?? ''));
+            $manualQueueNo = trim((string)($data['queue_number'] ?? ''));
+
+            $error = null;
+            if ($patientCode === '' || $patientName === '') {
+                $error = 'No Rekam Medis dan Nama Pasien wajib diisi.';
+            } elseif (empty($data['polyclinic_name'])) {
+                $error = 'Poli / Unit wajib dipilih.';
+            } elseif ($manualQueueNo === '' || !ctype_digit($manualQueueNo)) {
+                $error = 'Nomor Antrian Poli wajib diisi dengan angka.';
+            }
+
+            $postQueue = null;
+            if (!$error && !empty($data['polyclinic_queue_id'])) {
+                $postQueue = $this->PolyclinicQueues->find()
+                    ->where(['PolyclinicQueues.id' => (int)$data['polyclinic_queue_id']])
+                    ->first();
+
+                if (!$postQueue) {
+                    $error = 'Data antrian tidak ditemukan.';
+                } else {
+                    $qSchema = $this->PolyclinicQueues->getSchema();
+                    if ($qSchema->hasColumn('is_active')) {
+                        $active = strtoupper(trim((string)($postQueue->is_active ?? '')));
+                        if (!in_array($active, ['Y', '1', 'TRUE', 'AKTIF'], true)) {
+                            $error = 'Antrian ini sudah diproses atau tidak aktif.';
+                        }
+                    }
+                }
+            }
+
+            if ($error) {
+                $this->Flash->error(__($error));
+            } else {
+                $this->loadModel('Patients');
+
+                $regData = [
+                    'registration_no'     => $this->_generateRegistrationNo('rawat_jalan'),
+                    'registration_date'   => !empty($data['registration_date'])
+                        ? date('Y-m-d', strtotime((string)$data['registration_date']))
+                        : date('Y-m-d'),
+                    'admission_time'      => $data['admission_time'] ?? date('H:i'),
+                    'service_type'        => 'rawat_jalan',
+                    'polyclinic_name'     => $data['polyclinic_name'],
+                    'queue_number'        => $manualQueueNo,
+                    'queue_no'            => $manualQueueNo,
+                    'polyclinic_queue_id' => !empty($data['polyclinic_queue_id']) ? (int)$data['polyclinic_queue_id'] : null,
+                    'doctor_id'           => !empty($data['doctor_id']) ? (int)$data['doctor_id'] : null,
+                    'doctor_schedule_id'  => !empty($data['doctor_schedule_id']) ? (int)$data['doctor_schedule_id'] : null,
+                    'payment_method'      => in_array(($data['payment_method'] ?? ''), ['PERORANGAN', 'ASURANSI'], true)
+                        ? $data['payment_method'] : null,
+                    'entry_process'       => 'Registrasi Sementara',
+                    'entry_method'        => 'Manual',
+                    'treatment_type'      => 'BIASA',
+                    'status'              => 'aktif',
+                    'is_create'           => 1,
+                    'is_update'           => 0,
+                    'is_delete'           => 0,
+                    'is_active'           => 'Y',
+                ];
+                $regData = array_intersect_key($regData, array_flip($this->Registrations->getSchema()->columns()));
+
+                $registration = $this->Registrations->patchEntity($registration, $regData);
+                foreach (['queue_no', 'queue_number', 'polyclinic_name', 'doctor_schedule_id', 'admission_time'] as $f) {
+                    if (array_key_exists($f, $regData)) {
+                        $registration->{$f} = $regData[$f];
+                    }
+                }
+
+                $patientErrors = [];
+
+                $saved = $this->Registrations->getConnection()->transactional(function () use (
+                    &$registration, $postQueue, $patientCode, $patientName, &$patientErrors
+                ) {
+                    $patient = $this->Patients->find()
+                        ->where(['Patients.code' => $patientCode])
+                        ->first();
+
+                    if (!$patient) {
+                        $patient = $this->Patients->newEmptyEntity();
+                        $patient = $this->Patients->patchEntity($patient, [
+                            'code' => $patientCode,
+                            'full_name' => $patientName,
+                        ]);
+                        $patient->code = $patientCode;
+
+                        if (!$this->Patients->save($patient)) {
+                            $patientErrors = $patient->getErrors();
+                            return false;
+                        }
+                    }
+
+                    $registration->patient_id = (int)$patient->id;
+
+                    if (!$this->Registrations->save($registration)) {
+                        return false;
+                    }
+
+                    $this->_createMedicalRecordForRegistration($registration);
+
+                    if ($postQueue) {
+                        $qSchema = $this->PolyclinicQueues->getSchema();
+                        if ($qSchema->hasColumn('is_active')) {
+                            $type = $qSchema->getColumnType('is_active');
+                            $postQueue->is_active = in_array($type, ['boolean', 'integer', 'tinyinteger', 'smallinteger'], true) ? 0 : 'N';
+                        }
+                        if ($qSchema->hasColumn('checkin_status')) {
+                            $postQueue->checkin_status = 'Sudah Check-in';
+                        }
+                        if ($qSchema->hasColumn('call_status')) {
+                            $postQueue->call_status = 'Selesai';
+                        }
+                        if ($qSchema->hasColumn('is_update')) {
+                            $postQueue->is_update = 1;
+                        }
+                        if (!$this->PolyclinicQueues->save($postQueue)) {
+                            $this->log('addTemp: gagal update antrian: ' . json_encode($postQueue->getErrors()), 'error');
+                        }
+                    }
+
+                    return true;
+                });
+
+                if ($saved) {
+                    try {
+                        $this->_syncOutpatientVisitFromRegistration($registration);
+                    } catch (\Throwable $e) {
+                        $this->Flash->warning(__('Registrasi tersimpan, tetapi sinkron Rawat Jalan gagal: ' . $e->getMessage()));
+                    }
+
+                    $this->Flash->success(__('Registrasi sementara berhasil disimpan.'));
+                    return $this->redirect([
+                        'controller' => 'PatientAdmissions',
+                        'action' => 'index',
+                        '?' => ['tab' => 'rawat_jalan'],
+                    ]);
+                }
+
+                $errorSource = !empty($patientErrors) ? $patientErrors : $registration->getErrors();
+                $detail = json_encode($errorSource, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+                if (in_array($detail, ['[]', 'null', ''], true)) {
+                    $detail = 'Tidak ada detail validasi. Cek field wajib di database.';
+                }
+                $this->Flash->error(__('Registrasi gagal disimpan. Error: ' . $detail));
+            }
+        }
+
+        $this->set(compact(
+            'registration',
+            'registrationNo',
+            'fromQueue',
+            'queueId',
+            'queueNumber',
+            'queueCode',
+            'polyclinicName',
+            'queueDoctorId',
+            'queueDoctorScheduleId'
+        ));
+        $this->viewBuilder()->setTemplate('add_temp');
+    }
+
+    protected function addTempLegacy()
+    {
+        $registration = $this->Registrations->newEmptyEntity();
+
+        $fromQueue = false;
+        $queueId = $this->request->getQuery('queue_id');
+        $queueNumber = null;
+        $queueCode = null;
+        $polyclinicName = $this->request->getQuery('polyclinic_name');
+        $queueDoctorId = null;
+        $queueDoctorScheduleId = null;
+
+        $this->loadModel('PolyclinicQueues');
+
+        if (!empty($queueId)) {
+            $queue = $this->PolyclinicQueues->find()
+                ->where(['PolyclinicQueues.id' => (int)$queueId])
+                ->first();
+
+            if ($queue) {
+                $fromQueue = true;
+                $queueNumber = $queue->queue_number ?? ($queue->queue_no ?? '');
+                $queueCode = $queue->code;
+                $polyclinicName = $queue->poly_name;
+
+                if (!empty($polyclinicName)) {
+                    $this->loadModel('DoctorSchedules');
+                    $todayName = [
+                        'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu',
+                        'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu', 'Sunday' => 'Minggu',
+                    ][date('l')] ?? '';
+
+                    $todaySchedule = $this->DoctorSchedules->find()
+                        ->contain(['Doctors'])
+                        ->where([
+                            'DoctorSchedules.day' => $todayName,
+                            'DoctorSchedules.is_active' => 'Y',
+                            'Doctors.polyclinic_name' => $polyclinicName,
+                        ])
+                        ->first();
+
+                    if ($todaySchedule) {
+                        $queueDoctorId = $todaySchedule->doctor_id;
+                        $queueDoctorScheduleId = $todaySchedule->id;
+                    }
+                }
+            }
+        }
+
+        $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
+
+        if ($this->request->is('post')) {
+            $data = $this->request->getData();
+
+            $patientCode = trim((string)($data['patient_code'] ?? ''));
+            $patientName = trim((string)($data['patient_name'] ?? ''));
+            $manualQueueNo = trim((string)($data['queue_number'] ?? ''));
+
+            $error = null;
+            if ($patientCode === '' || $patientName === '') {
+                $error = 'No Rekam Medis dan Nama Pasien wajib diisi.';
+            } elseif (empty($data['polyclinic_name'])) {
+                $error = 'Poli / Unit wajib dipilih.';
+            } elseif ($manualQueueNo === '' || !ctype_digit($manualQueueNo)) {
+                $error = 'Nomor Antrian Poli wajib diisi dengan angka.';
+            }
+
+            $postQueue = null;
+            if (!$error && !empty($data['polyclinic_queue_id'])) {
+                $postQueue = $this->PolyclinicQueues->find()
+                    ->where(['PolyclinicQueues.id' => (int)$data['polyclinic_queue_id']])
+                    ->first();
+
+                if (!$postQueue) {
+                    $error = 'Data antrian tidak ditemukan.';
+                } else {
+                    $qSchema = $this->PolyclinicQueues->getSchema();
+                    if ($qSchema->hasColumn('is_active')) {
+                        $active = strtoupper(trim((string)($postQueue->is_active ?? '')));
+                        if (!in_array($active, ['Y', '1', 'TRUE', 'AKTIF'], true)) {
+                            $error = 'Antrian ini sudah diproses atau tidak aktif.';
+                        }
+                    }
+                }
+            }
+
+            if ($error) {
+                $this->Flash->error(__($error));
+            } else {
+                $this->loadModel('Patients');
+
+                $regData = [
+                    'registration_no'     => $this->_generateRegistrationNo('rawat_jalan'),
+                    'registration_date'   => !empty($data['registration_date'])
+                        ? date('Y-m-d', strtotime((string)$data['registration_date']))
+                        : date('Y-m-d'),
+                    'admission_time'      => $data['admission_time'] ?? date('H:i'),
+                    'service_type'        => 'rawat_jalan',
+                    'polyclinic_name'     => $data['polyclinic_name'],
+                    'queue_number'        => $manualQueueNo,
+                    'queue_no'            => $manualQueueNo,
+                    'polyclinic_queue_id' => !empty($data['polyclinic_queue_id']) ? (int)$data['polyclinic_queue_id'] : null,
+                    'doctor_id'           => !empty($data['doctor_id']) ? (int)$data['doctor_id'] : null,
+                    'doctor_schedule_id'  => !empty($data['doctor_schedule_id']) ? (int)$data['doctor_schedule_id'] : null,
+                    'payment_method'      => in_array(($data['payment_method'] ?? ''), ['PERORANGAN', 'ASURANSI'], true)
+                        ? $data['payment_method'] : null,
+                    'treatment_type'      => 'BIASA',
+                    'status'              => 'aktif',
+                    'is_create'           => 1,
+                    'is_update'           => 0,
+                    'is_delete'           => 0,
+                    'is_active'           => 'Y',
+                ];
+                $regData = array_intersect_key($regData, array_flip($this->Registrations->getSchema()->columns()));
+
+                $registration = $this->Registrations->patchEntity($registration, $regData);
+                foreach (['queue_no', 'queue_number', 'polyclinic_name', 'doctor_schedule_id', 'admission_time'] as $f) {
+                    if (array_key_exists($f, $regData)) {
+                        $registration->{$f} = $regData[$f];
+                    }
+                }
+
+                $patientErrors = [];
+
+                $saved = $this->Registrations->getConnection()->transactional(function () use (
+                    &$registration, $postQueue, $patientCode, $patientName, &$patientErrors
+                ) {
+                    $patient = $this->Patients->find()
+                        ->where(['Patients.code' => $patientCode])
+                        ->first();
+
+                    if (!$patient) {
+                        $patient = $this->Patients->newEmptyEntity();
+                        $patient = $this->Patients->patchEntity($patient, [
+                            'code' => $patientCode,
+                            'full_name' => $patientName,
+                        ]);
+                        $patient->code = $patientCode;
+
+                        if (!$this->Patients->save($patient)) {
+                            $patientErrors = $patient->getErrors();
+                            return false;
+                        }
+                    }
+
+                    $registration->patient_id = (int)$patient->id;
+
+                    if (!$this->Registrations->save($registration)) {
+                        return false;
+                    }
+
+                    $this->_createMedicalRecordForRegistration($registration);
+
+                    if ($postQueue) {
+                        $qSchema = $this->PolyclinicQueues->getSchema();
+                        if ($qSchema->hasColumn('is_active')) {
+                            $type = $qSchema->getColumnType('is_active');
+                            $postQueue->is_active = in_array($type, ['boolean', 'integer', 'tinyinteger', 'smallinteger'], true) ? 0 : 'N';
+                        }
+                        if ($qSchema->hasColumn('checkin_status')) {
+                            $postQueue->checkin_status = 'Sudah Check-in';
+                        }
+                        if ($qSchema->hasColumn('call_status')) {
+                            $postQueue->call_status = 'Selesai';
+                        }
+                        if ($qSchema->hasColumn('is_update')) {
+                            $postQueue->is_update = 1;
+                        }
+                        if (!$this->PolyclinicQueues->save($postQueue)) {
+                            $this->log('addTemp: gagal update antrian: ' . json_encode($postQueue->getErrors()), 'error');
+                        }
+                    }
+
+                    return true;
+                });
+
+                if ($saved) {
+                    try {
+                        $this->_syncOutpatientVisitFromRegistration($registration);
+                    } catch (\Throwable $e) {
+                        $this->Flash->warning(__('Registrasi tersimpan, tetapi sinkron Rawat Jalan gagal: ' . $e->getMessage()));
+                    }
+
+                    $this->Flash->success(__('Registrasi sementara berhasil disimpan.'));
+                    return $this->redirect([
+                        'controller' => 'PatientAdmissions',
+                        'action' => 'index',
+                        '?' => ['tab' => 'rawat_jalan'],
+                    ]);
+                }
+
+                $errorSource = !empty($patientErrors) ? $patientErrors : $registration->getErrors();
+                $detail = json_encode($errorSource, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+                if (in_array($detail, ['[]', 'null', ''], true)) {
+                    $detail = 'Tidak ada detail validasi. Cek field wajib di database.';
+                }
+                $this->Flash->error(__('Registrasi gagal disimpan. Error: ' . $detail));
+            }
+        }
+
+        $this->set(compact(
+            'registration',
+            'registrationNo',
+            'fromQueue',
+            'queueId',
+            'queueNumber',
+            'queueCode',
+            'polyclinicName',
+            'queueDoctorId',
+            'queueDoctorScheduleId'
+        ));
+        $this->viewBuilder()->setTemplate('add_temp');
     }
 
     public function edit($id = null)
@@ -958,14 +1708,24 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
                         $patient->title = $title;
                     }
                     $patient->full_name = $fullName;
-
                     $patientFields = [
-                        'identity_type', 'identity_number', 'gender', 'blood_type', 'allergy', 'birth_date','address', 'father_name', 'mother_name', 'phone_number', 'nationality','citizenship', 'occupation', 'religion', 'education', 'ethnic_group', 'marital_status',
+                        'identity_type', 'identity_number', 'gender', 'blood_type', 'allergy', 'birth_date',
+                        'address', 'father_name', 'mother_name', 'phone_number', 'nationality',
+                        'citizenship', 'occupation', 'religion', 'education', 'ethnic_group', 'marital_status',
                     ];
                     foreach ($patientFields as $field) {
                         if ($patientSchema->hasColumn($field) && array_key_exists($field, $data['patient'])) {
                             $value = $data['patient'][$field];
                             $patient->{$field} = ($value === '') ? null : $value;
+                        }
+                    }
+
+                    // No. Kartu asuransi/BPJS: samakan juga ke master pasien
+                    // kalau diisi/diubah lewat form edit registrasi ini.
+                    if ($patientSchema->hasColumn('insurance_card_no')) {
+                        $cardNoInput = trim((string)($data['insurance_card_no'] ?? ''));
+                        if ($cardNoInput !== '') {
+                            $patient->insurance_card_no = $cardNoInput;
                         }
                     }
 
@@ -984,7 +1744,6 @@ $registrationNo = $this->_generateRegistrationNo('rawat_jalan');
 
             // WAJIB: hapus dari $data supaya tidak ikut patchEntity ke Registration
             unset($data['patient']);
-            // , $data['patient_title']
 
             // Ambil data penanggung jawab saat edit.
 
@@ -1750,6 +2509,90 @@ private function _saveDoctorScheduleQuotaHistory(int $scheduleId, string $cycleD
         return date('Y-m-d', strtotime((string)$date));
     }
 
+        protected function _syncOutpatientBillingFromRegistration($registration, bool $isNewPatient): bool
+    {
+        if (($registration->service_type ?? '') !== 'rawat_jalan') {
+            return true;
+        }
+
+        $this->loadModel('OutpatientBillings');
+        $schema = $this->OutpatientBillings->getSchema();
+
+        $billing = $this->OutpatientBillings->find()
+            ->where(['OutpatientBillings.registration_id' => (int)$registration->id])
+            ->first();
+
+        $isNewBilling = false;
+        if (!$billing) {
+            $billing = $this->OutpatientBillings->newEmptyEntity();
+            $isNewBilling = true;
+        }
+
+        if ($schema->hasColumn('registration_id')) {
+            $billing->registration_id = (int)$registration->id;
+        }
+        if ($schema->hasColumn('registration_no')) {
+            $billing->registration_no = (string)($registration->registration_no ?? '');
+        }
+        if ($schema->hasColumn('patient_id')) {
+            $billing->patient_id = !empty($registration->patient_id) ? (int)$registration->patient_id : null;
+        }
+        if ($schema->hasColumn('doctor_id')) {
+            $billing->doctor_id = !empty($registration->doctor_id) ? (int)$registration->doctor_id : null;
+        }
+        if ($schema->hasColumn('polyclinic_name')) {
+            $billing->polyclinic_name = $registration->polyclinic_name ?? null;
+        }
+        if ($schema->hasColumn('insurance_type') && empty($billing->insurance_type)) {
+            $billing->insurance_type = $registration->insurance_type ?? 'Umum';
+        }
+        if ($schema->hasColumn('billing_no') && empty($billing->billing_no)) {
+            $billing->billing_no = (string)($registration->registration_no ?? ('BIL-' . date('YmdHis')));
+        }
+        if ($schema->hasColumn('status') && empty($billing->status)) {
+            $billing->status = 'draft';
+        }
+        if ($schema->hasColumn('exam_date') && empty($billing->exam_date)) {
+            $billing->exam_date = $registration->registration_date ?? date('Y-m-d');
+        }
+        if ($schema->hasColumn('exam_time') && empty($billing->exam_time)) {
+            $billing->exam_time = $registration->admission_time ?? date('H:i:s');
+        }
+        if ($schema->hasColumn('is_delete') && !isset($billing->is_delete)) {
+            $billing->is_delete = 0;
+        }
+
+        if ($isNewBilling && $schema->hasColumn('admin_fee')) {
+            $billing->admin_fee = $isNewPatient ? 5000 : 0;
+        }
+
+        if ($isNewBilling) {
+            $adminFee = $schema->hasColumn('admin_fee') ? (float)($billing->admin_fee ?? 0) : 0;
+
+            foreach (['total_action', 'total_medicine', 'total_lab', 'total_radiology', 'total_other', 'discount_amount'] as $zeroField) {
+                if ($schema->hasColumn($zeroField)) {
+                    $billing->{$zeroField} = 0;
+                }
+            }
+            if ($schema->hasColumn('subtotal')) {
+                $billing->subtotal = $adminFee;
+            }
+            if ($schema->hasColumn('grand_total')) {
+                $billing->grand_total = $adminFee;
+            }
+        }
+
+        if (!$this->OutpatientBillings->save($billing)) {
+            $this->log(
+                'Gagal sync outpatient billing dari registrasi: ' . json_encode($billing->getErrors()),
+                'error'
+            );
+            return false;
+        }
+
+        return true;
+    }
+
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
@@ -1999,10 +2842,11 @@ private function _saveDoctorScheduleQuotaHistory(int $scheduleId, string $cycleD
             'ethnic_group',
             'marital_status',
         ];
-        
+
         foreach ([
             'title',
             'age',
+            'insurance_card_no',
             'province',
             'city',
             'district',

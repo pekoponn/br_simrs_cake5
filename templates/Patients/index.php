@@ -104,7 +104,7 @@ function hitungUmur($birthDate) {
                 <?= $this->Form->create(null, ['type' => 'get']) ?>
                 <div class="input-group pull-right" style="max-width:400px; width:100%;">
                     <input type="text" name="key" class="form-control"
-                           placeholder="Cari kode pasien / nama / NIK / telepon..."
+                           placeholder="Cari Rekam Medis / nama / NIK / telepon..."
                            value="<?= h($this->request->getQuery('key')) ?>">
                     <span class="input-group-btn">
                         <button type="submit" class="btn btn-warning">
@@ -128,7 +128,7 @@ function hitungUmur($birthDate) {
                 <thead>
                     <tr class="text-center">
                         <th width="40">#</th>
-                        <th width="120">Kode Pasien</th>
+                        <th width="120">Rekam Medis</th>
                         <th>Nama Lengkap</th>
                         <th width="80">Gender</th>
                         <th width="60">Umur</th>
@@ -141,7 +141,8 @@ function hitungUmur($birthDate) {
                 </thead>
                 <tbody>
                 <?php
-                $no = 1;
+                $paging = $this->request->getAttribute('paging')['Patients'] ?? null;
+                $no     = $paging ? $paging['start'] : 1; // start = nomor baris pertama di halaman ini
                 foreach ($patients as $patient):
                     $isAktif  = ($patient->is_active === 'Y' || $patient->is_active === 1);
                     $isMale   = (strtolower($patient->gender ?? '') === 'male');

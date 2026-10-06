@@ -10,10 +10,11 @@ use Cake\ORM\Entity;
  *
  * @property int $id
  * @property string $code
- * @property string|null $medical_record_no
+ * @property string|null $title
  * @property string $full_name
  * @property string $identity_type
  * @property string $identity_number
+ * @property string|null $insurance_card_no
  * @property string $gender
  * @property string $blood_type
  * @property \Cake\I18n\FrozenDate|null $birth_date
@@ -24,10 +25,10 @@ use Cake\ORM\Entity;
  * @property string $phone_number
  * @property string $nationality
  * @property string $citizenship
- * @property string $id_prov
- * @property string $id_kab
- * @property string $id_kec
- * @property string $id_kel
+ * @property string $province
+ * @property string $city
+ * @property string $district
+ * @property string $subdistrict
  * @property string $occupation
  * @property string $religion
  * @property string $education
@@ -43,6 +44,7 @@ use Cake\ORM\Entity;
  * @property string $is_active
  * @property string|null $is_log
  *
+ * @property \App\Model\Entity\PatientPic[] $patient_pics
  * @property \App\Model\Entity\Registration[] $registrations
  */
 class Patient extends Entity
@@ -58,11 +60,11 @@ class Patient extends Entity
      */
     protected $_accessible = [
         'code' => true,
-        'medical_record_no' => true,
         'title' => true,
         'full_name' => true,
         'identity_type' => true,
         'identity_number' => true,
+        'insurance_card_no' => true,
         'gender' => true,
         'blood_type' => true,
         'allergy' => true,
@@ -78,10 +80,6 @@ class Patient extends Entity
         'city' => true,
         'district' => true,
         'subdistrict' => true,
-        'id_prov' => true,
-        'id_kab' => true,
-        'id_kec' => true,
-        'id_kel' => true,
         'occupation' => true,
         'religion' => true,
         'education' => true,
@@ -96,6 +94,7 @@ class Patient extends Entity
         'delete_log' => true,
         'is_active' => true,
         'is_log' => true,
+        'patient_pics' => true,
         'registrations' => true,
     ];
 }
