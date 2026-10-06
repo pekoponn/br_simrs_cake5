@@ -104,31 +104,61 @@ class UsersController extends AppController
      */
     public function index()
     {
-        $key = $this->request->getQuery('key');
-        if ($key) {
-            $query = $this->Users->find('all')
-                ->where(['OR' => ['Users.name like' => '%' . $key . '%', 'Users.staff like' => '%' . $key . '%', 'Users.devision like' => '%' . $key . '%', 'Users.last_login like' => '%' . $key . '%']]);
-        } else {
-            $query = $this->Users;
+        // $key = $this->request->getQuery('key');
+        // if ($key) {
+        //   $query = $this->Users->find('all')
+        //                 ->where(['OR'=>['Users.name like' => '%' . $key . '%', 'Users.staff like' => '%' . $key . '%', 'Users.devision like' => '%' . $key . '%', 'Users.last_login like' => '%' . $key . '%']]);
+        // } else {
+        //   $query = $this->Users;
+        // }
+        $users = $this->Users->find('all')->contain([]);
+        $code = $this->request->getQuery('filtercode');
+        $name = $this->request->getQuery('filtername');
+        $status = $this->request->getQuery('filterstatus');
+        // $driver = $this->request->getQuery('filterDriver');
+        $devision = $this->request->getQuery('filterDivisi');
+
+
+        $dataWhere = array();
+        if (!empty($code)) {
+            $dataWhere['Users.code like'] = '%' . $code . '%';
         }
+        if (!empty($name)) {
+            $dataWhere['Users.name like'] = '%' . $name . '%';
+        }
+        if (!empty($status)) {
+            $dataWhere['Users.status'] = $status;
+        }
+        if (!empty($devision)) {
+            $dataWhere['Users.devision like'] = '%' . $devision . '%';
+        }
+
+        // $dataWheres = (!empty($dataWheres)) ? $dataWheres : '';
+        // $queries = $users->where([$dataWheres])->order(['Users.code' => 'ASC']);
+
+                
+        $conditions = !empty($dataWhere) ? $dataWhere : [];
+        $query = $this->Users->find()->contain(['CreatedUsers'])->where($conditions)->order(['Users.code' => 'ASC']);
+        $users = $this->paginate($query);
+        $this->set('users', $this->paginate($query, ['limit' => '10']));
 
         // debug($query);
 
-        $this->paginate = [
-            'contain' => [],
-        ];
+        // $this->paginate = [
+        //     'contain' => ['Branches'],
+        // ];
 
-        $settings = [
-            'limit' => 10,
-            'order' => [
-                'code' => 'asc',
-            ],
-        ];
-        $users = $this->paginate($query, $settings);
-
+        // $settings = [
+        //     'limit' => 10,
+        //     'order' => [
+        //         'code' => 'asc',
+        //     ],
+        // ];
+        // $users = $this->paginate($query, $settings);
+        
         //$data['setFlash'] = array();        
-
-        $this->set(compact('users'));
+        
+        // $this->set(compact('users'));
 
         //$users = $this->paginate($this->Users, $settings);
     }

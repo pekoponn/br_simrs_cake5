@@ -56,7 +56,12 @@ class UsersTable extends Table
         $this->belongsTo('Branches', [
             'foreignKey' => 'branch_id',
             'joinType' => 'INNER',
-        ]);        
+        ]);       
+        
+        $this->belongsTo('CreatedUsers', [
+            'className' => 'Users',
+            'foreignKey' => 'is_create'
+        ]);
     }
 
     /**
