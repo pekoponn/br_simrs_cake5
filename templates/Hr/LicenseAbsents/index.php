@@ -134,7 +134,7 @@
                                         }
                                         ?>
                                         <?php
-                                        if ($checkUrl['licenseabsents']['knowing'] == '1' && $data->knowing == null) {
+                                        if ($checkUrl['licenseabsents']['knowing'] == '1' && $data->knowing == null && $data->approved != null) {
                                             echo $this->Krs->btn('knowing', $linkKnown);
                                         }
                                         ?>

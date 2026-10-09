@@ -64,6 +64,8 @@ if (!empty($rules)) {
     $userResetPassword = ($user['resetPassword'] == 1) ? 'checked' : '';
     $userDelete = ($user['delete'] == 1) ? 'checked' : '';
     $userResetFace = ($user['resetFace']==1) ? 'checked' : '';
+    $userTemplateExcel = ($user['templateExcel']==1) ? 'checked' : '';
+    $userExportExcel = ($user['exportExcel']==1) ? 'checked' : '';
 
 
     // Setting
@@ -3191,6 +3193,18 @@ $bankincomesXls = ($bankincomes['xls'] == 1) ? 'checked' : '';
                                         ?>
                                         <label class="form-check-label">Restart Wajah</label>
                                     </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php
+                                        echo $this->Form->checkbox('Rules.users.templateExcel', ['value' => '1', 'hiddenField' => true, 'checked' => $userTemplateExcel, 'class' => 'form-check-input']);
+                                        ?>
+                                        <label class="form-check-label">Template Excel</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php
+                                        echo $this->Form->checkbox('Rules.users.exportExcel', ['value' => '1', 'hiddenField' => true, 'checked' => $userExportExcel, 'class' => 'form-check-input']);
+                                        ?>
+                                        <label class="form-check-label">Export Excel</label>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
@@ -4877,6 +4891,55 @@ $bankincomesXls = ($bankincomes['xls'] == 1) ? 'checked' : '';
                             </td>
                         </tr>
                         <tr>
+                            <td>Surat Perintah Kerja Lembur</td>
+                            <td>
+                                <div class="col-md-12">
+                                    <div class="form-check form-check-inline">
+                                        <?php
+                                        echo $this->Form->checkbox('Rules.workorders.index', ['value' => 1, 'hiddenField' => true, 'checked' => $workorders_index, 'class' => 'form-check-input']);
+                                        ?>
+                                        <label class="form-check-label">Daftar</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php
+                                        echo $this->Form->checkbox('Rules.workorders.add', ['value' => 1, 'hiddenField' => true, 'checked' => $workorders_add, 'class' => 'form-check-input']);
+                                        ?>
+                                        <label class="form-check-label">Buat</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php
+                                        echo $this->Form->checkbox('Rules.workorders.addSpt', ['value' => 1, 'hiddenField' => true, 'checked' => $workorders_addSpt, 'class' => 'form-check-input']);
+                                        ?>
+                                        <label class="form-check-label">Buat(Dari SPT)</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php
+                                        echo $this->Form->checkbox('Rules.workorders.edit', ['value' => 1, 'hiddenField' => true, 'checked' => $workorders_edit, 'class' => 'form-check-input']);
+                                        ?>
+                                        <label class="form-check-label">Ubah</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php
+                                        echo $this->Form->checkbox('Rules.workorders.view', ['value' => 1, 'hiddenField' => true, 'checked' => $workorders_view, 'class' => 'form-check-input']);
+                                        ?>
+                                        <label class="form-check-label">View</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php
+                                        echo $this->Form->checkbox('Rules.workorders.delete', ['value' => 1, 'hiddenField' => true, 'checked' => $workorders_delete, 'class' => 'form-check-input']);
+                                        ?>
+                                        <label class="form-check-label">Hapus</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php
+                                        echo $this->Form->checkbox('Rules.workorders.approve', ['value' => 1, 'hiddenField' => true, 'checked' => $workorders_approve, 'class' => 'form-check-input']);
+                                        ?>
+                                        <label class="form-check-label">Menyetujui</label>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
                             <td>Laporan Kendala Absen</td>
                             <td>
                                 <div class="col-md-12">
@@ -4969,7 +5032,7 @@ $bankincomesXls = ($bankincomes['xls'] == 1) ? 'checked' : '';
         var confirmTitle = "Apakah anda ingin menyimpan data tersebut ?";
         var formAction = "<?php echo $this->Url->build(['controller' => 'users', 'action' => 'access', $users->id], ['fullBase' => true]); ?>";
         handleFormConfirmSubmitValid('UserAddForm', 'btn-add', confirmTitle, formAction);
-        const staffNeedTeam = ['Koordinator', 'Kepala Unit', 'Assistant Supervisor', 'Supervisor', 'Assistant Manager', 'Manager', 'Direktur'];
+        const staffNeedTeam = ['MANAGER', 'KEPALA UNIT'];
 
         $('#staff').on('change', function () {
             let selectedStaff = $(this).val();

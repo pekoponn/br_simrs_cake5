@@ -1,6 +1,6 @@
 <?php
 use Cake\Chronos\Date;
-$dataChild = $this->Html->link('Ijin Pulang', ['action' => 'index'], ['full_base' => true]);
+$dataChild = $this->Html->link('Ijin Terlambat', ['action' => 'index'], ['full_base' => true]);
 ?>
 
 <?= $this->Krs->breadcrumb('HRGA', $dataChild, 'Mengetahui') ?>

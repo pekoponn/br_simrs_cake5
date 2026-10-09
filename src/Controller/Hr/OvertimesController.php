@@ -256,6 +256,11 @@ class OvertimesController extends AppController
         $overtime = $this->Overtimes->get($id, [
             'contain' => [],
         ]);
+
+        if ($overtime->approved !== null) {
+            $this->Flash->error('Data sudah disetujui, tidak bisa diedit.');
+            return $this->redirect(['action' => 'index']);
+        }
         if ($this->request->is(['patch', 'post', 'put'])) {
             $dataRow = $this->request->getData();
             $isUser = $dataRow['is_update'];
@@ -433,6 +438,10 @@ class OvertimesController extends AppController
         $overtime = $this->Overtimes->get($id, [
             'contain' => ['Users', 'WorkOrders', 'WorkOrders.WorkOrderLines'],
         ]);
+        if ($overtime->approved === null) {
+            $this->Flash->error('Data belum disetujui, belum bisa diketahui.');
+            return $this->redirect(['action' => 'index']);
+        }
         if ($this->request->is(['patch', 'post', 'put'])) {
             $dataRow = $this->request->getData();
             $isUser = $dataRow['knowing'];

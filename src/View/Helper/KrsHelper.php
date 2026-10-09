@@ -153,6 +153,14 @@ class KrsHelper extends Helper
 			$btnAttribute = ['name' => '<i class="fa fa-sitemap"></i>', 'color' => 'purple', 'title' => 'Hak Akses'];
 		} elseif ($type == "resetPassword") {
 			$btnAttribute = ['name' => '<i class="fa fa-unlock-alt"></i>', 'color' => 'lime', 'title' => 'Reset Password'];
+		} elseif ($type == "addFace") {
+			$btnAttribute = ['name' => '<i class="fa fa-camera"></i>', 'color' => 'pink', 'title' => 'Tambah Wajah'];
+		} elseif ($type == "approve") {
+			$btnAttribute = ['name' => '<i class="fa fa-check"></i>', 'color' => 'success', 'title' => 'Menyetujui'];
+		}  elseif ($type == "knowing") {
+			$btnAttribute = ['name' => '<i class="fa fa-thumbs-up"></i>', 'color' => 'pink', 'title' => 'Mengetahui'];
+		} elseif ($type == "resetPin") {
+			$btnAttribute = ['name' => '<i class="fa fa-unlock-alt"></i>', 'color' => 'grey', 'title' => 'Reset Pin'];
 		}
 
 		if ($type == "delete") {
@@ -184,26 +192,42 @@ class KrsHelper extends Helper
 		//$this->Form->button('<i class="fas fa-plus"></i> (BARU)', array('class'=>'btn btn-sm btn-inverse width-120 m-r-5 m-b-5', 'escape' => false));
 	}
 
-	public function breadcrumb($dataParent = null, $dataChild = null, $dataGrandChild = null, $showBreadcrumb = false, $showTitle = false)
-	{
-		$view = '';
-		if ($showBreadcrumb) {
-			$view .= '<ol class="breadcrumb float-xl-right">';
-			if (!empty($dataChild)) {
-				$view .= (isset($dataParent)) ? '<li class="breadcrumb-item">' . $dataParent . '</li>' : '';
-			}
-			if (!empty($dataChild)) {
-				$view .= (isset($dataChild)) ? '<li class="breadcrumb-item">' . $dataChild . '</li>' : '<li class="breadcrumb-item active">' . $dataChild . '</li>';
-			}
-			if (!empty($dataGrandChild)) {
-				$view .= (isset($dataGrandChild)) ? '<li class="breadcrumb-item active">' . $dataGrandChild . '</li>' : '';
-			}
-			$view .= '</ol>';
-		}
+	// public function breadcrumb($dataParent = null, $dataChild = null, $dataGrandChild = null, $showBreadcrumb = false, $showTitle = false)
+	// {
+	// 	$view = '';
+	// 	if ($showBreadcrumb) {
+	// 		$view .= '<ol class="breadcrumb float-xl-right">';
+	// 		if (!empty($dataChild)) {
+	// 			$view .= (isset($dataParent)) ? '<li class="breadcrumb-item">' . $dataParent . '</li>' : '';
+	// 		}
+	// 		if (!empty($dataChild)) {
+	// 			$view .= (isset($dataChild)) ? '<li class="breadcrumb-item">' . $dataChild . '</li>' : '<li class="breadcrumb-item active">' . $dataChild . '</li>';
+	// 		}
+	// 		if (!empty($dataGrandChild)) {
+	// 			$view .= (isset($dataGrandChild)) ? '<li class="breadcrumb-item active">' . $dataGrandChild . '</li>' : '';
+	// 		}
+	// 		$view .= '</ol>';
+	// 	}
 
-		if ($showTitle) {
-			$view .= '<h1 class="page-header">' . trim(strip_tags($dataChild)) . '</h1>';
+	// 	if ($showTitle) {
+	// 		$view .= '<h1 class="page-header">' . trim(strip_tags($dataChild)) . '</h1>';
+	// 	}
+
+	// 	return $view;
+	// }
+
+	public function breadcrumb($dataParent = null, $dataChild = null, $dataGrandChild = null)
+	{
+		$view = '<ol class="breadcrumb float-xl-right">';
+		if (!empty($dataChild)) {
+			$view .= isset($dataParent) ? '<li class="breadcrumb-item">' . $dataParent . '</li>' : '';
+			$view .= '<li class="breadcrumb-item">' . $dataChild . '</li>';
 		}
+		if (!empty($dataGrandChild)) {
+			$view .= '<li class="breadcrumb-item active">' . $dataGrandChild . '</li>';
+		}
+		$view .= '</ol>';
+		$view .= '<h1 class="page-header">' . trim(strip_tags((string)$dataChild)) . ' <small>kumpulan beberapa data...</small></h1>';
 
 		return $view;
 	}
@@ -236,7 +260,7 @@ class KrsHelper extends Helper
 
 	public function position($data = null)
 	{
-		$view = array('Admin' => 'Admin', 'Staff' => 'Staff', 'Supervisor' => 'Supervisor', 'Manager' => 'Manager', 'Direktur' => 'Direktur');
+		$view = array('MANAGER' => 'MANAGER', 'KEPALA UNIT' => 'KEPALA UNIT', 'STAF' => 'STAF', 'PELAKSANA' => 'PELAKSANA');
 		$result = (empty($data)) ? $view : $view[$data];
 		return $result;
 	}
@@ -796,6 +820,13 @@ class KrsHelper extends Helper
 		$result = (empty($data)) ? $view : $view[$data];
 		return $result;
 	}
+
+	public function statusTidakMasuk($data = null)
+    {
+        $view = array('Sesuai' => 'Sesuai', 'Tidak Sesuai' => 'Tidak Sesuai');
+        $result = (empty($data)) ? $view : $view[$data];
+        return $result;
+    }
 
 	public function btnSeach($value = '')
 	{
@@ -1703,8 +1734,20 @@ class KrsHelper extends Helper
 	}
 
 	public function devision($data=null){
-		$view = array('PAJAK'=>'PAJAK', 'SEKPEM GROUP NUSANTARA' => 'SEKPEM GROUP NUSANTARA', 'SEKPEM GROUP WILAYAH TIMUR (SG-Tim)' => 'SEKPEM GROUP WILAYAH TIMUR (SG-Tim)', 'SEKPEM GROUP WILAYAH (SG-Teng)' => 'SEKPEM GROUP WILAYAH (SG-Teng)', 'SEKPEM GROUP WILAYAH BARAT (SG-B)' => 'SEKPEM GROUP WILAYAH BARAT (SG-B)', 'SPI GROUP NUSANTARA' => 'SPI GROUP NUSANTARA', 'SPI GROUP WILAYAH TIMUR (SPI G-Tim)'=>'SPI GROUP WILAYAH TIMUR (SPI G-Tim)', 'SPI GROUP WILAYAH TENGAH (SPI G-Teng)'=>'SPI GROUP WILAYAH TENGAH (SPI G-Teng)','SPI GROUP WILAYAH BARAT (SPI G-B)'=>'SPI GROUP WILAYAH BARAT (SPI G-B)', 'LIMBAH PADAT'=> 'LIMBAH PADAT', 'BIDANG CAIR, UDARA & PENUNJANG' => 'BIDANG CAIR, UDARA & PENUNJANG', 'SDM & UMUM' => 'SDM & UMUM', 'KEUANGAN' => 'KEUANGAN', 'TEKNIK' => 'TEKNIK', 'BUSSINESS DEVELOPMENT' => 'BUSSINESS DEVELOPMENT', 'KONSULTAN LEGAL' => 'KONSULTAN LEGAL', "Triata" => "Triata", "Artama Bali" => "Artama Bali", "Artama Ambon" => "Artama Ambon", "Bhakti Bumi Berseri" => "Bhakti Bumi Berseri", "RSU Bhakti Rahayu (Tabanan)" => "RSU Bhakti Rahayu (Tabanan)", "RSU Bhakti Rahayu (Denpasar)" => "RSU Bhakti Rahayu (Denpasar)", "Wilwatikta" => "Wilwatikta", "Pratama Jaya" => "Pratama Jaya", "BWC" => "BWC", "CTBL" => "CTBL", "Damar" => "PT. Damar", "CV Damar"=>"CV Damar", "KARFA" => "KARFA", "Koperasi" => "Koperasi", "MBDU" => "MBDU Bali", "Citra Gama Sakti" => "Citra Gama Sakti", "Klin" => "Klin", "Satria Buana Cemerlang Transportasi" => "Satria Buana Cemerlang Transportasi", "Satria Buana Cemerlang Dokling" => "Satria Buana Cemerlang Dokling & Ipal", "Satria Buana Cemerlang Makassar" => "Satria Buana Cemerlang Makassar", "Satria Buana Cemerlang Ambon" => "Satria Buana Cemerlang Ambon","Unilab" => "Unilab", "ANI" =>"Aksata Nusantara Infosysjaya", "Manunggal Bumi Lestari" => "Manunggal Bumi Lestari", "Satya Pratama Jaya" => "Satya Pratama Jaya", "Wilwa Developer" => "Wilwa Developer", "MBDU Surabaya" => "MBDU Surabaya", "PT. Satya Pratama Jaya Surabaya" => "PT. Satya Pratama Jaya Surabaya", "CV. Gotong Royong Jaya" => "CV. Gotong Royong Jaya", "CV. Angin Selatan" => "CV. Angin Selatan", "PT Unitlab Adi Cakra" => "PT Unitlab Adi Cakra", "Investasi" => "Investasi", "CV. Bakti Bumi Berseri" => "CV. Bakti Bumi Berseri");
-		return (empty($data)) ? $view : $view[$data];
+		// $view = array('PAJAK'=>'PAJAK', 'SEKPEM GROUP NUSANTARA' => 'SEKPEM GROUP NUSANTARA', 'SEKPEM GROUP WILAYAH TIMUR (SG-Tim)' => 'SEKPEM GROUP WILAYAH TIMUR (SG-Tim)', 'SEKPEM GROUP WILAYAH (SG-Teng)' => 'SEKPEM GROUP WILAYAH (SG-Teng)', 'SEKPEM GROUP WILAYAH BARAT (SG-B)' => 'SEKPEM GROUP WILAYAH BARAT (SG-B)', 'SPI GROUP NUSANTARA' => 'SPI GROUP NUSANTARA', 'SPI GROUP WILAYAH TIMUR (SPI G-Tim)'=>'SPI GROUP WILAYAH TIMUR (SPI G-Tim)', 'SPI GROUP WILAYAH TENGAH (SPI G-Teng)'=>'SPI GROUP WILAYAH TENGAH (SPI G-Teng)','SPI GROUP WILAYAH BARAT (SPI G-B)'=>'SPI GROUP WILAYAH BARAT (SPI G-B)', 'LIMBAH PADAT'=> 'LIMBAH PADAT', 'BIDANG CAIR, UDARA & PENUNJANG' => 'BIDANG CAIR, UDARA & PENUNJANG', 'SDM & UMUM' => 'SDM & UMUM', 'KEUANGAN' => 'KEUANGAN', 'TEKNIK' => 'TEKNIK', 'BUSSINESS DEVELOPMENT' => 'BUSSINESS DEVELOPMENT', 'KONSULTAN LEGAL' => 'KONSULTAN LEGAL', "Triata" => "Triata", "Artama Bali" => "Artama Bali", "Artama Ambon" => "Artama Ambon", "Bhakti Bumi Berseri" => "Bhakti Bumi Berseri", "RSU Bhakti Rahayu (Tabanan)" => "RSU Bhakti Rahayu (Tabanan)", "RSU Bhakti Rahayu (Denpasar)" => "RSU Bhakti Rahayu (Denpasar)", "Wilwatikta" => "Wilwatikta", "Pratama Jaya" => "Pratama Jaya", "BWC" => "BWC", "CTBL" => "CTBL", "Damar" => "PT. Damar", "CV Damar"=>"CV Damar", "KARFA" => "KARFA", "Koperasi" => "Koperasi", "MBDU" => "MBDU Bali", "Citra Gama Sakti" => "Citra Gama Sakti", "Klin" => "Klin", "Satria Buana Cemerlang Transportasi" => "Satria Buana Cemerlang Transportasi", "Satria Buana Cemerlang Dokling" => "Satria Buana Cemerlang Dokling & Ipal", "Satria Buana Cemerlang Makassar" => "Satria Buana Cemerlang Makassar", "Satria Buana Cemerlang Ambon" => "Satria Buana Cemerlang Ambon","Unilab" => "Unilab", "ANI" =>"Aksata Nusantara Infosysjaya", "Manunggal Bumi Lestari" => "Manunggal Bumi Lestari", "Satya Pratama Jaya" => "Satya Pratama Jaya", "Wilwa Developer" => "Wilwa Developer", "MBDU Surabaya" => "MBDU Surabaya", "PT. Satya Pratama Jaya Surabaya" => "PT. Satya Pratama Jaya Surabaya", "CV. Gotong Royong Jaya" => "CV. Gotong Royong Jaya", "CV. Angin Selatan" => "CV. Angin Selatan", "PT Unitlab Adi Cakra" => "PT Unitlab Adi Cakra", "Investasi" => "Investasi", "CV. Bakti Bumi Berseri" => "CV. Bakti Bumi Berseri");
+		$view = array(
+			'FARMASI' => 'FARMASI', 'SECURITY' => 'SECURITY', 'LABORATORIUM' => 'LABORATORIUM',
+			'REKAM MEDIS' => 'REKAM MEDIS', 'PARKIR' => 'PARKIR', 'RAWAT JALAN' => 'RAWAT JALAN',
+			'UGD' => 'UGD', 'CLEANING SERVICE' => 'CLEANING SERVICE', 'DRIVER' => 'DRIVER',
+			'KASIR' => 'KASIR', 'RADIOLOGI' => 'RADIOLOGI', 'UBS' => 'UBS', 'KLAMER' => 'KLAMER',
+			'KEBIDANAN & PERINATOLOGI' => 'KEBIDANAN & PERINATOLOGI', 'UPI' => 'UPI',
+			'RAWAT INAP' => 'RAWAT INAP', 'GIZI' => 'GIZI', 'AHLI GIZI' => 'AHLI GIZI',
+			'LAUNDRY' => 'LAUNDRY', 'LOGISTIK' => 'LOGISTIK', 'KEUANGAN' => 'KEUANGAN',
+			'ATEM' => 'ATEM', 'KESLING' => 'KESLING', 'PROMKES' => 'PROMKES',
+			'CASE MANAGER' => 'CASE MANAGER', 'TEKNISI' => 'TEKNISI', 'PUJASERA' => 'PUJASERA',
+			'PT. BHAKTI RAHAYU' => 'PT. BHAKTI RAHAYU', 'MANAGERIAL' => 'MANAGERIAL', 'IT' => 'IT',
+		);
+		return (empty($data)) ? $view : ($view[$data] ?? null);
 		// ,"Satria Buana Cemerlang Surabaya" => "Satria Buana Cemerlang Surabaya"
 	}
 	
@@ -1725,10 +1768,33 @@ class KrsHelper extends Helper
 
 	public function descLeaves($data=null)
 	{
-		$view = array('Pernikahan^3'=>'Pernikahan (3 hari)', 'Baptis Khitan^2'=>'Baptis/Khitan anak (2 hari)', 'Meninggal^2'=>'Orang tua/anak/istri/suami/mertua meninggal (2 hari)', 'Anggota lain meninggal^1'=>'Anggota keluarga lainnya yang serumah meninggal (1 hari)', 'Pernikahan Anak^2'=>'Pernikahan anak (2 hari)', 'Istri Melahirkan Keguguran^2'=>'Istri melahirkan/keguguran (2 hari)', 'Jaga Sakit^3'=>'Menjaga Orang tua/anak/istri/suami/mertua (3 hari)', 'Lain Lain^1'=>'Lain-lain');
+		$view = array(
+			'Pernikahan karyawan sendiri^3' => 'Pernikahan karyawan sendiri (3 hari)',
+			'Pernikahan anak karyawan^2' => 'Pernikahan anak karyawan (2 hari)',
+			'Pernikahan saudara kandung karyawan^1' => 'Pernikahan saudara kandung karyawan (1 hari)',
+			'Istri karyawan melahirkan^2' => 'Istri karyawan melahirkan (2 hari)',
+			'Suami / istri / anak / orang tua kandung / mertua / saudara kandung meninggal dunia^2' => 'Suami / istri / anak / orang tua kandung / mertua / saudara kandung meninggal dunia (2 hari)',
+			'Kakek / nenek kandung karyawan meninggal^1' => 'Kakek / nenek kandung karyawan meninggal (1 hari)',
+			'Pengkhitanan anak kandung karyawan^2' => 'Pengkhitanan anak kandung karyawan (2 hari)',
+			'Pembaptisan anak kandung karyawan^2' => 'Pembaptisan anak kandung karyawan (2 hari)',
+			'Lain-lain^1' => 'Lain-lain (1 hari)',
+		);
+		// $view = array('Pernikahan^3'=>'Pernikahan (3 hari)', 'Baptis Khitan^2'=>'Baptis/Khitan anak (2 hari)', 'Meninggal^2'=>'Orang tua/anak/istri/suami/mertua meninggal (2 hari)', 'Anggota lain meninggal^1'=>'Anggota keluarga lainnya yang serumah meninggal (1 hari)', 'Pernikahan Anak^2'=>'Pernikahan anak (2 hari)', 'Istri Melahirkan Keguguran^2'=>'Istri melahirkan/keguguran (2 hari)', 'Jaga Sakit^3'=>'Menjaga Orang tua/anak/istri/suami/mertua (3 hari)', 'Lain Lain^1'=>'Lain-lain');
 		
 		$result = (empty($data)) ? $view : $view[$data];
 		return $result;
+	}
+
+	public function leaveTypes($data = null)
+	{
+		$view = array(
+			'Umroh^14' => 'Umroh (14 hari)',
+			'Haji^30' => 'Haji (1 bulan / 30 hari)',
+			'Melahirkan^90' => 'Cuti Melahirkan (90 hari)',
+			'Keguguran^45' => 'Cuti Keguguran (45 hari)'
+		);
+
+		return empty($data) ? $view : ($view[$data] ?? null);
 	}
 
 }

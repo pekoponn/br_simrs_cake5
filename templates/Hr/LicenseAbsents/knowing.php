@@ -27,6 +27,10 @@ $dataChild = $this->Html->link('Tidak Masuk', ['action' => 'index'], ['full_base
                                 <div class="col-4 col-sm-4">: <span><?php echo date_format($licenseAbsent->date_from, 'd M Y') . ' - ' . date_format($licenseAbsent->date_end, 'd M Y') ?></span></div>
                             </div>
                             <div class="row">
+                                <div class="col-2 col-sm-2"><b>Jenis Izin</b></div>
+                                <div class="col-4 col-sm-4">: <span><?= !empty($licenseAbsent->type) ? h($licenseAbsent->type) : '-' ?></span></div>
+                            </div>
+                            <div class="row">
                                 <div class="col-2 col-sm-2"><b>File pendukung</b></div>
                                 <div class="col-4 col-sm-4"> : 
                                     <?php if (!empty($licenseAbsent->files)) : ?>
@@ -47,7 +51,7 @@ $dataChild = $this->Html->link('Tidak Masuk', ['action' => 'index'], ['full_base
                             <div class="row">
                                 <div class="col-6 col-sm-6"><span><?= $this->Krs->fDecode($licenseAbsent->description) ?></span></div>
                             </div>
-                             <div class="row">
+                            <div class="row">
                                 <div class="col-2 col-sm-2"><b>Catatan Penyetuju</b></div>
                                 <div class="col-2 col-sm-2">:</span></div>
                             </div>
@@ -65,6 +69,7 @@ $dataChild = $this->Html->link('Tidak Masuk', ['action' => 'index'], ['full_base
                                         'class' => 'form-control select2',
                                         'options' => $this->Krs->statusTidakMasuk(),
                                         'empty' => '-- Pilih Status --',
+                                        'required' => true
                                     ]) ?>
                                 </div>
                             </div>

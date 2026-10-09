@@ -81,7 +81,7 @@
                     <thead class="bg-gradient-silver">
                         <tr class="text-center">
                             <th width="15%">Tanggal</th>
-                            <!-- <th width="10%">Jenis</th> -->
+                            <th width="12%">Jenis Cuti</th>
                             <th>Pemohon</th>
                             <th width="12%">Devisi</th>                            
                             <th width="15%">Menyetujui</th>
@@ -112,24 +112,16 @@
                                    
                                     <td class="text-center">
                                     <?php
-                                    $dates = [];
                                     if (!empty($data->date_1)) {
-                                        $dates[] = $data->date_1->format('d M Y');
-                                    }
-                                    if (!empty($data->date_2)) {
-                                        $dates[] = $data->date_2->format('d M Y');
-                                    }
-                                    if (!empty($data->date_3)) {
-                                        $dates[] = $data->date_3->format('d M Y');
-                                    }
-                                    if (!empty($dates)) {
-                                        echo implode(', ', $dates);
-                                    } else {
+                                        echo $data->date_1->format('d M Y');
+                                    } elseif (!empty($data->date_from) && !empty($data->date_end)) {
                                         echo $data->date_from->format('d M Y') . ' - ' . $data->date_end->format('d M Y');
+                                    } else {
+                                        echo '-';
                                     }
                                     ?>
                                     </td>
-                                    <!-- <td><?= $data->type?></td> -->
+                                    <td class="text-center"><?= !empty($data->type) ? h($data->type) : '-' ?></td>
                                     <td><b><?= $data->user->name?></b><br><small><?= date_format($data->created, 'd M Y') ?></small></td>
                                     <td class="text-center"><?= $dataDevision ?></td>
                                     <td class="text-center">
@@ -158,23 +150,23 @@
                                         }
                                         ?>
                                         <?php
-                                        if ($checkUrl['leaves']['knowing'] == '1' && $data->knowing == null && $data->is_cancel == 0) {
+                                        // if ($checkUrl['leaves']['knowing'] == '1' && $data->knowing == null && $data->is_cancel == 0) {
+                                        if ($checkUrl['leaves']['knowing'] == '1' && $data->knowing == null && $data->approved != null && $data->is_cancel == 0) {
                                             echo $this->Krs->btn('knowing', $linkKnown);
                                         }
                                         ?>
                                         <?php
-                                        if ($checkUrl['leaves']['edit'] == '1' && ($data->approved_date == null || $data->knowing_date == null || $data->is_cancel == 0)) {
+                                        // if ($checkUrl['leaves']['edit'] == '1' && ($data->approved_date == null || $data->knowing_date == null || $data->is_cancel == 0)) {
+                                        if ($checkUrl['leaves']['edit'] == '1' && $data->approved == null && $data->is_cancel == 0) {
                                             echo $this->Krs->btn('edit', $linkEdit);
                                         }
                                         ?>
                                         <?php
                                         $today = date('Y-m-d');
                                         $dates = [];
-                                        if (!empty($data->date_1) || !empty($data->date_2) || !empty($data->date_3)) {
-                                            $dates = [$data->date_1, $data->date_2, $data->date_3];
-                                        } else {
-                                            $dates = [$data->date_from, $data->date_end];
-                                        }
+                                        $dates = !empty($data->date_1)
+                                            ? [$data->date_1]
+                                            : [$data->date_from, $data->date_end];
                                         $canCancel = false;
                                         foreach ($dates as $date) {
                                             if (!empty($date) && $date->format('Y-m-d') >= $today) {

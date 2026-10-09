@@ -30,14 +30,14 @@
                         ]); ?>
                     </div>
                     <div class="col-md-2">
-                        <?= $this->Form->control('businessUnitSearch', [
+                        <?= $this->Form->control('devisionSearch', [
                             'type' => 'select',
                             'label' => false,
-                            'id'    => 'businessUnitSearch',
+                            'id'    => 'devisionSearch',
                             'class' => 'form-control select2',
 
-                            'options' => $this->Krs->dataUbs(),
-                            'empty' => '-- Pilih UBS --'
+                            'options' => $this->Krs->devision(),
+                            'empty' => '-- Pilih Devisi --'
                         ]); ?>    
                     </div> 
                     <div class="col-md-2">
@@ -64,7 +64,7 @@
                     <thead class="thead-dark text-center">
                         <tr>
                             <th width="">Nomor Surat</th>
-                            <th width="">UBS</th>
+                            <th width="">Devisi</th>
                             <th width="">Tanggal Surat</th>
                             <th width="">Deskripsi</th>
                             <th width="">Approve</th>
@@ -275,7 +275,7 @@ function loadHistoryData(){
                 }
                 
                 d.nomorSuratSearch = $('#nomorSuratSearch').val();
-                d.businessUnitSearch = $('#businessUnitSearch').val();
+                d.devisionSearch = $('#devisionSearch').val();
                 // d.NamaCabangSearch = $('#NamaCabangSearch').val();
                 // d.NamaAreaSearch = $('#NamaAreaSearch').val();
                 d.start_date = start_date;
@@ -313,7 +313,7 @@ function loadHistoryData(){
 
             // 2. Cabang
             {
-                data: 'business_unit',
+                data: 'devision',
                 className: 'text-center'
             },
 
@@ -447,7 +447,7 @@ function loadHistoryData(){
             }
         ],
     });
-    $('#nomorSuratSearch, #businessUnitSearch, .daterange').on('change', function () {
+    $('#nomorSuratSearch, #devisionSearch, .daterange').on('change', function () {
         table.ajax.reload();
     });
 
@@ -485,7 +485,7 @@ $(document).on('click', '.btn-preview', function () {
     // $('#previewName').text(masterData.is_create_user?.name || '-');
     // $('#previewCreated').text(masterData.created || '-');
     $('#previewCode').text(masterData.code || '-');
-    $('#previewBusinessUnit').text(masterData.business_unit || '-');
+    $('#previewBusinessUnit').text(masterData.devision || '-');
     $('#previewDate').text(masterData.date ? moment(masterData.date).format('DD-MM-YYYY') : '-');
     $('#previewDescription').text(masterData.description || '-');
        

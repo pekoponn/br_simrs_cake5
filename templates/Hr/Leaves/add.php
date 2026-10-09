@@ -25,51 +25,51 @@ $dataChild = $this->Html->link('Cuti', ['action' => 'index'], ['full_base' => tr
                     <?php echo $this->Form->control('position', ['type' => 'hidden', 'value' => $getUser->staff]); ?>
                     <?php echo $this->Form->control('devision', ['type' => 'hidden', 'value' => $getUser->devision]); ?>
                 </div>
-                <!-- <label class="col-form-label col-md-1">Tanggal :</label>
-                <div class="col-md-4">                   
+                <div class="col-md-6" id="separateLeaveDates">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label>Tanggal Cuti</label>
+                            <div class="input-group">
+                                <?= $this->Form->control('date_1', [
+                                    'label' => false,
+                                    'type' => 'text',
+                                    'class' => 'form-control tanggal',
+                                    'placeholder' => '-- Pilih Tanggal --',
+                                    'readonly' => true,
+                                ]) ?>
+
+                                <span class="input-group-btn">
+                                    <button
+                                        class="btn btn-inverse resetSeparateDate"
+                                        type="button"
+                                        data-target="date_1">
+                                        <i class="fa fa-times"></i>
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <muted class="text-muted">*Pengajuan cuti minimal 14 hari sebelum tanggal cuti</muted>
+                </div>
+                <div class="col-md-5" id="rangeLeaveDates" style="display:none;">
+                    <label>Tanggal Cuti</label>
                     <?php
-                    echo $this->Krs->inputDateRange('date_from', array("class"=>"form-control date-picker filterDate", 'readonly' => true, 'placeholder' => 'Tanggal...'), 'date_end', array("class"=>"form-control date-picker filterDate", 'readonly' => true, 'placeholder' => 'Tanggal...'), 's/d', 'resetDate');
+                    echo $this->Krs->inputDateRange('date_from', array("class"=>"form-control date-picker filterDate", 'readonly' => true, 'placeholder' => 'Tanggal mulai...'), 'date_end', array("class"=>"form-control date-picker filterDate", 'readonly' => true, 'placeholder' => 'Tanggal selesai...'), 's/d', 'resetDate');
                     ?>
                     <muted class="text-muted">*Pengajuan cuti minimal 14 hari sebelum tanggal cuti</muted>
-                </div> -->
-                <div class="col-md-2">
-                    <label>Tanggal Cuti 1</label>
-                    <div class="input-group">
-                        <?= $this->Form->control('date_1', ['label' => false, 'type' => 'text', 'class' => 'form-control tanggal', 'placeholder' => '-- Pilih Tanggal --', 'readonly' => true,
-                        ]); ?>
-                        <span class="input-group-btn">
-                            <button class="btn btn-inverse resetDate" type="button" data-target="date_1"><i class="fa fa-times"></i></button>
-                        </span>
-                    </div>
-                    <muted class="text-muted">*Pengajuan cuti minimal 14 hari sebelum tanggal cuti</muted>
-                </div>
-                <div class="col-md-2">
-                    <label>Tanggal Cuti 2</label>
-                    <div class="input-group">
-                        <?= $this->Form->control('date_2', ['label' => false, 'type' => 'text', 'class' => 'form-control tanggal', 'placeholder' => '-- Pilih Tanggal --', 'readonly' => true,
-                        ]); ?>
-                        <span class="input-group-btn">
-                            <button class="btn btn-inverse resetDate" type="button" data-target="date_2"><i class="fa fa-times"></i></button>
-                        </span>
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <label>Tanggal Cuti 3</label>
-                    <div class="input-group">
-                        <?= $this->Form->control('date_3', ['label' => false, 'type' => 'text', 'class' => 'form-control tanggal', 'placeholder' => '-- Pilih Tanggal --', 'readonly' => true,
-                        ]); ?>
-                        <span class="input-group-btn">
-                            <button class="btn btn-inverse resetDate" type="button" data-target="date_3"><i class="fa fa-times"></i></button>
-                        </span>
-                    </div>
                 </div>
             </div>
             <div class="row">
-                
-                <!-- <div class="col-md-6">
-                    <?= $this->Form->control('type', ['label' => 'Keperluan', 'class' => 'form-control types', 'options' => $this->Krs->descLeaves(), 'default'=>'Lain Lain']); ?>
-                </div> -->
-                
+                <div class="col-md-4">
+                    <?= $this->Form->control('type', [
+                        'label' => 'Jenis Cuti <span class="text-danger">*</span>',
+                        'escape' => false,
+                        'class' => 'form-control select2Form types',
+                        'options' => $this->Krs->leaveTypes(),
+                        'empty' => 'Pilih jenis cuti',
+                        // 'required' => true,
+                    ]); ?>
+                </div>
             </div>
             <hr>
             <?= $this->Form->control('description', ['label' => 'Deskripsi', 'class' => 'form-control', 'type' => 'textarea']); ?>
@@ -101,24 +101,42 @@ $(document).ready(function() {
         todayHighlight: true
     });
 
-    $('.resetDate').click(function () {
-        let target = $(this).data('target');
+    $('.resetSeparateDate').click(function () {
+        $('input[name="' + $(this).data('target') + '"]').datepicker('update', '');
+    });
 
-        $('input[name="' + target + '"]')
-            .datepicker('update', '');
+    // Inisialisasi langsung pada field jenis cuti agar selalu tampil sebagai Select2.
+    $('#type').select2({
+        width: '100%',
+        placeholder: 'Pilih jenis cuti',
+        allowClear: true,
     });
-    $('.types').select2({
-        placeholder: 'Pilih salah satu keperluan',
-    });
+
+    function toggleLeaveDateFields() {
+        const hasLeaveType = $('#type').val() !== null && $('#type').val() !== '';
+        $('#separateLeaveDates').toggle(!hasLeaveType);
+        $('#rangeLeaveDates').toggle(hasLeaveType);
+        $('.filterDate').prop('required', hasLeaveType);
+
+        if (hasLeaveType) {
+            $('.tanggal').datepicker('update', '');
+        } else {
+            $('.filterDate').datepicker('update', '');
+        }
+    }
+
+    $('#type').on('change', toggleLeaveDateFields);
+    toggleLeaveDateFields();
 
     $('#div').select2({
         placeholder: 'Pilih Jenis',
     });
 
-    $('.tanggal').datepicker({
+    $('.filterDate').datepicker('destroy').datepicker({
         autoclose: true,
         format: 'dd-mm-yyyy',
-        startDate: '<?= $minLeaveDate ?>'
+        startDate: '<?= $minLeaveDate ?>',
+        todayHighlight: true
     });
 
     $('.timepicker').timepicker({

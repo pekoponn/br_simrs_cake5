@@ -10,6 +10,7 @@ use Cake\ORM\Entity;
  *
  * @property int $id
  * @property string|null $business_unit
+ * @property string|null $devision
  * @property string|null $code
  * @property \Cake\I18n\FrozenDate|null $date
  * @property string|null $description
@@ -45,6 +46,7 @@ class WorkOrder extends Entity
      */
     protected $_accessible = [
         'business_unit' => true,
+        'devision' => true,
         'code' => true,
         'date' => true,
         'description' => true,

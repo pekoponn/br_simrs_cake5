@@ -296,7 +296,8 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 
 					$menuHrgaEmployees = ($getController == 'hrgaemployees') ? 'class="active"' : '';
 
-					$menuHrIjin = ($getController == 'licenseabsents' || $getController == 'licenseearlyleaves' || $getController == 'permissionlates' || $getController == 'outpermits') ? 'class="active"' : '';
+					// $menuHrIjin = ($getController == 'licenseabsents' || $getController == 'licenseearlyleaves' || $getController == 'permissionlates' || $getController == 'outpermits') ? 'class="active"' : '';
+					$menuHrIjin = ($getController == 'licenseabsents' || $getController == 'licenseearlyleaves' || $getController == 'permissionlates' || $getController == 'outpermits') ? 'active' : '';
 					$menuHrLicenseAbsents = ($getController == 'licenseabsents') ? 'class="active"' : '';
 					$menuHrLicenseEarlyLeaves = ($getController == 'licenseearlyleaves') ? 'class="active"' : '';
 					$menuPermissionLates = ($getController == 'permissionlates') ? 'class="active"' : '';
@@ -1179,7 +1180,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 						</a>
 						<ul class="sub-menu">
 							<li<?= $menuChangePassword ?>>
-								<?= $this->Html->link('Ganti Password', ['prefix' => false,'controller' => 'Users', 'action' => 'changepassword', $getUser->id], ['fullBase' => true, 'escape' => false]) ?>
+								<?= $this->Html->link('Ganti Password', ['prefix' => false,'controller' => 'Users', 'action' => 'changePassword', $getUser->id], ['fullBase' => true, 'escape' => false]) ?>
 					</li>
 					<?php
 					if ($users['index'] == 1) {

@@ -51,6 +51,32 @@ $dataJamKeluar = $dataRows->time_from == null ? " - " : $dataRows->time_from;
                     <?= $this->Krs->fDecode($dataRows->description) ?>
                 </div>
             </div>
+            <?php if (!empty($dataRows->desc_approve)) : ?>
+            <div class="row m-b-5">
+                <div class="col-3 col-sm-3">
+                    <b>Catatan Penyetuju</b>
+                </div>
+                <div class="col-1 col-sm-1">:</div>
+            </div>
+            <div class="row m-b-5">
+                <div class="col-12 col-sm-12">
+                    <?= nl2br(h($dataRows->desc_approve)) ?>
+                </div>
+            </div>
+            <?php endif; ?>
+            <?php if (!empty($dataRows->desc_knowing)) : ?>
+            <div class="row m-b-5">
+                <div class="col-3 col-sm-3">
+                    <b>Catatan Mengetahui</b>
+                </div>
+                <div class="col-1 col-sm-1">:</div>
+            </div>
+            <div class="row m-b-5">
+                <div class="col-12 col-sm-12">
+                    <?= nl2br(h($dataRows->desc_knowing)) ?>
+                </div>
+            </div>
+            <?php endif; ?>
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>

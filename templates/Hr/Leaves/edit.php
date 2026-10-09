@@ -25,41 +25,63 @@ $dataChild = $this->Html->link('Cuti', ['action' => 'index'], ['full_base' => tr
                     <?php echo $this->Form->control('position', ['type' => 'hidden', 'value' => $getUser->position]); ?>
                     <?php echo $this->Form->control('devision', ['type' => 'hidden', 'value' => $getUser->devision]); ?>
                 </div>
-                <!-- <label class="col-form-label col-md-1">Tanggal :</label>
-                <div class="col-md-4">                   
-                    <?php
-                    echo $this->Krs->inputDateRange('date_from', array("class"=>"form-control date-picker filterDate", 'readonly' => true, 'placeholder' => 'Tanggal...', 'value'=>date_format($leave['date_from'], 'd-m-Y')), 'date_end', array("class"=>"form-control date-picker filterDate", 'readonly' => true, 'placeholder' => 'Tanggal...', 'value'=>date_format($leave['date_end'], 'd-m-Y')), 's/d', 'resetDate');
-                    ?>
-                    <muted class="text-muted">*Pengajuan cuti minimal 14 hari sebelum tanggal cuti</muted>
-                </div> -->
-                <div class="col-md-2">
-                    <label>Tanggal Cuti 1</label>
-                    <div class="input-group">
-                        <?= $this->Form->control('date_1', ['label' => false, 'type' => 'text', 'class' => 'form-control filterDate', 'placeholder' => '-- Pilih Tanggal --', 'readonly' => true, 'value'=>!empty($leave->date_1) ? $leave->date_1->format('d-m-Y') : '' ]); ?>
-                        <span class="input-group-btn">
-                            <button class="btn btn-inverse resetDate" type="button" data-target="date_1"><i class="fa fa-times"></i></button>
-                        </span>
+
+                <!-- Tanggal 1 hari (jenis cuti kosong) -->
+                <div class="col-md-6" id="separateLeaveDates">
+                    <div class="row">
+                        <label class="col-form-label col-md-3">Tanggal Cuti :</label>
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <?= $this->Form->control('date_1', [
+                                    'label' => false,
+                                    'type' => 'text',
+                                    'class' => 'form-control separateDate',
+                                    'placeholder' => '-- Pilih Tanggal --',
+                                    'readonly' => true,
+                                    'value' => !empty($leave->date_1) ? $leave->date_1->format('d-m-Y') : '',
+                                ]) ?>
+                                <span class="input-group-btn"><button class="btn btn-inverse resetSeparateDate" type="button" data-target="date_1"><i class="fa fa-times"></i></button></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-2">
-                    <label>Tanggal Cuti 2</label>
-                    <div class="input-group">
-                        <?= $this->Form->control('date_2', ['label' => false, 'type' => 'text', 'class' => 'form-control filterDate', 'placeholder' => '-- Pilih Tanggal --', 'readonly' => true, 'value'=>!empty($leave->date_2) ? $leave->date_2->format('d-m-Y') : ''
-                        ]); ?>
-                        <span class="input-group-btn">
-                            <button class="btn btn-inverse resetDate" type="button" data-target="date_2"><i class="fa fa-times"></i></button>
-                        </span>
+
+                <!-- Tanggal rentang (jenis cuti dipilih) -->
+                <div class="col-md-6" id="rangeLeaveDates" style="display:none;">
+                    <div class="row">
+                        <label class="col-form-label col-md-3">Tanggal Cuti :</label>
+                        <div class="col-md-9">
+                            <?= $this->Krs->inputDateRange(
+                                'date_from',
+                                ['class' => 'form-control date-picker rangeDate', 'readonly' => true, 'placeholder' => 'Tanggal mulai...', 'value' => $leave->date_from ? $leave->date_from->format('d-m-Y') : ''],
+                                'date_end',
+                                ['class' => 'form-control date-picker rangeDate', 'readonly' => true, 'placeholder' => 'Tanggal selesai...', 'value' => $leave->date_end ? $leave->date_end->format('d-m-Y') : ''],
+                                's/d',
+                                'resetDateRange'
+                            ) ?>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-2">
-                    <label>Tanggal Cuti 3</label>
-                    <div class="input-group">
-                        <?= $this->Form->control('date_3', ['label' => false, 'type' => 'text', 'class' => 'form-control filterDate', 'placeholder' => '-- Pilih Tanggal --', 'readonly' => true, 'value'=>!empty($leave->date_3) ? $leave->date_3->format('d-m-Y') : ''
-                        ]); ?>
-                        <span class="input-group-btn">
-                            <button class="btn btn-inverse resetDate" type="button" data-target="date_3"><i class="fa fa-times"></i></button>
-                        </span>
-                    </div>
+            </div>
+            <?php
+            $leaveTypeOptions = $this->Krs->leaveTypes();
+            $selectedLeaveType = '';
+            foreach ($leaveTypeOptions as $leaveTypeValue => $leaveTypeLabel) {
+                if (explode('^', $leaveTypeValue, 2)[0] === $leave->type) {
+                    $selectedLeaveType = $leaveTypeValue;
+                    break;
+                }
+            }
+            ?>
+            <div class="row">
+                <div class="col-md-4">
+                    <?= $this->Form->control('type', [
+                        'label' => 'Jenis Cuti',
+                        'class' => 'form-control types',
+                        'options' => $leaveTypeOptions,
+                        'empty' => 'Pilih jenis cuti',
+                        'value' => $selectedLeaveType,
+                    ]) ?>
                 </div>
             </div>
             <!-- <div class="row">
@@ -94,28 +116,45 @@ $minLeaveDate = date('d-m-Y', strtotime($leave->created . ' +14 days'));
         var confirmTitle = "Apakah anda ingin menyimpan data tersebut ?";
         var formAction = "<?php echo $this->Url->build(['prefix' => 'Hr', 'controller' => 'Leaves', 'action' => 'edit', $leave->id], ['fullBase' => true]); ?>";
         handleFormConfirmSubmitValid('GroupAddForm', 'btn-add', confirmTitle, formAction);
-        datePickerReset('input-daterange', 'resetDate', 'filterDate', 'dd-mm-yyyy');
-        $('.filterDate').datepicker('destroy');
-
-        $('.filterDate').datepicker({
+        $('.separateDate, .rangeDate').datepicker({
             autoclose: true,
             format: 'dd-mm-yyyy',
             startDate: '<?= $minLeaveDate ?>'
         });
 
         $('.types').select2({
-            // placeholder: 'Pilih salah satu keperluan',
+            placeholder: 'Pilih jenis cuti',
+            allowClear: true,
+            width: '100%'
         });
+
+        $('.resetSeparateDate').on('click', function () {
+            $('input[name="' + $(this).data('target') + '"]').datepicker('update', '');
+        });
+
+        function toggleLeaveDateFields(clearOppositeFields) {
+            const hasLeaveType = $('#type').val() !== null && $('#type').val() !== '';
+            $('#separateLeaveDates').toggle(!hasLeaveType);
+            $('#rangeLeaveDates').toggle(hasLeaveType);
+            $('.rangeDate').prop('required', hasLeaveType);
+
+            if (clearOppositeFields) {
+                if (hasLeaveType) {
+                    $('.separateDate').datepicker('update', '');
+                } else {
+                    $('.rangeDate').datepicker('update', '');
+                }
+            }
+        }
+
+        $('#type').on('change', function () {
+            toggleLeaveDateFields(true);
+        });
+        toggleLeaveDateFields(false);
 
         $('#div').select2({
             placeholder: 'Pilih Jenis',
         });
-
-        $('.tanggal').datepicker({
-            autoclose: true,
-            format: 'dd-mm-yyyy'
-        });
-
 
         $('.timepicker').timepicker({
         });

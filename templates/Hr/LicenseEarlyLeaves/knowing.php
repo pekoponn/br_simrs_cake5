@@ -51,6 +51,11 @@ $dataChild = $this->Html->link('Ijin Pulang', ['action' => 'index'], ['full_base
                             <div class="row">
                                 <div class="col-6 col-sm-6"><span><?= $this->Krs->fDecode($licenseEarlyLeave->description) ?></span></div>
                             </div>
+                            <div class="row m-b-15">
+                                <div class="col-6 col-sm-6">
+                                    <?= $this->Form->control('desc_knowing', ['label' => 'Catatan Mengetahui', 'class' => 'form-control', 'type' => 'textarea', 'rows' => 3]); ?>
+                                </div>
+                            </div>
                         </div>
                         <div class="row">
                             <div class="form-group">

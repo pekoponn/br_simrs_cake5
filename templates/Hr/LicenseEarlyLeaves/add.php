@@ -31,7 +31,7 @@ $dataChild = $this->Html->link('Ijin Pulang', ['action' => 'index'], ['full_base
                 </div>
             </div>
             <div class="form-group row m-b-15">
-                <label class="col-form-label col-md-1">Jam :</label>
+                <!-- <label class="col-form-label col-md-1">Jam :</label>
                 <div class="col-md-4">
                     <div class="row">
                        <div class="col-md-5">
@@ -57,7 +57,7 @@ $dataChild = $this->Html->link('Ijin Pulang', ['action' => 'index'], ['full_base
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> -->
                 <label class="col-form-label col-md-1">Jam Pulang :</label>
                 <div class="col-md-2">
                     <?php echo $this->Form->control('time_from', ['label' => false, 'class' => 'form-control clockpicker', 'type'=>'text', 'placeholder' => '-- Pilih Jam --']); ?>

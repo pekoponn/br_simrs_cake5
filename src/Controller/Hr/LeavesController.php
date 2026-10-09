@@ -74,17 +74,13 @@ class LeavesController extends AppController
         if (!empty($filterDateFrom) && !empty($filterDateEnd)) {
             $data['filterDateFrom'] = $filterDateFrom;
             $data['filterDateEnd'] = $filterDateEnd;
-            // $dataWhere[] = 'DATE(Leaves.date_from) BETWEEN "' . $this->Krs->dateTo($filterDateFrom) . '" AND "' . $this->Krs->dateTo($filterDateEnd) . '"';
+
+            $from = $this->Krs->dateTo($filterDateFrom);
+            $to   = $this->Krs->dateTo($filterDateEnd);
+
             $dataWhere[] = '(
-                DATE(Leaves.date_1) BETWEEN "' . $this->Krs->dateTo($filterDateFrom) . '" AND "' . $this->Krs->dateTo($filterDateEnd) . '" 
-                OR DATE(Leaves.date_2) BETWEEN "' . $this->Krs->dateTo($filterDateFrom) . '" AND "' . $this->Krs->dateTo($filterDateEnd) . '" 
-                OR DATE(Leaves.date_3) BETWEEN "' . $this->Krs->dateTo($filterDateFrom) . '" AND "' . $this->Krs->dateTo($filterDateEnd) . '" 
-                OR (
-                    Leaves.date_1 IS NULL
-                    AND Leaves.date_2 IS NULL
-                    AND Leaves.date_3 IS NULL
-                    AND DATE(Leaves.date_from) BETWEEN "' . $this->Krs->dateTo($filterDateFrom) . '" AND "' . $this->Krs->dateTo($filterDateEnd) . '"
-                )
+                DATE(Leaves.date_1) BETWEEN "' . $from . '" AND "' . $to . '"
+                OR (DATE(Leaves.date_from) <= "' . $to . '" AND DATE(Leaves.date_end) >= "' . $from . '")
             )';
         }
 
@@ -173,30 +169,64 @@ class LeavesController extends AppController
         if ($this->request->is('post')) {
             
             $dataRow = $this->request->getData();
-            // list($typeName, $typeDay) = explode('^', $dataRow['type']);
+            [$typeName] = array_pad(explode('^', (string)($dataRow['type'] ?? ''), 2), 2, null);
 
             $isUser = $dataRow['is_create'];
 
             $auditLog = $this->Krs->auditLog("Leaves", 'N',  $isUser, "Leaves add");
             $dataAuditLog = array('is_log' => $auditLog);
 
-            // $dataAuditLog['type'] = $typeName;
-            // $dataAuditLog['leave_days'] = $typeDay;
-            // $dataLeaveDays['leave_days'] =
-            // (new \DateTime($this->Krs->dateTo($dataRow['date_from'])))
-            //     ->diff(new \DateTime($this->Krs->dateTo($dataRow['date_end'])))
-            //     ->days + 1;
-            // $dataLeaveDays['leave_days'] = $leaveDays;
+            if (!empty($typeName)) {
+                if (empty($dataRow['date_from']) || empty($dataRow['date_end'])) {
+                    $this->Flash->error('Tanggal mulai dan tanggal selesai wajib diisi.');
+                    $this->set(compact('leave'));
+                    return;
+                }
+                $dateFrom = $this->Krs->dateTo($dataRow['date_from']);
+                $dateEnd = $this->Krs->dateTo($dataRow['date_end']);
+                if (strtotime($dateEnd) < strtotime($dateFrom)) {
+                    $this->Flash->error('Tanggal selesai cuti tidak boleh sebelum tanggal mulai.');
+                    $this->set(compact('leave'));
+                    return;
+                }
+                $dataLeave = [
+                    'type' => $typeName,
+                    'date_from' => $dateFrom,
+                    'date_end' => $dateEnd,
+                    'leave_days' => (new \DateTime($dateFrom))->diff(new \DateTime($dateEnd))->days + 1,
+                    'date_1' => null,
+                    'date_2' => null,
+                    'date_3' => null,
+                ];
+            } else {
+                if (empty($dataRow['date_1'])) {
+                    $this->Flash->error('Tanggal cuti wajib dipilih.');
+                    $this->set(compact('leave'));
+                    return;
+                }
 
-            // $dataDateFrom = array('date_from' => $this->Krs->dateTo($dataRow['date_from']));
-            // $dataDateEnd = array('date_end' => $this->Krs->dateTo($dataRow['date_end']));
-            $dataDate1 = array('date_1' => $this->Krs->dateTo($dataRow['date_1']));
-            $dataDate2 = array('date_2' => $this->Krs->dateTo($dataRow['date_2']));
-            $dataDate3 = array('date_3' => $this->Krs->dateTo($dataRow['date_3']));
+                $date1 = $this->Krs->dateTo($dataRow['date_1']);
+
+                $dataLeave = [
+                    'type' => null,
+                    'date_from' => null,
+                    'date_end' => null,
+                    'date_1' => $date1,
+                    'date_2' => null,
+                    'date_3' => null,
+                    'leave_days' => 1,
+                ];
+            }
+            // $leaveDateText = !empty($typeName)
+            //     ? ($dataRow['date_from'] . ' s/d ' . $dataRow['date_end'])
+            //     : implode(', ', array_filter([$dataRow['date_1'] ?? null, $dataRow['date_2'] ?? null, $dataRow['date_3'] ?? null]));
+            $leaveDateText = !empty($typeName)
+                ? ($dataRow['date_from'] . ' s/d ' . $dataRow['date_end'])
+                : $dataRow['date_1'];
             $dataApplicant = array('applicant' => $isUser);
             $dataDesc = array('description' => $this->Krs->fEncode($dataRow['description']));
 
-            $leave = $this->Leaves->patchEntity($leave, array_merge($dataRow, $dataApplicant, $dataDesc, $dataAuditLog, $dataDate1, $dataDate2, $dataDate3));
+            $leave = $this->Leaves->patchEntity($leave, array_merge($dataRow, $dataApplicant, $dataDesc, $dataAuditLog, $dataLeave));
             // $dataDateFrom, $dataDateEnd, $dataLeaveDays,
             if ($this->Leaves->save($leave)) {
                 $pemohon = $this->Users->get($isUser);
@@ -238,9 +268,13 @@ class LeavesController extends AppController
         $leave = $this->Leaves->get($id, [
             'contain' => [],
         ]);
+        if ($leave->approved !== null || $leave->is_cancel > 0) {
+            $this->Flash->error('Data sudah disetujui/dibatalkan, tidak bisa diedit.');
+            return $this->redirect(['action' => 'index']);
+        }
         if ($this->request->is(['patch', 'post', 'put'])) {
             $dataRow = $this->request->getData();
-            // list($typeName, $typeDay) = explode('^', $dataRow['type']);
+            [$typeName] = array_pad(explode('^', (string)($dataRow['type'] ?? ''), 2), 2, null);
             // $dataType['type'] = $typeName;
             // $dataLeaveDays['leave_days'] = $typeDay;
             $isUser = $dataRow['is_update'];
@@ -248,12 +282,46 @@ class LeavesController extends AppController
             $dataAuditLog = array('is_log' => $auditLog); 
             // $dataDateFrom = array('date_from' => $this->Krs->dateTo($dataRow['date_from']));
             // $dataDateEnd = array('date_end' => $this->Krs->dateTo($dataRow['date_end']));
-            $dataDate1 = array('date_1' => $this->Krs->dateTo($dataRow['date_1']));
-            $dataDate2 = array('date_2' => $this->Krs->dateTo($dataRow['date_2']));
-            $dataDate3 = array('date_3' => $this->Krs->dateTo($dataRow['date_3']));
+            $dataDate1 = array('date_1' => !empty($dataRow['date_1']) ? $this->Krs->dateTo($dataRow['date_1']) : null);
+            $dataDate2 = array('date_2' => !empty($dataRow['date_2']) ? $this->Krs->dateTo($dataRow['date_2']) : null);
+            $dataDate3 = array('date_3' => !empty($dataRow['date_3']) ? $this->Krs->dateTo($dataRow['date_3']) : null);
             $dataDesc = array('description' => $this->Krs->fEncode($dataRow['description']));
 
-            $leave = $this->Leaves->patchEntity($leave, array_merge($dataRow, $dataAuditLog, $dataDate1, $dataDate2, $dataDate3, $dataDesc));
+            $dataLeaveType = [];
+            if (!empty($typeName) && !empty($dataRow['date_from']) && !empty($dataRow['date_end'])) {
+                $dateFrom = $this->Krs->dateTo($dataRow['date_from']);
+                $dateEnd = $this->Krs->dateTo($dataRow['date_end']);
+                if (strtotime($dateEnd) < strtotime($dateFrom)) {
+                    $this->Flash->error('Tanggal selesai cuti tidak boleh sebelum tanggal mulai.');
+                    $this->set(compact('leave'));
+                    return;
+                }
+                $dataLeaveType = [
+                    'type' => $typeName,
+                    'date_from' => $dateFrom,
+                    'date_end' => $dateEnd,
+                    'leave_days' => (new \DateTime($dateFrom))->diff(new \DateTime($dateEnd))->days + 1,
+                    'date_1' => null,
+                    'date_2' => null,
+                    'date_3' => null,
+                ];
+            } elseif (empty($typeName)) {
+                if (empty($dataRow['date_1'])) {
+                    $this->Flash->error('Tanggal cuti wajib dipilih.');
+                    $this->set(compact('leave'));
+                    return;
+                }
+                $dataLeaveType = [
+                    'type' => null,
+                    'date_from' => null,
+                    'date_end' => null,
+                    'date_1' => $dataDate1['date_1'],
+                    'date_2' => null,
+                    'date_3' => null,
+                    'leave_days' => 1,
+                ];
+            }
+            $leave = $this->Leaves->patchEntity($leave, array_merge($dataRow, $dataAuditLog, $dataDate1, $dataDate2, $dataDate3, $dataDesc, $dataLeaveType));
             // , $dataType, $dataLeaveDays
             if ($this->Leaves->save($leave)) {
                 $this->Flash->success('Terima kasih, Data berhasil disimpan.');
@@ -299,9 +367,10 @@ class LeavesController extends AppController
             $dataRow = $this->request->getData();
             $isApprove = $dataRow['approved'];
             $date = ['approved_date' => new Date()];
+            $dataNote = ['desc_approve' => trim((string)($dataRow['desc_approve'] ?? ''))];
             $auditLog = $this->Krs->auditLog("Leaves", 'N', $isApprove, "Leaves approve");
             $dataAuditLog = ['is_log' => $auditLog];
-            $leave = $this->Leaves->patchEntity($leave, array_merge($dataRow, $date, $dataAuditLog));
+            $leave = $this->Leaves->patchEntity($leave, array_merge($dataRow, $date, $dataNote, $dataAuditLog));
 
             if ($this->Leaves->save($leave)) {
                 $usersTable = $this->getTableLocator()->get('Users');
@@ -316,12 +385,11 @@ class LeavesController extends AppController
                         ->first();
 
                     if ($employee) {
-                        $dates = array_filter([$leave->date_1, $leave->date_2, $leave->date_3]);
-                        $jumlahHari = count(array_unique($dates));
+                        $jumlahHari = (int)$leave->leave_days;
                         $employee->jml_cuti = max(0, $employee->jml_cuti - $jumlahHari);
                         $employeesTable->save($employee);
-                        // Simpan log
-                        $logMsg = "Cuti atas nama {$leave->user->name} disetujui oleh HRGA (User ID: {$isApprove}) pada ". date('Y-m-d H:i:s') . ". Pengurangan cuti: {$jumlahHari} hari.";
+
+                        $logMsg = "Cuti atas nama {$leave->user->name} disetujui oleh HRGA (User ID: {$isApprove}) pada " . date('Y-m-d H:i:s') . ". Pengurangan cuti: {$jumlahHari} hari.";
                         $leave->is_log = trim(($leave->is_log ?? '') . "\n" . $logMsg);
                         $this->Leaves->save($leave);
                     }
@@ -341,16 +409,19 @@ class LeavesController extends AppController
         $leave = $this->Leaves->get($id, [
             'contain' => ['Users'],
         ]);
+        if ($leave->approved === null) {
+            $this->Flash->error('Data belum disetujui, belum bisa diketahui.');
+            return $this->redirect(['action' => 'index']);
+        }
         if ($this->request->is(['patch', 'post', 'put'])) {
             $dataRow = $this->request->getData();
-            // pr($dataRow);
             $isUser = $dataRow['knowing'];
-            // $isApprove = $dataRow['knowing'];
             $date = array('knowing_date' => new Date());
+            $dataNote = ['desc_knowing' => trim((string)($dataRow['desc_knowing'] ?? ''))];
             $auditLog = $this->Krs->auditLog("Leaves", 'N', $isUser, "Leaves knowing");
             $dataAuditLog = array('is_log' => $auditLog);
 
-            $leave = $this->Leaves->patchEntity($leave, array_merge($dataRow, $date, $dataAuditLog));
+            $leave = $this->Leaves->patchEntity($leave, array_merge($dataRow, $date, $dataNote, $dataAuditLog));
 
             // pr($leave);
             if ($this->Leaves->save($leave)) {
@@ -383,7 +454,11 @@ class LeavesController extends AppController
         if (!empty($filterDateFrom) && !empty($filterDateEnd)) {
             $dateFrom = $this->Krs->dateTo($filterDateFrom);
             $dateEnd  = $this->Krs->dateTo($filterDateEnd);
-            $dataWhere[] ='DATE(Leaves.date_from) BETWEEN "' . $dateFrom . '" AND "' . $dateEnd .'"';
+
+            $dataWhere[] = '(
+                DATE(Leaves.date_1) BETWEEN "' . $dateFrom . '" AND "' . $dateEnd . '"
+                OR (DATE(Leaves.date_from) <= "' . $dateEnd . '" AND DATE(Leaves.date_end) >= "' . $dateFrom . '")
+            )';
         }
         if (!empty($filterApplicant)) {
             $dataWhere['Users.name like'] = '%' . $filterApplicant . '%';
@@ -402,7 +477,7 @@ class LeavesController extends AppController
         $query = $this->Leaves->find('all')
             ->contain(['Users', 'Mengetahui', 'Menyetujui'])
             ->order([
-                'DATE(Leaves.date_from)' => 'DESC',
+                'COALESCE(Leaves.date_from, Leaves.date_1)' => 'DESC',
                 'Users.name' => 'DESC'
             ]);
 
@@ -463,8 +538,11 @@ class LeavesController extends AppController
             $sheet->setCellValue( 'B' . $rowNum, $r->user->name ?? '-');
             $sheet->setCellValue('C' . $rowNum,$r->devision ?? '-');
             $sheet->setCellValue('D' . $rowNum,$r->leave_days.' Hari' ?? '-');
-            $sheet->setCellValue('E' . $rowNum,!empty($r->date_from)? $r->date_from->format('d-m-Y') : '-');
-            $sheet->setCellValue('F' . $rowNum, !empty($r->date_end) ? $r->date_end->format('d-m-Y') : '-');
+            $tglDari   = $r->date_from ?? $r->date_1;
+            $tglSampai = $r->date_end ?? $r->date_1;
+
+            $sheet->setCellValue('E' . $rowNum, !empty($tglDari) ? $tglDari->format('d-m-Y') : '-');
+            $sheet->setCellValue('F' . $rowNum, !empty($tglSampai) ? $tglSampai->format('d-m-Y') : '-');
             $sheet->setCellValue('G' . $rowNum,$r->type ?? '-');
             // $sheet->setCellValue('F' . $rowNum, $this->Krs->fDecode($r->description) ?? '-');
             // $sheet->setCellValue('G' . $rowNum, $r->mengetahui->name ?? '-');
@@ -517,23 +595,106 @@ class LeavesController extends AppController
             $session = $this->getRequest()->getSession();
             $dataSession = $session->read('Auth');
             $userId = $dataSession['id'];
+
             $leave = $this->Leaves->get($id);
+
+            // Cegah pembatalan ganda (supaya jatah tidak dikembalikan dua kali)
+            if ($leave->is_cancel > 0) {
+                $this->Flash->error(__('Pengajuan cuti ini sudah dibatalkan sebelumnya.'));
+                return $this->redirect($this->referer());
+            }
+
+            // Cuti dianggap sudah disetujui jika sudah ada approved_date dan status_approve = 'Y'
+            $wasApproved = ($leave->approved_date !== null && $leave->status_approve === 'Y');
+
             $leave = $this->Leaves->patchEntity($leave, [
                 'is_cancel'     => $userId,
                 'canceled'      => $this->Krs->dateNow(),
                 'cancel_reason' => $this->request->getData('cancel_reason'),
-                'is_log'        => $this->Krs->auditLog($this->request->getParam('controller'), $id, $userId, 'Leave cancel')
+                'is_log'        => $this->Krs->auditLog($this->request->getParam('controller'), $id, $userId, 'Leave cancel'),
             ]);
-            // debug($leave);
-            // die;
 
-            if ($this->Leaves->save($leave)) {
-                $this->Flash->success(__('Pengajuan cuti berhasil dibatalkan.'));
-            } else {
+            $connection = $this->Leaves->getConnection();
+            $connection->begin();
+
+            try {
+                if (!$this->Leaves->save($leave)) {
+                    throw new \RuntimeException('Gagal menyimpan pembatalan.');
+                }
+
+                $restoredDays = 0;
+
+                // Kembalikan jatah cuti hanya jika sebelumnya sudah di-approve
+                if ($wasApproved) {
+                    $user = $this->getTableLocator()->get('Users')
+                        ->find()
+                        ->where(['id' => $leave->applicant])
+                        ->first();
+
+                    if (!empty($user) && !empty($user->hrga_employee_id)) {
+                        $employeesTable = $this->getTableLocator()->get('HrgaEmployees');
+                        $employee = $employeesTable->find()
+                            ->where(['id' => $user->hrga_employee_id])
+                            ->first();
+
+                        if ($employee) {
+                            // Pakai leave_days, sama seperti perhitungan pengurangan di approve()
+                            $restoredDays = (int)$leave->leave_days;
+                            $employee->jml_cuti = $employee->jml_cuti + $restoredDays;
+
+                            if (!$employeesTable->save($employee)) {
+                                throw new \RuntimeException('Gagal mengembalikan jatah cuti.');
+                            }
+
+                            $logMsg = "Pembatalan cuti atas nama {$user->name} (User ID: {$userId}) pada "
+                                . date('Y-m-d H:i:s') . ". Pengembalian cuti: {$restoredDays} hari.";
+                            $leave->is_log = trim(($leave->is_log ?? '') . "\n" . $logMsg);
+                            $this->Leaves->save($leave);
+                        }
+                    }
+                }
+
+                $connection->commit();
+
+                if ($wasApproved) {
+                    $this->Flash->success(__('Pengajuan cuti dibatalkan dan {0} hari jatah cuti dikembalikan.', $restoredDays));
+                } else {
+                    $this->Flash->success(__('Pengajuan cuti berhasil dibatalkan.'));
+                }
+            } catch (\Throwable $e) {
+                $connection->rollback();
                 $this->Flash->error(__('Pengajuan cuti gagal dibatalkan.'));
             }
         }
 
         return $this->redirect($this->referer());
     }
+
+    // public function cancel($id = null)
+    // {
+    //     if ($this->request->is(['patch', 'post', 'put'])) {
+    //         $id = $this->request->getData('id') ?? $id;
+    //         $session = $this->getRequest()->getSession();
+    //         $dataSession = $session->read('Auth');
+    //         $userId = $dataSession['id'];
+    //         $leave = $this->Leaves->get($id);
+    //         $leave = $this->Leaves->patchEntity($leave, [
+    //             $user = $this->getTableLocator()->get('Users')->find()->where(['id' => $leave->applicant])->first();
+    //                 $employees = $this->getTableLocator()->get('HrgaEmployees');
+    //             'is_cancel'     => $userId,
+    //             'canceled'      => $this->Krs->dateNow(),
+    //             'cancel_reason' => $this->request->getData('cancel_reason'),
+    //             'is_log'        => $this->Krs->auditLog($this->request->getParam('controller'), $id, $userId, 'Leave cancel')
+    //         ]);
+    //         // debug($leave);
+    //         // die;
+
+    //         if ($this->Leaves->save($leave)) {
+    //             $this->Flash->success(__('Pengajuan cuti berhasil dibatalkan.'));
+    //         } else {
+    //             $this->Flash->error(__('Pengajuan cuti gagal dibatalkan.'));
+    //     }
+
+    //     return $this->redirect($this->referer());
+    // }
 }

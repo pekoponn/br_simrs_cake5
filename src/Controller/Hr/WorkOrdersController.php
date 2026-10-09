@@ -112,6 +112,7 @@ class WorkOrdersController extends AppController
             ]);
             // debug($workOrder);
             // die;
+            $workOrder->devision = $dataRow['devision'] ?? null;
             if ($this->WorkOrders->save($workOrder)) {
                 $this->Flash->success(__('Surat Perintah Kerja Lembur berhasil disimpan.'));
 
@@ -254,7 +255,7 @@ class WorkOrdersController extends AppController
         $end_date   = $this->request->getQuery('end_date');
         // $NamaAsetSearch = $this->request->getQuery('NamaAsetSearch');
         $nomorSuratSearch = $this->request->getQuery('nomorSuratSearch');
-        $businessUnitSearch = $this->request->getQuery('businessUnitSearch');
+        $devisionSearch = $this->request->getQuery('devisionSearch');
         // $form_type = $this->request->getQuery('form_type');
 
         $query = $this->WorkOrders->find()
@@ -284,8 +285,8 @@ class WorkOrdersController extends AppController
             $query->where(['WorkOrders.code LIKE' => '%' . $nomorSuratSearch . '%']);
         }
 
-        if (!empty($businessUnitSearch)) {
-            $query->where(['WorkOrders.business_unit LIKE' => '%' . $businessUnitSearch . '%']);
+        if (!empty($devisionSearch)) {
+            $query->where(['WorkOrders.devision LIKE' => '%' . $devisionSearch . '%']);
         }
 
         if (!empty($start_date) && !empty($end_date)) {

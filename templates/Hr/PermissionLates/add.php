@@ -20,14 +20,14 @@ $dataChild = $this->Html->link('Ijin Terlambat', ['action' => 'index'], ['full_b
                 </div>
                 <label class="col-form-label col-md-1">Jabatan :</label>
                 <div class="col-md-3">
-                    <?php echo $this->Form->control('position', ['label'=>false,'type' => 'text', 'class'=>'form-control-plaintext', 'value' => $getUser->position]); ?>
+                    <?php echo $this->Form->control('position', ['label'=>false,'type' => 'text', 'class'=>'form-control-plaintext', 'value' => $getUser->staff]); ?>
                     <?php echo $this->Form->control('is_create', ['type' => 'hidden', 'value' => $getUser->id]); ?>
-                    <?php echo $this->Form->control('position', ['type' => 'hidden', 'value' => $getUser->position]); ?>
+                    <?php echo $this->Form->control('position', ['type' => 'hidden', 'value' => $getUser->staff]); ?>
                     <?php echo $this->Form->control('devision', ['type' => 'hidden', 'value' => $getUser->devision]); ?>
                 </div>
                 <label class="col-form-label col-md-1">Tanggal :</label>
                 <div class="col-md-2">
-                    <?php echo $this->Form->control('date', ['label' => false, 'class' => 'form-control tanggal', 'type'=>'text', 'empty' => '-- Pilih Tanggal --']); ?>
+                    <?php echo $this->Form->control('date', ['label' => false, 'class' => 'form-control tanggal', 'type'=>'text', 'empty' => '-- Pilih Tanggal --', 'placeholder' => '-- Pilih Tanggal --']); ?>
                 </div>
             </div>
             <div class="form-group row m-b-15">
@@ -81,8 +81,14 @@ $(document).ready(function() {
 
     $('.tanggal').datepicker({
         autoclose: true,
-        format: 'dd-mm-yyyy'
-    }).datepicker('setDate', 'now');
+        format: 'dd-mm-yyyy',
+        startDate: new Date(),
+        endDate: new Date()
+    }).datepicker('setDate', new Date());
+
+    $('.tanggal').on('keydown paste', function(e) {
+    e.preventDefault();
+    });
     
 });
 </script>

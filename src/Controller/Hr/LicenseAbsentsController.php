@@ -233,12 +233,21 @@ class LicenseAbsentsController extends AppController
         $licenseAbsent = $this->LicenseAbsents->get($id, [
             'contain' => [],
         ]);
+        if ($licenseAbsent->approved !== null) {
+            $this->Flash->error('Data sudah disetujui, tidak bisa diedit.');
+            return $this->redirect(['action' => 'index']);
+        }
         if ($this->request->is(['patch', 'post', 'put'])) {
             $dataRow = $this->request->getData();
             unset($dataRow['files']);
+            [$typeName, $typeDay] = array_pad(explode('^', (string)($dataRow['type'] ?? ''), 2), 2, null);
             $isUser = $dataRow['is_update'];
             $auditLog = $this->Krs->auditLog("LicenseAbsents", $id, $isUser, "LicenseAbsents edit");
             $dataAuditLog = array('is_log' => $auditLog); 
+            $dataType = array(
+                'type' => $typeName,
+                'absent_days' => $typeDay ?? $licenseAbsent->absent_days,
+            );
             $dataDateFrom = array('date_from' => $this->Krs->dateTo($dataRow['date_from']));
             $dataDateEnd = array('date_end' => $this->Krs->dateTo($dataRow['date_end']));
             $dataDesc = array('description' => $this->Krs->fEncode($dataRow['description']));
@@ -262,7 +271,7 @@ class LicenseAbsentsController extends AppController
                 $fileData[$fieldName] = $filename;
             }
 
-            $licenseAbsent = $this->LicenseAbsents->patchEntity($licenseAbsent, array_merge($dataRow, $dataAuditLog, $dataDateFrom, $dataDateEnd, $dataDesc, $fileData));
+            $licenseAbsent = $this->LicenseAbsents->patchEntity($licenseAbsent, array_merge($dataRow, $dataAuditLog, $dataType, $dataDateFrom, $dataDateEnd, $dataDesc, $fileData));
             if ($this->LicenseAbsents->save($licenseAbsent)) {
                 $this->Flash->success('Terima kasih, Data berhasil disimpan.');
 
@@ -327,6 +336,10 @@ class LicenseAbsentsController extends AppController
         $licenseAbsent = $this->LicenseAbsents->get($id, [
             'contain' => ['Users'],
         ]);
+        if ($licenseAbsent->approved === null) {
+            $this->Flash->error('Data belum disetujui, belum bisa diketahui.');
+            return $this->redirect(['action' => 'index']);
+        }
         if ($this->request->is(['patch', 'post', 'put'])) {
             $dataRow = $this->request->getData();
             // pr($dataRow);

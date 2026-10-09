@@ -8,18 +8,9 @@ $dataRows = $data['dataRows'];
 // $dataDateEnd = date_format($dataRows->date_end, 'd M Y');
 // $dataApprove = $dataRows->approved == null ? " - " : '<b>'.$dataRows->menyetujui->name.'</b> (<i>'.date_format($dataRows->approved_date, 'd-m-Y').'</i>)';
 // $dataKnowing = $dataRows->knowing == null ? " - " : '<b>'.$dataRows->mengetahui->name.'</b> (<i>'.date_format($dataRows->knowing_date, 'd-m-Y').'</i>)';
-$dates = [];
+
 if (!empty($dataRows->date_1)) {
-    $dates[] = $dataRows->date_1->format('d M Y');
-}
-if (!empty($dataRows->date_2)) {
-    $dates[] = $dataRows->date_2->format('d M Y');
-}
-if (!empty($dataRows->date_3)) {
-    $dates[] = $dataRows->date_3->format('d M Y');
-}
-if (!empty($dates)) {
-    $tanggalCuti = implode(', ', $dates);
+    $tanggalCuti = $dataRows->date_1->format('d M Y');
 } elseif (!empty($dataRows->date_from) && !empty($dataRows->date_end)) {
     $tanggalCuti = $dataRows->date_from->format('d M Y') . ' - ' . $dataRows->date_end->format('d M Y');
 } else {
@@ -79,6 +70,10 @@ $dataApprove = $dataRows->approved == null
                 </div>
                 <div class="col-4 col-sm-4">: <i><i><?= $dataDateEnd; ?></i></div> -->
             </div>
+            <div class="row m-b-5">
+                <div class="col-2 col-sm-2"><b>Jenis Cuti</b></div>
+                <div class="col-4 col-sm-4">: <i><?= !empty($dataRows->type) ? h($dataRows->type) : '-' ?></i></div>
+            </div>
             <!-- <div class="row m-b-5 m-b-5">
                 <div class="col-2 col-sm-2">
                     <b>Jenis</b>
@@ -96,6 +91,32 @@ $dataApprove = $dataRows->approved == null
                     <?= $this->Krs->fDecode($dataRows->description) ?>
                 </div>
             </div>
+            <?php if (!empty($dataRows->desc_approve)) : ?>
+            <div class="row m-b-5">
+                <div class="col-3 col-sm-3">
+                    <b>Catatan Approve</b>
+                </div>
+                <div class="col-1 col-sm-1">:</div>
+            </div>
+            <div class="row m-b-5">
+                <div class="col-12 col-sm-12">
+                    <?= nl2br(h($dataRows->desc_approve)) ?>
+                </div>
+            </div>
+            <?php endif; ?>
+            <?php if (!empty($dataRows->desc_knowing)) : ?>
+            <div class="row m-b-5">
+                <div class="col-3 col-sm-3">
+                    <b>Catatan Mengetahui</b>
+                </div>
+                <div class="col-1 col-sm-1">:</div>
+            </div>
+            <div class="row m-b-5">
+                <div class="col-12 col-sm-12">
+                    <?= nl2br(h($dataRows->desc_knowing)) ?>
+                </div>
+            </div>
+            <?php endif; ?>
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>

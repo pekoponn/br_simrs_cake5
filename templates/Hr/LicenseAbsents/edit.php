@@ -35,7 +35,13 @@ $dataChild = $this->Html->link('Tidak Masuk', ['action' => 'index'], ['full_base
             <div class="form-group row m-b-15">
                 <label class="col-form-label col-md-1">Keperluan :</label>
                 <div class="col-md-3">
-                    <?php echo $this->Form->control('type', ['label' => false, 'options' => ['Sakit' => 'Sakit', 'Keperluan Pribadi' => 'Keperluan Pribadi', 'Lain-lain' => 'Lain-lain'], 'class' => 'form-control types', 'empty' => '-- Pilih Keperluan --']); ?>
+                    <?php echo $this->Form->control('type', [
+                        'label' => false,
+                        'options' => $this->Krs->descLeaves(),
+                        'class' => 'form-control types',
+                        'empty' => '-- Pilih Keperluan --',
+                        'value' => $licenseAbsent->type . '^' . $licenseAbsent->absent_days,
+                    ]); ?>
                 </div>
                 <label class="col-form-label col-md-1">Berkas :</label>
                 <div class="col-md-4">

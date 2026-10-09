@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace App\Controller;
 use Cake\Auth\DefaultPasswordHasher; //Memanggil PasswordHaser
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Cake\Http\CallbackStream;
 
 /**
  * Users Controller
@@ -369,6 +372,20 @@ class UsersController extends AppController
     {
         $userData = $this->request->getAttribute('identity');
 
+        $rowUsers = $this->Users->find('list', [
+            'keyField' => 'id',
+            'valueField' => 'name'
+        ])
+        ->where([
+            'Users.is_active' => 'Y',
+            // 'Users.id !=' => $userData->id
+        ])
+        ->order(['Users.name' => 'ASC'])
+        ->toArray();
+        $users = $this->Users->get($id, [
+            'contain' => [/*'Division'*/],
+        ]);
+
         $users = $this->Users->get($id, [
             //'contain' => ['Division'],
         ]);
@@ -376,7 +393,7 @@ class UsersController extends AppController
         $rules = $this->Krs->_rule($users->rules);
         // pr($rule);
         //pr($rules);
-        $this->set(compact('users', 'rules'));
+        $this->set(compact('users', 'rules', 'rowUsers'));
 
         if ($this->request->is(['patch', 'post', 'put'])) {
             $dataRow = $this->request->getData();
@@ -402,6 +419,14 @@ class UsersController extends AppController
 
             $dataRadius = [
                 'radius_id' => $dataRow['radius_id'] ?? $users->radius_id
+            ];
+
+            $dataStaff = [
+                'staff' => $dataRow['staff'] ?? $users->staff
+            ];
+
+            $dataDevision = [
+                'devision' => $dataRow['devision'] ?? $users->devision
             ];
 
             $auditLog = $this->Krs->auditLog(
@@ -473,6 +498,8 @@ class UsersController extends AppController
                     $dataUbs,
                     $dataProjectStatus,
                     $dataRadius,
+                    $dataStaff,
+                    $dataDevision,
                     $dataAuditLog,
                     $dataRule
                 )
@@ -663,5 +690,81 @@ class UsersController extends AppController
             'success' => true,
             'data' => $user
         ]));
+    }
+
+    public function templateExcel($dataLink='')
+    {       
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Set default font 
+        $spreadsheet->getDefaultStyle()->getFont()->setName('Arial');
+        $spreadsheet->getDefaultStyle()->getFont()->setSize(10);
+
+        $spreadsheet->setActiveSheetIndex(0);
+        // for($a=0;$a<16;$a++){
+        //     $_chr = chr(65+$a);
+        //     $sheet->getColumnDimension($_chr)->setAutoSize(true);
+        // }
+            
+        $styleArray = [
+            'font'  => [
+                'bold'  => true,
+                'size'  => 11,
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'color' => [
+                    'argb' => 'FFEFEFEF',
+                ],
+                
+            ],
+        ]; 
+        $styleArrayInfo = [
+            'font'  => [
+                'color' => ['argb' => 'FF757575'],
+            ],
+            'alignment' => [
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'color' => [
+                    'argb' => 'FFEFEFEF',
+                ],
+            ],
+        ]; 
+
+        $sheet->getStyle('A1:C1')->applyFromArray($styleArray);
+        $sheet->getStyle('A2:C2')->applyFromArray($styleArrayInfo)->getAlignment()->setWrapText(true);
+
+        // sheet peratama
+        $sheet->setTitle('Sheet 1');
+        // Add some data, resembling some different data types  
+        $sheet->setCellValue('A1', 'code');
+        $sheet->setCellValue('A2', 'Kode user harus unik, huruf kecil tanpa spasi. Contoh: tsabitah');
+        $sheet->setCellValue('B1', 'Nama Karyawan');
+        $sheet->setCellValue('B2', 'Masukkan nama lengkap karyawan pada kolom ini, sebagai informasi');
+        $sheet->setCellValue('C1', 'Sandi');
+        $sheet->setCellValue('C2', 'Masukkan data Sandi pada kolom ini, sebagai informasi');
+
+        $row = 3;
+        $writer = new Xlsx($spreadsheet);
+        // ↓↓ Added new code from here in the eariler sample code
+        // Save the file in a stream
+        $stream = new CallbackStream(function () use ($writer) {
+            $writer->save('php://output');
+        });
+        $filename = 'Template_Users-' . date('ymd');
+        $response = $this->response;
+        // Return the stream in a response
+        return $response->withType('xlsx')
+            ->withHeader('Content-Disposition', "attachment;filename=\"{$filename}.xlsx\"")
+            ->withBody($stream);
+
+        // $this->set(compact('data'));
     }
 }

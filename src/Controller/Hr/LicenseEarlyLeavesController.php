@@ -221,6 +221,10 @@ class LicenseEarlyLeavesController extends AppController
         $licenseEarlyLeave = $this->LicenseEarlyLeaves->get($id, [
             'contain' => [],
         ]);
+        if ($licenseEarlyLeave->approved !== null) {
+            $this->Flash->error('Data sudah disetujui, tidak bisa diedit.');
+            return $this->redirect(['action' => 'index']);
+        }
         if ($this->request->is(['patch', 'post', 'put'])) {
             $dataRow = $this->request->getData();
             unset($dataRow['files']);
@@ -295,9 +299,10 @@ class LicenseEarlyLeavesController extends AppController
             $dataRow = $this->request->getData();
             $isApprove = $dataRow['is_approved'];
             $date = ['approved' => new \DateTime()];
+            $dataNote = ['desc_approve' => trim((string)($dataRow['desc_approve'] ?? ''))];
             $auditLog = $this->Krs->auditLog("LicenseEarlyLeaves", 'N', $isApprove, "LicenseEarlyLeaves approve");
             $dataAuditLog = ['is_log' => $auditLog];
-            $licenseEarlyLeave = $this->LicenseEarlyLeaves->patchEntity($licenseEarlyLeave, array_merge($dataRow, $date, $dataAuditLog));
+            $licenseEarlyLeave = $this->LicenseEarlyLeaves->patchEntity($licenseEarlyLeave, array_merge($dataRow, $date, $dataNote, $dataAuditLog));
             // debug($licenseEarlyLeave);
             // die;
 
@@ -318,16 +323,19 @@ class LicenseEarlyLeavesController extends AppController
         $licenseEarlyLeave = $this->LicenseEarlyLeaves->get($id, [
             'contain' => ['Users'],
         ]);
+        if ($licenseEarlyLeave->approved === null) {
+            $this->Flash->error('Data belum disetujui, belum bisa diketahui.');
+            return $this->redirect(['action' => 'index']);
+        }
         if ($this->request->is(['patch', 'post', 'put'])) {
             $dataRow = $this->request->getData();
-            // pr($dataRow);
             $isUser = $dataRow['is_knowing'];
-            // $isApprove = $dataRow['knowing'];
             $date = array('knowing' => new \DateTime());
+            $dataNote = ['desc_knowing' => trim((string)($dataRow['desc_knowing'] ?? ''))];
             $auditLog = $this->Krs->auditLog("LicenseEarlyLeaves", 'N', $isUser, "LicenseEarlyLeaves knowing");
             $dataAuditLog = array('is_log' => $auditLog);
 
-            $licenseEarlyLeave = $this->LicenseEarlyLeaves->patchEntity($licenseEarlyLeave, array_merge($dataRow, $date, $dataAuditLog));
+            $licenseEarlyLeave = $this->LicenseEarlyLeaves->patchEntity($licenseEarlyLeave, array_merge($dataRow, $date, $dataNote, $dataAuditLog));
 
             // pr($licenseEarlyLeave);
             if ($this->LicenseEarlyLeaves->save($licenseEarlyLeave)) {

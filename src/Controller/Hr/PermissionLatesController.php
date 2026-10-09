@@ -8,6 +8,7 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use Laminas\Diactoros\CallbackStream;
 
 /**
  * PermissionLates Controller
@@ -137,6 +138,7 @@ class PermissionLatesController extends AppController
             $dataRow = $this->request->getData();
             unset($dataRow['files']);
             $isUser = $dataRow['is_create'];
+            $dataRow['date'] = date('d-m-Y');
 
             $auditLog = $this->Krs->auditLog("PermissionLates", 'N',  $isUser, "PermissionLates add");
             $dataAuditLog = array('is_log' => $auditLog);
@@ -199,6 +201,10 @@ class PermissionLatesController extends AppController
         $permissionLate = $this->PermissionLates->get($id, [
             'contain' => [],
         ]);
+        if ($permissionLate->approved !== null) {
+            $this->Flash->error('Data sudah disetujui, tidak bisa diedit.');
+            return $this->redirect(['action' => 'index']);
+        }
         if ($this->request->is(['patch', 'post', 'put'])) {
             $permissionLate = $this->PermissionLates->patchEntity($permissionLate, $this->request->getData());
             if ($this->PermissionLates->save($permissionLate)) {
@@ -237,6 +243,10 @@ class PermissionLatesController extends AppController
         $permissionLate = $this->PermissionLates->get($id, [
             'contain' => ['Users'],
         ]);
+        if ($permissionLate->approved === null) {
+            $this->Flash->error('Data belum disetujui, belum bisa diketahui.');
+            return $this->redirect(['action' => 'index']);
+        }
         if ($permissionLate->approved_date !== null) {
             $this->Flash->error('Data ini sudah disetujui sebelumnya.');
             return $this->redirect(['action' => 'index']);
@@ -246,9 +256,10 @@ class PermissionLatesController extends AppController
             $dataRow = $this->request->getData();
             $isApprove = $dataRow['is_approved'];
             $date = ['approved' => new \DateTime()];
+            $dataNote = ['desc_approve' => trim((string)($dataRow['desc_approve'] ?? ''))];
             $auditLog = $this->Krs->auditLog("PermissionLates", 'N', $isApprove, "PermissionLates approve");
             $dataAuditLog = ['is_log' => $auditLog];
-            $permissionLate = $this->PermissionLates->patchEntity($permissionLate, array_merge($dataRow, $date, $dataAuditLog));
+            $permissionLate = $this->PermissionLates->patchEntity($permissionLate, array_merge($dataRow, $date, $dataNote, $dataAuditLog));
             // debug($permissionLate);
             // die;
             if ($this->PermissionLates->save($permissionLate)) {
@@ -272,9 +283,10 @@ class PermissionLatesController extends AppController
             $dataRow = $this->request->getData();
             $isUser = $dataRow['is_knowing'];
             $date = array('knowing' => new \DateTime());
+            $dataNote = ['desc_knowing' => trim((string)($dataRow['desc_knowing'] ?? ''))];
             $auditLog = $this->Krs->auditLog("PermissionLates", 'N', $isUser, "PermissionLates knowing");
             $dataAuditLog = array('is_log' => $auditLog);
-            $permissionLate = $this->PermissionLates->patchEntity($permissionLate, array_merge($dataRow, $date, $dataAuditLog));
+            $permissionLate = $this->PermissionLates->patchEntity($permissionLate, array_merge($dataRow, $date, $dataNote, $dataAuditLog));
             // debug($permissionLate); die;
             // pr($permissionLate);
             if ($this->PermissionLates->save($permissionLate)) {

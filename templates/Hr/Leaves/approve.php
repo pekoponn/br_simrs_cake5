@@ -27,18 +27,8 @@ $dataChild = $this->Html->link('Form Cuti', ['action' => 'index'], ['full_base' 
                                 <div class="col-4 col-sm-4">:
                                     <span>
                                         <?php
-                                        $dates = [];
                                         if (!empty($leave->date_1)) {
-                                            $dates[] = $leave->date_1->format('d M Y');
-                                        }
-                                        if (!empty($leave->date_2)) {
-                                            $dates[] = $leave->date_2->format('d M Y');
-                                        }
-                                        if (!empty($leave->date_3)) {
-                                            $dates[] = $leave->date_3->format('d M Y');
-                                        }
-                                        if (!empty($dates)) {
-                                            echo implode(', ', $dates);
+                                            echo $leave->date_1->format('d M Y');
                                         } elseif (!empty($leave->date_from) && !empty($leave->date_end)) {
                                             echo $leave->date_from->format('d M Y') . ' - ' . $leave->date_end->format('d M Y');
                                         } else {
@@ -47,6 +37,10 @@ $dataChild = $this->Html->link('Form Cuti', ['action' => 'index'], ['full_base' 
                                         ?>
                                     </span>
                                 </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-2 col-sm-2"><b>Jenis Cuti</b></div>
+                                <div class="col-4 col-sm-4">: <span><?= !empty($leave->type) ? h($leave->type) : '-' ?></span></div>
                             </div>
                             <!-- <div class="row">
                                 <div class="col-2 col-sm-2"><b>Perihal</b></div>
@@ -58,6 +52,11 @@ $dataChild = $this->Html->link('Form Cuti', ['action' => 'index'], ['full_base' 
                             </div>
                             <div class="row">
                                 <div class="col-6 col-sm-6"><span><?= $this->Krs->fDecode($leave->description) ?></span></div>
+                            </div>
+                            <div class="row m-b-15">
+                                <div class="col-6 col-sm-6">
+                                    <?= $this->Form->control('desc_approve', ['label' => 'Catatan Penyetuju', 'class' => 'form-control', 'type' => 'textarea', 'rows' => 3]); ?>
+                                </div>
                             </div>
                             <div class="row">
                                 <div class="form-group">
