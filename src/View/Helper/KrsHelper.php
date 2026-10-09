@@ -265,6 +265,32 @@ class KrsHelper extends Helper
 		return $result;
 	}
 
+	public function workingHours($data = null)
+	{
+		$view = [
+			'1' => '07.00 - 15.00 (Sabtu 07.00 - 12.00)',
+			'2' => '08.00 - 16.00 (Sabtu 08.00 - 13.00)',
+			'3' => '09.00 - 17.00 (Sabtu 09.00 - 14.00)',
+		];
+		return (empty($data)) ? $view : ($view[$data] ?? null);
+	}
+
+	public function workingHoursSchedule($type, bool $isSaturday = false)
+	{
+		$weekday = [
+			'1' => ['in' => '07:00', 'out' => '15:00'],
+			'2' => ['in' => '08:00', 'out' => '16:00'],
+			'3' => ['in' => '09:00', 'out' => '17:00'],
+		];
+		$saturday = [
+			'1' => ['in' => '07:00', 'out' => '12:00'],
+			'2' => ['in' => '08:00', 'out' => '13:00'],
+			'3' => ['in' => '09:00', 'out' => '14:00'],
+		];
+		$data = $isSaturday ? $saturday : $weekday;
+		return $data[$type] ?? null;
+	}
+
 	public function truck($value = null)
 	{
 		$data = array('DK 8868 QQ' => 'DK 8868 QQ', 'DK 8776 BT' => 'DK 8776 BT', 'DK 9136 CW' => 'DK 8776 BT', 'Lain-lain' => 'Lain-lain');

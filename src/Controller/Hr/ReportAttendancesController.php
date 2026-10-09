@@ -108,7 +108,9 @@ class ReportAttendancesController extends AppController
                 u.id,
                 u.name,
                 COALESCE(a.hadir, 0) AS hadir,
+                GREATEST(COALESCE(a.hadir, 0) - COALESCE(a.terlambat_lebih, 0), 0) AS hadir_terpotong,
                 COALESCE(a.terlambat, 0) AS terlambat,
+                COALESCE(a.terlambat_lebih, 0) AS terlambat_lebih,
                 COALESCE(o.lembur, 0) AS lembur,
                 COALESCE(la.ijin, 0) AS ijin,
                 COALESCE(l.cuti, 0) AS cuti,
@@ -120,20 +122,29 @@ class ReportAttendancesController extends AppController
                     COUNT(*) AS hadir,
                     COUNT(
                         CASE
-                            WHEN x.first_in > '08:00:00'
+                            WHEN TIME(x.first_in) > x.jam_masuk
+                            AND TIME(x.first_in) <= ADDTIME(x.jam_masuk, '00:10:00')
                             THEN 1
                         END
-                    ) AS terlambat
+                    ) AS terlambat,
+                    COUNT(
+                        CASE
+                            WHEN TIME(x.first_in) > ADDTIME(x.jam_masuk, '00:10:00')
+                            THEN 1
+                        END
+                    ) AS terlambat_lebih
                 FROM (
                     SELECT
-                        user_id,
-                        date,
-                        MIN(CASE WHEN inout_mode = 'I' THEN time_in END) AS first_in
-                    FROM absences
-                    WHERE date BETWEEN :start_date AND :end_date
-                    AND inout_mode IN ('I', 'O') 
-                    GROUP BY user_id, date
-                    HAVING COUNT(*) > 0 
+                        ab.user_id,
+                        ab.date,
+                        MIN(CASE WHEN ab.inout_mode = 'I' THEN ab.time_in END) AS first_in,
+                        MAKETIME(6 + COALESCE(us.working_hours, 2), 0, 0) AS jam_masuk
+                    FROM absences ab
+                    INNER JOIN users us ON us.id = ab.user_id
+                    WHERE ab.date BETWEEN :start_date AND :end_date
+                    AND ab.inout_mode IN ('I', 'O')
+                    GROUP BY ab.user_id, ab.date, us.working_hours
+                    HAVING COUNT(*) > 0
                 ) x
                 GROUP BY x.user_id
             ) a ON a.user_id = u.id
@@ -264,8 +275,10 @@ class ReportAttendancesController extends AppController
         $dateend   = $this->Krs->dateTo($endDate);
 
         // Ambil data user
-        $userSql = "SELECT id, name FROM users WHERE id = :user_id AND is_active = 'Y' LIMIT 1";
+       $userSql = "SELECT id, name, working_hours FROM users WHERE id = :user_id AND is_active = 'Y' LIMIT 1";
         $user = $conn->execute($userSql, ['user_id' => $id])->fetch('assoc');
+
+        $jamMasuk = $this->Krs->workingHoursSchedule($user['working_hours'])['in'];
 
         if (!$user) {
             throw new \Cake\Http\Exception\NotFoundException('User tidak ditemukan.');
@@ -280,16 +293,17 @@ class ReportAttendancesController extends AppController
                 CASE WHEN COUNT(CASE WHEN a.inout_mode IN ('I', 'O') THEN 1 END) > 0
                     THEN 'Y' ELSE 'N'
                 END AS hadir,
-                CASE 
+                CASE
                     WHEN COUNT(CASE WHEN a.inout_mode = 'I' THEN 1 END) > 0
-                    THEN 
-                        CASE 
-                            WHEN TIME(MIN(CASE WHEN a.inout_mode = 'I' THEN a.time_in END)) > TIME('08:00:00')
-                            THEN 
-                                TIMESTAMPDIFF(MINUTE, 
-                                    TIME('08:00:00'), 
+                    THEN
+                        CASE
+                            WHEN TIME(MIN(CASE WHEN a.inout_mode = 'I' THEN a.time_in END)) > TIME(:jam_masuk)
+                            THEN CEIL(
+                                TIMESTAMPDIFF(SECOND,
+                                    TIME(:jam_masuk),
                                     TIME(MIN(CASE WHEN a.inout_mode = 'I' THEN a.time_in END))
-                                )
+                                ) / 60
+                            )
                             ELSE 0
                         END
                     ELSE NULL
@@ -468,6 +482,7 @@ class ReportAttendancesController extends AppController
             'gen_start'   => $datestart,
             'gen_end'     => $dateend,
             'uid_absen_issue' => $id,
+            'jam_masuk' => $jamMasuk
         ])->fetchAll('assoc');
         // debug($rows);
         // die;
@@ -536,7 +551,7 @@ class ReportAttendancesController extends AppController
             ]
         ]);
         // Header tabel
-        $sheet->fromArray(['No', 'Nama Pegawai', 'Hadir (Hari)', 'Terlambat (Kali)', 'Lembur (Jam)', 'Ijin Sesuai', 'Ijin Tidak Sesuai', 'Cuti', 'Permisi'], null, 'A2');
+        $sheet->fromArray(['No', 'Nama Pegawai', 'Hadir (Hari)', 'Hadir (Sudah Terpotong)', 'Terlambat (0-10 Menit)', 'Terlambat (>10 Menit)', 'Lembur (Jam)', 'Ijin', 'Cuti', 'Permisi'], null, 'A2');
 
         $sheet->getStyle('A2:I2')->applyFromArray([
             'font' => [
@@ -558,12 +573,13 @@ class ReportAttendancesController extends AppController
             $sheet->setCellValue("A{$row}", $no++);
             $sheet->setCellValue("B{$row}", $item['name'] ?? '-');
             $sheet->setCellValue("C{$row}", $item['hadir'] ?? 0);
-            $sheet->setCellValue("D{$row}", $item['terlambat'] ?? 0);
-            $sheet->setCellValue("E{$row}", $item['lembur'] ?? 0);
-            $sheet->setCellValue("F{$row}", $item['ijin_sesuai'] ?? 0);
-            $sheet->setCellValue("G{$row}", $item['ijin_tidak_sesuai'] ?? 0);
-            $sheet->setCellValue("H{$row}", $item['cuti'] ?? 0);
-            $sheet->setCellValue("I{$row}", $item['permisi'] ?? 0);
+            $sheet->setCellValue("D{$row}", $item['hadir_terpotong'] ?? 0);
+            $sheet->setCellValue("E{$row}", $item['terlambat'] ?? 0);
+            $sheet->setCellValue("F{$row}", $item['terlambat_lebih'] ?? 0);
+            $sheet->setCellValue("G{$row}", $item['lembur'] ?? 0);
+            $sheet->setCellValue("H{$row}", $item['ijin'] ?? 0);
+            $sheet->setCellValue("I{$row}", $item['cuti'] ?? 0);
+            $sheet->setCellValue("J{$row}", $item['permisi'] ?? 0);
 
             $row++;
         }
@@ -612,11 +628,12 @@ class ReportAttendancesController extends AppController
         $endDate   = $this->request->getQuery('end_date');
         $datestart = $this->Krs->dateTo($startDate);
         $dateend   = $this->Krs->dateTo($endDate);
-        $userSql = "SELECT id, name FROM users WHERE id = :user_id AND is_active = 'Y' LIMIT 1";
+        $userSql = "SELECT id, name, working_hours FROM users WHERE id = :user_id AND is_active = 'Y' LIMIT 1";
         $user = $conn->execute($userSql, ['user_id' => $id])->fetch('assoc');
         if (!$user) {
             throw new \Cake\Http\Exception\NotFoundException('User tidak ditemukan.');
         }
+        $jamMasuk = $this->Krs->workingHoursSchedule($user['working_hours'])['in'];
         $sql = "
             SELECT
                 d.date,
@@ -625,16 +642,17 @@ class ReportAttendancesController extends AppController
                 CASE WHEN COUNT(CASE WHEN a.inout_mode IN ('I', 'O') THEN 1 END) > 0
                     THEN 'Y' ELSE 'N'
                 END AS hadir,
-                CASE 
+               CASE
                     WHEN COUNT(CASE WHEN a.inout_mode = 'I' THEN 1 END) > 0
-                    THEN 
-                        CASE 
-                            WHEN TIME(MIN(CASE WHEN a.inout_mode = 'I' THEN a.time_in END)) > TIME('08:00:00')
-                            THEN 
-                                TIMESTAMPDIFF(MINUTE, 
-                                    TIME('08:00:00'), 
+                    THEN
+                        CASE
+                            WHEN TIME(MIN(CASE WHEN a.inout_mode = 'I' THEN a.time_in END)) > TIME(:jam_masuk)
+                            THEN CEIL(
+                                TIMESTAMPDIFF(SECOND,
+                                    TIME(:jam_masuk),
                                     TIME(MIN(CASE WHEN a.inout_mode = 'I' THEN a.time_in END))
-                                )
+                                ) / 60
+                            )
                             ELSE 0
                         END
                     ELSE NULL
@@ -772,6 +790,7 @@ class ReportAttendancesController extends AppController
             'uid_absen'   => $id,   
             'gen_start'   => $datestart,
             'gen_end'     => $dateend,
+            'jam_masuk' => $jamMasuk
         ])->fetchAll('assoc');
         
         // Hitung total (sama seperti view)

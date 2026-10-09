@@ -41,11 +41,13 @@
                         <th width="5%">No.</th>
                         <th>Nama Pegawai</th>
                         <th>Hadir (Hari)</th>
-                        <th>Terlambat (Kali)</th>
+                        <th>Hadir (Sudah Terpotong)</th>
+                        <th>Terlambat (0-10 Menit)</th>
+                        <th>Terlambat (&gt;10 Menit)</th>
                         <th>Lembur (Jam)</th>
                         <th>Ijin Tidak Masuk</th>
                         <th>Cuti</th>
-                        <th>Permisi</th>
+                        <th>Keluar Sementara</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -135,7 +137,9 @@ function BindDataTable(){
             },
             { data: 'name', defaultContent: '-' },
             { data: 'hadir', defaultContent: 0 },
-            { data: 'terlambat', defaultContent: 0 },
+            { data: "hadir_terpotong", defaultContent: 0 },
+            { data: "terlambat", defaultContent: 0 },
+            { data: "terlambat_lebih", defaultContent: 0 },
             { data: 'lembur', defaultContent: 0 },
             { data: 'ijin', defaultContent: 0 },
             { data: 'cuti', defaultContent: 0 },
@@ -184,8 +188,15 @@ function BindDataTable(){
                     data: "hadir",
                     defaultContent: 0
                 },
+                {   data: "hadir_terpotong",
+                    defaultContent: 0 
+                },
                 {
                     data: "terlambat",
+                    defaultContent: 0
+                },
+                {
+                    data: "terlambat_lebih",
                     defaultContent: 0
                 },
                 {

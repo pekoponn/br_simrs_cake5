@@ -77,6 +77,7 @@ class User extends Entity
         'user_team' => true,
         'radius_id' => true,
         'zona' => true,
+        'working_hours' => true,
         'face' => true,
         'code' => true,
         'staff' => true,

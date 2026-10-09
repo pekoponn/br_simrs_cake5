@@ -429,6 +429,15 @@ class UsersController extends AppController
                 'devision' => $dataRow['devision'] ?? $users->devision
             ];
 
+            $dataWorkingHours = [
+                'working_hours' => (isset($dataRow['working_hours']) && $dataRow['working_hours'] !== '')
+                    ? (int)$dataRow['working_hours']
+                    : null
+            ];
+
+            $d_teamGroup = (empty($dataRow['user_team'])) ? "" : implode(",", $dataRow['user_team']);
+            $dataTeamGroup = array('user_team' => $d_teamGroup);
+
             $auditLog = $this->Krs->auditLog(
                 $this->request->getParam('controller'),
                 $id,
@@ -500,6 +509,8 @@ class UsersController extends AppController
                     $dataRadius,
                     $dataStaff,
                     $dataDevision,
+                    $dataWorkingHours,
+                    $dataTeamGroup,
                     $dataAuditLog,
                     $dataRule
                 )

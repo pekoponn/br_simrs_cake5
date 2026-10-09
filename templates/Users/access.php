@@ -765,6 +765,22 @@ $bankincomesXls = ($bankincomes['xls'] == 1) ? 'checked' : '';
                     </div>
                 </div>
                 <div class="form-group row m-b-15">
+                    <label class="col-form-label col-md-3">Jam Masuk</label>
+                    <div class="col-md-9">
+                        <?php
+                        echo $this->Form->control('working_hours', [
+                            'label' => false,
+                            'empty' => 'Silakan pilih..',
+                            'options' => $this->Krs->workingHours(),
+                            'data-placeholder' => 'Silakan pilih..',
+                            'class' => 'form-control select2FormClear',
+                            'error' => false,
+                            'default' => $users->working_hours,
+                        ]);
+                        ?>
+                    </div>
+                </div>
+                <div class="form-group row m-b-15">
                     <label class="col-form-label col-md-3">Radius</label>
                     <div class="col-md-9">
                         <?php

@@ -6,7 +6,9 @@
  * @var string $endDate
  */
 $totalHadir   = count(array_filter($rows, fn($r) => $r['hadir'] === 'Y'));
-$totalTelat   = count(array_filter($rows, fn($r) => !empty($r['terlambat'])));
+$totalTelat      = count(array_filter($rows, fn($r) => !empty($r['terlambat']) && $r['terlambat'] <= 10));
+$totalTelatLebih = count(array_filter($rows, fn($r) => !empty($r['terlambat']) && $r['terlambat'] > 10));
+$totalHadirTerpotong = max($totalHadir - $totalTelatLebih, 0);
 $totalCuti    = array_sum(array_column($rows, 'cuti'));
 $totalPermisi = array_sum(array_column($rows, 'permisi'));
 $totalIjinS   = count(array_filter($rows, fn($r) => $r['ijin_status'] === 'Sesuai'));
@@ -50,11 +52,12 @@ $excelUrl = $this->Url->build(['prefix'     => 'Hr', 'controller' => 'ReportAtte
                             <th>Masuk</th>
                             <th>Keluar</th>
                             <th>Hadir</th>
+                            <th>Hadir (Sudah Terpotong)</th>
                             <th>Terlambat</th>
                             <th>Lembur (Jam)</th>
                             <th>Ijin</th>
                             <th>Cuti</th>
-                            <th>Permisi</th>
+                            <th>Keluar Sementara</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -99,10 +102,26 @@ $excelUrl = $this->Url->build(['prefix'     => 'Hr', 'controller' => 'ReportAtte
                             <?php endif; ?>
                         </td>
                         <td class="text-center">
+                            <?php if ($row['hadir'] === 'Y' && (empty($row['terlambat']) || $row['terlambat'] <= 10)): ?>
+                                <i class="fas fa-check text-success"></i>
+                            <?php elseif ($row['hadir'] === 'Y'): ?>
+                                <span class="text-danger">-</span>
+                                <br><small class="text-danger">(terpotong)</small>
+                            <?php else: ?>
+                                <span class="text-muted">-</span>
+                            <?php endif; ?>
+                        </td>
+                        <td class="text-center">
                             <?php if (!empty($row['terlambat']) && $row['terlambat'] > 0): ?>
-                                <span class="badge badge-danger">
+                                <!-- <span class="badge badge-danger">
+                                    <i class="fas fa-clock"></i> <?= $row['terlambat'] ?> menit
+                                </span> -->
+                                <span class="badge <?= $row['terlambat'] > 10 ? 'badge-danger' : 'badge-warning' ?>">
                                     <i class="fas fa-clock"></i> <?= $row['terlambat'] ?> menit
                                 </span>
+                                <?php if ($row['terlambat'] > 10): ?>
+                                    <br><small class="text-danger">(memotong hadir)</small>
+                                <?php endif; ?>
                             <?php else: ?>
                                 <span class="text-muted">-</span>
                             <?php endif; ?>
@@ -125,7 +144,8 @@ $excelUrl = $this->Url->build(['prefix'     => 'Hr', 'controller' => 'ReportAtte
                                 <?php endif; ?>
                                 <?php if (!empty($row['ijin_description'])): ?>
                                     <br>
-                                    <small class="text-muted ml-1"><?= h($row['ijin_description']) ?></small>
+                                    <!-- <small class="text-muted ml-1"><?= h($row['ijin_description']) ?></small> -->
+                                    <small class="text-muted ml-1"><?= h(strip_tags($row['ijin_description'])) ?></small>
                                 <?php endif; ?>
                             <?php else: ?>
                                 <span class="text-muted">-</span>

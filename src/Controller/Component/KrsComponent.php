@@ -253,4 +253,32 @@ class KrsComponent extends Component
 				return 'Asia/Jakarta';
 		}
 	}
+	public function workingHours($data = null)
+	{
+		$view = [
+			'1' => '07.00 - 15.00 (Sabtu 07.00 - 12.00)',
+			'2' => '08.00 - 16.00 (Sabtu 08.00 - 13.00)',
+			'3' => '09.00 - 17.00 (Sabtu 09.00 - 14.00)',
+		];
+		return (empty($data)) ? $view : ($view[$data] ?? null);
+	}
+
+	/**
+	 * Jam masuk & pulang per tipe. Tipe kosong/tidak valid -> tipe 2 (08.00).
+	 */
+	public function workingHoursSchedule($type = null, bool $isSaturday = false): array
+	{
+		$weekday = [
+			1 => ['in' => '07:00:00', 'out' => '15:00:00'],
+			2 => ['in' => '08:00:00', 'out' => '16:00:00'],
+			3 => ['in' => '09:00:00', 'out' => '17:00:00'],
+		];
+		$saturday = [
+			1 => ['in' => '07:00:00', 'out' => '12:00:00'],
+			2 => ['in' => '08:00:00', 'out' => '13:00:00'],
+			3 => ['in' => '09:00:00', 'out' => '14:00:00'],
+		];
+		$list = $isSaturday ? $saturday : $weekday;
+		return $list[(int)$type] ?? $list[2];
+	}
 }
