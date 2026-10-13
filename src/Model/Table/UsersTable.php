@@ -264,10 +264,10 @@ class UsersTable extends Table
      * @param \Cake\ORM\RulesChecker $rules The rules object to be modified.
      * @return \Cake\ORM\RulesChecker
      */
-    public function buildRules(RulesChecker $rules): RulesChecker
-    {
-        $rules->add($rules->isUnique(['email']), ['errorField' => 'email']);
+    // public function buildRules(RulesChecker $rules): RulesChecker
+    // {
+    //     $rules->add($rules->isUnique(['email']), ['errorField' => 'email']);
         
-        return $rules;
-    }
+    //     return $rules;
+    // }
 }

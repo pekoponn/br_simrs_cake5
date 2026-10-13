@@ -260,7 +260,7 @@ class KrsHelper extends Helper
 
 	public function position($data = null)
 	{
-		$view = array('MANAGER' => 'MANAGER', 'KEPALA UNIT' => 'KEPALA UNIT', 'STAF' => 'STAF', 'PELAKSANA' => 'PELAKSANA');
+		$view = array('DIREKTUR' => 'DIREKTUR','WAKIL DIREKTUR' => 'WAKIL DIREKTUR','KASUBAG' => 'KASUBAG','MANAGER' => 'MANAGER', 'KEPALA UNIT' => 'KEPALA UNIT', 'STAF' => 'STAF', 'PELAKSANA' => 'PELAKSANA');
 		$result = (empty($data)) ? $view : $view[$data];
 		return $result;
 	}
@@ -1802,8 +1802,7 @@ class KrsHelper extends Helper
 			'Suami / istri / anak / orang tua kandung / mertua / saudara kandung meninggal dunia^2' => 'Suami / istri / anak / orang tua kandung / mertua / saudara kandung meninggal dunia (2 hari)',
 			'Kakek / nenek kandung karyawan meninggal^1' => 'Kakek / nenek kandung karyawan meninggal (1 hari)',
 			'Pengkhitanan anak kandung karyawan^2' => 'Pengkhitanan anak kandung karyawan (2 hari)',
-			'Pembaptisan anak kandung karyawan^2' => 'Pembaptisan anak kandung karyawan (2 hari)',
-			'Lain-lain^1' => 'Lain-lain (1 hari)',
+			'Pembaptisan anak kandung karyawan^2' => 'Pembaptisan anak kandung karyawan (2 hari)','Sakit^1' => 'Sakit (1 hari)','Lain-lain^1' => 'Lain-lain (1 hari)',
 		);
 		// $view = array('Pernikahan^3'=>'Pernikahan (3 hari)', 'Baptis Khitan^2'=>'Baptis/Khitan anak (2 hari)', 'Meninggal^2'=>'Orang tua/anak/istri/suami/mertua meninggal (2 hari)', 'Anggota lain meninggal^1'=>'Anggota keluarga lainnya yang serumah meninggal (1 hari)', 'Pernikahan Anak^2'=>'Pernikahan anak (2 hari)', 'Istri Melahirkan Keguguran^2'=>'Istri melahirkan/keguguran (2 hari)', 'Jaga Sakit^3'=>'Menjaga Orang tua/anak/istri/suami/mertua (3 hari)', 'Lain Lain^1'=>'Lain-lain');
 		

@@ -435,6 +435,18 @@ class UsersController extends AppController
                     : null
             ];
 
+            $dataName = [
+                'name' => $dataRow['name'] ?? $users->name
+            ];
+
+            $dataTelp = [
+                'telp' => $dataRow['telp'] ?? $users->telp
+            ];
+
+            $dataEmail = [
+                'email' => $dataRow['email'] ?? $users->email
+            ];
+
             $d_teamGroup = (empty($dataRow['user_team'])) ? "" : implode(",", $dataRow['user_team']);
             $dataTeamGroup = array('user_team' => $d_teamGroup);
 
@@ -481,6 +493,9 @@ class UsersController extends AppController
                     'knowing' => 0,
                     'getHistory' => 1,
                 ],
+                'hrgaemployees' => [
+                    'viewAll' => 0,
+                ],
             ];
 
             $mergedRules = array_replace_recursive(
@@ -510,6 +525,9 @@ class UsersController extends AppController
                     $dataStaff,
                     $dataDevision,
                     $dataWorkingHours,
+                    $dataName,
+                    $dataTelp,
+                    $dataEmail,
                     $dataTeamGroup,
                     $dataAuditLog,
                     $dataRule

@@ -33,6 +33,13 @@ class HrgaEmployeesController extends AppController
     public function index()
     {
         $hrgaEmployees = $this->HrgaEmployees->find('all')->contain(['Users']);
+        $identity = $this->request->getAttribute('identity');
+        $viewAll = $this->canViewAll();
+
+        if (!$viewAll) {
+            // paksa hanya data milik sendiri
+            $hrgaEmployees->where(['HrgaEmployees.id' => (int)($identity->hrga_employee_id ?? 0)]);
+        }
 
         $nip = $this->request->getQuery('filternip');
         $name = $this->request->getQuery('filtername');
@@ -63,11 +70,22 @@ class HrgaEmployeesController extends AppController
 
         $queries = (!empty($dataWhere)) ? $hrgaEmployees->where([$dataWhere])->order(['HrgaEmployees.created' => 'Desc']) : $hrgaEmployees->order(['HrgaEmployees.created' => 'DESC']);
 
-        $expired = $this->HrgaEmployees->find('all')
-        ->where(['OR' => [
-            'HrgaEmployees.contract_end_date BETWEEN NOW() AND NOW() + INTERVAL 30 DAY', 'HrgaEmployees.is_active' => 'N'],
-            'HrgaEmployees.status NOT IN' => ['Resign', 'Non-Aktif', 'PHK', 'Pensiun']])
-        ->toArray();
+        // $expired = $this->HrgaEmployees->find('all')
+        // ->where(['OR' => [
+        //     'HrgaEmployees.contract_end_date BETWEEN NOW() AND NOW() + INTERVAL 30 DAY', 'HrgaEmployees.is_active' => 'N'],
+        //     'HrgaEmployees.status NOT IN' => ['Resign', 'Non-Aktif', 'PHK', 'Pensiun']])
+        // ->toArray();
+        $expiredQuery = $this->HrgaEmployees->find('all')
+            ->where(['OR' => [
+                'HrgaEmployees.contract_end_date BETWEEN NOW() AND NOW() + INTERVAL 30 DAY',
+                'HrgaEmployees.is_active' => 'N'],
+                'HrgaEmployees.status NOT IN' => ['Resign', 'Non-Aktif', 'PHK', 'Pensiun']]);
+
+        if (!$viewAll) {
+            $expiredQuery->where(['HrgaEmployees.id' => (int)($identity->hrga_employee_id ?? 0)]);
+        }
+
+        $expired = $expiredQuery->toArray();
 
         $this->set(['hrgaEmployees' => $this->paginate($queries, ['limit' => '10']), 'expired' => $expired]);
     }
@@ -79,15 +97,29 @@ class HrgaEmployeesController extends AppController
      * @return \Cake\Http\Response|null|void Renders view
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
+    // public function view($id = null)
+    // {
+    //     $hrgaEmployee = $this->HrgaEmployees->get($id, [
+    //         'contain' => ['Users', 'HrgaAttendances', 'HrgaEmployeeLines'],
+    //     ]);
+
+    //     $this->set(compact('hrgaEmployee'));
+    // }
     public function view($id = null)
     {
+        if (!$this->canViewAll()) {
+            $identity = $this->request->getAttribute('identity');
+            if ((int)$id !== (int)($identity->hrga_employee_id ?? 0)) {
+                throw new \Cake\Http\Exception\ForbiddenException(__('Anda hanya dapat melihat data sendiri.'));
+            }
+        }
+
         $hrgaEmployee = $this->HrgaEmployees->get($id, [
             'contain' => ['Users', 'HrgaAttendances', 'HrgaEmployeeLines'],
         ]);
 
         $this->set(compact('hrgaEmployee'));
     }
-
     /**
      * Add method
      *
@@ -843,7 +875,7 @@ class HrgaEmployeesController extends AppController
             ],
             'devisi' => [
                 'Divisi',
-                'Format: Divisi^SubDivisi, lihat daftar lengkap di sheet "Referensi Divisi". Contoh: SDM & UMUM^HUMAN RESOURCE (HR)',
+                'Isi sesuai nama divisi di sheet "Referensi Divisi". Contoh: IT',
             ],
             'position' => [
                 'Posisi / Jabatan',
@@ -966,41 +998,21 @@ class HrgaEmployeesController extends AppController
      * dipakai untuk isi sheet "Referensi Divisi" saja (bukan untuk memvalidasi
      * input saat import). Key = value persis yang harus diisi di kolom "devisi".
      */
+    // 
     private function refDivisions(): array
     {
         return [
-            'PAJAK^Pajak' => 'PAJAK - PAJAK',
-            'SEKPEM GROUP NUSANTARA^ADMIN' => 'SEKPEM GROUP NUSANTARA - ADMIN',
-            'SEKPEM GROUP NUSANTARA^OPERASIONAL' => 'SEKPEM GROUP NUSANTARA - OPERASIONAL',
-            'SEKPEM GROUP WILAYAH TIMUR (SG-Tim)^ADMIN' => 'SEKPEM GROUP WILAYAH TIMUR (SG-Tim) - ADMIN',
-            'SEKPEM GROUP WILAYAH TIMUR (SG-Tim)^OPERASIONAL' => 'SEKPEM GROUP WILAYAH TIMUR (SG-Tim) - OPERASIONAL',
-            'SEKPEM GROUP WILAYAH (SG-Teng)^ADMIN' => 'SEKPEM GROUP WILAYAH (SG-Teng) - ADMIN',
-            'SEKPEM GROUP WILAYAH (SG-Teng)^OPERASIONAL' => 'SEKPEM GROUP WILAYAH (SG-Teng) - OPERASIONAL',
-            'SEKPEM GROUP WILAYAH BARAT (SG-B)^ADMIN' => 'SEKPEM GROUP WILAYAH BARAT (SG-B) - ADMIN',
-            'SEKPEM GROUP WILAYAH BARAT (SG-B)^OPERASIONAL' => 'SEKPEM GROUP WILAYAH BARAT (SG-B) - OPERASIONAL',
-            'SPI GROUP NUSANTARA^SPI GROUP NUSANTARA' => 'SPI GROUP NUSANTARA',
-            'SPI GROUP WILAYAH TIMUR (SPI G-Tim)^SPI GROUP WILAYAH TIMUR (SPI G-Tim)' => 'SPI GROUP WILAYAH TIMUR (SPI G-Tim)',
-            'SPI GROUP WILAYAH TENGAH (SPI G-Teng)^SPI GROUP WILAYAH TENGAH (SPI G-Teng)' => 'SPI GROUP WILAYAH TENGAH (SPI G-Teng)',
-            'SPI GROUP WILAYAH BARAT (SPI G-B)^SPI GROUP WILAYAH BARAT (SPI G-B)' => 'SPI GROUP WILAYAH BARAT (SPI G-B)',
-            'LIMBAH PADAT^KADIV SAMPAH SPESIFIK' => 'LIMBAH PADAT - KADIV SAMPAH SPESIFIK',
-            'LIMBAH PADAT^KADIV SAMPAH DOMESTIK / RUMAH TANGGA' => 'LIMBAH PADAT - KADIV SAMPAH DOMESTIK / RUMAH TANGGA',
-            'BIDANG CAIR, UDARA & PENUNJANG^KADIV CAIR & UDARA ' => 'BIDANG CAIR, UDARA & PENUNJANG - KADIV CAIR & UDARA',
-            'BIDANG CAIR, UDARA & PENUNJANG^KADIV SAMPAH UDARA' => 'BIDANG CAIR, UDARA & PENUNJANG - KADIV SAMPAH UDARA',
-            'BIDANG CAIR, UDARA & PENUNJANG^KADIV PENUNJANG' => 'BIDANG CAIR, UDARA & PENUNJANG - KADIV PENUNJANG',
-            'SDM & UMUM^PERSONALIA' => 'SDM & UMUM - PERSONALIA',
-            'SDM & UMUM^HUMAN RESOURCE (HR)' => 'SDM & UMUM - HUMAN RESOURCE (HR)',
-            'SDM & UMUM^UMUM' => 'SDM & UMUM - UMUM',
-            'KEUANGAN^KEUANGAN' => 'KEUANGAN - KEUANGAN',
-            'KEUANGAN^LOGISTIK' => 'KEUANGAN - LOGISTIK',
-            'KEUANGAN^ACCOUNTING & HUTANG PIUTANG' => 'KEUANGAN - ACCOUNTING & HUTANG PIUTANG',
-            'TEKNIK^TEKNIK' => 'TEKNIK - TEKNIK',
-            'BUSSINESS DEVELOPMENT^WILAYAH TIMUR (Marketing)' => 'BUSSINESS DEVELOPMENT - WILAYAH TIMUR (Marketing)',
-            'BUSSINESS DEVELOPMENT^WILAYAH TIMUR (Customer Care)' => 'BUSSINESS DEVELOPMENT - WILAYAH TIMUR (Customer Care)',
-            'BUSSINESS DEVELOPMENT^WILAYAH TENGAH (Marketing)' => 'BUSSINESS DEVELOPMENT - WILAYAH TENGAH (Marketing)',
-            'BUSSINESS DEVELOPMENT^WILAYAH TENGAH (Customer Care)' => 'BUSSINESS DEVELOPMENT - WILAYAH TENGAH (Customer Care)',
-            'BUSSINESS DEVELOPMENT^WILAYAH BARAT (Marketing)' => 'BUSSINESS DEVELOPMENT - WILAYAH BARAT (Marketing)',
-            'BUSSINESS DEVELOPMENT^WILAYAH BARAT (Customer Care)' => 'BUSSINESS DEVELOPMENT - WILAYAH BARAT (Customer Care)',
-            'KONSULTAN LEGAL^KONSULTAN LEGAL' => 'KONSULTAN LEGAL',
+            'FARMASI' => 'FARMASI', 'SECURITY' => 'SECURITY', 'LABORATORIUM' => 'LABORATORIUM',
+            'REKAM MEDIS' => 'REKAM MEDIS', 'PARKIR' => 'PARKIR', 'RAWAT JALAN' => 'RAWAT JALAN',
+            'UGD' => 'UGD', 'CLEANING SERVICE' => 'CLEANING SERVICE', 'DRIVER' => 'DRIVER',
+            'KASIR' => 'KASIR', 'RADIOLOGI' => 'RADIOLOGI', 'UBS' => 'UBS', 'KLAMER' => 'KLAMER',
+            'KEBIDANAN & PERINATOLOGI' => 'KEBIDANAN & PERINATOLOGI', 'UPI' => 'UPI',
+            'RAWAT INAP' => 'RAWAT INAP', 'GIZI' => 'GIZI', 'AHLI GIZI' => 'AHLI GIZI',
+            'LAUNDRY' => 'LAUNDRY', 'LOGISTIK' => 'LOGISTIK', 'KEUANGAN' => 'KEUANGAN',
+            'ATEM' => 'ATEM', 'KESLING' => 'KESLING', 'PROMKES' => 'PROMKES',
+            'CASE MANAGER' => 'CASE MANAGER', 'TEKNISI' => 'TEKNISI', 'PUJASERA' => 'PUJASERA',
+            'PT. BHAKTI RAHAYU' => 'PT. BHAKTI RAHAYU', 'MANAGERIAL' => 'MANAGERIAL',
+            'IT' => 'IT', 'SDM' => 'SDM', 'SEKDIR' => 'SEKDIR',
         ];
     }
     
@@ -1390,6 +1402,14 @@ class HrgaEmployeesController extends AppController
         return $this->redirect([
             'action' => 'index'
         ]);
+    }
+
+    private function canViewAll(): bool
+    {
+        $identity = $this->request->getAttribute('identity');
+        $rules = $this->Krs->_rule($identity->rules);
+
+        return ($rules['hrgaemployees']['viewAll'] ?? 0) == 1;
     }
 
 }

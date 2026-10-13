@@ -2258,3 +2258,12 @@ CREATE TABLE IF NOT EXISTS `emergency_actions` (
     PRIMARY KEY (`id`),
     KEY `idx_emergency_actions_registration` (`registration_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+26/10/13
+
+ALTER TABLE users
+	ADD COLUMN telegram_chat_id VARCHAR(255) NULL DEFAULT NULL AFTER radius_id;
+
+ALTER TABLE users
+	ADD COLUMN working_hours VARCHAR(255) NULL DEFAULT NULL AFTER zona;

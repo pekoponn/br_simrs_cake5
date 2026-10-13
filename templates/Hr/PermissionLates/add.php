@@ -27,7 +27,13 @@ $dataChild = $this->Html->link('Ijin Terlambat', ['action' => 'index'], ['full_b
                 </div>
                 <label class="col-form-label col-md-1">Tanggal :</label>
                 <div class="col-md-2">
-                    <?php echo $this->Form->control('date', ['label' => false, 'class' => 'form-control tanggal', 'type'=>'text', 'empty' => '-- Pilih Tanggal --', 'placeholder' => '-- Pilih Tanggal --']); ?>
+                    <?php echo $this->Form->control('date', [
+                        'label' => false,
+                        'class' => 'form-control',
+                        'type' => 'text',
+                        'value' => date('d-m-Y'),
+                        'readonly' => true
+                    ]); ?>
                 </div>
             </div>
             <div class="form-group row m-b-15">
@@ -79,16 +85,16 @@ $(document).ready(function() {
         autoclose: true,
     });
 
-    $('.tanggal').datepicker({
-        autoclose: true,
-        format: 'dd-mm-yyyy',
-        startDate: new Date(),
-        endDate: new Date()
-    }).datepicker('setDate', new Date());
+    // $('.tanggal').datepicker({
+    //     autoclose: true,
+    //     format: 'dd-mm-yyyy',
+    //     startDate: new Date(),
+    //     endDate: new Date()
+    // }).datepicker('setDate', new Date());
 
-    $('.tanggal').on('keydown paste', function(e) {
-    e.preventDefault();
-    });
+    // $('.tanggal').on('keydown paste', function(e) {
+    // e.preventDefault();
+    // });
     
 });
 </script>

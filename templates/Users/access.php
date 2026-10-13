@@ -510,6 +510,7 @@ $bankincomesXls = ($bankincomes['xls'] == 1) ? 'checked' : '';
     $hrgaemployeesAdd = ($hrgaemployees['add'] == 1) ? 'checked' : '';
     $hrgaemployeesEdit = ($hrgaemployees['edit'] == 1) ? 'checked' : '';
     $hrgaemployeesView = ($hrgaemployees['view'] == 1) ? 'checked' : '';
+    $hrgaemployeesViewAll = (($hrgaemployees['viewAll'] ?? 0) == 1) ? 'checked' : '';
     $hrgaemployeesSalary = ($hrgaemployees['salary'] == 1) ? 'checked' : '';
     $hrgaemployeesDelete = ($hrgaemployees['delete'] == 1) ? 'checked' : '';
     $hrgaemployeesExcel = ($hrgaemployees['excel'] == 1) ? 'checked' : '';
@@ -682,21 +683,13 @@ $bankincomesXls = ($bankincomes['xls'] == 1) ? 'checked' : '';
                     <label class="col-form-label col-md-3">Nama</label>
                     <div class="col-md-9">
                         <?php
-                        echo $this->Form->control('name', ['label' => false, 'class' => 'form-control-plaintext', 'placeholder' => 'Nama..', 'value' => $users->name, 'disabled' => true]);
-                        $person = [
-                            'name' => 'Michael',
-                            'age' => '3 mau tau aja',
-                            'city' => 'London',
-                            'country' => 'England'
-                        ];
-                        $string = 'Hi my name is {{country}}, I am {{age}} years old,tinggal di {{city}} negara yang keren {{name}}';
-
-                        $string = preg_replace_callback('/\G((?:[^{\\]|\\.|{[^{])*){{((?:[^}\\]|\\.|}[^}])+)}}/', function ($match) use ($person) {
-                            return $match[1] . $person[$match[2]];
-                        }, $string);
-
-                        echo $string . "\n";
-
+                        echo $this->Form->control('name', [
+                            'label' => false,
+                            'class' => 'form-control',
+                            'placeholder' => 'Nama..',
+                            'error' => false,
+                            'default' => $users->name
+                        ]);
                         ?>
                     </div>
                 </div>
@@ -704,14 +697,28 @@ $bankincomesXls = ($bankincomes['xls'] == 1) ? 'checked' : '';
                     <label class="col-form-label col-md-3">Telp</label>
                     <div class="col-md-9">
                         <?php
-                        echo $this->Form->control('telp', ['label' => false, 'class' => 'form-control-plaintext', 'placeholder' => 'Telp..', 'value' => $users->telp, 'readonly' => true]); ?>
+                        echo $this->Form->control('telp', [
+                            'label' => false,
+                            'class' => 'form-control',
+                            'placeholder' => 'Telp..',
+                            'error' => false,
+                            'default' => $users->telp
+                        ]);
+                        ?>
                     </div>
                 </div>
                 <div class="form-group row m-b-15">
                     <label class="col-form-label col-md-3">Email</label>
                     <div class="col-md-9">
                         <?php
-                        echo $this->Form->control('email', ['label' => false, 'class' => 'form-control-plaintext', 'placeholder' => 'Email..', 'value' => $users->email, 'disabled' => true]); ?>
+                        echo $this->Form->control('email', [
+                            'label' => false,
+                            'class' => 'form-control',
+                            'placeholder' => 'Email..',
+                            'error' => false,
+                            'default' => $users->email
+                        ]);
+                        ?>
                     </div>
                 </div>
                 <div class="form-group row m-b-15 align-items-center">
@@ -732,12 +739,19 @@ $bankincomesXls = ($bankincomes['xls'] == 1) ? 'checked' : '';
                     <div class="col-md-9">
                         <?php
                         $dataStaff = $this->Krs->position();
-                        echo $this->Form->control('staff', ['label' => false, 'empty' => false, 'options' => $dataStaff, 'data-placeholder' => 'Silakan pilih..', 'class' => 'form-control select2Form', 'error' => false, "default" => $users->staff, 'id'=>'staff']);
+                        echo $this->Form->control('staff', ['label' => false, 'empty' => 'Silakan pilih..', 'options' => $dataStaff, 'data-placeholder' => 'Silakan pilih..', 'class' => 'form-control select2Form', 'error' => false, "default" => $users->staff, 'id'=>'staff']);
                         ?>
                     </div>
                 </div>
+                <?php
+                // Keep the initial visibility in sync with the client-side staff list.
+                // Staff values may be stored with different casing, so compare them
+                // case-insensitively when the form is opened again.
+                $staffNeedTeam = ['DIREKTUR', 'WAKIL DIREKTUR', 'KASUBAG', 'MANAGER', 'KEPALA UNIT'];
+                $showUserTeam = in_array(strtoupper(trim((string)$users->staff)), $staffNeedTeam, true);
+                ?>
                 <div class="form-group row m-b-15" id="userTeamDiv"
-                    <?= in_array($users->staff, ['Koordinator', 'Kepala Unit', 'Assistant Supervisor', 'Supervisor', 'Assistant Manager','Manager', 'Direktur']) ? '' : 'style="display:none;"' ?>>
+                    <?= $showUserTeam ? '' : 'style="display:none;"' ?>>
                     <label class="col-form-label col-md-3">Tim Kerja</label>
                     <div class="col-md-9">
                         <?php
@@ -748,7 +762,9 @@ $bankincomesXls = ($bankincomes['xls'] == 1) ? 'checked' : '';
                             'options' => $rowUsers,
                             'class' => 'form-control select2Form',
                             'multiple' => true,
-                            'default' => $defaultUser,
+                            // user_team is stored as a comma-separated string, while
+                            // a multiple select needs an explicit array of values.
+                            'value' => $defaultUser,
                             'data-placeholder' => 'Silakan pilih tim kerja..',
                             'empty' => false
                         ]);
@@ -760,7 +776,7 @@ $bankincomesXls = ($bankincomes['xls'] == 1) ? 'checked' : '';
                     <div class="col-md-9">
                         <?php
                         $dataDevision = $this->Krs->devision();
-                        echo $this->Form->control('devision', ['label' => false, 'empty' => false, 'options' => $dataDevision, 'data-placeholder' => 'Silakan pilih..', 'class' => 'form-control select2Form', 'error' => false, "default" => $users->devision]);
+                        echo $this->Form->control('devision', ['label' => false, 'empty' => 'Silakan pilih..', 'options' => $dataDevision, 'data-placeholder' => 'Silakan pilih..', 'class' => 'form-control select2Form', 'error' => false, "default" => $users->devision]);
                         ?>
                     </div>
                 </div>
@@ -4245,6 +4261,12 @@ $bankincomesXls = ($bankincomes['xls'] == 1) ? 'checked' : '';
                                     </div>
                                     <div class="form-check form-check-inline">
                                         <?php
+                                        echo $this->Form->checkbox('Rules.hrgaemployees.viewAll', ['value' => 1, 'hiddenField' => true, 'checked' => $hrgaemployeesViewAll, 'class' => 'form-check-input']);
+                                        ?>
+                                        <label class="form-check-label">View All</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <?php
                                         echo $this->Form->checkbox('Rules.hrgaemployees.salary', ['value' => 1, 'hiddenField' => true, 'checked' => $hrgaemployeesSalary, 'class' => 'form-check-input']);
                                         ?>
                                         <label class="form-check-label">Setting Gaji</label>
@@ -5048,20 +5070,26 @@ $bankincomesXls = ($bankincomes['xls'] == 1) ? 'checked' : '';
         var confirmTitle = "Apakah anda ingin menyimpan data tersebut ?";
         var formAction = "<?php echo $this->Url->build(['controller' => 'users', 'action' => 'access', $users->id], ['fullBase' => true]); ?>";
         handleFormConfirmSubmitValid('UserAddForm', 'btn-add', confirmTitle, formAction);
-        const staffNeedTeam = ['MANAGER', 'KEPALA UNIT'];
+        const staffNeedTeam = ['DIREKTUR','WAKIL DIREKTUR','KASUBAG','MANAGER', 'KEPALA UNIT'];
 
-        $('#staff').on('change', function () {
-            let selectedStaff = $(this).val();
+        function updateUserTeamVisibility() {
+            const selectedStaff = String($('#staff').val() || '').trim().toUpperCase();
             if (staffNeedTeam.includes(selectedStaff)) {
                 $('#userTeamDiv').show();
             } else {
                 $('#userTeamDiv').hide();
                 $('#user-team').val(null).trigger('change');
             }
+        }
+
+        $('#staff').on('change', function () {
+            updateUserTeamVisibility();
         });
 
 
         $(".select2Form").select2();
+        // Apply the same rule immediately for edit pages; no need to reselect Staff.
+        updateUserTeamVisibility();
 
     });
 </script>
