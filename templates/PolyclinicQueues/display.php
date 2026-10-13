@@ -26,7 +26,7 @@ $queueSource = function ($queue): string {
         return 'Belum ada panggilan';
     }
 
-    return $queue->source === 'Mobile JKN' ? 'Mobile JKN' : 'Loket Rumah Sakit';
+    return $queue->source === 'Mobile JKN' ? 'MJKN' : 'Onsite';
 };
 
 $currentStatus = $calledQueue ? 'Sedang dipanggil' : 'Belum ada panggilan';
@@ -282,8 +282,9 @@ $waitingQueueList = array_values(array_filter(
 
     .card-title {
         margin: 4px 0 0;
+        margin-top: 10px;
         color: #112136;
-        font-size: clamp(16px, 1.35vw, 21px);
+        font-size: clamp(20px, 1.5vw, 30px);
         font-weight: 900;
         line-height: 1.1;
         letter-spacing: 0;
@@ -482,7 +483,7 @@ $waitingQueueList = array_values(array_filter(
         max-width: 140px;
         overflow: hidden;
         color: #667085;
-        font-size: 12px;
+        font-size: 17px;
         font-weight: 800;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -496,7 +497,7 @@ $waitingQueueList = array_values(array_filter(
         border-radius: 999px;
         background: #ecfdf7;
         color: #0f766e;
-        font-size: 11px;
+        font-size: 17px;
         font-weight: 900;
         white-space: nowrap;
     }
@@ -602,7 +603,7 @@ $waitingQueueList = array_values(array_filter(
                         <div class="card-icon">
                             <i class="fa fa-mobile"></i>
                         </div>
-                        <div class="card-kicker">Online</div>
+                        <!-- <div class="card-kicker">Online</div> -->
                         <h2 class="card-title">Mobile JKN</h2>
                         <div class="total-number" id="online-total"><?= h($onlineTotal ?? 0) ?></div>
                         <div class="total-label">Total antrian hari ini</div>
@@ -630,8 +631,8 @@ $waitingQueueList = array_values(array_filter(
                         <div class="card-icon">
                             <i class="fa fa-desktop"></i>
                         </div>
-                        <div class="card-kicker">Onsite</div>
-                        <h2 class="card-title">Loket Rumah Sakit</h2>
+                        <!-- <div class="card-kicker">Onsite</div> -->
+                        <h2 class="card-title">ONSITE</h2>
                         <div class="total-number" id="onsite-total"><?= h($onsiteTotal ?? 0) ?></div>
                         <div class="total-label">Total antrian hari ini</div>
                         <div class="mini-info">
@@ -653,7 +654,7 @@ $waitingQueueList = array_values(array_filter(
                         <thead>
                             <tr>
                                 <th>No</th>
-                                <th>Pasien / Poli</th>
+                                <th>Jenis</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
@@ -665,8 +666,9 @@ $waitingQueueList = array_values(array_filter(
                                             <span class="queue-list-code"><?= h($queueItem->code ?: '-') ?></span>
                                         </td>
                                         <td>
-                                            <span class="queue-list-patient"><?= h($queueItem->patients_name ?: '-') ?></span>
-                                            <span class="queue-list-poly"><?= h($queueItem->poly_name ?: '-') ?></span>
+                                            <!-- <span class="queue-list-patient"><?= h($queueItem->patients_name ?: '-') ?></span> -->
+                                            <!-- <span class="queue-list-poly"><?= h($queueItem->poly_name ?: '-') ?></span> -->
+                                            <span class="queue-list-poly"><?= h($queueSource($queueItem)) ?></span>
                                         </td>
                                         <td>
                                             <span class="queue-list-status">
@@ -753,16 +755,18 @@ $waitingQueueList = array_values(array_filter(
 
             tbody.innerHTML = items.map(function(item) {
                 var code = escapeHtml(item.code || '-');
-                var patient = escapeHtml(item.patients_name || '-');
-                var poly = escapeHtml(item.poly_name || '-');
+                // var patient = escapeHtml(item.patients_name || '-');
+                // var poly = escapeHtml(item.poly_name || '-');
+                var source = escapeHtml(item.source || '-');
                 var status = escapeHtml(item.call_status || 'Menunggu');
 
                 return '' +
                     '<tr>' +
                         '<td><span class="queue-list-code">' + code + '</span></td>' +
                         '<td>' +
-                            '<span class="queue-list-patient">' + patient + '</span>' +
-                            '<span class="queue-list-poly">' + poly + '</span>' +
+                            '<!-- <span class="queue-list-patient">' + escapeHtml(item.patients_name || '-') + '</span> -->' +
+                            '<!-- <span class="queue-list-poly">' + escapeHtml(item.poly_name || '-') + '</span> -->' +
+                            '<span class="queue-list-poly">' + source + '</span>' +
                         '</td>' +
                         '<td>' +
                             '<span class="queue-list-status"><i class="fa fa-clock-o"></i> ' + status + '</span>' +

@@ -163,7 +163,7 @@ $todayLabel = date('d F Y'); ?>
 
     .current-panel .current-label {
         font-weight: 700;
-        font-size: 18px;
+        font-size: 25px;
     }
 
     .current-panel .current-number {
@@ -175,7 +175,7 @@ $todayLabel = date('d F Y'); ?>
 
     .current-panel .current-poli {
         font-weight: 800;
-        font-size: 18px;
+        font-size: 35px;
         text-transform: uppercase;
     }
 
@@ -195,6 +195,7 @@ $todayLabel = date('d F Y'); ?>
         display: block;
         color: #657786;
         font-weight: 600;
+        font-size: 25px;
         margin-top: 6px;
     }
 
@@ -204,7 +205,7 @@ $todayLabel = date('d F Y'); ?>
     }
 
     .display-list-wrap .display-table {
-        font-size: 24px;
+        font-size: 30px;
     }
 
     .display-list-wrap .display-table th {
@@ -307,7 +308,7 @@ $todayLabel = date('d F Y'); ?>
         }
 
         .display-table {
-            font-size: 16px
+            font-size: 20px
         }
 
         .display-table th,
@@ -408,7 +409,7 @@ $todayLabel = date('d F Y'); ?>
     }
 
     .display-list-wrap .display-table {
-        font-size: 24px !important
+        font-size: 28px !important
     }
 
     .display-list-wrap .display-table th {
@@ -450,9 +451,9 @@ $todayLabel = date('d F Y'); ?>
             </div>
             <div class="display-content">
                 <div class="current-panel">
+                    <div class="current-poli" id="current-poli-name"><?= h($polyclinic) ?></div>
                     <div class="current-label">Nomor Antrian</div>
                     <div class="current-number" id="current-queue-number"><?= h($currentVisit->queue_number ?? '-') ?></div>
-                    <div class="current-poli" id="current-poli-name"><?= h($polyclinic) ?></div>
                     <div class="current-detail" id="current-detail">
                         <?= h($currentVisit->patient->full_name ?? 'Belum ada panggilan') ?>
                         <small><?= h($currentVisit->patient->code ?? '-') ?></small>

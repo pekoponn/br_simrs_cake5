@@ -232,7 +232,7 @@ class PolyclinicQueuesController extends AppController
                     'code' => (string)($queueItem->code ?: '-'),
                     'poly_name' => (string)($queueItem->poly_name ?: '-'),
                     'patients_name' => (string)($queueItem->patients_name ?: '-'),
-                    'source' => $this->getSourceLabel((string)$queueItem->source),
+                    'source' => $queueItem->source === self::SOURCE_MOBILE_JKN ? 'MJKN' : 'Onsite',
                     'call_status' => (string)($queueItem->call_status ?: self::CALL_STATUS_WAITING),
                 ];
             }
