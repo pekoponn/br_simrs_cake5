@@ -23,7 +23,7 @@ class LicenseAbsentsController extends AppController
     {
         parent::initialize();
         $this->loadModel('Users');
-        // $this->loadComponent('Telegram');
+        $this->loadComponent('Telegram');
     }
     /**
      * Index method
@@ -202,7 +202,7 @@ class LicenseAbsentsController extends AppController
                     ])
                     ->first();
                 if ($atasan && !empty($atasan->telegram_chat_id)) {
-                    $url = 'group.brgroup.id/hr/license-absents';
+                    $url = 'https://rssby.brgroup.id/hr/license-absents';
                     $pesan =
                         "📢 TIDAK MASUK \n\n" .
                         "👤 Pemohon : {$pemohon->name}\n" .

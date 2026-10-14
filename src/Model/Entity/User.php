@@ -76,6 +76,7 @@ class User extends Entity
         'hrga_employee_id' => true,
         'user_team' => true,
         'radius_id' => true,
+        'telegram_chat_id' => true,
         'zona' => true,
         'working_hours' => true,
         'face' => true,

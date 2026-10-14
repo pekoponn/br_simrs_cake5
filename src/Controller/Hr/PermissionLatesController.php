@@ -22,7 +22,7 @@ class PermissionLatesController extends AppController
     {
         parent::initialize();
         $this->loadModel('Users');
-        // $this->loadComponent('Telegram');
+        $this->loadComponent('Telegram');
     }
     /**
      * Index method
@@ -168,7 +168,7 @@ class PermissionLatesController extends AppController
                     ])
                     ->first();
                 if ($atasan && !empty($atasan->telegram_chat_id)) {
-                    $url = 'group.brgroup.id/hr/permission-lates';
+                    $url = 'https://rssby.brgroup.id/hr/permission-lates';
                     $pesan =
                         "📢 PERMINTAAN IJIN TERLAMBAT\n\n" .
                         "👤 Pemohon : {$pemohon->name}\n" .
@@ -243,14 +243,14 @@ class PermissionLatesController extends AppController
         $permissionLate = $this->PermissionLates->get($id, [
             'contain' => ['Users'],
         ]);
-        if ($permissionLate->approved === null) {
-            $this->Flash->error('Data belum disetujui, belum bisa diketahui.');
-            return $this->redirect(['action' => 'index']);
-        }
-        if ($permissionLate->approved_date !== null) {
-            $this->Flash->error('Data ini sudah disetujui sebelumnya.');
-            return $this->redirect(['action' => 'index']);
-        }
+        // if ($permissionLate->approved === null) {
+        //     $this->Flash->error('Data belum disetujui, belum bisa diketahui.');
+        //     return $this->redirect(['action' => 'index']);
+        // }
+        // if ($permissionLate->approved_date !== null) {
+        //     $this->Flash->error('Data ini sudah disetujui sebelumnya.');
+        //     return $this->redirect(['action' => 'index']);
+        // }
 
         if ($this->request->is(['patch', 'post', 'put'])) {
             $dataRow = $this->request->getData();

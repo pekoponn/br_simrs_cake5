@@ -111,6 +111,42 @@ $jsTimezone = $timezoneMap[$userTimezone] ?? 'Asia/Jakarta';
             </div>          
         </div>
     </div>
+    <div class="card border-0 mb-3 bg-dark text-white">
+        <div class="card-body">
+            <div class="m-b-2 text-grey"><b>Riwayat Absensi</b>
+                <span class="ml-2"><i class="fa fa-info-circle" data-toggle="popover" data-trigger="hover" data-title="Riwayat Absensi.." data-placement="top" data-content="Riwayat absensi yang sudah dilakukan."></i></span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">Tanggal</th>
+                            <th scope="col">Keterangan</th>
+                            <th scope="col">Jam</th>
+                        </tr>
+                    </thead>
+                            <tbody id="attendance-history-body">
+                        <?php if (!empty($historyAbsences)) : ?>
+                            <?php foreach ($historyAbsences as $history) : ?>
+                                <tr>
+                                    <td><?= date('d-m-Y') ?></td>
+                                    <td>
+                                        <i class="fa fa-circle <?= $history['type'] === 'I' ? 'text-lime' : 'text-red' ?> f-s-8 mr-2"></i>
+                                        <?= h($history['mode']) ?>
+                                    </td>
+                                    <td><?= h($history['time']) ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else : ?>
+                            <tr>
+                                <td colspan="3" class="text-center">Belum ada absensi hari ini.</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>          
+        </div>
+    </div>
     <?= $this->Form->end() ?>
 </div>
 <?php
@@ -183,6 +219,38 @@ function setFaceAlert(message, type) {
     $('#alertFace').html('<div class="alert ' + alertClass + ' fade show"><strong>' + message + '</strong></div>');
 }
 
+function refreshAttendanceHistory() {
+    $.getJSON('<?= $this->Url->build(['prefix' => 'Hr', 'controller' => 'Absences', 'action' => 'todayHistory']) ?>', function (rows) {
+        var $body = $('#attendance-history-body').empty();
+        if (!rows || !rows.length) {
+            $body.append('<tr><td colspan="3" class="text-center">Belum ada absensi hari ini.</td></tr>');
+            return;
+        }
+        rows.forEach(function (row) {
+            var color = row.type === 'I' ? 'text-lime' : 'text-red';
+            var mode = $('<div>').text(row.mode).html();
+            var time = $('<div>').text(row.time).html();
+            $body.append('<tr><td><?= date('d-m-Y') ?></td><td><i class="fa fa-circle ' + color + ' f-s-8 mr-2"></i>' + mode + '</td><td>' + time + '</td></tr>');
+        });
+    });
+}
+
+function appendAttendanceHistory(type) {
+    var now = getUserNow();
+    var pad = function (value) { return String(value).padStart(2, '0'); };
+    var date = pad(now.getDate()) + '-' + pad(now.getMonth() + 1) + '-' + now.getFullYear();
+    var time = pad(now.getHours()) + ':' + pad(now.getMinutes());
+    var mode = type === 'I' ? 'Masuk' : 'Pulang';
+    var color = type === 'I' ? 'text-lime' : 'text-red';
+    var $body = $('#attendance-history-body');
+
+    $body.find('td[colspan="3"]').closest('tr').remove();
+    $body.append(
+        '<tr><td>' + date + '</td><td><i class="fa fa-circle ' + color +
+        ' f-s-8 mr-2"></i>' + mode + '</td><td>' + time + '</td></tr>'
+    );
+}
+
 function btnCond(cond) {
     $('#statusSpin').html('<i class="fa fa-spinner fa-pulse fa-fw"></i>').show();
         // alert(cond);
@@ -217,8 +285,10 @@ function btnCond(cond) {
                 var responseCode = (typeof response === 'string') ? response.replace(/"/g, '') : response;
                 if(responseCode=='Y') {
                 SwalHelper.success("Terimakasih, Selamat beraktivitas", "Absen sudah masuk");
+                appendAttendanceHistory(cond);
                 }else if(responseCode=='S') {
                 SwalHelper.warning("Absen sudah dilakukan", "Maaf... anda sudah melakukan absensi...", "warning");
+                refreshAttendanceHistory();
                 }else if(responseCode=='F') {
                 SwalHelper.warning("Informasi", "Wajah tidak sesuai. Silakan verifikasi ulang.", "warning");
                 }else if(responseCode=='NF') {

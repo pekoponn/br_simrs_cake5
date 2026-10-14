@@ -20,7 +20,7 @@ class OutPermitsController extends AppController
         parent::initialize();
         $this->loadModel('OutPermits');
         $this->loadModel('Users');
-        // $this->loadComponent('Telegram');
+        $this->loadComponent('Telegram');
       
     }
     /**
@@ -90,7 +90,7 @@ class OutPermitsController extends AppController
                     ])
                     ->first();
                 if ($atasan && !empty($atasan->telegram_chat_id)) {
-                    $url = 'group.brgroup.id/hr/out-permits';
+                    $url = 'https://rssby.brgroup.id/hr/out-permits';
                     $pesan =
                         "📢 IJIN KELUAR SEMENTARA\n\n" .
                         "👤 Pemohon : {$pemohon->name}\n" .

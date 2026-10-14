@@ -45,6 +45,7 @@ use Cake\Routing\Router;
 $routes->setRouteClass(DashedRoute::class);
 
 $routes->scope('/', function (RouteBuilder $builder) {
+    $builder->connect('/telegram/webhook', ['controller' => 'Telegram', 'action' => 'webhook'], ['_method' => 'POST']);
     /*
      * Here, we are connecting '/' (base path) to a controller called 'Pages',
      * its action called 'display', and we pass a param to select the view file

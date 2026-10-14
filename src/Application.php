@@ -99,7 +99,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 return false;
             }
             // Skip token check for API URLs.
-            if (strcmp($controller,'Apis') == 0 || $action=='portalApi' || $controller=='Users') {
+            if (strcmp($controller,'Apis') == 0 || $action=='portalApi' || $controller=='Users' || $controller=='Telegram') {
                 return true;
             }
             if ($controller === 'Beds' && in_array($action, ['updateStatus', 'searchPatients'], true)) {

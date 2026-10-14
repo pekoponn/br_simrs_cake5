@@ -22,7 +22,7 @@ class OvertimesController extends AppController
     {
         parent::initialize();
         $this->loadModel('Users');
-        // $this->loadComponent('Telegram');
+        $this->loadComponent('Telegram');
     }
     /**
      * Index method
@@ -219,7 +219,7 @@ class OvertimesController extends AppController
                         ])
                         ->first();
                     if ($atasan && !empty($atasan->telegram_chat_id)) {
-                        $url =  'group.brgroup.id/hr/overtimes';
+                        $url = 'https://rssby.brgroup.id/hr/overtimes';
                         $pesan =
                             "📢 LEMBUR\n\n" .
                             "👤 Pemohon : {$pemohon->name}\n" .

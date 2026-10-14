@@ -24,7 +24,7 @@ class LeavesController extends AppController
     {
         parent::initialize();
         $this->loadModel('Users');
-        // $this->loadComponent('Telegram');
+        $this->loadComponent('Telegram');
     }
     /**
      * Index method
@@ -235,17 +235,19 @@ class LeavesController extends AppController
                         "FIND_IN_SET($isUser, user_team)"
                     ])
                     ->first();
+                $url = 'https://rssby.brgroup.id/hr/leaves';
+                $pesan =
+                    "📢 PERMINTAAN CUTI\n\n" .
+                    "👤 Pemohon : {$pemohon->name}\n" .
+                    "📅 Tanggal : {$leaveDateText}\n\n" .
+                    "Silakan melakukan approval/mengetahui melalui link berikut:\n" .
+                    $url;
+                $notifiedChatIds = [];
                 if ($atasan && !empty($atasan->telegram_chat_id)) {
-                    $url = 'group.brgroup.id/hr/leaves';
-                    $pesan =
-                        "📢 PERMINTAAN CUTI\n\n" .
-                        "👤 Pemohon : {$pemohon->name}\n" .
-                        "📅 Tanggal : {$dataRow['date_from']} s/d {$dataRow['date_end']}\n\n" .
-                        "Silakan melakukan approval/mengetahui melalui link berikut:\n" .
-                        $url;
                     $this->Telegram->sendMessage($atasan->telegram_chat_id, $pesan);
-                    $this->Telegram->notifyKnowing('leaves', $pesan);
+                    $notifiedChatIds[] = (string)$atasan->telegram_chat_id;
                 }
+                $this->Telegram->notifyKnowing('leaves', $pesan, $notifiedChatIds);
                 $this->Flash->success('Terima kasih, Data berhasil disimpan.');
 
                 return $this->redirect(['action' => 'index']);

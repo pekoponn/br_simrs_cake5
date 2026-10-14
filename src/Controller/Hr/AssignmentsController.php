@@ -20,7 +20,7 @@ class AssignmentsController extends AppController
         parent::initialize();
         $this->loadModel('Assignments');
         $this->loadModel('Users');
-        // $this->loadComponent('Telegram');
+        $this->loadComponent('Telegram');
       
     }
     /**
@@ -91,7 +91,7 @@ class AssignmentsController extends AppController
                     ])
                     ->first();
                 if ($atasan && !empty($atasan->telegram_chat_id)) {
-                    $url =  'group.brgroup.id/hr/assignments';
+                    $url = 'https://rssby.brgroup.id/hr/assignments';
                     $pesan =
                         "📢 PENUGASAN\n\n" .
                         "👤 Pemohon : {$pemohon->name}\n" .

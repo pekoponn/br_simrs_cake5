@@ -101,8 +101,35 @@ class AbsencesController extends AppController
                 ])
                 ->first();
         }
-
-        $this->set(compact('absence', 'users', 'checkAssignmentToday'));
+        $historyAbsences = [];
+        if (!empty($currentUserId)) {
+            $logs = $this->Absences->find()
+                ->select(['id', 'inout_mode', 'date', 'time_in', 'time_out', 'created'])
+                ->where([
+                    'Absences.user_id' => $currentUserId,
+                    'Absences.date'    => $dateNow->format('Y-m-d'),
+                ])
+                ->order(['Absences.created' => 'ASC', 'Absences.id' => 'ASC'])
+                ->enableHydration(false)
+                ->toArray();
+            foreach ($logs as $log) {
+                $isIn = $log['inout_mode'] === 'I';
+                $raw  = $isIn ? $log['time_in'] : $log['time_out'];
+                if (empty($raw)) {
+                    $time = '-';
+                } elseif (is_object($raw)) {
+                    $time = $raw->format('H:i');
+                } else {
+                    $time = date('H:i', strtotime((string)$raw));
+                }
+                $historyAbsences[] = [
+                    'mode' => $isIn ? 'Masuk' : 'Pulang',
+                    'type' => $log['inout_mode'],
+                    'time' => $time,
+                ];
+            }
+        }
+        $this->set(compact('absence', 'users', 'checkAssignmentToday', 'historyAbsences'));
     }
 
     /**
@@ -388,6 +415,24 @@ class AbsencesController extends AppController
             $result = "errors";
         }
         return $this->response->withType("application/json")->withStringBody(json_encode($result));
+    }
+
+    /** Return today's attendance rows for the add page without reloading it. */
+    public function todayHistory()
+    {
+        $this->request->allowMethod(['get']);
+        $auth = (array)$this->getRequest()->getSession()->read('Auth');
+        $userId = (int)($auth['id'] ?? 0);
+        $rows = $userId > 0 ? $this->Absences->find()->select(['inout_mode','time_in','time_out'])
+            ->where(['user_id' => $userId, 'date' => date('Y-m-d')])
+            ->order(['created' => 'ASC', 'id' => 'ASC'])->enableHydration(false)->toArray() : [];
+        $result = [];
+        foreach ($rows as $row) {
+            $in = $row['inout_mode'] === 'I';
+            $raw = $in ? $row['time_in'] : $row['time_out'];
+            $result[] = ['type' => $row['inout_mode'], 'mode' => $in ? 'Masuk' : 'Pulang', 'time' => $raw ? substr((string)$raw, 0, 5) : '-'];
+        }
+        return $this->response->withType('application/json')->withStringBody(json_encode($result));
     }
 
     public function getHistory()

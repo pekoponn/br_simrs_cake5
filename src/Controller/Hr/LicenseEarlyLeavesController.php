@@ -23,7 +23,7 @@ class LicenseEarlyLeavesController extends AppController
     {
         parent::initialize();
         $this->loadModel('Users');
-        // $this->loadComponent('Telegram');
+        $this->loadComponent('Telegram');
     }
     /**
      * Index method
@@ -188,7 +188,7 @@ class LicenseEarlyLeavesController extends AppController
                     ])
                     ->first();
                 if ($atasan && !empty($atasan->telegram_chat_id)) {
-                    $url = 'group.brgroup.id/hr/license-early-leaves';
+                    $url = 'https://rssby.brgroup.id/hr/license-early-leaves';
                     $pesan =
                         "📢 PULANG CEPAT\n\n" .
                         "👤 Pemohon : {$pemohon->name}\n" .
