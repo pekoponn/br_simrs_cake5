@@ -188,6 +188,23 @@ const officeRadius = 15; // radius dalam meter
 const hasEarlyLeave = <?= $hasEarlyLeave ? 'true' : 'false' ?>;
 const isDynamicUser = !hasRadius || hasEarlyLeave;
 
+// ===== Suara absen =====
+var soundIn  = new Audio('<?= $this->Url->build('/audio/in.mpeg') ?>');
+var soundOut = new Audio('<?= $this->Url->build('/audio/out.mpeg') ?>');
+soundIn.preload  = 'auto';
+soundOut.preload = 'auto';
+
+function playAttendanceSound(cond) {
+    var snd = (cond === 'I') ? soundIn : soundOut;
+    try {
+        soundIn.pause();  soundIn.currentTime  = 0;
+        soundOut.pause(); soundOut.currentTime = 0;
+        snd.play().catch(function (e) { console.log('Audio diblokir:', e); });
+    } catch (e) {
+        console.log(e);
+    }
+}
+
 function getUserNow() {
     return new Date(
         new Date().toLocaleString("en-US", {
@@ -284,6 +301,7 @@ function btnCond(cond) {
             success: function(response) {
                 var responseCode = (typeof response === 'string') ? response.replace(/"/g, '') : response;
                 if(responseCode=='Y') {
+                playAttendanceSound(cond);
                 SwalHelper.success("Terimakasih, Selamat beraktivitas", "Absen sudah masuk");
                 appendAttendanceHistory(cond);
                 }else if(responseCode=='S') {
