@@ -45,7 +45,70 @@ class DashboardController extends AppController
         $botUsername = Configure::read('Telegram.botUsername');
         $telegramLink = "https://t.me/{$botUsername}?start={$dataSession['id']}";
         $todayAttendance = $this->buildTodayAttendance($dataSession);
-        $this->set(compact('result', 'notifications', 'totalNotifications', 'hasApprovalAccess', 'workOrderNotifications', 'telegramChatId', 'telegramLink', 'todayAttendance'));
+        $todaySummary = $this->getTodaySummary();
+        $todayPresence = $this->getTodayPresence();
+        $this->set(compact('result', 'notifications', 'totalNotifications', 'hasApprovalAccess', 'workOrderNotifications', 'telegramChatId', 'telegramLink', 'todayAttendance', 'todaySummary', 'todayPresence'));
+    }
+
+    /** Ringkasan kehadiran pegawai aktif berdasarkan absen masuk pertama hari ini. */
+    private function getTodayPresence(): array
+    {
+        $this->loadModel('Users');
+        $this->loadModel('Absences');
+        $today = date('Y-m-d');
+        $total = $this->Users->find()->where(['is_active' => 'Y'])->count();
+        $present = $this->Absences->find()
+            ->where(['date' => $today, 'inout_mode' => 'I'])
+            ->select(['user_id'])->distinct(['user_id'])->count();
+        $present = min($present, $total);
+
+        return ['total' => $total, 'present' => $present, 'absent' => max(0, $total - $present)];
+    }
+
+    private function getTodaySummary(): array
+    {
+        $this->loadModel('Users');
+        $this->loadModel('Absences');
+        $this->loadModel('Leaves');
+        $this->loadModel('LicenseAbsents');
+        $this->loadModel('PermissionLates');
+        $this->loadModel('LicenseEarlyLeaves');
+
+        $today = date('Y-m-d');
+        $lateAfter = '08:00:00'; // Jam masuk standar, ubah di sini bila kebijakan berubah.
+        $activeUsers = ['Users.is_active' => 'Y'];
+
+        // time_in disimpan sebagai TIME/scalar; MIN memastikan hanya absen masuk pertama per user.
+        $late = $this->Absences->find()
+            ->select(['user_id'])
+            ->matching('Users', function ($q) use ($activeUsers) {
+                return $q->where($activeUsers);
+            })
+            ->where(['Absences.date' => $today, 'Absences.inout_mode' => 'I'])
+            ->group(['Absences.user_id'])
+            ->having(['MIN(Absences.time_in) >' => $lateAfter])
+            ->count();
+
+        $cuti = $this->Leaves->find()->matching('Users', function ($q) use ($activeUsers) {
+            return $q->where($activeUsers);
+        })->where(['Leaves.date_from <=' => $today, 'Leaves.date_end >=' => $today])->count();
+        $izinTidakMasuk = $this->LicenseAbsents->find()->matching('Users', function ($q) use ($activeUsers) {
+            return $q->where($activeUsers);
+        })->where(['LicenseAbsents.date_from <=' => $today, 'LicenseAbsents.date_end >=' => $today])->count();
+        $izinTerlambat = $this->PermissionLates->find()->matching('Users', function ($q) use ($activeUsers) {
+            return $q->where($activeUsers);
+        })->where(['PermissionLates.date' => $today])->count();
+        $pulangCepat = $this->LicenseEarlyLeaves->find()->matching('Users', function ($q) use ($activeUsers) {
+            return $q->where($activeUsers);
+        })->where(['LicenseEarlyLeaves.date' => $today])->count();
+
+        return [
+            'late' => $late,
+            'cuti' => $cuti,
+            'izin_tidak_masuk' => $izinTidakMasuk,
+            'izin_terlambat' => $izinTerlambat,
+            'pulang_cepat' => $pulangCepat,
+        ];
     }
 
     public function todayAttendance()
