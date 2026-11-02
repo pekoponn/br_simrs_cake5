@@ -96,7 +96,7 @@ class OrdersTable extends Table
 
         $last = $this->find()
             ->where(['no_order LIKE' => $prefix . '%'])
-            ->order(['no_order' => 'DESC'])
+            ->orderBy(['no_order' => 'DESC'])
             ->first();
 
         $seq = $last ? (int)substr($last->no_order, -5) + 1 : 1;
@@ -118,7 +118,7 @@ class OrdersTable extends Table
                 'OrderMcus',
             ])
             ->where(['Orders.patient_id' => $patientId])
-            ->order(['Orders.tgl_order' => 'DESC'])
+            ->orderBy(['Orders.tgl_order' => 'DESC'])
             ->toArray();
     }
 }

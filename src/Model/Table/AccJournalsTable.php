@@ -223,10 +223,9 @@ class AccJournalsTable extends Table
         $yearMonth = (isset($monthYear)) ? $monthYear : $dateNow;
         //$yearMonth = (isset($monthYear)) ? $monthYear : $year.$month;
 
-        $dataRows = $this->find('all',[
-            'fields' => array('codes' => 'MAX(RIGHT(AccJournals.code, 3))+1'),
-            'conditions' => array('SUBSTRING(AccJournals.code, 1, 6) =' => $yearMonth, 'AccJournals.journal_type' => $type)
-        ]); 
+        $dataRows = $this->find('all',
+        fields: array('codes' => 'MAX(RIGHT(AccJournals.code, 3))+1'),
+        conditions: array('SUBSTRING(AccJournals.code, 1, 6) =' => $yearMonth, 'AccJournals.journal_type' => $type)); 
 
         $dataRows = $dataRows->first();
         $dataResult = $dataRows->codes;

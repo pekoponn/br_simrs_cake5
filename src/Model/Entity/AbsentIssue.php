@@ -15,11 +15,11 @@ use Cake\ORM\Entity;
  * @property string|null $description
  * @property string|null $status
  * @property int|null $is_done
- * @property \Cake\I18n\FrozenTime|null $doned
+ * @property \Cake\I18n\DateTime|null $doned
  * @property int $is_create
- * @property \Cake\I18n\FrozenTime|null $created
+ * @property \Cake\I18n\DateTime|null $created
  * @property int $is_update
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $modified
  * @property string|null $is_log
  * @property string|null $is_active
  *
@@ -36,7 +36,7 @@ class AbsentIssue extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'user_id' => true,
         'file_1' => true,
         'file_2' => true,

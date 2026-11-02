@@ -20,12 +20,12 @@ use Cake\ORM\Entity;
  * @property string $discount_rp
  * @property string $tax
  * @property string $total_harga
- * @property \Cake\I18n\FrozenDate|null $tgl_kadaluarsa
+ * @property \Cake\I18n\Date|null $tgl_kadaluarsa
  * @property string|null $po_no
  * @property string|null $histori
  * @property string $nilai_diskon
- * @property \Cake\I18n\FrozenTime $created
- * @property \Cake\I18n\FrozenTime $modified
+ * @property \Cake\I18n\DateTime $created
+ * @property \Cake\I18n\DateTime $modified
  *
  * @property \App\Model\Entity\Invoice $invoice
  * @property \App\Model\Entity\Medicine $medicine
@@ -41,7 +41,7 @@ class InvoiceDetail extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'invoice_id' => true,
         'medicine_id' => true,
         'kode_barang' => true,

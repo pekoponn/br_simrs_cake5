@@ -44,8 +44,8 @@ use Cake\ORM\Entity;
  * @property string|null $decubitus_education
  * @property string|null $status
  * @property bool|null $is_active
- * @property \Cake\I18n\FrozenTime $created
- * @property \Cake\I18n\FrozenTime $modified
+ * @property \Cake\I18n\DateTime $created
+ * @property \Cake\I18n\DateTime $modified
  *
  * @property \App\Model\Entity\Registration $registration
  * @property \App\Model\Entity\Patient $patient
@@ -62,7 +62,7 @@ class EmergencyNursingAssessment extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'registration_id' => true,
         'patient_id' => true,
         'nurse_id' => true,

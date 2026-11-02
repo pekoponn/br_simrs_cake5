@@ -22,7 +22,7 @@ class HrgaEmployeesController extends AppController
     {
         parent::initialize();
 
-        $this->loadModel('HrgaEmployees');
+        $this->HrgaEmployees = $this->fetchTable('HrgaEmployees');
     }
 
     /**
@@ -127,7 +127,7 @@ class HrgaEmployeesController extends AppController
      */
     public function add()
     {
-        // $this->loadModel('HrgaEmployees');
+        // $this->HrgaEmployees = $this->fetchTable('HrgaEmployees');
         $hrgaEmployee = $this->HrgaEmployees->newEmptyEntity();
         if ($this->request->is('post')) {
 
@@ -367,7 +367,7 @@ class HrgaEmployeesController extends AppController
         }
         $users = $this->HrgaEmployees->Users->find('list', ['keyField' => 'id', 'valueField' => 'name'])->where(['Users.hrga_employee_id' => 0]);
 
-        $this->loadModel('DaerahKabupatens');
+        $this->DaerahKabupatens = $this->fetchTable('DaerahKabupatens');
         $kabupaten = $this->DaerahKabupatens->find('list', ['keyField' => 'nama', 'valueField' => 'nama']);
         $this->set(compact('hrgaEmployee', 'users', 'kabupaten'));
     }
@@ -649,7 +649,7 @@ class HrgaEmployeesController extends AppController
         }
         $users = $this->HrgaEmployees->Users->find('list', ['keyField' => 'id', 'valueField' => 'name']);
 
-        $this->loadModel('DaerahKabupatens');
+        $this->DaerahKabupatens = $this->fetchTable('DaerahKabupatens');
         $kabupaten = $this->DaerahKabupatens->find('list', ['keyField' => 'nama', 'valueField' => 'nama'])->toArray();
         if (!empty($hrgaEmployee->devisi) && !empty($hrgaEmployee->sub_devisi)) {
             $hrgaEmployee->devisi = $hrgaEmployee->devisi . '^' . $hrgaEmployee->sub_devisi;

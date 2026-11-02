@@ -14,8 +14,8 @@ use Cake\ORM\Entity;
  * @property string|null $code
  * @property string|null $diagnosis
  * @property bool|null $is_primary
- * @property \Cake\I18n\FrozenTime|null $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
  *
  * @property \App\Model\Entity\MedicalRecord $medical_record
  */
@@ -30,7 +30,7 @@ class MedicalRecordDiagnosis extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'medical_record_id' => true,
         'type' => true,
         'code' => true,

@@ -35,9 +35,7 @@ class OrderRadiologiesController extends AppController
      */
     public function view($id = null)
     {
-        $orderRadiology = $this->OrderRadiologies->get($id, [
-            'contain' => ['Orders', 'Registrations', 'Patients', 'Doctors', 'MasterRadiologies'],
-        ]);
+        $orderRadiology = $this->OrderRadiologies->get($id, contain: ['Orders', 'Registrations', 'Patients', 'Doctors', 'MasterRadiologies']);
 
         $this->set(compact('orderRadiology'));
     }
@@ -76,9 +74,7 @@ class OrderRadiologiesController extends AppController
      */
     public function edit($id = null)
     {
-        $orderRadiology = $this->OrderRadiologies->get($id, [
-            'contain' => [],
-        ]);
+        $orderRadiology = $this->OrderRadiologies->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $orderRadiology = $this->OrderRadiologies->patchEntity($orderRadiology, $this->request->getData());
             if ($this->OrderRadiologies->save($orderRadiology)) {

@@ -35,9 +35,7 @@ class BedHistoriesController extends AppController
      */
     public function view($id = null)
     {
-        $bedHistory = $this->BedHistories->get($id, [
-            'contain' => ['Beds', 'Rooms'],
-        ]);
+        $bedHistory = $this->BedHistories->get($id, contain: ['Beds', 'Rooms']);
 
         $this->set(compact('bedHistory'));
     }
@@ -73,9 +71,7 @@ class BedHistoriesController extends AppController
      */
     public function edit($id = null)
     {
-        $bedHistory = $this->BedHistories->get($id, [
-            'contain' => [],
-        ]);
+        $bedHistory = $this->BedHistories->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $bedHistory = $this->BedHistories->patchEntity($bedHistory, $this->request->getData());
             if ($this->BedHistories->save($bedHistory)) {

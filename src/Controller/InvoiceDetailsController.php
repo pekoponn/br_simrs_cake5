@@ -35,9 +35,7 @@ class InvoiceDetailsController extends AppController
      */
     public function view($id = null)
     {
-        $invoiceDetail = $this->InvoiceDetails->get($id, [
-            'contain' => ['Invoices', 'Medicines'],
-        ]);
+        $invoiceDetail = $this->InvoiceDetails->get($id, contain: ['Invoices', 'Medicines']);
 
         $this->set(compact('invoiceDetail'));
     }
@@ -73,9 +71,7 @@ class InvoiceDetailsController extends AppController
      */
     public function edit($id = null)
     {
-        $invoiceDetail = $this->InvoiceDetails->get($id, [
-            'contain' => [],
-        ]);
+        $invoiceDetail = $this->InvoiceDetails->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $invoiceDetail = $this->InvoiceDetails->patchEntity($invoiceDetail, $this->request->getData());
             if ($this->InvoiceDetails->save($invoiceDetail)) {

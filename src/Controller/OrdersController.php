@@ -11,25 +11,25 @@ class OrdersController extends AppController
 
         $this->loadComponent('Flash');
 
-        $this->loadModel('Orders');
-        $this->loadModel('Registrations');
-        $this->loadModel('Patients');
-        $this->loadModel('Doctors');
-        $this->loadModel('OrderStatuses');
-        $this->loadModel('OrderPrescriptions');
-        $this->loadModel('Medicines');
-        $this->loadModel('Users');
-        $this->loadModel('OrderLaboratories');
-        $this->loadModel('MasterLaboratories');
-        $this->loadModel('OrderRadiologies');
-        $this->loadModel('MasterRadiologies');
-        $this->loadModel('OrderSupports');
-        $this->loadModel('MasterSupports');
-        $this->loadModel('OrderSurgeries');
-        $this->loadModel('OrderMcus');
-        $this->loadModel('MasterOperationTypes');
-        $this->loadModel('MasterMcuTypes');
-        $this->loadModel('NutritionCombine');
+        $this->Orders = $this->fetchTable('Orders');
+        $this->Registrations = $this->fetchTable('Registrations');
+        $this->Patients = $this->fetchTable('Patients');
+        $this->Doctors = $this->fetchTable('Doctors');
+        $this->OrderStatuses = $this->fetchTable('OrderStatuses');
+        $this->OrderPrescriptions = $this->fetchTable('OrderPrescriptions');
+        $this->Medicines = $this->fetchTable('Medicines');
+        $this->Users = $this->fetchTable('Users');
+        $this->OrderLaboratories = $this->fetchTable('OrderLaboratories');
+        $this->MasterLaboratories = $this->fetchTable('MasterLaboratories');
+        $this->OrderRadiologies = $this->fetchTable('OrderRadiologies');
+        $this->MasterRadiologies = $this->fetchTable('MasterRadiologies');
+        $this->OrderSupports = $this->fetchTable('OrderSupports');
+        $this->MasterSupports = $this->fetchTable('MasterSupports');
+        $this->OrderSurgeries = $this->fetchTable('OrderSurgeries');
+        $this->OrderMcus = $this->fetchTable('OrderMcus');
+        $this->MasterOperationTypes = $this->fetchTable('MasterOperationTypes');
+        $this->MasterMcuTypes = $this->fetchTable('MasterMcuTypes');
+        $this->NutritionCombine = $this->fetchTable('NutritionCombine');
     }
 
     public function index()
@@ -162,7 +162,7 @@ public function antrianFarmasi()
 
     $medicalRecordMap = [];
     if (!empty($registrationIds)) {
-        $this->loadModel('MedicalRecords');
+        $this->MedicalRecords = $this->fetchTable('MedicalRecords');
 
         $medicalRecords = $this->MedicalRecords->find()
             ->select(['registration_id', 'medical_record_no'])
@@ -233,7 +233,7 @@ public function proses($id = null)
 
         // Ambil No Rekam Medis dari registration_id order ini.
         if (!empty($order->registration_id)) {
-            $this->loadModel('MedicalRecords');
+            $this->MedicalRecords = $this->fetchTable('MedicalRecords');
             $mr = $this->MedicalRecords->find()
                 ->select(['medical_record_no'])
                 ->where(['registration_id' => (int)$order->registration_id])
@@ -840,7 +840,7 @@ public function proses($id = null)
             'FARMASI IGD',
         ];
 
-        $this->loadModel('OutpatientVisits');
+        $this->OutpatientVisits = $this->fetchTable('OutpatientVisits');
 
         $outpatientVisit = null;
 

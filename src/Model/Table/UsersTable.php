@@ -57,7 +57,7 @@ class UsersTable extends Table
             'foreignKey' => 'branch_id',
             'joinType' => 'INNER',
         ]);       
-        
+
         $this->belongsTo('CreatedUsers', [
             'className' => 'Users',
             'foreignKey' => 'is_create'
@@ -267,7 +267,7 @@ class UsersTable extends Table
     // public function buildRules(RulesChecker $rules): RulesChecker
     // {
     //     $rules->add($rules->isUnique(['email']), ['errorField' => 'email']);
-        
+
     //     return $rules;
     // }
 }

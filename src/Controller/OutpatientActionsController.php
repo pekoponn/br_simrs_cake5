@@ -35,9 +35,7 @@ class OutpatientActionsController extends AppController
      */
     public function view($id = null)
     {
-        $outpatientAction = $this->OutpatientActions->get($id, [
-            'contain' => ['OutpatientVisits', 'MasterTindakan'],
-        ]);
+        $outpatientAction = $this->OutpatientActions->get($id, contain: ['OutpatientVisits', 'MasterTindakan']);
 
         $this->set(compact('outpatientAction'));
     }
@@ -73,9 +71,7 @@ class OutpatientActionsController extends AppController
      */
     public function edit($id = null)
     {
-        $outpatientAction = $this->OutpatientActions->get($id, [
-            'contain' => [],
-        ]);
+        $outpatientAction = $this->OutpatientActions->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $outpatientAction = $this->OutpatientActions->patchEntity($outpatientAction, $this->request->getData());
             if ($this->OutpatientActions->save($outpatientAction)) {

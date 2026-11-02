@@ -19,10 +19,10 @@ class PatientHistoriesController extends AppController
 
     public function index()
     {
-        $this->loadModel('Patients');
-        $this->loadModel('Registrations');
-        $this->loadModel('OutpatientVisits');
-        $this->loadModel('OutpatientVisitEmr');
+        $this->Patients = $this->fetchTable('Patients');
+        $this->Registrations = $this->fetchTable('Registrations');
+        $this->OutpatientVisits = $this->fetchTable('OutpatientVisits');
+        $this->OutpatientVisitEmr = $this->fetchTable('OutpatientVisitEmr');
 
         // q dipakai ketika pasien sudah dipilih dari modal.
         // patient_search dipakai untuk isi pencarian di modal cari pasien.
@@ -159,7 +159,7 @@ class PatientHistoriesController extends AppController
 
                     $cpptRows = [];
                     if ($outpatientVisit && $hasTable('outpatient_cppt_notes')) {
-                        $this->loadModel('OutpatientCpptNotes');
+                        $this->OutpatientCpptNotes = $this->fetchTable('OutpatientCpptNotes');
                         $cpptRows = $this->OutpatientCpptNotes->find()
                             ->where(['OutpatientCpptNotes.outpatient_visit_id' => (int)$outpatientVisit->id])
                             ->order(['OutpatientCpptNotes.noted_at' => 'ASC', 'OutpatientCpptNotes.id' => 'ASC'])
@@ -423,7 +423,7 @@ private function resolveUserName($connection, callable $hasTable, $userId): ?str
     public function searchPatients()
 {
     $this->request->allowMethod(['get']);
-    $this->loadModel('Patients');
+    $this->Patients = $this->fetchTable('Patients');
 
     $term = trim((string)$this->request->getQuery('term', ''));
     $limit = (int)$this->request->getQuery('limit', 50);
@@ -514,8 +514,8 @@ private function resolveUserName($connection, callable $hasTable, $userId): ?str
 
     public function periksa($outpatientVisitId = null)
     {
-        $this->loadModel('OutpatientVisits');
-        $this->loadModel('PatientHistorys');
+        $this->OutpatientVisits = $this->fetchTable('OutpatientVisits');
+        $this->PatientHistorys = $this->fetchTable('PatientHistorys');
 
         $visit = $this->OutpatientVisits->get($outpatientVisitId, [
             'contain' => ['Patients', 'Doctors', 'Registrations'],
@@ -963,9 +963,9 @@ private function resolveUserName($connection, callable $hasTable, $userId): ?str
 
     public function history($patientId = null)
     {
-        $this->loadModel('Patients');
-        $this->loadModel('OutpatientVisits');
-        $this->loadModel('OutpatientVisitEmr');
+        $this->Patients = $this->fetchTable('Patients');
+        $this->OutpatientVisits = $this->fetchTable('OutpatientVisits');
+        $this->OutpatientVisitEmr = $this->fetchTable('OutpatientVisitEmr');
 
         $patient = $this->Patients->get($patientId);
         $connection = ConnectionManager::get('default');

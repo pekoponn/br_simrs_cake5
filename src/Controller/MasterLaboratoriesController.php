@@ -10,7 +10,7 @@ class MasterLaboratoriesController extends AppController
         parent::initialize();
 
         $this->loadComponent('Flash');
-        $this->loadModel('MasterLaboratories');
+        $this->MasterLaboratories = $this->fetchTable('MasterLaboratories');
     }
 
     public function index()

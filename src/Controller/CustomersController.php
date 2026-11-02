@@ -39,9 +39,7 @@ class CustomersController extends AppController
      */
     public function view($id = null)
     {
-        $customer = $this->Customers->get($id, [
-            'contain' => ['Branches', 'Users', 'Marketings', 'DataInvoices', 'DataTaxes', 'Mous', 'AccCashes', 'AccChartOfAccounts', 'AccJournalBanks', 'AccJournalCashes', 'AccJournalMemorials', 'AccJournals', 'Certificates', 'CommissionDetails', 'InvoiceDeposits', 'InvoiceEntries', 'InvoiceOuts', 'Invoices', 'ManifestInsides', 'ManifestProcessors', 'Manifests', 'Mouses', 'Offers', 'Operationals', 'OrderRegularLines', 'Orders', 'Orders230129', 'OrdersOri', 'Permits', 'TruckSchedules', 'UnidentifiedIncomes', 'WastePrices', 'Wastes'],
-        ]);
+        $customer = $this->Customers->get($id, contain: ['Branches', 'Users', 'Marketings', 'DataInvoices', 'DataTaxes', 'Mous', 'AccCashes', 'AccChartOfAccounts', 'AccJournalBanks', 'AccJournalCashes', 'AccJournalMemorials', 'AccJournals', 'Certificates', 'CommissionDetails', 'InvoiceDeposits', 'InvoiceEntries', 'InvoiceOuts', 'Invoices', 'ManifestInsides', 'ManifestProcessors', 'Manifests', 'Mouses', 'Offers', 'Operationals', 'OrderRegularLines', 'Orders', 'Orders230129', 'OrdersOri', 'Permits', 'TruckSchedules', 'UnidentifiedIncomes', 'WastePrices', 'Wastes']);
 
         $this->set(compact('customer'));
     }
@@ -65,10 +63,10 @@ class CustomersController extends AppController
         }
         $branches = $this->Customers->Branches->find('list', ['limit' => 200]);
         $users = $this->Customers->Users->find('list', ['limit' => 200]);
-        $marketings = $this->Customers->Marketings->find('list', ['limit' => 200]);
-        $dataInvoices = $this->Customers->DataInvoices->find('list', ['limit' => 200]);
-        $dataTaxes = $this->Customers->DataTaxes->find('list', ['limit' => 200]);
-        $mous = $this->Customers->Mous->find('list', ['limit' => 200]);
+        $marketings = $this->Customers->Marketings->find('list', limit: 200);
+        $dataInvoices = $this->Customers->DataInvoices->find('list', limit: 200);
+        $dataTaxes = $this->Customers->DataTaxes->find('list', limit: 200);
+        $mous = $this->Customers->Mous->find('list', limit: 200);
         $this->set(compact('customer', 'branches', 'users', 'marketings', 'dataInvoices', 'dataTaxes', 'mous'));
     }
 
@@ -81,9 +79,7 @@ class CustomersController extends AppController
      */
     public function edit($id = null)
     {
-        $customer = $this->Customers->get($id, [
-            'contain' => [],
-        ]);
+        $customer = $this->Customers->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $customer = $this->Customers->patchEntity($customer, $this->request->getData());
             if ($this->Customers->save($customer)) {
@@ -95,10 +91,10 @@ class CustomersController extends AppController
         }
         $branches = $this->Customers->Branches->find('list', ['limit' => 200]);
         $users = $this->Customers->Users->find('list', ['limit' => 200]);
-        $marketings = $this->Customers->Marketings->find('list', ['limit' => 200]);
-        $dataInvoices = $this->Customers->DataInvoices->find('list', ['limit' => 200]);
-        $dataTaxes = $this->Customers->DataTaxes->find('list', ['limit' => 200]);
-        $mous = $this->Customers->Mous->find('list', ['limit' => 200]);
+        $marketings = $this->Customers->Marketings->find('list', limit: 200);
+        $dataInvoices = $this->Customers->DataInvoices->find('list', limit: 200);
+        $dataTaxes = $this->Customers->DataTaxes->find('list', limit: 200);
+        $mous = $this->Customers->Mous->find('list', limit: 200);
         $this->set(compact('customer', 'branches', 'users', 'marketings', 'dataInvoices', 'dataTaxes', 'mous'));
     }
 

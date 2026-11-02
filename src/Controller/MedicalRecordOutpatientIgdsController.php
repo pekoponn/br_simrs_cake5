@@ -35,9 +35,7 @@ class MedicalRecordOutpatientIgdsController extends AppController
      */
     public function view($id = null)
     {
-        $medicalRecordOutpatientIgd = $this->MedicalRecordOutpatientIgds->get($id, [
-            'contain' => ['MedicalRecords'],
-        ]);
+        $medicalRecordOutpatientIgd = $this->MedicalRecordOutpatientIgds->get($id, contain: ['MedicalRecords']);
 
         $this->set(compact('medicalRecordOutpatientIgd'));
     }
@@ -72,9 +70,7 @@ class MedicalRecordOutpatientIgdsController extends AppController
      */
     public function edit($id = null)
     {
-        $medicalRecordOutpatientIgd = $this->MedicalRecordOutpatientIgds->get($id, [
-            'contain' => [],
-        ]);
+        $medicalRecordOutpatientIgd = $this->MedicalRecordOutpatientIgds->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $medicalRecordOutpatientIgd = $this->MedicalRecordOutpatientIgds->patchEntity($medicalRecordOutpatientIgd, $this->request->getData());
             if ($this->MedicalRecordOutpatientIgds->save($medicalRecordOutpatientIgd)) {

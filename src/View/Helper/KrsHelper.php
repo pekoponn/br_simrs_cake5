@@ -11,7 +11,7 @@ use Cake\I18n\FrozenDate;
 
 class KrsHelper extends Helper
 {
-	public $helpers = ['Html', 'Paginator', 'Form'];
+	public array $helpers = ['Html', 'Paginator', 'Form'];
 
 	//Klinik
 	public $company = 'Portal';
@@ -552,7 +552,7 @@ class KrsHelper extends Helper
 		return $result;
 	}
 
-	public function inputDateRange($nameFrom, $arrayFrom = array(), $nameTo, $arrayTo = array(), $separator, $reset)
+	public function inputDateRange($nameFrom, $arrayFrom, $nameTo, $arrayTo, $separator, $reset)
 	{
 		$input = '<div class="input-group input-daterange">';
 		$input .= $this->Form->input($nameFrom, $arrayFrom);
@@ -650,7 +650,7 @@ class KrsHelper extends Helper
 
 		// Jika string, ubah dulu menjadi FrozenDate atau FrozenTime
 		try {
-			$dateObj = new FrozenTime($value); // atau FrozenDate jika hanya tanggal
+			$dateObj = new \Cake\I18n\DateTime($value); // atau FrozenDate jika hanya tanggal
 			return $dateObj->format($formats);
 		} catch (\Exception $e) {
 			return ''; // fallback jika format tidak valid

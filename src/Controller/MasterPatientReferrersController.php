@@ -206,7 +206,7 @@ class MasterPatientReferrersController extends AppController
         $last = $this->MasterPatientReferrers
             ->find()
             ->select(['id'])
-            ->order([
+            ->orderBy([
                 'MasterPatientReferrers.id' => 'DESC',
             ])
             ->first();

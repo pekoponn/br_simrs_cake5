@@ -127,7 +127,7 @@ $conditions['DATE(Registrations.registration_date) <='] = $filterDateTo;
     if ($this->request->getQuery('from_planned_inpatient') && !empty($sourceRegistrationId)) {
         $fromPlannedInpatient = true;
 
-        $this->loadModel('Patients');
+        $this->Patients = $this->fetchTable('Patients');
         $sourceRegistration = $this->Registrations->find()
             ->where(['Registrations.id' => (int)$sourceRegistrationId])
             ->first();
@@ -185,7 +185,7 @@ $conditions['DATE(Registrations.registration_date) <='] = $filterDateTo;
     $praReferralType = null;
 
     if ($this->request->getQuery('from_pra_registration') && !empty($sourcePraRegistrationId)) {
-        $this->loadModel('PraRegistrations');
+        $this->PraRegistrations = $this->fetchTable('PraRegistrations');
 
         $sourcePraRegistration = $this->PraRegistrations->find()
             ->where(['PraRegistrations.id' => (int)$sourcePraRegistrationId])
@@ -210,7 +210,7 @@ $conditions['DATE(Registrations.registration_date) <='] = $filterDateTo;
             if (!empty($sourcePraRegistration->doctor_id)) {
                 $queueDoctorId = (int)$sourcePraRegistration->doctor_id;
             } elseif (!empty($sourcePraRegistration->doctor_name)) {
-                $this->loadModel('Doctors');
+                $this->Doctors = $this->fetchTable('Doctors');
 
                 $praDoctorNameNormalized = strtolower(trim((string)$sourcePraRegistration->doctor_name));
 
@@ -231,7 +231,7 @@ $conditions['DATE(Registrations.registration_date) <='] = $filterDateTo;
             if (!empty($sourcePraRegistration->patient_id)) {
                 $queuePatientId = (int)$sourcePraRegistration->patient_id;
 
-                $this->loadModel('Patients');
+                $this->Patients = $this->fetchTable('Patients');
                 $patientSchema = $this->Patients->getSchema();
                 $queuePatientFields = array_values(array_filter([
                     'id', 'code', 'title', 'full_name', 'identity_type', 'identity_number',
@@ -274,7 +274,7 @@ $conditions['DATE(Registrations.registration_date) <='] = $filterDateTo;
             }
 
             if (!empty($queueDoctorId)) {
-                $this->loadModel('DoctorSchedules');
+                $this->DoctorSchedules = $this->fetchTable('DoctorSchedules');
 
                 $candidateSchedules = $this->DoctorSchedules->find()
                     ->where([
@@ -347,7 +347,7 @@ $conditions['DATE(Registrations.registration_date) <='] = $filterDateTo;
             $praGuarantor = $sourcePraRegistration->guarantor ?? null;
 
             if (!empty($praGuarantor)) {
-                $this->loadModel('MasterPenjamins');
+                $this->MasterPenjamins = $this->fetchTable('MasterPenjamins');
                 $matchedPenjamin = $this->MasterPenjamins->find()
                     ->where(['MasterPenjamins.code' => $praGuarantor])
                     ->first();
@@ -379,7 +379,7 @@ $conditions['DATE(Registrations.registration_date) <='] = $filterDateTo;
     $queue = null;
 
     if (!empty($queueId)) {
-        $this->loadModel('PolyclinicQueues');
+        $this->PolyclinicQueues = $this->fetchTable('PolyclinicQueues');
         $queue = $this->PolyclinicQueues->find()
             ->where(['PolyclinicQueues.id' => (int)$queueId])
             ->first();
@@ -395,7 +395,7 @@ $conditions['DATE(Registrations.registration_date) <='] = $filterDateTo;
             $queueSource = $queue->source ?? '';
 
         if (!empty($polyclinicName)) {
-            $this->loadModel('DoctorSchedules');
+            $this->DoctorSchedules = $this->fetchTable('DoctorSchedules');
 
             $todayName = [
                 'Monday'    => 'Senin',
@@ -427,7 +427,7 @@ $conditions['DATE(Registrations.registration_date) <='] = $filterDateTo;
         if ($this->PolyclinicQueues->getSchema()->hasColumn('patient_id') && !empty($queue->patient_id)) {
                 $queuePatientId = (int)$queue->patient_id;
 
-                $this->loadModel('Patients');
+                $this->Patients = $this->fetchTable('Patients');
                 $patientSchema = $this->Patients->getSchema();
                 $queuePatientFields = [
                     'id',
@@ -480,7 +480,7 @@ $conditions['DATE(Registrations.registration_date) <='] = $filterDateTo;
             }   
 
             if (empty($queuePatientData) && ($queuePhoneNumber !== '' || $queueIdentityNumber !== '')) {
-                $this->loadModel('Patients');
+                $this->Patients = $this->fetchTable('Patients');
                 $patientSchema = $this->Patients->getSchema();
 
                 $fallbackConditions = ['OR' => []];
@@ -595,7 +595,7 @@ $registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_
 
         $queue = null;
         if (!empty($data['polyclinic_queue_id'])) {
-            $this->loadModel('PolyclinicQueues');
+            $this->PolyclinicQueues = $this->fetchTable('PolyclinicQueues');
             $queue = $this->PolyclinicQueues->find()
                 ->where(['PolyclinicQueues.id' => (int)$data['polyclinic_queue_id']])
                 ->first();
@@ -637,7 +637,7 @@ $registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_
         // rollback bersama-sama (atomic), tidak ada pasien "yatim".
         // ============================================================
 
-        $this->loadModel('Patients');
+        $this->Patients = $this->fetchTable('Patients');
 
         $patientFields = [
             'title',
@@ -1004,7 +1004,7 @@ $registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_
             }
 
             if (!empty($personResponsibleData)) {
-                $this->loadModel('PersonResponsibles');
+                $this->PersonResponsibles = $this->fetchTable('PersonResponsibles');
                 $personSchema = $this->PersonResponsibles->getSchema();
 
                 $personData = $personResponsibleData;
@@ -1100,7 +1100,7 @@ $registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_
             }
 
             if ($fromPraRegistration && !empty($sourcePraRegistrationId)) {
-                $this->loadModel('PraRegistrations');
+                $this->PraRegistrations = $this->fetchTable('PraRegistrations');
                 $this->PraRegistrations->updateAll(
                     [
                         'registration_id' => (int)$registration->id,
@@ -1157,7 +1157,7 @@ $registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_
         $registration = $this->Registrations->patchEntity($registration, $safeDataForEntity);
     }
 
-    $this->loadModel('DaerahProvinsis');
+    $this->DaerahProvinsis = $this->fetchTable('DaerahProvinsis');
 
     $provinces = $this->DaerahProvinsis->find()
         ->select(['id_prov', 'nama'])
@@ -1180,7 +1180,7 @@ $registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_
         'valueField' => 'name',
     ])->where(['Beds.status' => 0])->limit(200)->all()->toArray();
 
-    $this->loadModel('MasterPenjamins');
+    $this->MasterPenjamins = $this->fetchTable('MasterPenjamins');
     $masterPenjamins = $this->MasterPenjamins->find('list', [
         'keyField' => 'name',
         'valueField' => 'name',
@@ -1189,7 +1189,7 @@ $registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_
         ->order(['MasterPenjamins.name' => 'ASC'])
         ->toArray();
 
-    $this->loadModel('MasterTreatmentPackages');
+    $this->MasterTreatmentPackages = $this->fetchTable('MasterTreatmentPackages');
     $masterTreatmentPackages = $this->MasterTreatmentPackages->find('list', [
         'keyField' => 'name',
         'valueField' => 'name',
@@ -1268,7 +1268,7 @@ $registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_
         $queueDoctorId = null;
         $queueDoctorScheduleId = null;
 
-        $this->loadModel('PolyclinicQueues');
+        $this->PolyclinicQueues = $this->fetchTable('PolyclinicQueues');
 
         if (!empty($queueId)) {
             $queue = $this->PolyclinicQueues->find()
@@ -1282,7 +1282,7 @@ $registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_
                 $polyclinicName = $queue->poly_name;
 
                 if (!empty($polyclinicName)) {
-                    $this->loadModel('DoctorSchedules');
+                    $this->DoctorSchedules = $this->fetchTable('DoctorSchedules');
                     $todayName = [
                         'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu',
                         'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu', 'Sunday' => 'Minggu',
@@ -1345,7 +1345,7 @@ $registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_
             if ($error) {
                 $this->Flash->error(__($error));
             } else {
-                $this->loadModel('Patients');
+                $this->Patients = $this->fetchTable('Patients');
 
                 $regData = [
                     'registration_no'     => $this->_generateRegistrationNo('rawat_jalan'),
@@ -1484,7 +1484,7 @@ $registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_
         $queueDoctorId = null;
         $queueDoctorScheduleId = null;
 
-        $this->loadModel('PolyclinicQueues');
+        $this->PolyclinicQueues = $this->fetchTable('PolyclinicQueues');
 
         if (!empty($queueId)) {
             $queue = $this->PolyclinicQueues->find()
@@ -1498,7 +1498,7 @@ $registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_
                 $polyclinicName = $queue->poly_name;
 
                 if (!empty($polyclinicName)) {
-                    $this->loadModel('DoctorSchedules');
+                    $this->DoctorSchedules = $this->fetchTable('DoctorSchedules');
                     $todayName = [
                         'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu',
                         'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu', 'Sunday' => 'Minggu',
@@ -1561,7 +1561,7 @@ $registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_
             if ($error) {
                 $this->Flash->error(__($error));
             } else {
-                $this->loadModel('Patients');
+                $this->Patients = $this->fetchTable('Patients');
 
                 $regData = [
                     'registration_no'     => $this->_generateRegistrationNo('rawat_jalan'),
@@ -1696,7 +1696,7 @@ $registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_
             $data = $this->request->getData();
 
             // ── Update data pasien terkait (kalau ada perubahan dari form) ──────────
-            $this->loadModel('Patients');
+            $this->Patients = $this->fetchTable('Patients');
             if (!empty($data['patient']) && is_array($data['patient']) && !empty($registration->patient_id)) {
                 try {
                     $patient = $this->Patients->get((int)$registration->patient_id);
@@ -1920,7 +1920,7 @@ $registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_
                 $this->_createMedicalRecordForRegistration($registration);
 
                 if (!empty($personResponsibleData)) {
-                    $this->loadModel('PersonResponsibles');
+                    $this->PersonResponsibles = $this->fetchTable('PersonResponsibles');
                     $personSchema = $this->PersonResponsibles->getSchema();
 
                     $personResponsible = $this->PersonResponsibles->find()
@@ -2058,7 +2058,7 @@ $registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_
 
         $beds = $bedQuery->order(['Beds.name' => 'ASC'])->enableHydration(false)->toArray();
 
-        $this->loadModel('MasterPenjamins');
+        $this->MasterPenjamins = $this->fetchTable('MasterPenjamins');
         $masterPenjamins = $this->MasterPenjamins->find('list', [
             'keyField' => 'name',
             'valueField' => 'name',
@@ -2067,7 +2067,7 @@ $registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_
             ->order(['MasterPenjamins.name' => 'ASC'])
             ->toArray();
 
-        $this->loadModel('MasterTreatmentPackages');
+        $this->MasterTreatmentPackages = $this->fetchTable('MasterTreatmentPackages');
         $masterTreatmentPackages = $this->MasterTreatmentPackages->find('list', [
             'keyField' => 'name',
             'valueField' => 'name',
@@ -2116,7 +2116,7 @@ $registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_
 
    protected function _createMedicalRecordForRegistration($registration): void
 {
-    $this->loadModel('MedicalRecords');
+    $this->MedicalRecords = $this->fetchTable('MedicalRecords');
 
     $existing = $this->MedicalRecords->find()
         ->where([
@@ -2147,7 +2147,7 @@ $registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_
      */
     protected function _generateNoRm($registration): string
     {
-        $this->loadModel('MedicalRecords');
+        $this->MedicalRecords = $this->fetchTable('MedicalRecords');
 
         $regDate = $registration->registration_date ?? date('Y-m-d');
         $ymd = (is_object($regDate) && method_exists($regDate, 'format'))
@@ -2168,8 +2168,8 @@ $registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_
 
     protected function _updateBedOccupied(int $bedId, int $patientId, string $registrationNo): void
     {
-        $this->loadModel('Beds');
-        $this->loadModel('Patients');
+        $this->Beds = $this->fetchTable('Beds');
+        $this->Patients = $this->fetchTable('Patients');
 
         try {
             $bed = $this->Beds->get($bedId);
@@ -2209,7 +2209,7 @@ $registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_
 
     protected function _incrementScheduleQuota(int $doctorScheduleId): void
 {
-    $this->loadModel('DoctorSchedules');
+    $this->DoctorSchedules = $this->fetchTable('DoctorSchedules');
 
     try {
         $schedule = $this->DoctorSchedules->find()
@@ -2262,7 +2262,7 @@ $registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_
 private function _saveDoctorScheduleQuotaHistory(int $scheduleId, string $cycleDate, int $quota, int $quotaUsed): void
 {
     try {
-        $this->loadModel('DoctorScheduleQuotaHistories');
+        $this->DoctorScheduleQuotaHistories = $this->fetchTable('DoctorScheduleQuotaHistories');
 
         $existing = $this->DoctorScheduleQuotaHistories->find()
             ->where([
@@ -2294,7 +2294,7 @@ private function _saveDoctorScheduleQuotaHistory(int $scheduleId, string $cycleD
 
     protected function _releaseBed(int $bedId, string $registrationNo): void
     {
-        $this->loadModel('Beds');
+        $this->Beds = $this->fetchTable('Beds');
 
         try {
             $bed = $this->Beds->get($bedId);
@@ -2335,7 +2335,7 @@ private function _saveDoctorScheduleQuotaHistory(int $scheduleId, string $cycleD
     private function saveBedHistoryFromRegistration($bed, array $data): void
     {
         try {
-            $this->loadModel('BedHistories');
+            $this->BedHistories = $this->fetchTable('BedHistories');
             $history = $this->BedHistories->newEmptyEntity();
             $history->bed_id = $bed->id;
             $history->room_id = $bed->room_id;
@@ -2356,7 +2356,7 @@ private function _saveDoctorScheduleQuotaHistory(int $scheduleId, string $cycleD
 
     protected function _syncOutpatientVisitFromRegistration($registration): bool
     {
-        $this->loadModel('OutpatientVisits');
+        $this->OutpatientVisits = $this->fetchTable('OutpatientVisits');
 
         $schema = $this->OutpatientVisits->getSchema();
 
@@ -2482,7 +2482,7 @@ private function _saveDoctorScheduleQuotaHistory(int $scheduleId, string $cycleD
 
     protected function _cancelOutpatientVisitFromRegistration($registration): void
     {
-        $this->loadModel('OutpatientVisits');
+        $this->OutpatientVisits = $this->fetchTable('OutpatientVisits');
 
         $visit = $this->OutpatientVisits->find()
             ->where(['registration_id' => $registration->id])
@@ -2515,7 +2515,7 @@ private function _saveDoctorScheduleQuotaHistory(int $scheduleId, string $cycleD
             return true;
         }
 
-        $this->loadModel('OutpatientBillings');
+        $this->OutpatientBillings = $this->fetchTable('OutpatientBillings');
         $schema = $this->OutpatientBillings->getSchema();
 
         $billing = $this->OutpatientBillings->find()
@@ -2632,7 +2632,7 @@ private function _saveDoctorScheduleQuotaHistory(int $scheduleId, string $cycleD
                 continue;
             }
 
-            $this->loadModel($config['model']);
+            $this->{$config['model']} = $this->fetchTable($config['model']);
             $region = $this->{$config['model']}->find()
                 ->select(['nama'])
                 ->where([$config['key'] => (string)$patientData[$field]])
@@ -2650,7 +2650,7 @@ private function _saveDoctorScheduleQuotaHistory(int $scheduleId, string $cycleD
     private function getMasterPatientReferrerOptions(): array
     {
         try {
-            $this->loadModel('MasterPatientReferrers');
+            $this->MasterPatientReferrers = $this->fetchTable('MasterPatientReferrers');
         } catch (\Throwable $e) {
             return [];
         }
@@ -2709,7 +2709,7 @@ private function _saveDoctorScheduleQuotaHistory(int $scheduleId, string $cycleD
         }
 
         try {
-            $this->loadModel('MasterPatientReferrers');
+            $this->MasterPatientReferrers = $this->fetchTable('MasterPatientReferrers');
         } catch (\Throwable $e) {
             return;
         }
@@ -2816,7 +2816,7 @@ private function _saveDoctorScheduleQuotaHistory(int $scheduleId, string $cycleD
 
         $keyword = trim((string)$this->request->getQuery('q'));
 
-        $this->loadModel('Patients');
+        $this->Patients = $this->fetchTable('Patients');
 
         $schema = $this->Patients->getSchema();
 
@@ -2918,7 +2918,7 @@ private function _saveDoctorScheduleQuotaHistory(int $scheduleId, string $cycleD
                     continue;
                 }
 
-                $this->loadModel($config['model']);
+                $this->{$config['model']} = $this->fetchTable($config['model']);
                 $map = $this->{$config['model']}->find()
                     ->select([$config['key'], 'nama'])
                     ->where([$config['key'] . ' IN' => $ids])
@@ -2950,7 +2950,7 @@ private function _saveDoctorScheduleQuotaHistory(int $scheduleId, string $cycleD
 
         $idProv = $this->request->getQuery('id_prov');
 
-        $this->loadModel('DaerahKabupatens');
+        $this->DaerahKabupatens = $this->fetchTable('DaerahKabupatens');
 
         $kabupatens = $this->DaerahKabupatens->find()
             ->select(['id_kab', 'nama'])
@@ -2972,7 +2972,7 @@ private function _saveDoctorScheduleQuotaHistory(int $scheduleId, string $cycleD
 
         $idKab = $this->request->getQuery('id_kab');
 
-        $this->loadModel('DaerahKecamatans');
+        $this->DaerahKecamatans = $this->fetchTable('DaerahKecamatans');
 
         $kecamatans = $this->DaerahKecamatans->find()
             ->select(['id_kec', 'nama'])
@@ -2994,7 +2994,7 @@ private function _saveDoctorScheduleQuotaHistory(int $scheduleId, string $cycleD
 
         $idKec = $this->request->getQuery('id_kec');
 
-        $this->loadModel('DaerahKelurahans');
+        $this->DaerahKelurahans = $this->fetchTable('DaerahKelurahans');
 
         $kelurahans = $this->DaerahKelurahans->find()
             ->select(['id_kel', 'nama'])
@@ -3084,7 +3084,7 @@ private function _saveDoctorScheduleQuotaHistory(int $scheduleId, string $cycleD
 
     $doctorId = $this->request->getQuery('doctor_id');
 
-    $this->loadModel('DoctorSchedules');
+    $this->DoctorSchedules = $this->fetchTable('DoctorSchedules');
 
     $schedules = $this->DoctorSchedules->find()
         ->select([

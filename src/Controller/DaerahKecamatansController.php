@@ -32,9 +32,7 @@ class DaerahKecamatansController extends AppController
      */
     public function view($id = null)
     {
-        $daerahKecamatan = $this->DaerahKecamatans->get($id, [
-            'contain' => [],
-        ]);
+        $daerahKecamatan = $this->DaerahKecamatans->get($id, contain: []);
 
         $this->set(compact('daerahKecamatan'));
     }
@@ -68,9 +66,7 @@ class DaerahKecamatansController extends AppController
      */
     public function edit($id = null)
     {
-        $daerahKecamatan = $this->DaerahKecamatans->get($id, [
-            'contain' => [],
-        ]);
+        $daerahKecamatan = $this->DaerahKecamatans->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $daerahKecamatan = $this->DaerahKecamatans->patchEntity($daerahKecamatan, $this->request->getData());
             if ($this->DaerahKecamatans->save($daerahKecamatan)) {

@@ -23,7 +23,7 @@ use Cake\ORM\Entity;
  * @property bool $is_covered
  * @property int $sort_order
  * @property bool|null $is_delete
- * @property \Cake\I18n\FrozenTime $created
+ * @property \Cake\I18n\DateTime $created
  *
  * @property \App\Model\Entity\OutpatientBilling $outpatient_billing
  */
@@ -38,7 +38,7 @@ class OutpatientBillingItem extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'billing_id' => true,
         'item_type' => true,
         'item_code' => true,

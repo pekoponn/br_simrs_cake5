@@ -15,7 +15,7 @@ class NutritionMenusController extends AppController
     {
         parent::initialize();
 
-        $this->loadModel('NutritionMenus');
+        $this->NutritionMenus = $this->fetchTable('NutritionMenus');
     }
     /**
      * Index method
@@ -38,9 +38,7 @@ class NutritionMenusController extends AppController
      */
     public function view($id = null)
     {
-        $nutritionMenu = $this->NutritionMenus->get($id, [
-            'contain' => [],
-        ]);
+        $nutritionMenu = $this->NutritionMenus->get($id, contain: []);
 
         $this->set(compact('nutritionMenu'));
     }
@@ -74,9 +72,7 @@ class NutritionMenusController extends AppController
      */
     public function edit($id = null)
     {
-        $nutritionMenu = $this->NutritionMenus->get($id, [
-            'contain' => [],
-        ]);
+        $nutritionMenu = $this->NutritionMenus->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $nutritionMenu = $this->NutritionMenus->patchEntity($nutritionMenu, $this->request->getData());
             if ($this->NutritionMenus->save($nutritionMenu)) {

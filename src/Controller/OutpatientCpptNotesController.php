@@ -35,9 +35,7 @@ class OutpatientCpptNotesController extends AppController
      */
     public function view($id = null)
     {
-        $outpatientCpptNote = $this->OutpatientCpptNotes->get($id, [
-            'contain' => ['OutpatientVisits', 'Registrations', 'Patients', 'Doctors'],
-        ]);
+        $outpatientCpptNote = $this->OutpatientCpptNotes->get($id, contain: ['OutpatientVisits', 'Registrations', 'Patients', 'Doctors']);
 
         $this->set(compact('outpatientCpptNote'));
     }
@@ -75,9 +73,7 @@ class OutpatientCpptNotesController extends AppController
      */
     public function edit($id = null)
     {
-        $outpatientCpptNote = $this->OutpatientCpptNotes->get($id, [
-            'contain' => [],
-        ]);
+        $outpatientCpptNote = $this->OutpatientCpptNotes->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $outpatientCpptNote = $this->OutpatientCpptNotes->patchEntity($outpatientCpptNote, $this->request->getData());
             if ($this->OutpatientCpptNotes->save($outpatientCpptNote)) {

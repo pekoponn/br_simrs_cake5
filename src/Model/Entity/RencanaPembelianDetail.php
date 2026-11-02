@@ -20,8 +20,8 @@ use Cake\ORM\Entity;
  * @property string $total_approv
  * @property string $is_obat
  * @property string|null $keterangan
- * @property \Cake\I18n\FrozenTime $created
- * @property \Cake\I18n\FrozenTime $modified
+ * @property \Cake\I18n\DateTime $created
+ * @property \Cake\I18n\DateTime $modified
  *
  * @property \App\Model\Entity\RencanaPembelian $rencana_pembelian
  * @property \App\Model\Entity\Medicine $medicine
@@ -37,7 +37,7 @@ class RencanaPembelianDetail extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'rencana_pembelian_id' => true,
         'medicine_id' => true,
         'kode_barang' => true,

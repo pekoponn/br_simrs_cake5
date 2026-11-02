@@ -20,18 +20,18 @@ use Cake\ORM\Entity;
  * @property int|null $queue_number
  * @property string|null $polyclinic_name
  * @property string|null $room_name
- * @property \Cake\I18n\FrozenDate $visit_date
+ * @property \Cake\I18n\Date $visit_date
  * @property \Cake\I18n\Time|null $visit_time
  * @property string $status
  * @property int|null $billing_id
  * @property string|null $billing_status
- * @property \Cake\I18n\FrozenTime|null $called_at
- * @property \Cake\I18n\FrozenTime|null $start_time
- * @property \Cake\I18n\FrozenTime|null $end_time
+ * @property \Cake\I18n\DateTime|null $called_at
+ * @property \Cake\I18n\DateTime|null $start_time
+ * @property \Cake\I18n\DateTime|null $end_time
  * @property string|null $created_by
  * @property string|null $updated_by
- * @property \Cake\I18n\FrozenTime|null $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
  *
  * @property \App\Model\Entity\Registration $registration
  * @property \App\Model\Entity\Patient $patient
@@ -50,7 +50,7 @@ class OutpatientVisit extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'registration_id' => true,
         'registration_no' => true,
         'patient_id' => true,

@@ -16,10 +16,10 @@ use Cake\ORM\Entity;
  * @property string|null $account_no
  * @property string $amount
  * @property bool $verified
- * @property \Cake\I18n\FrozenTime|null $verified_at
+ * @property \Cake\I18n\DateTime|null $verified_at
  * @property int|null $verified_by
  * @property string|null $notes
- * @property \Cake\I18n\FrozenTime $created
+ * @property \Cake\I18n\DateTime $created
  * @property int|null $created_by
  *
  * @property \App\Model\Entity\OutpatientBilling $outpatient_billing
@@ -35,7 +35,7 @@ class OutpatientBillingPayment extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'billing_id' => true,
         'payment_no' => true,
         'payment_method' => true,

@@ -10,7 +10,7 @@ use Cake\ORM\Entity;
  *
  * @property int $id
  * @property string $retur_no
- * @property \Cake\I18n\FrozenDate $tgl_retur
+ * @property \Cake\I18n\Date $tgl_retur
  * @property string|null $bapb_no
  * @property string|null $no_faktur
  * @property string|null $gudang_depo
@@ -18,8 +18,8 @@ use Cake\ORM\Entity;
  * @property string|null $nama_supplier
  * @property string|null $catatan
  * @property string $total
- * @property \Cake\I18n\FrozenTime $created
- * @property \Cake\I18n\FrozenTime $modified
+ * @property \Cake\I18n\DateTime $created
+ * @property \Cake\I18n\DateTime $modified
  *
  * @property \App\Model\Entity\Supplier $supplier
  * @property \App\Model\Entity\ReturPembelianDetail[] $retur_pembelian_details
@@ -35,7 +35,7 @@ class ReturPembelian extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'retur_no' => true,
         'tgl_retur' => true,
         'bapb_no' => true,

@@ -21,8 +21,8 @@ use Cake\ORM\Entity;
  * @property string|null $harga
  * @property string|null $total_harga
  * @property string|null $keterangan
- * @property \Cake\I18n\FrozenTime|null $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
  *
  * @property \App\Model\Entity\Order $order
  * @property \App\Model\Entity\Medicine $medicine
@@ -38,7 +38,7 @@ class OrderPrescription extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'order_id' => true,
         'medicine_id' => true,
         'medicine_unit' => true,

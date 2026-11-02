@@ -133,7 +133,7 @@ class BedsController extends AppController
         }
 
         try {
-            $this->loadModel('NutritionMealSchedules');
+            $this->NutritionMealSchedules = $this->fetchTable('NutritionMealSchedules');
 
             $statusLabels = [
                 0 => 'Tersedia',
@@ -562,7 +562,7 @@ class BedsController extends AppController
                 $patientName = $data['patient_name'] ?? null;
 
                 if ($patientId) {
-                    $this->loadModel('Patients');
+                    $this->Patients = $this->fetchTable('Patients');
                     try {
                         $patient     = $this->Patients->get($patientId, ['fields' => ['id', 'full_name']]);
                         $patientName = $patient->full_name;
@@ -603,7 +603,7 @@ class BedsController extends AppController
                 }
 
                 if ($statusBefore !== $statusAfter) {
-                    $this->loadModel('BedHistories');
+                    $this->BedHistories = $this->fetchTable('BedHistories');
                     $history                  = $this->BedHistories->newEmptyEntity();
                     $history->bed_id          = $bed->id;
                     $history->room_id         = $bed->room_id;
@@ -705,7 +705,7 @@ class BedsController extends AppController
         $patients = [];
 
         if (!empty(trim($key))) {
-            $this->loadModel('Patients');
+            $this->Patients = $this->fetchTable('Patients');
             $results = $this->Patients->find()
                 ->select(['id', 'code', 'full_name'])
                 ->where([
@@ -771,7 +771,7 @@ class BedsController extends AppController
             $patientName = $data['patient_name'] ?? null;
 
             if ($patientId) {
-                $this->loadModel('Patients');
+                $this->Patients = $this->fetchTable('Patients');
                 try {
                     $patient     = $this->Patients->get($patientId, ['fields' => ['id', 'full_name']]);
                     $patientName = $patient->full_name;
@@ -847,7 +847,7 @@ class BedsController extends AppController
             }
 
             if ($statusBefore !== $statusAfter) {
-                $this->loadModel('BedHistories');
+                $this->BedHistories = $this->fetchTable('BedHistories');
                 $history                  = $this->BedHistories->newEmptyEntity();
                 $history->bed_id          = $bedSaved->id;
                 $history->room_id         = $bedSaved->room_id;

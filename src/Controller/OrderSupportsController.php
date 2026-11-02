@@ -35,9 +35,7 @@ class OrderSupportsController extends AppController
      */
     public function view($id = null)
     {
-        $orderSupport = $this->OrderSupports->get($id, [
-            'contain' => ['Orders', 'Registrations', 'Patients', 'Doctors'],
-        ]);
+        $orderSupport = $this->OrderSupports->get($id, contain: ['Orders', 'Registrations', 'Patients', 'Doctors']);
 
         $this->set(compact('orderSupport'));
     }
@@ -75,9 +73,7 @@ class OrderSupportsController extends AppController
      */
     public function edit($id = null)
     {
-        $orderSupport = $this->OrderSupports->get($id, [
-            'contain' => [],
-        ]);
+        $orderSupport = $this->OrderSupports->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $orderSupport = $this->OrderSupports->patchEntity($orderSupport, $this->request->getData());
             if ($this->OrderSupports->save($orderSupport)) {

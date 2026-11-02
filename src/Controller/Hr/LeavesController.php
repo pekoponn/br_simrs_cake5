@@ -23,7 +23,7 @@ class LeavesController extends AppController
     public function initialize(): void
     {
         parent::initialize();
-        $this->loadModel('Users');
+        $this->Users = $this->fetchTable('Users');
         $this->loadComponent('Telegram');
     }
     /**
@@ -50,7 +50,7 @@ class LeavesController extends AppController
         $data['HRISApproved'] = $dataSession->hris_approved;
         $data['HRISKnowing'] = $dataSession->hris_knowing;
         $data['HRISFullAccess'] = $dataSession->hris_full_access;
-        
+
         if($data['HRISKnowing']=='Y' || $data['HRISFullAccess']=='Y') {
             $arrayDevision = array();
         } elseif($data['HRISApproved']=='Y') {
@@ -59,12 +59,12 @@ class LeavesController extends AppController
         } else {
             $arrayDevision = array('Leaves.applicant'=>$dataId);           
         }
-        
+
         $filterDateFrom = $this->request->getQuery('filterDateFrom');
         $filterDateEnd = $this->request->getQuery('filterDateEnd');
         $filterApplicant = $this->request->getQuery('filterApplicant');
         $filterDevision = $this->request->getQuery('filterDevision');
-        
+
         $data['filterDateFrom'] = array();
         $data['filterDateEnd'] = array();
         $data['filterApplicant'] = array();
@@ -92,7 +92,7 @@ class LeavesController extends AppController
             $data['filterDevision'] = $filterDevision;
             $dataWhere['Leaves.devision'] = $filterDevision;
         }
-        
+
         // Auth user & rules
         $currentUserId = $dataSession['id']; 
         $rulesString   = $dataSession['rules'];
@@ -101,7 +101,7 @@ class LeavesController extends AppController
         $canViewDevision = isset($rules['leaves']['viewDevision']) ? $rules['leaves']['viewDevision'] : 0;
         // pr($canViewDevision);
 
-        $dataRow = $this->Leaves->find('all')->contain(['Users','Mengetahui','Menyetujui'])->order(['Leaves.created' => 'DESC', 'Users.name' => 'DESC']);
+        $dataRow = $this->Leaves->find('all')->contain(['Users','Mengetahui','Menyetujui'])->orderBy(['Leaves.created' => 'DESC', 'Users.name' => 'DESC']);
 
         if ($canViewAll == '1') {
             // $dataRow->where(['Leaves.is_create' => $currentUserId]);
@@ -125,7 +125,7 @@ class LeavesController extends AppController
 //         debug($dataWhere); die;
         $data['filterLink'] = $this->Krs->fEncode($dataWhere);
         $this->set(['dataRows'=>$paginateRow, 'data'=> $data]);
-        
+
 
 
         /*$leaves = $this->Leaves->find('all')->contain(['Users','Menyetujui','Mengetahui']);
@@ -138,7 +138,7 @@ class LeavesController extends AppController
 
         // $this->set('leaves', $this->paginate($queries, ['limit' => '10']));
         $this->set(['leaves'=>$this->paginate($queries, ['limit' => '10']), 'data'=> $data]);*/
-        
+
     }
 
     /**
@@ -151,9 +151,7 @@ class LeavesController extends AppController
     public function view($id = null)
     {
         list($dataId, $dataUserId) = explode('^', $this->Krs->fDecode($id));
-        $leave = $this->Leaves->get($dataId, [
-            'contain' => ['Users','Mengetahui','Menyetujui'],
-        ]);
+        $leave = $this->Leaves->get($dataId, contain: ['Users','Mengetahui','Menyetujui']);
         $data['dataRows'] = $leave;
         $this->set(compact('data'));
     }
@@ -167,7 +165,7 @@ class LeavesController extends AppController
     {
         $leave = $this->Leaves->newEmptyEntity();
         if ($this->request->is('post')) {
-            
+
             $dataRow = $this->request->getData();
             [$typeName] = array_pad(explode('^', (string)($dataRow['type'] ?? ''), 2), 2, null);
 
@@ -267,9 +265,7 @@ class LeavesController extends AppController
      */
     public function edit($id = null)
     {
-        $leave = $this->Leaves->get($id, [
-            'contain' => [],
-        ]);
+        $leave = $this->Leaves->get($id, contain: []);
         if ($leave->approved !== null || $leave->is_cancel > 0) {
             $this->Flash->error('Data sudah disetujui/dibatalkan, tidak bisa diedit.');
             return $this->redirect(['action' => 'index']);
@@ -357,9 +353,7 @@ class LeavesController extends AppController
 
     public function approve($id = null)
     {
-        $leave = $this->Leaves->get($id, [
-            'contain' => ['Users'],
-        ]);
+        $leave = $this->Leaves->get($id, contain: ['Users']);
         if ($leave->approved_date !== null) {
             $this->Flash->error('Data ini sudah disetujui sebelumnya.');
             return $this->redirect(['action' => 'index']);
@@ -408,9 +402,7 @@ class LeavesController extends AppController
 
     public function knowing($id = null)
     {
-        $leave = $this->Leaves->get($id, [
-            'contain' => ['Users'],
-        ]);
+        $leave = $this->Leaves->get($id, contain: ['Users']);
         if ($leave->approved === null) {
             $this->Flash->error('Data belum disetujui, belum bisa diketahui.');
             return $this->redirect(['action' => 'index']);
@@ -478,7 +470,7 @@ class LeavesController extends AppController
 
         $query = $this->Leaves->find('all')
             ->contain(['Users', 'Mengetahui', 'Menyetujui'])
-            ->order([
+            ->orderBy([
                 'COALESCE(Leaves.date_from, Leaves.date_1)' => 'DESC',
                 'Users.name' => 'DESC'
             ]);
@@ -486,7 +478,7 @@ class LeavesController extends AppController
         if ($canViewAll == '1') {
             // $dataRow->where(['Leaves.is_create' => $currentUserId]);
         }
-        
+
         if ($canViewAll == '0' && $canViewDevision == '1') {
             $dataDevisions = !empty($dataUserTeam) ? explode(',', $dataUserTeam) : [];
             $dataDevisions[] = $dataId;
@@ -550,7 +542,7 @@ class LeavesController extends AppController
             // $sheet->setCellValue('G' . $rowNum, $r->mengetahui->name ?? '-');
             // $sheet->setCellValue('H' . $rowNum, $r->menyetujui->name ?? '-');
             // $sheet->setCellValue('I' . $rowNum, $r->status ?? '-');
-              
+
             $sheet->setCellValue('H' . $rowNum, !empty($r->created) ? $r->created->format('d-m-Y H:i:s') : '-');
             $sheet->setCellValue('I' . $rowNum, (!empty($r->mengetahui) ? $r->mengetahui->name : '-') . "\n" . (!empty($r->knowing_date) ? $r->knowing_date->format('d-m-Y') : '-'));
             $sheet->setCellValue('J' . $rowNum, (!empty($r->menyetujui) ? $r->menyetujui->name : '-') . "\n" .(!empty($r->approved_date) ? $r->approved_date->format('d-m-Y') : '-'));

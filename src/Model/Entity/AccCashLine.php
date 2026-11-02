@@ -17,11 +17,11 @@ use Cake\ORM\Entity;
  * @property int|null $credit
  * @property string $job
  * @property string|null $who_create
- * @property \Cake\I18n\FrozenTime|null $created
+ * @property \Cake\I18n\DateTime|null $created
  * @property string|null $who_update
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $modified
  * @property string|null $who_delete
- * @property \Cake\I18n\FrozenTime|null $deleted
+ * @property \Cake\I18n\DateTime|null $deleted
  * @property string|null $status
  *
  * @property \App\Model\Entity\AccCash $acc_cash
@@ -38,7 +38,7 @@ class AccCashLine extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'acc_cash_id' => true,
         'acc_account_id' => true,
         'acc_account_code' => true,

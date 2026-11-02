@@ -24,7 +24,7 @@ class AuthController extends AppController
             $getData = $result->getData();
             $dateNow = date('Y-m-d H:i:s');
 
-            $this->loadModel('Users');
+            $this->Users = $this->fetchTable('Users');
             // mengupdate last_login dan visited
             $this->Users->updateAll(['last_login' => $dateNow, 'visited' => $getData['visited'] + 1], ['id' => $getData['id']]);
 

@@ -204,7 +204,7 @@ class MasterTreatmentPackagesController extends AppController
         $last = $this->MasterTreatmentPackages
             ->find()
             ->select(['id'])
-            ->order([
+            ->orderBy([
                 'MasterTreatmentPackages.id' => 'DESC',
             ])
             ->first();

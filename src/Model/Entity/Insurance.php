@@ -19,11 +19,11 @@ use Cake\ORM\Entity;
  * @property string $phone_number_rs
  * @property string $email_rs
  * @property int $is_create
- * @property \Cake\I18n\FrozenTime|null $created
+ * @property \Cake\I18n\DateTime|null $created
  * @property int $is_update
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $modified
  * @property int $is_delete
- * @property \Cake\I18n\FrozenTime|null $deleted
+ * @property \Cake\I18n\DateTime|null $deleted
  * @property string|null $delete_log
  * @property string $is_active
  */
@@ -38,7 +38,7 @@ class Insurance extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'code' => true,
         'region' => true,
         'name' => true,

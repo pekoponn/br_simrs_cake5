@@ -16,7 +16,7 @@ class TelegramController extends AppController
     {
         parent::initialize();
         $this->loadComponent('Telegram');
-        $this->loadModel('Users');
+        $this->Users = $this->fetchTable('Users');
         $this->autoRender = false;
     }
 

@@ -28,6 +28,7 @@ use Cake\Http\Exception\ForbiddenException;
  *
  * @link https://book.cakephp.org/4/en/controllers.html#the-app-controller
  */
+#[\AllowDynamicProperties]
 class AppController extends Controller
 {
     /**
@@ -43,7 +44,6 @@ class AppController extends Controller
     {
         parent::initialize();
 
-        $this->loadComponent('RequestHandler');
         $this->loadComponent('Flash');
         $this->loadComponent('Krs');
 
@@ -617,9 +617,9 @@ class AppController extends Controller
         }
 
         if ((int)($schedule->quota_used ?? 0) > 0) {
-            $this->loadModel('DoctorScheduleQuotaHistories');
+            $historiesTable = $this->fetchTable('DoctorScheduleQuotaHistories');
 
-            $exists = $this->DoctorScheduleQuotaHistories->exists([
+            $exists = $historiesTable->exists([
                 'doctor_schedule_id' => $schedule->id,
                 'cycle_date' => $storedResetDate,
             ]);
@@ -627,22 +627,22 @@ class AppController extends Controller
             if (!$exists) {
                 $now = date('Y-m-d H:i:s');
 
-                $history = $this->DoctorScheduleQuotaHistories->newEntity([
+                $history = $historiesTable->newEntity([
                     'doctor_schedule_id' => $schedule->id,
                     'cycle_date' => $storedResetDate,
                     'quota' => $schedule->quota,
                     'quota_used' => $schedule->quota_used,
-                    'created' => $now,   // <-- fix: isi manual, kolom NOT NULL tanpa default
-                    'modified' => $now,  // <-- jaga-jaga kalau kolom ini juga NOT NULL
+                    'created' => $now,
+                    'modified' => $now,
                 ]);
 
-                $this->DoctorScheduleQuotaHistories->save($history);
+                $historiesTable->save($history);
             }
         }
 
         $schedule->quota_used = 0;
         $schedule->quota_reset_at = $activeCycleDate;
 
-        $this->DoctorSchedules->save($schedule);
+        $this->fetchTable('DoctorSchedules')->save($schedule);
     }
 }

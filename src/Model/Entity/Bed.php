@@ -16,11 +16,11 @@ use Cake\ORM\Entity;
  * @property string $class_name
  * @property int $status
  * @property string $is_active
- * @property \Cake\I18n\FrozenTime|null $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
  * @property int $is_delete
- * @property \Cake\I18n\FrozenTime|null $check_in_date
- * @property \Cake\I18n\FrozenTime|null $check_out_date
+ * @property \Cake\I18n\DateTime|null $check_in_date
+ * @property \Cake\I18n\DateTime|null $check_out_date
  * @property string|null $patient_name
  * @property int|null $patient_id
  * @property string|null $notes_patient
@@ -40,7 +40,7 @@ class Bed extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'code' => true,
         'room_id' => true,
         'bed_no' => true,

@@ -32,9 +32,7 @@ class MasterOperationTypesController extends AppController
      */
     public function view($id = null)
     {
-        $masterOperationType = $this->MasterOperationTypes->get($id, [
-            'contain' => [],
-        ]);
+        $masterOperationType = $this->MasterOperationTypes->get($id, contain: []);
 
         $this->set(compact('masterOperationType'));
     }
@@ -68,9 +66,7 @@ class MasterOperationTypesController extends AppController
      */
     public function edit($id = null)
     {
-        $masterOperationType = $this->MasterOperationTypes->get($id, [
-            'contain' => [],
-        ]);
+        $masterOperationType = $this->MasterOperationTypes->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $masterOperationType = $this->MasterOperationTypes->patchEntity($masterOperationType, $this->request->getData());
             if ($this->MasterOperationTypes->save($masterOperationType)) {

@@ -14,14 +14,14 @@ use Cake\ORM\Entity;
  * @property string|null $pelayanan
  * @property string|null $kelas
  * @property string|null $ruang
- * @property \Cake\I18n\FrozenDate|null $tgl_masuk
- * @property \Cake\I18n\FrozenDate|null $tgl_keluar
- * @property \Cake\I18n\FrozenDate|null $tgl_operasi
+ * @property \Cake\I18n\Date|null $tgl_masuk
+ * @property \Cake\I18n\Date|null $tgl_keluar
+ * @property \Cake\I18n\Date|null $tgl_operasi
  * @property string|null $nama_dokter
  * @property string|null $keadaan_keluar_rs
  * @property string|null $cara_keluar
- * @property \Cake\I18n\FrozenTime|null $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
  *
  * @property \App\Model\Entity\MedicalRecord $medical_record
  */
@@ -36,7 +36,7 @@ class MedicalRecordInpatient extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'medical_record_id' => true,
         'jenis' => true,
         'pelayanan' => true,

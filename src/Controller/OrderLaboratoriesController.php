@@ -35,9 +35,7 @@ class OrderLaboratoriesController extends AppController
      */
     public function view($id = null)
     {
-        $orderLaboratory = $this->OrderLaboratories->get($id, [
-            'contain' => ['Orders', 'Registrations', 'Patients', 'Doctors'],
-        ]);
+        $orderLaboratory = $this->OrderLaboratories->get($id, contain: ['Orders', 'Registrations', 'Patients', 'Doctors']);
 
         $this->set(compact('orderLaboratory'));
     }
@@ -75,9 +73,7 @@ class OrderLaboratoriesController extends AppController
      */
     public function edit($id = null)
     {
-        $orderLaboratory = $this->OrderLaboratories->get($id, [
-            'contain' => [],
-        ]);
+        $orderLaboratory = $this->OrderLaboratories->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $orderLaboratory = $this->OrderLaboratories->patchEntity($orderLaboratory, $this->request->getData());
             if ($this->OrderLaboratories->save($orderLaboratory)) {

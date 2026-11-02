@@ -32,9 +32,7 @@ class PharmacyItemsController extends AppController
      */
     public function view($id = null)
     {
-        $pharmacyItem = $this->PharmacyItems->get($id, [
-            'contain' => [],
-        ]);
+        $pharmacyItem = $this->PharmacyItems->get($id, contain: []);
 
         $this->set(compact('pharmacyItem'));
     }
@@ -68,9 +66,7 @@ class PharmacyItemsController extends AppController
      */
     public function edit($id = null)
     {
-        $pharmacyItem = $this->PharmacyItems->get($id, [
-            'contain' => [],
-        ]);
+        $pharmacyItem = $this->PharmacyItems->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $pharmacyItem = $this->PharmacyItems->patchEntity($pharmacyItem, $this->request->getData());
             if ($this->PharmacyItems->save($pharmacyItem)) {

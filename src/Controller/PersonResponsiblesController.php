@@ -15,7 +15,7 @@ class PersonResponsiblesController extends AppController
     {
         parent::initialize();
 
-        $this->loadModel('PersonResponsibles');
+        $this->PersonResponsibles = $this->fetchTable('PersonResponsibles');
     }
     /**
      * Index method
@@ -38,9 +38,7 @@ class PersonResponsiblesController extends AppController
      */
     public function view($id = null)
     {
-        $personResponsible = $this->PersonResponsibles->get($id, [
-            'contain' => ['Registrations'],
-        ]);
+        $personResponsible = $this->PersonResponsibles->get($id, contain: ['Registrations']);
 
         $this->set(compact('personResponsible'));
     }
@@ -74,9 +72,7 @@ class PersonResponsiblesController extends AppController
      */
     public function edit($id = null)
     {
-        $personResponsible = $this->PersonResponsibles->get($id, [
-            'contain' => [],
-        ]);
+        $personResponsible = $this->PersonResponsibles->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $personResponsible = $this->PersonResponsibles->patchEntity($personResponsible, $this->request->getData());
             if ($this->PersonResponsibles->save($personResponsible)) {

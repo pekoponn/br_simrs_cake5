@@ -24,22 +24,22 @@ use Cake\ORM\Entity;
  * @property int|null $recipient_payer_id
  * @property string|null $recipient_payer_name
  * @property string|null $recipient_payer_code
- * @property \Cake\I18n\FrozenDate|null $date
- * @property \Cake\I18n\FrozenDate|null $date_posting
+ * @property \Cake\I18n\Date|null $date
+ * @property \Cake\I18n\Date|null $date_posting
  * @property string|null $payment_type
  * @property string|null $no_cek
  * @property string|null $no_ref
- * @property \Cake\I18n\FrozenDate|null $warkat_date
+ * @property \Cake\I18n\Date|null $warkat_date
  * @property string|null $job
  * @property int|null $balance
  * @property string|null $grand_total
  * @property string|null $description
  * @property string|null $is_create
- * @property \Cake\I18n\FrozenTime|null $created
+ * @property \Cake\I18n\DateTime|null $created
  * @property string|null $is_update
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $modified
  * @property string|null $is_delete
- * @property \Cake\I18n\FrozenTime|null $deleted
+ * @property \Cake\I18n\DateTime|null $deleted
  * @property string|null $status
  * @property string|null $is_active
  *
@@ -60,7 +60,7 @@ class AccJournal extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'branch_id' => true,
         'number' => true,
         'journal_sub_id' => true,

@@ -29,7 +29,7 @@ class PolyclinicQueuesController extends AppController
     {
         parent::initialize();
 
-        $this->loadModel('PolyclinicQueues');
+        $this->PolyclinicQueues = $this->fetchTable('PolyclinicQueues');
     }
 
     public function index()
@@ -428,7 +428,7 @@ class PolyclinicQueuesController extends AppController
             $medicalRecordNo = null;
 
             if ($patientId !== null) {
-            $this->loadModel('Patients');
+            $this->Patients = $this->fetchTable('Patients');
             $patientSchema = $this->Patients->getSchema();
             $patientSelect = ['id', 'code', 'full_name', 'identity_number', 'phone_number'];
             if ($patientSchema->hasColumn('medical_record_no')) {
@@ -563,7 +563,7 @@ class PolyclinicQueuesController extends AppController
 
         $q = trim((string)$this->request->getQuery('q'));
 
-        $this->loadModel('Patients');
+        $this->Patients = $this->fetchTable('Patients');
 
         $schema = $this->Patients->getSchema();
         $selectFields = [
@@ -924,7 +924,7 @@ private function getPolyclinicButtonData(?string $visitDate = null): array
             $queueTotals[(string)$row['poly_name']] = (int)$row['total'];
         }
 
-        $this->loadModel('DoctorSchedules');
+        $this->DoctorSchedules = $this->fetchTable('DoctorSchedules');
         $scheduleRows = $this->DoctorSchedules->find()
             ->contain([
                 'Doctors',
@@ -1257,7 +1257,7 @@ private function getPolyclinicButtonData(?string $visitDate = null): array
 
     private function getTodayPolyclinicCloseTime(string $polyclinicName): ?string
     {
-        $this->loadModel('DoctorSchedules');
+        $this->DoctorSchedules = $this->fetchTable('DoctorSchedules');
 
         $scheduleRows = $this->DoctorSchedules->find()
             ->contain([
@@ -1299,7 +1299,7 @@ private function getPolyclinicButtonData(?string $visitDate = null): array
 
         private function getDoctorForPolySession(string $polyName, string $session, string $visitDate): array
     {
-        $this->loadModel('DoctorSchedules');
+        $this->DoctorSchedules = $this->fetchTable('DoctorSchedules');
 
         $scheduleRows = $this->DoctorSchedules->find()
             ->contain(['Doctors'])

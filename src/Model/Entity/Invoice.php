@@ -12,14 +12,14 @@ use Cake\ORM\Entity;
  * @property string $bapb_no
  * @property string|null $nama_supplier
  * @property int|null $supplier_id
- * @property \Cake\I18n\FrozenDate $tgl_terima
+ * @property \Cake\I18n\Date $tgl_terima
  * @property string|null $no_faktur
  * @property string|null $sj_no
- * @property \Cake\I18n\FrozenDate|null $tgl_tukar_faktur
+ * @property \Cake\I18n\Date|null $tgl_tukar_faktur
  * @property string $kurs
  * @property string $rate
  * @property string $pembayaran
- * @property \Cake\I18n\FrozenDate|null $tgl_jatuh_tempo
+ * @property \Cake\I18n\Date|null $tgl_jatuh_tempo
  * @property string|null $diterima_lokasi_gudang
  * @property string $materai
  * @property string $discount_percent
@@ -28,8 +28,8 @@ use Cake\ORM\Entity;
  * @property string $total
  * @property string $grand_total
  * @property string|null $catatan
- * @property \Cake\I18n\FrozenTime $created
- * @property \Cake\I18n\FrozenTime $modified
+ * @property \Cake\I18n\DateTime $created
+ * @property \Cake\I18n\DateTime $modified
  *
  * @property \App\Model\Entity\Supplier $supplier
  * @property \App\Model\Entity\InvoiceDetail[] $invoice_details
@@ -45,7 +45,7 @@ class Invoice extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'bapb_no' => true,
         'nama_supplier' => true,
         'supplier_id' => true,

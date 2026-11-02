@@ -23,7 +23,7 @@ class DaerahKecamatan extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'id_kab' => true,
         'nama' => true,
     ];

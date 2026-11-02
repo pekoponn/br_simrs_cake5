@@ -52,7 +52,7 @@ class RencanaPembeliansController extends AppController
             ->find()
             ->select(['id', 'code', 'name', 'generic_name', 'unit_1', 'hna'])
             ->where(['is_active' => 'Y'])
-            ->order(['name' => 'ASC'])
+            ->orderBy(['name' => 'ASC'])
             ->all();
 
         $this->set(compact('rencanaPembelian', 'medicines'));
@@ -83,7 +83,7 @@ class RencanaPembeliansController extends AppController
             ->find()
             ->select(['id', 'code', 'name', 'generic_name', 'unit_1', 'hna'])
             ->where(['is_active' => 'Y'])
-            ->order(['name' => 'ASC'])
+            ->orderBy(['name' => 'ASC'])
             ->all();
 
         $this->set(compact('rencanaPembelian', 'medicines'));

@@ -28,10 +28,10 @@ class SalariesController extends AppController
     {
         $filterUnitBusiness = $this->request->getQuery('filterUnitBusiness');
         $filterEmployee = $this->request->getQuery('filterEmployee');
-        
+
         $data['filterUnitBusiness'] = array();
         $data['filterEmployee'] = array();
-        
+
         $dataWhere = array();
         if (!empty($filterEmployee)) {
             $data['filterEmployee'] = $filterEmployee;
@@ -42,9 +42,9 @@ class SalariesController extends AppController
             $data['filterUnitBusiness'] = $filterUnitBusiness;
             $dataWhere['HrgaEmployees.business_unit like'] = '%' . $filterUnitBusiness . '%';
         }
-        
+
         $dataRow = $this->Salaries->find('all')->contain(['HrgaEmployees'])->order(['HrgaEmployees.nip' => 'DESC']);
-       
+
         $queries = (!empty($dataWhere)) ? $dataRow->where([$dataWhere]) : $dataRow;
         $paginateRow = $this->paginate($queries, ['limit' => '15']);
         $data['dataRows'] = $paginateRow;
@@ -499,10 +499,10 @@ class SalariesController extends AppController
 
     public function importExcel($dataLink='')
     {
-        $this->loadModel('HrgaEmployees');
+        $this->HrgaEmployees = $this->fetchTable('HrgaEmployees');
         //Memanggil data Karyawan
         $rowEmployee = $this->HrgaEmployees->find('all')->contain([])->where(['is_active'=>'Y'])->order(['nip'=>'ASC'])->toArray();
-       
+
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -516,7 +516,7 @@ class SalariesController extends AppController
             $_chr = chr(65+$a);
             $sheet->getColumnDimension($_chr)->setAutoSize(true);
         }*/
-            
+
         $styleArray = [
             'font'  => [
                 'bold'  => true,
@@ -530,7 +530,7 @@ class SalariesController extends AppController
                 'color' => [
                     'argb' => 'FFEFEFEF',
                 ],
-                
+
             ],
         ]; 
 
@@ -579,14 +579,14 @@ class SalariesController extends AppController
         // $sheet->setCellValue('K2', 'Masukkan data BPJS Ketenagakerjaan pada kolom ini');
         // $sheet->setCellValue('L1', 'BPJS Pensiun');
         // $sheet->setCellValue('L2', 'Masukkan data BPJS Pensiun pada kolom ini');
-       
+
 
         $row = 3;
         foreach ($rowEmployee as $dataRowKey => $dataRow) {
             $sheet->setCellValue('A' . $row, $dataRow->id);
             $sheet->setCellValue('B' . $row, $dataRow->name);
             $sheet->setCellValue('C' . $row, $dataRow->nip);
-            
+
             $row++;
         }
 
@@ -686,11 +686,11 @@ class SalariesController extends AppController
                                     $this->Salaries->save($dataSave, array('callbacks' => false));
                                 }
                                 // pr($dataSave);
-                                
+
                             }
-                            
+
                         }
-                        
+
                         $this->Flash->success(__('Terima kasih, data Upload berhasil disimpan.'));
                         return $this->redirect(['action' => 'index']);
                         // return $this->redirect(['action' => 'dataBalanceExportImport']);

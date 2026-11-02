@@ -18,8 +18,8 @@ class AssignmentsController extends AppController
     public function initialize(): void
     {
         parent::initialize();
-        $this->loadModel('Assignments');
-        $this->loadModel('Users');
+        $this->Assignments = $this->fetchTable('Assignments');
+        $this->Users = $this->fetchTable('Users');
         $this->loadComponent('Telegram');
       
     }
@@ -47,9 +47,7 @@ class AssignmentsController extends AppController
      */
     public function view($id = null)
     {
-        $assignment = $this->Assignments->get($id, [
-            'contain' => ['Branches'],
-        ]);
+        $assignment = $this->Assignments->get($id, contain: ['Branches']);
 
         $this->set(compact('assignment'));
     }
@@ -120,9 +118,7 @@ class AssignmentsController extends AppController
      */
     public function edit($id = null)
     {
-        $assignment = $this->Assignments->get($id, [
-            'contain' => [],
-        ]);
+        $assignment = $this->Assignments->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $assignment = $this->Assignments->patchEntity($assignment, $this->request->getData());
             if ($this->Assignments->save($assignment)) {
@@ -231,7 +227,7 @@ class AssignmentsController extends AppController
         }
         $recordsTotal = $query->count();
         $query
-            ->order([
+            ->orderBy([
                 'Assignments.created' => 'DESC',
             ])
             ->limit($length)
@@ -284,7 +280,7 @@ class AssignmentsController extends AppController
 
             $assignment = $this->Assignments->get($data['id']);
             $assignment->is_approve = $data['is_approve'];
-            $assignment->approved = FrozenTime::now();
+            $assignment->approved = \Cake\I18n\DateTime::now();
             $assignment->approved_description = $data['approved_description'];
             $assignment->status_approve = $data['status_approve'];
             // debug($assignment); die;
@@ -348,7 +344,7 @@ class AssignmentsController extends AppController
 
             $assignment = $this->Assignments->get($data['id']);
             $assignment->is_knowing = $data['is_knowing'];
-            $assignment->knowing = FrozenTime::now();
+            $assignment->knowing = \Cake\I18n\DateTime::now();
             $assignment->knowing_description = $data['knowing_description'];
             $assignment->status_knowing = $data['status_knowing'];
             // debug($assignment); die;

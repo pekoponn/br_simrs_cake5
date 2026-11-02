@@ -11,9 +11,9 @@ class OutpatientBillingsController extends AppController
     public function initialize(): void
     {
         parent::initialize();
-        $this->loadModel('OutpatientBillings');
-        $this->loadModel('OutpatientBillingItems');
-        $this->loadModel('OutpatientBillingPayments');
+        $this->OutpatientBillings = $this->fetchTable('OutpatientBillings');
+        $this->OutpatientBillingItems = $this->fetchTable('OutpatientBillingItems');
+        $this->OutpatientBillingPayments = $this->fetchTable('OutpatientBillingPayments');
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -458,7 +458,7 @@ public function kwitansi($id = null)
         $billing->reopen_count  = (int)($billing->reopen_count ?? 0) + 1;
 
         if (!empty($billing->outpatient_visit_id)) {
-            $this->loadModel('OutpatientVisits');
+            $this->OutpatientVisits = $this->fetchTable('OutpatientVisits');
             $visit = $this->OutpatientVisits->find()
                 ->where(['id' => $billing->outpatient_visit_id])
                 ->first();

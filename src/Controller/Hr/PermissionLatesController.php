@@ -21,7 +21,7 @@ class PermissionLatesController extends AppController
     public function initialize(): void
     {
         parent::initialize();
-        $this->loadModel('Users');
+        $this->Users = $this->fetchTable('Users');
         $this->loadComponent('Telegram');
     }
     /**
@@ -85,7 +85,7 @@ class PermissionLatesController extends AppController
         $canViewDevision = isset($rules['permissionlates']['viewDevision']) ? $rules['permissionlates']['viewDevision'] : 0;
         // pr($canViewDevision);
 
-        $dataRow = $this->PermissionLates->find('all')->contain(['Users','Mengetahui','Menyetujui'])->order(['DATE(PermissionLates.date)' => 'DESC', 'Users.name' => 'DESC']);
+        $dataRow = $this->PermissionLates->find('all')->contain(['Users','Mengetahui','Menyetujui'])->orderBy(['DATE(PermissionLates.date)' => 'DESC', 'Users.name' => 'DESC']);
 
         if ($canViewAll == '1') {
             // $dataRow->where(['PermissionLates.is_create' => $currentUserId]);
@@ -119,9 +119,7 @@ class PermissionLatesController extends AppController
     public function view($id = null)
     {
         list($dataId, $dataUserId) = explode('^', $this->Krs->fDecode($id));
-        $permissionLate = $this->PermissionLates->get($dataId, [
-            'contain' => ['Users','Mengetahui','Menyetujui'],
-        ]);
+        $permissionLate = $this->PermissionLates->get($dataId, contain: ['Users','Mengetahui','Menyetujui']);
         $data['dataRows'] = $permissionLate;
         $this->set(compact('data'));
     }
@@ -198,9 +196,7 @@ class PermissionLatesController extends AppController
      */
     public function edit($id = null)
     {
-        $permissionLate = $this->PermissionLates->get($id, [
-            'contain' => [],
-        ]);
+        $permissionLate = $this->PermissionLates->get($id, contain: []);
         if ($permissionLate->approved !== null) {
             $this->Flash->error('Data sudah disetujui, tidak bisa diedit.');
             return $this->redirect(['action' => 'index']);
@@ -240,9 +236,7 @@ class PermissionLatesController extends AppController
 
     public function approve($id = null)
     {
-        $permissionLate = $this->PermissionLates->get($id, [
-            'contain' => ['Users'],
-        ]);
+        $permissionLate = $this->PermissionLates->get($id, contain: ['Users']);
         // if ($permissionLate->approved === null) {
         //     $this->Flash->error('Data belum disetujui, belum bisa diketahui.');
         //     return $this->redirect(['action' => 'index']);
@@ -276,9 +270,7 @@ class PermissionLatesController extends AppController
 
     public function knowing($id = null)
     {
-        $permissionLate = $this->PermissionLates->get($id, [
-            'contain' => ['Users'],
-        ]);
+        $permissionLate = $this->PermissionLates->get($id, contain: ['Users']);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $dataRow = $this->request->getData();
             $isUser = $dataRow['is_knowing'];
@@ -338,7 +330,7 @@ class PermissionLatesController extends AppController
 
         $query = $this->PermissionLates->find('all')
             ->contain(['Users', 'Mengetahui', 'Menyetujui'])
-            ->order([
+            ->orderBy([
                 'DATE(PermissionLates.date)' => 'DESC',
                 'Users.name' => 'DESC'
             ]);

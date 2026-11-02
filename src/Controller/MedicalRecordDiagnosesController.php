@@ -35,9 +35,7 @@ class MedicalRecordDiagnosesController extends AppController
      */
     public function view($id = null)
     {
-        $medicalRecordDiagnosis = $this->MedicalRecordDiagnoses->get($id, [
-            'contain' => ['MedicalRecords'],
-        ]);
+        $medicalRecordDiagnosis = $this->MedicalRecordDiagnoses->get($id, contain: ['MedicalRecords']);
 
         $this->set(compact('medicalRecordDiagnosis'));
     }
@@ -72,9 +70,7 @@ class MedicalRecordDiagnosesController extends AppController
      */
     public function edit($id = null)
     {
-        $medicalRecordDiagnosis = $this->MedicalRecordDiagnoses->get($id, [
-            'contain' => [],
-        ]);
+        $medicalRecordDiagnosis = $this->MedicalRecordDiagnoses->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $medicalRecordDiagnosis = $this->MedicalRecordDiagnoses->patchEntity($medicalRecordDiagnosis, $this->request->getData());
             if ($this->MedicalRecordDiagnoses->save($medicalRecordDiagnosis)) {

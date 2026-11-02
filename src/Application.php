@@ -36,6 +36,7 @@ use Authentication\AuthenticationServiceInterface;
 use Authentication\AuthenticationServiceProviderInterface;
 use Authentication\Middleware\AuthenticationMiddleware;
 use Cake\Routing\Router;
+use Cake\Routing\RouteCollection;
 use Psr\Http\Message\ServerRequestInterface;
 
 
@@ -59,6 +60,9 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
     {
         // Call parent to load bootstrap from files.
         parent::bootstrap();
+
+        // Inisialisasi RouteCollection agar Router tidak error
+        Router::setRouteCollection(new RouteCollection());
 
         if (PHP_SAPI === 'cli') {
             $this->bootstrapCli();
@@ -114,7 +118,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         $middlewareQueue
             // Catch any exceptions in the lower layers,
             // and make an error page/response
-            ->add(new ErrorHandlerMiddleware(Configure::read('Error')))
+            ->add(new ErrorHandlerMiddleware(Configure::read('Error'), $this))
 
             // Handle plugin/theme assets like CakePHP normally does.
             ->add(new AssetMiddleware([
@@ -187,18 +191,16 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
             'unauthenticatedRedirect' => Router::url('/auth/login'), 'queryParam' => 'redirect',
         ]);
         
-        // Load identifiers, ensure we check email and password fields
+        // Identifier: cek kolom 'code' dan 'password_new' di tabel users
         $authenticationService->loadIdentifier('Authentication.Password', [
             'fields' => [
                 'username' => 'code',
                 'password' => 'password_new',
-            ]
+            ],
         ]);
 
-        // Load the authenticators, you want session first
+        // Authenticator: session dulu, lalu form login
         $authenticationService->loadAuthenticator('Authentication.Session');
-
-        // Configure form data check to pick email and password
         $authenticationService->loadAuthenticator('Authentication.Form', [
             'fields' => [
                 'username' => 'code',

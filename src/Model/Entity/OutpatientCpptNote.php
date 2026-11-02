@@ -13,15 +13,15 @@ use Cake\ORM\Entity;
  * @property int|null $registration_id
  * @property int|null $patient_id
  * @property int|null $doctor_id
- * @property \Cake\I18n\FrozenTime|null $noted_at
+ * @property \Cake\I18n\DateTime|null $noted_at
  * @property string|null $health_worker_name
  * @property string|null $doctor_name
  * @property string|null $nurse_name
  * @property string|null $assessment_text
  * @property string|null $instruction
  * @property string|null $created_by
- * @property \Cake\I18n\FrozenTime|null $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
  *
  * @property \App\Model\Entity\OutpatientVisit $outpatient_visit
  * @property \App\Model\Entity\Registration $registration
@@ -39,7 +39,7 @@ class OutpatientCpptNote extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'outpatient_visit_id' => true,
         'registration_id' => true,
         'patient_id' => true,

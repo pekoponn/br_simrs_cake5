@@ -18,8 +18,8 @@ class InpatientEntriesController extends AppController
      */
     public function index()
     {
-        $this->loadModel('Registrations');
-        $this->loadModel('Rooms');
+        $this->Registrations = $this->fetchTable('Registrations');
+        $this->Rooms = $this->fetchTable('Rooms');
 
         $q = trim((string)$this->request->getQuery('q'));
         $roomId = $this->request->getQuery('room_id');
@@ -88,9 +88,7 @@ class InpatientEntriesController extends AppController
      */
     public function view($id = null)
     {
-        $inpatientEntry = $this->InpatientEntries->get($id, [
-            'contain' => ['Registrations', 'Patients', 'Doctors', 'Rooms', 'Beds'],
-        ]);
+        $inpatientEntry = $this->InpatientEntries->get($id, contain: ['Registrations', 'Patients', 'Doctors', 'Rooms', 'Beds']);
 
         $this->set(compact('inpatientEntry'));
     }
@@ -129,9 +127,7 @@ class InpatientEntriesController extends AppController
      */
     public function edit($id = null)
     {
-        $inpatientEntry = $this->InpatientEntries->get($id, [
-            'contain' => [],
-        ]);
+        $inpatientEntry = $this->InpatientEntries->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $inpatientEntry = $this->InpatientEntries->patchEntity($inpatientEntry, $this->request->getData());
             if ($this->InpatientEntries->save($inpatientEntry)) {

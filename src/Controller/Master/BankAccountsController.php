@@ -38,10 +38,9 @@ class BankAccountsController extends AppController
             $dataWhere['BankAccounts.account_holder LIKE'] = '%'.$filterNamaRekening.'%';
         }
     
-        $query = $this->BankAccounts->find('all', [
-            'conditions' => $dataWhere,
-            'contain' => [],
-        ]);
+        $query = $this->BankAccounts->find('all',
+        conditions: $dataWhere,
+        contain: []);
         $this->paginate = ['order' => ['BankAccounts.created' => 'DESC'], 'limit' => 10];
         $bankAccounts = $this->paginate($query);
 
@@ -59,9 +58,7 @@ class BankAccountsController extends AppController
      */
     public function view($id = null)
     {
-        $bankAccount = $this->BankAccounts->get($id, [
-            'contain' => [],
-        ]);
+        $bankAccount = $this->BankAccounts->get($id, contain: []);
 
         $this->set(compact('bankAccount'));
     }
@@ -107,9 +104,7 @@ class BankAccountsController extends AppController
      */
     public function edit($id = null)
     {
-        $bankAccount = $this->BankAccounts->get($id, [
-            'contain' => [],
-        ]);
+        $bankAccount = $this->BankAccounts->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             // debug($this->request->getData()); die;
             $dataRow = $this->request->getData();
@@ -198,7 +193,7 @@ class BankAccountsController extends AppController
         $bankAccounts = $this->BankAccounts->find()
             ->select(['id', 'account_holder', 'bank_name', 'account_number'])
             ->where(['is_active' => 'Y', 'OR' => ['account_holder LIKE' => "%{$dataSearch}%", 'bank_name LIKE'      => "%{$dataSearch}%", 'account_number LIKE' => "%{$dataSearch}%"]])
-            ->order(['account_holder' => 'ASC']);
+            ->orderBy(['account_holder' => 'ASC']);
         $result = [];
         foreach ($bankAccounts as $row) {
             $result[] = [
@@ -227,7 +222,7 @@ class BankAccountsController extends AppController
             $query->where(['BankAccounts.account_holder LIKE' => '%'.$filterNamaRekening.'%']);
         }
 
-        $query->order([
+        $query->orderBy([
             'BankAccounts.created' => 'DESC'
         ]);
         $rows = $query->toArray();

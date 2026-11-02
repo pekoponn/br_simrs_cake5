@@ -91,7 +91,7 @@ class DoctorSchedulesController extends AppController
         $currentCycleDate = $this->getDoctorScheduleCycleDate((string)$doctorSchedule->day);
         $currentQuotaUsed = (int)($doctorSchedule->quota_used ?? 0);
 
-        $this->loadModel('DoctorScheduleQuotaHistories');
+        $this->DoctorScheduleQuotaHistories = $this->fetchTable('DoctorScheduleQuotaHistories');
         $quotaHistories = $this->DoctorScheduleQuotaHistories->find()
             ->where(['doctor_schedule_id' => $doctorSchedule->id])
             ->order(['cycle_date' => 'DESC'])

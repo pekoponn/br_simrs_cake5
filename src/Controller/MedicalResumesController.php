@@ -35,9 +35,7 @@ class MedicalResumesController extends AppController
      */
     public function view($id = null)
     {
-        $medicalResume = $this->MedicalResumes->get($id, [
-            'contain' => ['OutpatientVisits', 'Registrations', 'Patients', 'Doctor1s'],
-        ]);
+        $medicalResume = $this->MedicalResumes->get($id, contain: ['OutpatientVisits', 'Registrations', 'Patients', 'Doctor1s']);
 
         $this->set(compact('medicalResume'));
     }
@@ -75,9 +73,7 @@ class MedicalResumesController extends AppController
      */
     public function edit($id = null)
     {
-        $medicalResume = $this->MedicalResumes->get($id, [
-            'contain' => [],
-        ]);
+        $medicalResume = $this->MedicalResumes->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $medicalResume = $this->MedicalResumes->patchEntity($medicalResume, $this->request->getData());
             if ($this->MedicalResumes->save($medicalResume)) {

@@ -202,7 +202,7 @@ class MedicalRecordsTable extends Table
     $last = $this->find()
         ->select(['medical_record_no'])
         ->where(['medical_record_no LIKE' => 'RM%'])
-        ->order(['id' => 'DESC'])
+        ->orderBy(['id' => 'DESC'])
         ->first();
 
     if ($last && !empty($last->medical_record_no)) {

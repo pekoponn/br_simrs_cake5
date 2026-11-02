@@ -17,11 +17,11 @@ use Cake\ORM\Entity;
  * @property int|null $quota
  * @property string|null $note
  * @property int|null $is_create
- * @property \Cake\I18n\FrozenTime|null $created
+ * @property \Cake\I18n\DateTime|null $created
  * @property int|null $is_update
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $modified
  * @property int|null $is_delete
- * @property \Cake\I18n\FrozenTime|null $deleted
+ * @property \Cake\I18n\DateTime|null $deleted
  * @property string|null $delete_log
  * @property string|null $is_active
  *
@@ -38,7 +38,7 @@ class DoctorSchedule extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'code' => true,
         'doctor_id' => true,
         'day' => true,

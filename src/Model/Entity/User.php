@@ -34,20 +34,20 @@ use Authentication\IdentityInterface;
  * @property string|null $rule_acc
  * @property string|null $jurnal_type_acc
  * @property string|null $change_password
- * @property \Cake\I18n\FrozenTime|null $change_password_date
+ * @property \Cake\I18n\DateTime|null $change_password_date
  * @property int|null $reset
- * @property \Cake\I18n\FrozenTime|null $reset_date
+ * @property \Cake\I18n\DateTime|null $reset_date
  * @property string|null $is_create
  * @property string|null $is_update
  * @property string|null $is_delete
- * @property \Cake\I18n\FrozenTime|null $deleted
+ * @property \Cake\I18n\DateTime|null $deleted
  * @property string|null $is_active
  * @property string|null $is_log
  * @property string|null $who_create
- * @property \Cake\I18n\FrozenTime|null $created
+ * @property \Cake\I18n\DateTime|null $created
  * @property string|null $who_update
- * @property \Cake\I18n\FrozenTime|null $modified
- * @property \Cake\I18n\FrozenTime|null $last_login
+ * @property \Cake\I18n\DateTime|null $modified
+ * @property \Cake\I18n\DateTime|null $last_login
  * @property string|null $status
  * @property string|null $level
  * @property int|null $visited
@@ -71,7 +71,7 @@ class User extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'branch_id' => true,
         'hrga_employee_id' => true,
         'user_team' => true,
@@ -137,7 +137,7 @@ class User extends Entity
      *
      * @var array
      */
-    protected $_hidden = [
+    protected array $_hidden = [
         'password_new',
     ];
     //'password',

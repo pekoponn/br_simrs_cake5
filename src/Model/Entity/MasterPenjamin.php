@@ -13,8 +13,8 @@ use Cake\ORM\Entity;
  * @property string $name
  * @property string|null $type
  * @property string|null $is_active
- * @property \Cake\I18n\FrozenTime|null $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
  */
 class MasterPenjamin extends Entity
 {
@@ -27,7 +27,7 @@ class MasterPenjamin extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'code' => true,
         'name' => true,
         'type' => true,

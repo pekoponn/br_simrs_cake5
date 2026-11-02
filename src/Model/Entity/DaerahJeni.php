@@ -22,7 +22,7 @@ class DaerahJeni extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'id_jenis' => true,
         'nama' => true,
     ];

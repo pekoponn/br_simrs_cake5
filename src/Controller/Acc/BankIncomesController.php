@@ -77,9 +77,7 @@ class BankIncomesController extends AppController
             ];
         }
        
-        $query = $this->BankIncomes->find('all', [
-            'contain' => ['Users', 'AccChartOfAccounts']
-        ]);
+        $query = $this->BankIncomes->find('all', contain: ['Users', 'AccChartOfAccounts']);
         if (!empty($arrayProject)) {
             $query->where($arrayProject);
         }
@@ -106,9 +104,7 @@ class BankIncomesController extends AppController
      */
     public function view($id = null)
     {
-        $bankIncome = $this->BankIncomes->get($id, [
-            'contain' => ['AccChartOfAccounts', 'Users'],
-        ]);
+        $bankIncome = $this->BankIncomes->get($id, contain: ['AccChartOfAccounts', 'Users']);
 
         $this->set(compact('bankIncome'));
     }
@@ -169,9 +165,7 @@ class BankIncomesController extends AppController
      */
     public function edit($id = null)
     {
-        $bankIncome = $this->BankIncomes->get($id, [
-            'contain' => [],
-        ]);
+        $bankIncome = $this->BankIncomes->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $bankIncome = $this->BankIncomes->patchEntity($bankIncome, $this->request->getData());
             if ($this->BankIncomes->save($bankIncome)) {
@@ -247,7 +241,7 @@ class BankIncomesController extends AppController
             ]);
         }
 
-        $query->order([
+        $query->orderBy([
             'BankIncomes.created' => 'DESC'
         ]);
         $rows = $query->toArray();

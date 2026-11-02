@@ -25,9 +25,9 @@ class BankTopupsController extends AppController
         parent::initialize();
         $sessions = $this->request->getSession();
         $this->session = $sessions->read('Auth');
-        $this->loadModel('Users');
+        $this->Users = $this->fetchTable('Users');
 
-        $this->loadModel('AccChartOfAccounts');
+        $this->AccChartOfAccounts = $this->fetchTable('AccChartOfAccounts');
     }
     /**
      * Index method
@@ -85,9 +85,7 @@ class BankTopupsController extends AppController
             ];
         }
        
-        $query = $this->BankTopups->find('all', [
-            'contain' => ['Users', 'AccChartOfAccounts', 'AccChartOfAccountTo']
-        ]);
+        $query = $this->BankTopups->find('all', contain: ['Users', 'AccChartOfAccounts', 'AccChartOfAccountTo']);
         if (!empty($arrayProject)) {
             $query->where($arrayProject);
         }
@@ -114,9 +112,7 @@ class BankTopupsController extends AppController
      */
     public function view($id = null)
     {
-        $bankTopup = $this->BankTopups->get($id, [
-            'contain' => ['AccChartOfAccounts', 'Users', 'AccChartOfAccountTo'],
-        ]);
+        $bankTopup = $this->BankTopups->get($id, contain: ['AccChartOfAccounts', 'Users', 'AccChartOfAccountTo']);
 
         $this->set(compact('bankTopup'));
     }
@@ -196,9 +192,7 @@ class BankTopupsController extends AppController
      */
     public function edit($id = null)
     {
-        $bankTopup = $this->BankTopups->get($id, [
-            'contain' => [],
-        ]);
+        $bankTopup = $this->BankTopups->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $bankTopup = $this->BankTopups->patchEntity($bankTopup, $this->request->getData());
             if ($this->BankTopups->save($bankTopup)) {
@@ -236,11 +230,11 @@ class BankTopupsController extends AppController
     public function getList()
     {
         $this->autoRender = false;
-        // $this->loadModel('Customers');
+        // $this->Customers = $this->fetchTable('Customers');
         // debug($this->request->getQuery());
         // die();
         $dataSearch = $this->request->getQuery('dataSearch');
-        
+
         // if($usingDefault=='submissionDebet') {
         //     $usingSubmission = array('AccChartOfAccounts.submission_debet'=>'Y');
         // } elseif($usingDefault=='submissionCredit') {
@@ -256,7 +250,7 @@ class BankTopupsController extends AppController
         // ,'^', AccChartOfAccounts.code
 
         // "fields" => array("CONCAT(AccChartOfAccount.id,'^', AccChartOfAccount.code) AS AccChartOfAccount__coaId", "AccChartOfAccount.id", "AccChartOfAccount.code", "AccChartOfAccount.default", "AccChartOfAccount.name", "AccChartOfAccount.journal_type", 
-        
+
         // "CONCAT('( ',AccChartOfAccount.code,') ', AccChartOfAccount.name)", "IFNULL(AccChartOfAccount.name, CONCAT(Customer.title,' ',Customer.name)) AS AccChartOfAccount__coaName"),
         // pr($dataRows);
 
@@ -269,13 +263,13 @@ class BankTopupsController extends AppController
         return $this->response->withType("application/json")->withStringBody(json_encode($result));
         // pr($result);
         /* $dataRows = $this->Items->find('all')->where(['name like' => '%' . $dataSearch . '%'])->order(['Items.name' => 'ASC']);
-        
+
         $result = array();
         foreach ($dataRows as $key => $data) {
             $result[$key]['id'] = (int) $data['id'];
             $result[$key]['text'] = $data['title'] . ' ' . $data['name'];
         }
-        
+
          */
     }
     public function xls()
@@ -319,7 +313,7 @@ class BankTopupsController extends AppController
             ]);
         }
 
-        $query->order([
+        $query->orderBy([
             'BankTopups.created' => 'DESC'
         ]);
         $rows = $query->toArray();

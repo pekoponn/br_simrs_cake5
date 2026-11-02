@@ -12,20 +12,20 @@ use Cake\ORM\Entity;
  * @property string|null $business_unit
  * @property string|null $devision
  * @property string|null $code
- * @property \Cake\I18n\FrozenDate|null $date
+ * @property \Cake\I18n\Date|null $date
  * @property string|null $description
  * @property int $is_approve
  * @property string|null $status_approve
- * @property \Cake\I18n\FrozenTime|null $approved
+ * @property \Cake\I18n\DateTime|null $approved
  * @property int $is_cancel
- * @property \Cake\I18n\FrozenTime|null $canceled
+ * @property \Cake\I18n\DateTime|null $canceled
  * @property string|null $cancel_reason
  * @property int $is_create
- * @property \Cake\I18n\FrozenTime|null $created
+ * @property \Cake\I18n\DateTime|null $created
  * @property int $is_update
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $modified
  * @property int $is_delete
- * @property \Cake\I18n\FrozenTime|null $deleted
+ * @property \Cake\I18n\DateTime|null $deleted
  * @property string|null $delete_log
  * @property string $is_active
  * @property string|null $is_log
@@ -44,7 +44,7 @@ class WorkOrder extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'business_unit' => true,
         'devision' => true,
         'code' => true,

@@ -37,7 +37,7 @@ class KartuStokController extends AppController
     public function initialize(): void
     {
         parent::initialize();
-        $this->loadModel('Medicines');
+        $this->Medicines = $this->fetchTable('Medicines');
     }
 
     /**

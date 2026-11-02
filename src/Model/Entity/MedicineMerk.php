@@ -20,11 +20,11 @@ use Cake\ORM\Entity;
  * @property int $qty_packaging
  * @property string|null $packaging
  * @property int $is_create
- * @property \Cake\I18n\FrozenTime|null $created
+ * @property \Cake\I18n\DateTime|null $created
  * @property int $is_update
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $modified
  * @property int $is_print
- * @property \Cake\I18n\FrozenTime|null $printed
+ * @property \Cake\I18n\DateTime|null $printed
  * @property string|null $is_active
  * @property string|null $is_log
  *
@@ -42,7 +42,7 @@ class MedicineMerk extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'branch_id' => true,
         'code' => true,
         'name' => true,

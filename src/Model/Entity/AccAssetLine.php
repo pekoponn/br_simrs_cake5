@@ -13,12 +13,12 @@ use Cake\ORM\Entity;
  * @property float $mutasi_tambah
  * @property float $mutasi_kurang
  * @property float $akumulasi
- * @property \Cake\I18n\FrozenDate $date_periode
+ * @property \Cake\I18n\Date $date_periode
  * @property float $nilai_buku
  * @property int $is_create
  * @property int $is_update
- * @property \Cake\I18n\FrozenTime $created
- * @property \Cake\I18n\FrozenTime $modified
+ * @property \Cake\I18n\DateTime $created
+ * @property \Cake\I18n\DateTime $modified
  * @property string $status
  *
  * @property \App\Model\Entity\AccAsset $acc_asset
@@ -34,7 +34,7 @@ class AccAssetLine extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'asset_id' => true,
         'mutasi_tambah' => true,
         'mutasi_kurang' => true,

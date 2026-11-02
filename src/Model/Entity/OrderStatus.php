@@ -13,8 +13,8 @@ use Cake\ORM\Entity;
  * @property string $nama
  * @property string|null $warna
  * @property int|null $urutan
- * @property \Cake\I18n\FrozenTime|null $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
  */
 class OrderStatus extends Entity
 {
@@ -27,7 +27,7 @@ class OrderStatus extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'kode' => true,
         'nama' => true,
         'warna' => true,

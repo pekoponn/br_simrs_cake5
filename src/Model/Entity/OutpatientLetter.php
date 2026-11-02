@@ -22,15 +22,15 @@ use Cake\ORM\Entity;
  * @property string|null $color_blind
  * @property string|null $blood_type
  * @property int|null $leave_days
- * @property \Cake\I18n\FrozenDate|null $leave_from
- * @property \Cake\I18n\FrozenDate|null $leave_to
+ * @property \Cake\I18n\Date|null $leave_from
+ * @property \Cake\I18n\Date|null $leave_to
  * @property string|null $diagnosis
  * @property string|null $notes
  * @property string|null $consultation_answer
  * @property bool|null $is_normal
- * @property \Cake\I18n\FrozenDate|null $examined_at
- * 
- * 
+ * @property \Cake\I18n\Date|null $examined_at
+ *
+ *
  * // Dipakai oleh Surat Kontrol BPJS (letter_type = 'kontrol_bpjs')
  * @property string|null $bpjs_card_no
  * @property int|null $referral_doctor_id
@@ -51,9 +51,9 @@ use Cake\ORM\Entity;
  * @property int|null $discharged_by_doctor_id
  * @property int|null $completing_doctor_id
  * @property string|null $patient_or_family_name
- * 
- * @property \Cake\I18n\FrozenTime|null $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ *
+ * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
  *
  * @property \App\Model\Entity\OutpatientVisit $outpatient_visit
  * @property \App\Model\Entity\Registration $registration
@@ -71,7 +71,7 @@ class OutpatientLetter extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'outpatient_visit_id' => true,
         'registration_id' => true,
         'patient_id' => true,

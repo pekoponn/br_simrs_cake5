@@ -69,7 +69,7 @@ class PatientsTable extends Table
         $lastPatient = $this->find()
             ->select(['code'])
             ->where(['code LIKE' => 'P%'])
-            ->order(['id' => 'DESC'])
+            ->orderBy(['id' => 'DESC'])
             ->first();
 
         if ($lastPatient && !empty($lastPatient->code)) {

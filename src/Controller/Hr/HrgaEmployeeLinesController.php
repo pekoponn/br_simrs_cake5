@@ -35,9 +35,7 @@ class HrgaEmployeeLinesController extends AppController
      */
     public function view($id = null)
     {
-        $hrgaEmployeeLine = $this->HrgaEmployeeLines->get($id, [
-            'contain' => ['HrgaEmployees'],
-        ]);
+        $hrgaEmployeeLine = $this->HrgaEmployeeLines->get($id, contain: ['HrgaEmployees']);
 
         $this->set(compact('hrgaEmployeeLine'));
     }
@@ -72,9 +70,7 @@ class HrgaEmployeeLinesController extends AppController
      */
     public function edit($id = null)
     {
-        $hrgaEmployeeLine = $this->HrgaEmployeeLines->get($id, [
-            'contain' => [],
-        ]);
+        $hrgaEmployeeLine = $this->HrgaEmployeeLines->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $hrgaEmployeeLine = $this->HrgaEmployeeLines->patchEntity($hrgaEmployeeLine, $this->request->getData());
             if ($this->HrgaEmployeeLines->save($hrgaEmployeeLine)) {

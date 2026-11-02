@@ -84,7 +84,7 @@ class PraRegistrationsController extends AppController
         }
 
         if ($doctorScheduleId !== '') {
-            $this->loadModel('DoctorSchedules');
+            $this->DoctorSchedules = $this->fetchTable('DoctorSchedules');
             $selectedSchedule = $this->DoctorSchedules->find()
                 ->where(['DoctorSchedules.id' => (int)$doctorScheduleId])
                 ->first();
@@ -485,7 +485,7 @@ private function attachEstimatedCallTime(iterable $praRegistrations): void
     public function initialize(): void
 {
     parent::initialize();
-    $this->loadModel('PolyclinicQueues');
+    $this->PolyclinicQueues = $this->fetchTable('PolyclinicQueues');
 }
 
 public function register($id = null)

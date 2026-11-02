@@ -11,7 +11,7 @@ use Cake\ORM\Entity;
  * @property int $id
  * @property string|null $name
  * @property string|null $description
- * @property \Cake\I18n\FrozenDate|null $date
+ * @property \Cake\I18n\Date|null $date
  * @property int|null $periode
  * @property string|null $group
  * @property int|null $quantity
@@ -19,8 +19,8 @@ use Cake\ORM\Entity;
  * @property int|null $is_create
  * @property int|null $is_update
  * @property string|null $status
- * @property \Cake\I18n\FrozenTime|null $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
  *
  * @property \App\Model\Entity\AccAssetLine[] $acc_asset_lines
  */
@@ -35,7 +35,7 @@ class AccAsset extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'name' => true,
         'description' => true,
         'date' => true,

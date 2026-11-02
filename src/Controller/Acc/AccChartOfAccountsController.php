@@ -88,7 +88,7 @@ class AccChartOfAccountsController extends AppController
                 $dataWhere['AccChartOfAccounts.name LIKE'] = '%'.$dataRow['filterName'] . '%';
                 $dataLink['filterName'] = $dataRow['filterName'];           
             }
-            
+
             $dataSearchs = $this->Krs->fEncode($dataWhere);
             $dataLinks = $this->Krs->fEncode($dataLink);
             return $this->redirect(['action' => 'index', '?' => ['search' => $dataSearchs, 'link' => $dataLinks]]);
@@ -120,7 +120,7 @@ class AccChartOfAccountsController extends AppController
         ];
 
         $accChartOfAccounts = $this->paginate($queries, $settings);
-        
+
         $this->set(compact('accChartOfAccounts', 'dataLink'));
 
         /*
@@ -273,7 +273,7 @@ class AccChartOfAccountsController extends AppController
                 $rowNames = (isset($dataRow['name'])) ? $dataRow['name']:NULL;
                 // $rowCodes = (isset($dataRow['code'])) ? $dataRow['code']:NULL;
 
-                
+
                 if($countLevel==2){
                     $rowSubHeaderAccount = '';
                     $dataNames = (empty($rowNames)) ? NULL :$rowNames;
@@ -303,7 +303,7 @@ class AccChartOfAccountsController extends AppController
                 $rowBeginningBalanceDebet = (empty($dataRow['beginning_balance_debets'])) ? NULL : $this->Krs->nom2Dec($dataRow['beginning_balance_debets']);
                 $rowBeginningBalanceCredit = (empty($dataRow['beginning_balance_credits'])) ? NULL : $this->Krs->nom2Dec($dataRow['beginning_balance_credits']);
                 $rowBeginningBalanceDate = (empty($dataRow['beginning_balance_dates']))? NULL:$this->Krs->dateTo($dataRow['beginning_balance_dates']);
-                
+
                 $dataSubHeaderAccount = array('sub_header_account' => $rowSubHeaderAccount);
                 // if($countLevel==2) {
                 //     $dataRowName = ucwords(strtolower($rowName));
@@ -635,7 +635,7 @@ class AccChartOfAccountsController extends AppController
                     } else {
                         return $this->redirect(['action' => 'index']);
                     }
-                    
+
                     // return $this->redirect($this->referer());
                 }
                 $this->Flash->error(__('Data gagal disimpan, silakan coba kembali.'));
@@ -653,7 +653,7 @@ class AccChartOfAccountsController extends AppController
                 }*/
                 // 
                 // pr($pages);
-                
+
                 // if($checkCountDuplicate==0) {
 
                 // } else {
@@ -744,11 +744,11 @@ class AccChartOfAccountsController extends AppController
                                 continue;
                             } 
 
-                            
+
                             // if($excel[3]==0 || empty($excel[3])) {
-                                
+
                             // } else {
-                                
+
                             $xlsId = $excel[0];
                             $xlsCode = $excel[1];
                             $xlsName = $excel[2];
@@ -780,11 +780,11 @@ class AccChartOfAccountsController extends AppController
                             //     'contain' => [],
                             // ]);
                             // $accChartOfAccounts[] = $this->AccChartOfAccounts->patchEntity($accChartOfAccount, array_merge($dataBeginningBalance, $dataAuditLog));
-                            
+
 
                             // pr($accChartOfAccount);
                         //     $auditLog = $this->KrsCom->auditLog("AccChartOfAccount", $coaId, $this->params['controller'],  $isUser, "edit from upload excel");
-                        
+
                         // $dataEditCOA["AccChartOfAccount"]["is_update"] = $isUser;
                         // $dataEditCOA['AccChartOfAccount']['is_log'] = "'".$auditLog."'";
                         // $dataEditCOA['AccChartOfAccount']['beginning_balance'] = $coaSaldoAwal;
@@ -815,7 +815,7 @@ class AccChartOfAccountsController extends AppController
                         /*if ($this->AccChartOfAccounts->save($accChartOfAccount, array('callbacks' => false))) {
                             $this->Flash->success(__('Terima kasih, data berhasil disimpan.'));
 
-                            
+
                         }
                         $this->Flash->error(__('Maaf Data gagal disimpan, Silakan coba kembali.'));*/
                         // return $this->redirect(['action' => 'index']);
@@ -865,14 +865,14 @@ class AccChartOfAccountsController extends AppController
         /*$data['page'] = 'Export/Import';
         $data["breadcrumb"] = 'Saldo Awal';
         $data['titleForLayout'] = $data["breadcrumb"].' - '.$data['page'];
-        
+
         //$data['page'] = 'Perkiraan - Saldo Awal';
         //$data['titleForLayout'] = 'Daftar - '.$data['page'];
 
         //$this->set("title_for_layout", "Daftar Perkiraan &nbsp;&raquo;&nbsp;");
-        
+
         $this->helpers[] = "FilterResults.Search";
-        
+
         $this->Filter->setPaginate("fields", "AccChartOfAccount.id, AccChartOfAccount.parent_id, AccChartOfAccount.name, AccChartOfAccount.code, AccChartOfAccount.type, AccChartOfAccount.journal_type, AccChartOfAccount.group, AccChartOfAccount.level, AccChartOfAccount.transaction, AccChartOfAccount.contra_account, AccChartOfAccount.beginning_balance, AccChartOfAccount.beginning_balance_date, Customer.id, Customer.title, Customer.name");
 
         $this->Filter->setPaginate("order", "AccChartOfAccount.lft ASC, AccChartOfAccount.rght ASC"); 
@@ -891,7 +891,7 @@ class AccChartOfAccountsController extends AppController
                 if(empty($filename['name'])) {
                     $this->KrsCom->setFlash("Maaf file tidak ditemukan!..", "error");
                     //$this->redirect(array('event_id' => $this->uuid, "controller"=>"acc_chart_of_accounts", "action" => "export_import_saldo_awal"));
-                    
+
                 } else {
                     $results = $this->KrsCom->__upload($filename, 0, 4, $strConfirmUpload);
                     //pr($results);
@@ -905,7 +905,7 @@ class AccChartOfAccountsController extends AppController
                         $coaSaldoAwal = $dataExcel['D'];
 
                         $auditLog = $this->KrsCom->auditLog("AccChartOfAccount", $coaId, $this->params['controller'],  $isUser, "edit from upload excel");
-                        
+
                         $dataEditCOA["AccChartOfAccount"]["is_update"] = $isUser;
                         $dataEditCOA['AccChartOfAccount']['is_log'] = "'".$auditLog."'";
                         $dataEditCOA['AccChartOfAccount']['beginning_balance'] = $coaSaldoAwal;
@@ -924,9 +924,9 @@ class AccChartOfAccountsController extends AppController
                 //$this->KrsCom->setFlash("Maaf Level tidak boleh melebihi dari Level 5!..", "error");
 
                 //$this->Session->setFlash($strConfirmUpload, 'default', array('class' => 'message'));
-                
 
-                
+
+
             }
         }
 
@@ -1143,12 +1143,12 @@ class AccChartOfAccountsController extends AppController
     public function statusSubmission($level=null) {
         // pr($this->request->getQuery());
         $this->autoRender=false;
-        
+
         // Memanggil data dengan method POST
         $getLink = $this->request->getQuery();
         // Memanggil data dengan method GET
         $dataRow = $this->request->getData();
-        
+
         $filterId = (empty($dataRow)) ? $getLink['id'] : $dataRow['id'];
         $filterCond = (empty($dataRow)) ? $getLink['cond'] : $dataRow['cond'];
         $filterValue = (empty($dataRow)) ? $getLink['yn'] : $dataRow['yn'];
@@ -1178,7 +1178,7 @@ class AccChartOfAccountsController extends AppController
     public function getList($usingDefault=null)
     {
         $this->autoRender = false;
-        // $this->loadModel('Customers');
+        // $this->Customers = $this->fetchTable('Customers');
 
         $dataSearch = $this->request->getQuery('dataSearch');
 
@@ -1196,7 +1196,7 @@ class AccChartOfAccountsController extends AppController
         //, 'coaName'=>"CONCAT('( ',AccChartOfAccounts.code,') ', AccChartOfAccounts.name)"
 
         // "fields" => array("CONCAT(AccChartOfAccount.id,'^', AccChartOfAccount.code) AS AccChartOfAccount__coaId", "AccChartOfAccount.id", "AccChartOfAccount.code", "AccChartOfAccount.default", "AccChartOfAccount.name", "AccChartOfAccount.journal_type", 
-        
+
         // "CONCAT('( ',AccChartOfAccount.code,') ', AccChartOfAccount.name)", "IFNULL(AccChartOfAccount.name, CONCAT(Customer.title,' ',Customer.name)) AS AccChartOfAccount__coaName"),
         // pr($dataRows);
 
@@ -1209,13 +1209,13 @@ class AccChartOfAccountsController extends AppController
         return $this->response->withType("application/json")->withStringBody(json_encode($result));
         // pr($result);
         /* $dataRows = $this->Items->find('all')->where(['name like' => '%' . $dataSearch . '%'])->order(['Items.name' => 'ASC']);
-        
+
         $result = array();
         foreach ($dataRows as $key => $data) {
             $result[$key]['id'] = (int) $data['id'];
             $result[$key]['text'] = $data['title'] . ' ' . $data['name'];
         }
-        
+
          */
     }
 

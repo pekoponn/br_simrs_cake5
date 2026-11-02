@@ -15,7 +15,7 @@ class LabRoResultsController extends AppController
 
         try {
             if ($jenis === 'laboratorium') {
-                $this->loadModel('LaboratoryTransactions');
+                $this->LaboratoryTransactions = $this->fetchTable('LaboratoryTransactions');
                 $rows = $this->LaboratoryTransactions->find()
                     ->contain(['Doctors'])
                     ->where(['LaboratoryTransactions.registration_id' => (int)$registrationId])
@@ -33,7 +33,7 @@ class LabRoResultsController extends AppController
                     ];
                 }
             } elseif ($jenis === 'radiologi') {
-                $this->loadModel('RadiologyTransactions');
+                $this->RadiologyTransactions = $this->fetchTable('RadiologyTransactions');
                 $rows = $this->RadiologyTransactions->find()
                     ->contain(['Doctors'])
                     ->where(['RadiologyTransactions.registration_id' => (int)$registrationId])

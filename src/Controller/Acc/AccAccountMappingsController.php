@@ -37,9 +37,7 @@ class AccAccountMappingsController extends AppController
      */
     public function view($id = null)
     {
-        $accAccountMapping = $this->AccAccountMappings->get($id, [
-            'contain' => ['Branches', 'AccChartOfAccounts'],
-        ]);
+        $accAccountMapping = $this->AccAccountMappings->get($id, contain: ['Branches', 'AccChartOfAccounts']);
 
         $this->set(compact('accAccountMapping'));
     }
@@ -75,9 +73,7 @@ class AccAccountMappingsController extends AppController
      */
     public function edit($id = null)
     {
-        $accAccountMapping = $this->AccAccountMappings->get($id, [
-            'contain' => [],
-        ]);
+        $accAccountMapping = $this->AccAccountMappings->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $accAccountMapping = $this->AccAccountMappings->patchEntity($accAccountMapping, $this->request->getData());
             if ($this->AccAccountMappings->save($accAccountMapping)) {

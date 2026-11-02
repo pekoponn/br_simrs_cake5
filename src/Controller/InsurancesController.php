@@ -32,9 +32,7 @@ class InsurancesController extends AppController
      */
     public function view($id = null)
     {
-        $insurance = $this->Insurances->get($id, [
-            'contain' => [],
-        ]);
+        $insurance = $this->Insurances->get($id, contain: []);
 
         $this->set(compact('insurance'));
     }
@@ -68,9 +66,7 @@ class InsurancesController extends AppController
      */
     public function edit($id = null)
     {
-        $insurance = $this->Insurances->get($id, [
-            'contain' => [],
-        ]);
+        $insurance = $this->Insurances->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $insurance = $this->Insurances->patchEntity($insurance, $this->request->getData());
             if ($this->Insurances->save($insurance)) {

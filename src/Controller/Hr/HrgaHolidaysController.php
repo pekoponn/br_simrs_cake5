@@ -28,7 +28,7 @@ class HrgaHolidaysController extends AppController
         } else {
             $queries = $holiday;
         }
-        $dataRow = $queries->order(['HrgaHolidays.date' => 'DESC']);
+        $dataRow = $queries->orderBy(['HrgaHolidays.date' => 'DESC']);
         $this->set('holiday', $this->paginate($dataRow, ['limit' => '10']));
     }
 
@@ -41,9 +41,7 @@ class HrgaHolidaysController extends AppController
      */
     public function view($id = null)
     {
-        $hrgaHoliday = $this->HrgaHolidays->get($id, [
-            'contain' => [],
-        ]);
+        $hrgaHoliday = $this->HrgaHolidays->get($id, contain: []);
 
         $this->set(compact('hrgaHoliday'));
     }
@@ -97,9 +95,7 @@ class HrgaHolidaysController extends AppController
         $desc = $this->request->getData('desc');
         $user = $this->request->getData('user');
 
-        $hrgaHoliday = $this->HrgaHolidays->get($id, [
-            'contain' => [],
-        ]);
+        $hrgaHoliday = $this->HrgaHolidays->get($id, contain: []);
 
         if ($this->request->is(['patch', 'post', 'put'])) {
 
@@ -123,8 +119,8 @@ class HrgaHolidaysController extends AppController
            $data[$index]['start'] = $value->date;           
         }
        $this->set(['data' => json_encode($data), 'hrgaHoliday' => $hrgaHoliday]);
-      
-      
+
+
 
         //     $dataRow = $this->request->getData();
         //     $isUser = $dataRow['is_update'];

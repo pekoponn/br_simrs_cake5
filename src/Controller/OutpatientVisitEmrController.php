@@ -22,7 +22,7 @@ class OutpatientVisitEmrController extends AppController
             return $this->redirect(['controller' => 'OutpatientVisits', 'action' => 'index']);
         }
 
-        $this->loadModel('OutpatientVisits');
+        $this->OutpatientVisits = $this->fetchTable('OutpatientVisits');
 
         $visit = $this->OutpatientVisits->get($id, [
             'contain' => [
@@ -36,7 +36,7 @@ class OutpatientVisitEmrController extends AppController
         // ── Cari data EMR yang sudah ada untuk kunjungan ini, atau siapkan baru ──
         $emr = $this->OutpatientVisitEmr->find()
         ->where(['outpatient_visit_id' => $visit->id])
-        ->order(['id' => 'DESC'])
+        ->orderBy(['id' => 'DESC'])
         ->first();
 
         if (!$emr) {
@@ -264,8 +264,8 @@ class OutpatientVisitEmrController extends AppController
 
         protected function _syncActionsToBilling($visit): void
     {
-        $this->loadModel('OutpatientBillings');
-        $this->loadModel('OutpatientBillingItems');
+        $this->OutpatientBillings = $this->fetchTable('OutpatientBillings');
+        $this->OutpatientBillingItems = $this->fetchTable('OutpatientBillingItems');
 
         $billing = $this->OutpatientBillings->find()
             ->where(['outpatient_visit_id' => $visit->id])
@@ -314,9 +314,9 @@ class OutpatientVisitEmrController extends AppController
 
     protected function _recalcBillingTotalsWithPaymentCheck(int $billingId): void
     {
-        $this->loadModel('OutpatientBillings');
-        $this->loadModel('OutpatientBillingItems');
-        $this->loadModel('OutpatientBillingPayments');
+        $this->OutpatientBillings = $this->fetchTable('OutpatientBillings');
+        $this->OutpatientBillingItems = $this->fetchTable('OutpatientBillingItems');
+        $this->OutpatientBillingPayments = $this->fetchTable('OutpatientBillingPayments');
 
         $billing = $this->OutpatientBillings->get($billingId);
 
@@ -444,7 +444,7 @@ class OutpatientVisitEmrController extends AppController
         }
 
         // Tandai kunjungan mulai diperiksa, sama seperti saat EMR utama disimpan pertama kali.
-        $this->loadModel('OutpatientVisits');
+        $this->OutpatientVisits = $this->fetchTable('OutpatientVisits');
         $visit = $this->OutpatientVisits->get($visitId);
         if (in_array($visit->status, ['waiting', 'called'])) {
             $visit->status = 'in_progress';
@@ -465,7 +465,7 @@ class OutpatientVisitEmrController extends AppController
         $this->request->allowMethod(['post']);
         $this->autoRender = false;
 
-        $this->loadModel('PolyclinicQueues');
+        $this->PolyclinicQueues = $this->fetchTable('PolyclinicQueues');
 
         $polyName    = trim((string)$this->request->getData('poly_name'));
         $patientName = trim((string)$this->request->getData('patient_name'));
@@ -690,8 +690,8 @@ class OutpatientVisitEmrController extends AppController
         $this->request->allowMethod(['get']);
         $this->autoRender = false;
 
-        $this->loadModel('OutpatientVisits');
-        $this->loadModel('OutpatientInitialMedicalAssessments');
+        $this->OutpatientVisits = $this->fetchTable('OutpatientVisits');
+        $this->OutpatientInitialMedicalAssessments = $this->fetchTable('OutpatientInitialMedicalAssessments');
 
         $visit = $this->OutpatientVisits->get($visitId, [
             'contain' => ['Patients', 'Doctors', 'Registrations'],
@@ -726,8 +726,8 @@ class OutpatientVisitEmrController extends AppController
         $this->request->allowMethod(['post']);
         $this->autoRender = false;
 
-        $this->loadModel('OutpatientVisits');
-        $this->loadModel('OutpatientInitialMedicalAssessments');
+        $this->OutpatientVisits = $this->fetchTable('OutpatientVisits');
+        $this->OutpatientInitialMedicalAssessments = $this->fetchTable('OutpatientInitialMedicalAssessments');
 
         $visit = $this->OutpatientVisits->get($visitId);
         $data = $this->request->getData();

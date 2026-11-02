@@ -16,9 +16,9 @@ class EmergencyEntriesController extends AppController
 
     public function index()
     {
-        $this->loadModel('Registrations');
-        $this->loadModel('Doctors');
-        $this->loadModel('MasterTenagaMedis');
+        $this->Registrations = $this->fetchTable('Registrations');
+        $this->Doctors = $this->fetchTable('Doctors');
+        $this->MasterTenagaMedis = $this->fetchTable('MasterTenagaMedis');
 
             $q = trim((string)$this->request->getQuery('q'));
             $dateFrom = $this->request->getQuery('date_from', date('Y-m-d'));
@@ -64,7 +64,7 @@ class EmergencyEntriesController extends AppController
             try {
                 $regIds = $registrations->extract('id')->toList();
                 if (!empty($regIds)) {
-                    $this->loadModel('MedicalRecords');
+                    $this->MedicalRecords = $this->fetchTable('MedicalRecords');
                     $medicalRecordNos = $this->MedicalRecords->find('list', [
                         'keyField' => 'registration_id',
                         'valueField' => 'medical_record_no',
@@ -96,8 +96,8 @@ class EmergencyEntriesController extends AppController
 
     public function resumeMedis($id = null)
     {
-        $this->loadModel('Registrations');
-        $this->loadModel('MedicalResumes');
+        $this->Registrations = $this->fetchTable('Registrations');
+        $this->MedicalResumes = $this->fetchTable('MedicalResumes');
 
         $containRelations = ['Patients', 'Doctors'];
 
@@ -163,7 +163,7 @@ class EmergencyEntriesController extends AppController
 
     public function emr($id = null)
     {
-        $this->loadModel('Registrations');
+        $this->Registrations = $this->fetchTable('Registrations');
 
         $containRelations = ['Patients', 'Doctors'];
 
@@ -234,7 +234,7 @@ class EmergencyEntriesController extends AppController
 
             if ($this->Registrations->save($registration)) {
                 if (!empty($emergencyActions) && $this->Registrations->hasAssociation('EmergencyActions')) {
-                    $this->loadModel('EmergencyActions');
+                    $this->EmergencyActions = $this->fetchTable('EmergencyActions');
 
                     $this->EmergencyActions->deleteAll([
                         'registration_id' => $registration->id,
@@ -277,9 +277,9 @@ class EmergencyEntriesController extends AppController
     {
         $this->request->allowMethod(['post']);
 
-        $this->loadModel('Registrations');
-        $this->loadModel('OutpatientBillings');
-        $this->loadModel('OutpatientBillingItems');
+        $this->Registrations = $this->fetchTable('Registrations');
+        $this->OutpatientBillings = $this->fetchTable('OutpatientBillings');
+        $this->OutpatientBillingItems = $this->fetchTable('OutpatientBillingItems');
 
         $contain = ['Patients', 'Doctors'];
 
@@ -427,7 +427,7 @@ class EmergencyEntriesController extends AppController
 
     public function cppt($id = null)
     {
-        $this->loadModel('Registrations');
+        $this->Registrations = $this->fetchTable('Registrations');
 
         $registration = $this->Registrations->get($id, [
             'contain' => ['Patients', 'Doctors'],
@@ -455,7 +455,7 @@ class EmergencyEntriesController extends AppController
 
     public function observasi($id = null)
     {
-        $this->loadModel('Registrations');
+        $this->Registrations = $this->fetchTable('Registrations');
 
         $registration = $this->Registrations->get($id, [
             'contain' => ['Patients', 'Doctors'],
@@ -466,8 +466,8 @@ class EmergencyEntriesController extends AppController
 
     public function tindakan($id = null)
     {
-        $this->loadModel('Registrations');
-        $this->loadModel('EmergencyActions');
+        $this->Registrations = $this->fetchTable('Registrations');
+        $this->EmergencyActions = $this->fetchTable('EmergencyActions');
 
         $registration = $this->Registrations->get($id, [
             'contain' => ['Patients', 'Doctors'],
@@ -486,8 +486,8 @@ class EmergencyEntriesController extends AppController
         $this->request->allowMethod(['post']);
         $this->autoRender = false;
 
-        $this->loadModel('Registrations');
-        $this->loadModel('EmergencyActions');
+        $this->Registrations = $this->fetchTable('Registrations');
+        $this->EmergencyActions = $this->fetchTable('EmergencyActions');
 
         $registration = $this->Registrations->get($id);
 
@@ -538,8 +538,8 @@ class EmergencyEntriesController extends AppController
         $this->request->allowMethod(['post', 'delete']);
         $this->autoRender = false;
 
-        $this->loadModel('Registrations');
-        $this->loadModel('EmergencyActions');
+        $this->Registrations = $this->fetchTable('Registrations');
+        $this->EmergencyActions = $this->fetchTable('EmergencyActions');
 
         $action = $this->EmergencyActions->get($actionId);
         $registration = $this->Registrations->get($action->registration_id);
@@ -581,7 +581,7 @@ class EmergencyEntriesController extends AppController
                     'umum'    => 'harga_umum',
                 ][(string)$this->request->getQuery('price_type', 'umum')] ?? 'harga_umum';
 
-                $this->loadModel('MasterTindakan');
+                $this->MasterTindakan = $this->fetchTable('MasterTindakan');
 
                 $query = $this->MasterTindakan->find()
                     ->where(['MasterTindakan.is_active' => 1])
@@ -605,7 +605,7 @@ class EmergencyEntriesController extends AppController
                     ];
                 }
             } elseif ($type === 'obat') {
-                $this->loadModel('Medicines');
+                $this->Medicines = $this->fetchTable('Medicines');
 
                 $query = $this->Medicines->find()
                     ->where(['Medicines.is_active IN' => ['Y', '1']])
@@ -641,7 +641,7 @@ class EmergencyEntriesController extends AppController
 
     public function labRo($id = null)
     {
-        $this->loadModel('Registrations');
+        $this->Registrations = $this->fetchTable('Registrations');
 
         $registration = $this->Registrations->get($id, [
             'contain' => ['Patients', 'Doctors'],
@@ -652,7 +652,7 @@ class EmergencyEntriesController extends AppController
 
     public function kajianKeperawatan($id = null)
     {
-        $this->loadModel('Registrations');
+        $this->Registrations = $this->fetchTable('Registrations');
 
         $registration = $this->Registrations->get($id, [
             'contain' => ['Patients', 'Doctors'],

@@ -22,7 +22,7 @@ class PatientsController extends AppController
                     ['Patients.is_delete IS' => null],
                 ],
             ])
-            ->order(['Patients.id' => 'ASC']);
+            ->orderBy(['Patients.id' => 'ASC']);
 
         // Filter pencarian
         $key = $this->request->getQuery('key');
@@ -51,7 +51,7 @@ class PatientsController extends AppController
 
         $numberingQuery = (clone $query)
             ->select(['Patients.id'])
-            ->order(['Patients.id' => 'ASC'])
+            ->orderBy(['Patients.id' => 'ASC'])
             ->enableHydration(false);
 
         $idOrderMap = [];
@@ -71,9 +71,7 @@ class PatientsController extends AppController
      */
 public function view($id = null)
 {
-    $patient = $this->Patients->get($id, [
-        'contain' => ['Registrations.Doctors'],
-    ]);
+    $patient = $this->Patients->get($id, contain: ['Registrations.Doctors']);
 
     $this->set(compact('patient'));
 }
@@ -122,7 +120,7 @@ public function view($id = null)
      */
     public function edit($id = null)
     {
-        $patient = $this->Patients->get($id, ['contain' => []]);
+        $patient = $this->Patients->get($id, contain: []);
 
         if ($this->request->is(['patch', 'post', 'put'])) {
             $data = $this->request->getData();

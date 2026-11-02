@@ -10,7 +10,7 @@ use Cake\ORM\Entity;
  *
  * @property int $id
  * @property string $no_perencanaan
- * @property \Cake\I18n\FrozenDate $tgl_perencanaan
+ * @property \Cake\I18n\Date $tgl_perencanaan
  * @property string|null $no_dokumen
  * @property string $status
  * @property int|null $supplier_id
@@ -18,8 +18,8 @@ use Cake\ORM\Entity;
  * @property string|null $diminta_oleh
  * @property string $total_qty_permintaan
  * @property string $total_permintaan
- * @property \Cake\I18n\FrozenTime $created
- * @property \Cake\I18n\FrozenTime $modified
+ * @property \Cake\I18n\DateTime $created
+ * @property \Cake\I18n\DateTime $modified
  *
  * @property \App\Model\Entity\Supplier $supplier
  * @property \App\Model\Entity\RencanaPembelianDetail[] $rencana_pembelian_details
@@ -35,7 +35,7 @@ class RencanaPembelian extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'no_perencanaan' => true,
         'tgl_perencanaan' => true,
         'no_dokumen' => true,

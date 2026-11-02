@@ -70,7 +70,7 @@ class DoctorsTable extends Table
         $lastDoctor = $this->find()
             ->select(['code'])
             ->where(['code LIKE' => 'DR-%'])
-            ->order(['id' => 'DESC'])
+            ->orderBy(['id' => 'DESC'])
             ->first();
 
         if ($lastDoctor && preg_match('/DR-(\d+)/', (string)$lastDoctor->code, $matches)) {

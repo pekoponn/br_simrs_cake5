@@ -7,7 +7,7 @@ use Cake\ORM\Entity;
 
 class OrderRadiology extends Entity
 {
-    protected $_accessible = [
+    protected array $_accessible = [
         'order_id' => true,
         'master_tindakan_id' => true,
         'code' => true,

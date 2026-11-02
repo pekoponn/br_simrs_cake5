@@ -16,9 +16,9 @@ class WorkOrdersController extends AppController
     public function initialize(): void
     {
         parent::initialize();
-        $this->loadModel('WorkOrders');
-        $this->loadModel('WorkOrderLines');
-        $this->loadModel('Users');
+        $this->WorkOrders = $this->fetchTable('WorkOrders');
+        $this->WorkOrderLines = $this->fetchTable('WorkOrderLines');
+        $this->Users = $this->fetchTable('Users');
     }
     /**
      * Index method

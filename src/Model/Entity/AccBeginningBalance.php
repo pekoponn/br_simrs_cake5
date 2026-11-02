@@ -11,7 +11,7 @@ use Cake\ORM\Entity;
  * @property int $id
  * @property string $branch_id
  * @property int|null $acc_chart_of_account_id
- * @property \Cake\I18n\FrozenDate|null $dates
+ * @property \Cake\I18n\Date|null $dates
  * @property int|null $status
  * @property int|null $position
  * @property string|null $ledger_dc
@@ -19,11 +19,11 @@ use Cake\ORM\Entity;
  * @property string|null $credit
  * @property int|null $is_active
  * @property string|null $is_create
- * @property \Cake\I18n\FrozenTime|null $created
+ * @property \Cake\I18n\DateTime|null $created
  * @property string|null $is_update
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $modified
  * @property string|null $is_delete
- * @property \Cake\I18n\FrozenTime|null $deleted
+ * @property \Cake\I18n\DateTime|null $deleted
  *
  * @property \App\Model\Entity\Branch $branch
  * @property \App\Model\Entity\AccChartOfAccount $acc_chart_of_account
@@ -39,7 +39,7 @@ class AccBeginningBalance extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'branch_id' => true,
         'acc_chart_of_account_id' => true,
         'dates' => true,

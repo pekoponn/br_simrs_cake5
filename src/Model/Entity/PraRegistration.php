@@ -13,14 +13,14 @@ use Cake\ORM\Entity;
  * @property int|null $patient_id
  * @property string|null $medical_record_no
  * @property string $patient_name
- * @property \Cake\I18n\FrozenDate|null $birth_date
+ * @property \Cake\I18n\Date|null $birth_date
  * @property string|null $address
  * @property string|null $phone_number
  * @property string|null $nik
  * @property int|null $doctor_id
  * @property string $doctor_name
  * @property string $poly_name
- * @property \Cake\I18n\FrozenDate $appointment_date
+ * @property \Cake\I18n\Date $appointment_date
  * @property string|null $appointment_day
  * @property \Cake\I18n\Time $appointment_time
  * @property int|null $patient_queue_number
@@ -32,10 +32,10 @@ use Cake\ORM\Entity;
  * @property string $channel
  * @property string|null $notes
  * @property string $registration_status
- * @property \Cake\I18n\FrozenTime|null $registered_at
- * @property \Cake\I18n\FrozenTime $created
+ * @property \Cake\I18n\DateTime|null $registered_at
+ * @property \Cake\I18n\DateTime $created
  * @property string|null $created_by
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $modified
  * @property string|null $modified_by
  *
  * @property \App\Model\Entity\Patient $patient
@@ -52,7 +52,7 @@ class PraRegistration extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'reservation_code' => true,
         'patient_id' => true,
         'medical_record_no' => true,

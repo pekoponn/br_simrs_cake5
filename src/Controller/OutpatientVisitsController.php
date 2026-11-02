@@ -12,7 +12,7 @@ class OutpatientVisitsController extends AppController
         $deviceCode = strtoupper(trim((string)$this->request->getQuery('device', '')));
         $polyclinic = trim((string)$this->request->getQuery('poli', 'Poli Umum'));
         if ($deviceCode !== '') {
-            $this->loadModel('OutpatientDisplayDevices');
+            $this->OutpatientDisplayDevices = $this->fetchTable('OutpatientDisplayDevices');
             $device = $this->OutpatientDisplayDevices->find()->where(['device_code' => $deviceCode, 'is_active' => 'Y'])->first();
             if ($device) {
                 $polyclinic = (string)$device->polyclinic_name;
@@ -69,7 +69,7 @@ class OutpatientVisitsController extends AppController
     /** Pengaturan terpusat poli yang ditampilkan oleh setiap PC display. */
     public function displaySettings()
     {
-        $this->loadModel('OutpatientDisplayDevices');
+        $this->OutpatientDisplayDevices = $this->fetchTable('OutpatientDisplayDevices');
         if ($this->request->is('post')) {
             $code = strtoupper(trim((string)$this->request->getData('device_code')));
             $polyclinic = trim((string)$this->request->getData('polyclinic_name'));
@@ -254,7 +254,7 @@ class OutpatientVisitsController extends AppController
         $registration   = null;
 
         if (!empty($registrationId)) {
-            $this->loadModel('Registrations');
+            $this->Registrations = $this->fetchTable('Registrations');
             try {
                 $registration = $this->Registrations->get((int)$registrationId, [
                     'contain' => ['Patients', 'Doctors'],
@@ -414,7 +414,7 @@ class OutpatientVisitsController extends AppController
             return $this->queueActionRedirect();
         }
 
-        $this->loadModel('OutpatientCpptNotes');
+        $this->OutpatientCpptNotes = $this->fetchTable('OutpatientCpptNotes');
 
         $visit = $this->OutpatientVisits->get($id, [
             'contain' => ['Patients', 'Doctors', 'Registrations', 'OutpatientActions'],
@@ -437,7 +437,7 @@ class OutpatientVisitsController extends AppController
             return $this->queueActionRedirect();
         }
 
-        $this->loadModel('OutpatientCpptNotes');
+        $this->OutpatientCpptNotes = $this->fetchTable('OutpatientCpptNotes');
 
         $visit = $this->OutpatientVisits->get($id);
         $data  = $this->request->getData();
@@ -491,7 +491,7 @@ class OutpatientVisitsController extends AppController
     public function deleteCppt($noteId = null)
     {
         $this->request->allowMethod(['post', 'delete']);
-        $this->loadModel('OutpatientCpptNotes');
+        $this->OutpatientCpptNotes = $this->fetchTable('OutpatientCpptNotes');
 
         $note = $this->OutpatientCpptNotes->get($noteId);
         $visitId = $note->outpatient_visit_id;
@@ -692,7 +692,7 @@ public function datang($id = null)
             ],
         ]);
 
-        $this->loadModel('OutpatientBillings');
+        $this->OutpatientBillings = $this->fetchTable('OutpatientBillings');
         $billing = $this->OutpatientBillings->find()
             ->select(['id', 'status'])
             ->where(['outpatient_visit_id' => $visit->id])
@@ -700,7 +700,7 @@ public function datang($id = null)
 
         $isBillingLocked = $billing && in_array($billing->status, ['paid', 'void', 'cancelled'], true);
 
-        $this->loadModel('OutpatientVisitEmr');
+        $this->OutpatientVisitEmr = $this->fetchTable('OutpatientVisitEmr');
 
         $emr = $this->OutpatientVisitEmr->find()
         ->where(['outpatient_visit_id' => $visit->id])
@@ -716,7 +716,7 @@ public function datang($id = null)
         // Resume medis tetap bisa dibuka walaupun tabel MedicalResumes belum ada.
         $medicalResume = null;
         try {
-            $this->loadModel('MedicalResumes');
+            $this->MedicalResumes = $this->fetchTable('MedicalResumes');
 
             $medicalResume = $this->MedicalResumes->find()
                 ->where(['outpatient_visit_id' => $visit->id])
@@ -868,7 +868,7 @@ public function datang($id = null)
 
         if ($q !== '') {
             try {
-                $this->loadModel('MasterIcd10');
+                $this->MasterIcd10 = $this->fetchTable('MasterIcd10');
                 $query = $this->MasterIcd10->find()
                     ->select(['id', 'kode', 'nama'])
                     ->where([
@@ -910,7 +910,7 @@ public function datang($id = null)
 
         if ($q !== '') {
             try {
-                $this->loadModel('MasterIcd9');
+                $this->MasterIcd9 = $this->fetchTable('MasterIcd9');
                 $query = $this->MasterIcd9->find()
                     ->select(['id', 'kode', 'nama'])
                     ->where([
@@ -961,8 +961,8 @@ public function datang($id = null)
     {
         $this->request->allowMethod(['post']);
     
-        $this->loadModel('OutpatientBillings');
-        $this->loadModel('OutpatientBillingItems');
+        $this->OutpatientBillings = $this->fetchTable('OutpatientBillings');
+        $this->OutpatientBillingItems = $this->fetchTable('OutpatientBillingItems');
     
         $visit = $this->OutpatientVisits->get($id, [
             'contain' => [
@@ -1088,7 +1088,7 @@ public function datang($id = null)
     {
         $this->request->allowMethod(['get']);
         $this->autoRender = false;
-        $this->loadModel('OutpatientLetters');
+        $this->OutpatientLetters = $this->fetchTable('OutpatientLetters');
 
         $letter = $this->OutpatientLetters->find()
             ->where([
@@ -1121,7 +1121,7 @@ public function datang($id = null)
     {
         $this->request->allowMethod(['post']);
         $this->autoRender = false;
-        $this->loadModel('OutpatientLetters');
+        $this->OutpatientLetters = $this->fetchTable('OutpatientLetters');
 
         $visit = $this->OutpatientVisits->get($id);
         $data  = $this->request->getData();

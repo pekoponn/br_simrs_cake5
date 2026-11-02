@@ -13,21 +13,21 @@ use Cake\ORM\Entity;
  * @property string $code
  * @property string|null $devision
  * @property string|null $position
- * @property \Cake\I18n\FrozenDate|null $date
+ * @property \Cake\I18n\Date|null $date
  * @property string|null $time_from
  * @property string|null $type
  * @property string|null $files
  * @property string|null $description
  * @property int|null $is_approved
- * @property \Cake\I18n\FrozenTime|null $approved
+ * @property \Cake\I18n\DateTime|null $approved
  * @property int|null $is_knowing
- * @property \Cake\I18n\FrozenTime|null $knowing
+ * @property \Cake\I18n\DateTime|null $knowing
  * @property string|null $is_create
- * @property \Cake\I18n\FrozenTime|null $created
+ * @property \Cake\I18n\DateTime|null $created
  * @property string|null $is_update
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $modified
  * @property string|null $is_delete
- * @property \Cake\I18n\FrozenTime|null $deleted
+ * @property \Cake\I18n\DateTime|null $deleted
  * @property string $is_active
  * @property string|null $is_log
  *
@@ -44,7 +44,7 @@ class LicenseEarlyLeave extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'branch_id' => true,
         'code' => true,
         'devision' => true,

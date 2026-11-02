@@ -15,7 +15,7 @@ use Cake\ORM\Entity;
  * @property int|null $registration_id
  * @property int $patient_id
  * @property int|null $doctor_id
- * @property \Cake\I18n\FrozenDate $visit_date
+ * @property \Cake\I18n\Date $visit_date
  * @property string|null $polyclinic_name
  * @property string|null $insurance_type
  * @property string|null $insurance_no
@@ -50,7 +50,7 @@ use Cake\ORM\Entity;
  * @property string|null $payment_method
  * @property string $paid_amount
  * @property string $change_amount
- * @property \Cake\I18n\FrozenTime|null $paid_at
+ * @property \Cake\I18n\DateTime|null $paid_at
  * @property int|null $cashier_id
  * @property string|null $cashier_name
  * @property string|null $paid_by
@@ -61,14 +61,14 @@ use Cake\ORM\Entity;
  * @property string|null $inpatient_referral_no
  * @property string|null $notes
  * @property string|null $void_reason
- * @property \Cake\I18n\FrozenTime|null $voided_at
+ * @property \Cake\I18n\DateTime|null $voided_at
  * @property int|null $voided_by
  * @property bool|null $is_create
  * @property bool|null $is_update
  * @property bool|null $is_delete
  * @property string|null $is_active
- * @property \Cake\I18n\FrozenTime $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime $created
+ * @property \Cake\I18n\DateTime|null $modified
  * @property int|null $created_by
  * @property int|null $modified_by
  *
@@ -89,7 +89,7 @@ class OutpatientBilling extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'billing_no' => true,
         'receipt_no' => true,
         'outpatient_visit_id' => true,

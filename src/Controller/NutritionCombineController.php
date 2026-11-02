@@ -15,7 +15,7 @@ class NutritionCombineController extends AppController
     {
         parent::initialize();
 
-        $this->loadModel('NutritionCombine');
+        $this->NutritionCombine = $this->fetchTable('NutritionCombine');
     }
     /**
      * Index method
@@ -38,9 +38,7 @@ class NutritionCombineController extends AppController
      */
     public function view($id = null)
     {
-        $nutritionCombine = $this->NutritionCombine->get($id, [
-            'contain' => [],
-        ]);
+        $nutritionCombine = $this->NutritionCombine->get($id, contain: []);
 
         $this->set(compact('nutritionCombine'));
     }
@@ -74,9 +72,7 @@ class NutritionCombineController extends AppController
      */
     public function edit($id = null)
     {
-        $nutritionCombine = $this->NutritionCombine->get($id, [
-            'contain' => [],
-        ]);
+        $nutritionCombine = $this->NutritionCombine->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $nutritionCombine = $this->NutritionCombine->patchEntity($nutritionCombine, $this->request->getData());
             if ($this->NutritionCombine->save($nutritionCombine)) {

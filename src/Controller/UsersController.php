@@ -139,9 +139,9 @@ class UsersController extends AppController
         // $dataWheres = (!empty($dataWheres)) ? $dataWheres : '';
         // $queries = $users->where([$dataWheres])->order(['Users.code' => 'ASC']);
 
-                
+
         $conditions = !empty($dataWhere) ? $dataWhere : [];
-        $query = $this->Users->find()->contain(['CreatedUsers'])->where($conditions)->order(['Users.code' => 'ASC']);
+        $query = $this->Users->find()->contain(['CreatedUsers'])->where($conditions)->orderBy(['Users.code' => 'ASC']);
         $users = $this->paginate($query);
         $this->set('users', $this->paginate($query, ['limit' => '10']));
 
@@ -158,9 +158,9 @@ class UsersController extends AppController
         //     ],
         // ];
         // $users = $this->paginate($query, $settings);
-        
+
         //$data['setFlash'] = array();        
-        
+
         // $this->set(compact('users'));
 
         //$users = $this->paginate($this->Users, $settings);
@@ -175,9 +175,7 @@ class UsersController extends AppController
      */
     public function view($id = null)
     {
-        $user = $this->Users->get($id, [
-            'contain' => ['Branches', 'Creditors', 'Customers', 'CustomersOri', 'Logs', 'Suppliers', 'Transporters'],
-        ]);
+        $user = $this->Users->get($id, contain: ['Branches', 'Creditors', 'Customers', 'CustomersOri', 'Logs', 'Suppliers', 'Transporters']);
 
         $this->set(compact('user'));
     }
@@ -290,9 +288,7 @@ class UsersController extends AppController
      */
     public function edit($id = null)
     {
-        $user = $this->Users->get($id, [
-            'contain' => [],
-        ]);
+        $user = $this->Users->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
 
             pr($user);
@@ -313,9 +309,7 @@ class UsersController extends AppController
 
     public function changePassword($id = null)
     {
-        $user = $this->Users->get($id, [
-            'contain' => [],
-        ]);
+        $user = $this->Users->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $hasher = new DefaultPasswordHasher(); // Memanggil class PasswordHasher
             $dataRow = $this->request->getData();
@@ -339,9 +333,7 @@ class UsersController extends AppController
 
     public function resetPassword($id = null)
     {
-        $user = $this->Users->get($id, [
-            'contain' => [],
-        ]);
+        $user = $this->Users->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $hasher = new DefaultPasswordHasher(); // Memanggil class PasswordHasher
             $dataRow = $this->request->getData();
@@ -372,23 +364,18 @@ class UsersController extends AppController
     {
         $userData = $this->request->getAttribute('identity');
 
-        $rowUsers = $this->Users->find('list', [
-            'keyField' => 'id',
-            'valueField' => 'name'
-        ])
+        $rowUsers = $this->Users->find('list',
+        keyField: 'id',
+        valueField: 'name')
         ->where([
             'Users.is_active' => 'Y',
             // 'Users.id !=' => $userData->id
         ])
-        ->order(['Users.name' => 'ASC'])
+        ->orderBy(['Users.name' => 'ASC'])
         ->toArray();
-        $users = $this->Users->get($id, [
-            'contain' => [/*'Division'*/],
-        ]);
+        $users = $this->Users->get($id, contain: [/*'Division'*/]);
 
-        $users = $this->Users->get($id, [
-            //'contain' => ['Division'],
-        ]);
+        $users = $this->Users->get($id);
 
         $rules = $this->Krs->_rule($users->rules);
         // pr($rule);
@@ -735,7 +722,7 @@ class UsersController extends AppController
         //     $_chr = chr(65+$a);
         //     $sheet->getColumnDimension($_chr)->setAutoSize(true);
         // }
-            
+
         $styleArray = [
             'font'  => [
                 'bold'  => true,
@@ -749,7 +736,7 @@ class UsersController extends AppController
                 'color' => [
                     'argb' => 'FFEFEFEF',
                 ],
-                
+
             ],
         ]; 
         $styleArrayInfo = [

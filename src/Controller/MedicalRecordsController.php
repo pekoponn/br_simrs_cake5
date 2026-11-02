@@ -14,14 +14,14 @@ class MedicalRecordsController extends AppController
 {
     public function index()
     {
-        $this->loadModel('Patients');
-        $this->loadModel('Registrations');
-        $this->loadModel('OutpatientVisits');
-        $this->loadModel('OutpatientVisitEmr');
-        $this->loadModel('MedicalRecords');
-        $this->loadModel('MedicalRecordInpatients');
-        $this->loadModel('MedicalRecordOutpatientIgds');
-        $this->loadModel('MedicalRecordDiagnoses');
+        $this->Patients = $this->fetchTable('Patients');
+        $this->Registrations = $this->fetchTable('Registrations');
+        $this->OutpatientVisits = $this->fetchTable('OutpatientVisits');
+        $this->OutpatientVisitEmr = $this->fetchTable('OutpatientVisitEmr');
+        $this->MedicalRecords = $this->fetchTable('MedicalRecords');
+        $this->MedicalRecordInpatients = $this->fetchTable('MedicalRecordInpatients');
+        $this->MedicalRecordOutpatientIgds = $this->fetchTable('MedicalRecordOutpatientIgds');
+        $this->MedicalRecordDiagnoses = $this->fetchTable('MedicalRecordDiagnoses');
 
         $q = trim((string)$this->request->getQuery('q', ''));
 
@@ -117,7 +117,7 @@ class MedicalRecordsController extends AppController
                                 ['MedicalRecords.is_delete IS' => null],
                             ],
                         ])
-                        ->order(['MedicalRecords.id' => 'DESC'])
+                        ->orderBy(['MedicalRecords.id' => 'DESC'])
                         ->first();
 
                     $medicalRecordsByRegistration[$registration->id] = $medicalRecord;
@@ -133,7 +133,7 @@ class MedicalRecordsController extends AppController
      public function searchPatients()
     {
     $this->request->allowMethod(['get']);
-    $this->loadModel('Patients');
+    $this->Patients = $this->fetchTable('Patients');
 
     $term = trim((string)$this->request->getQuery('term', ''));
     $limit = (int)$this->request->getQuery('limit', 50);
@@ -225,8 +225,8 @@ class MedicalRecordsController extends AppController
 public function backfillNoRm()
 {
     $this->autoRender = false;
-    $this->loadModel('MedicalRecords');
-    $this->loadModel('Registrations');
+    $this->MedicalRecords = $this->fetchTable('MedicalRecords');
+    $this->Registrations = $this->fetchTable('Registrations');
 
     $schema = $this->MedicalRecords->getSchema();
 
@@ -244,7 +244,7 @@ public function backfillNoRm()
                 ['MedicalRecords.medical_record_no' => ''],
             ],
         ])
-        ->order(['MedicalRecords.id' => 'ASC'])
+        ->orderBy(['MedicalRecords.id' => 'ASC'])
         ->all();
 
     $total = $emptyRecords->count();
@@ -277,7 +277,7 @@ public function backfillNoRm()
 
         $last = $this->MedicalRecords->find()
             ->where(['medical_record_no LIKE' => $prefix . '%'])
-            ->order(['id' => 'DESC'])
+            ->orderBy(['id' => 'DESC'])
             ->first();
 
         $lastSeq = $last ? (int)substr((string)$last->medical_record_no, strlen($prefix)) : 0;

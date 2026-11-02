@@ -24,7 +24,7 @@ class DaerahKelurahan extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'id_kec' => true,
         'nama' => true,
         'id_jenis' => true,

@@ -20,7 +20,7 @@ use Cake\ORM\Entity;
  * @property string|null $consultant1_name
  * @property string|null $consultant2_name
  * @property string|null $sender_name
- * @property \Cake\I18n\FrozenDate|null $planned_discharge_date
+ * @property \Cake\I18n\Date|null $planned_discharge_date
  * @property string|null $risk_note
  * @property string|null $summary_history
  * @property string|null $inpatient_indication
@@ -39,14 +39,14 @@ use Cake\ORM\Entity;
  * @property string|null $prognosis
  * @property string|null $letter_type
  * @property string|null $follow_up_treatment
- * @property \Cake\I18n\FrozenDate|null $control_date
+ * @property \Cake\I18n\Date|null $control_date
  * @property string|null $control_note
  * @property string|null $control_plan
  * @property string|null $return_reason
  * @property bool $print_classic
  * @property bool $send_digital_claim
- * @property \Cake\I18n\FrozenTime|null $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
  *
  * @property \App\Model\Entity\OutpatientVisit $outpatient_visit
  * @property \App\Model\Entity\Registration $registration
@@ -64,7 +64,7 @@ class MedicalResume extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'outpatient_visit_id' => true,
         'registration_id' => true,
         'patient_id' => true,

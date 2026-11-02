@@ -8,10 +8,10 @@ class TriageEntriesController extends AppController
     public function add()
     {
         $this->request->allowMethod(['post']);
-        $this->loadModel('EmergencyEntries');
-        $this->loadModel('Registrations');
-        $this->loadModel('Doctors');
-        $this->loadModel('MasterTenagaMedis');
+        $this->EmergencyEntries = $this->fetchTable('EmergencyEntries');
+        $this->Registrations = $this->fetchTable('Registrations');
+        $this->Doctors = $this->fetchTable('Doctors');
+        $this->MasterTenagaMedis = $this->fetchTable('MasterTenagaMedis');
 
         $data = $this->request->getData();
 
@@ -127,7 +127,7 @@ class TriageEntriesController extends AppController
     public function history($registrationId = null)
     {
         $this->request->allowMethod(['get']);
-        $this->loadModel('EmergencyEntries');
+        $this->EmergencyEntries = $this->fetchTable('EmergencyEntries');
 
         $entries = $this->EmergencyEntries->find()
             ->where([

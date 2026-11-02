@@ -18,8 +18,8 @@ class AccJournalLinesController extends AppController
 {
     public function getGeneralJournal()
     {
-        // $this->loadModel("AccChartOfAccount");
-        // $this->loadModel("AccJournal");
+        // $this->AccChartOfAccount = $this->fetchTable('AccChartOfAccount');
+        // $this->AccJournal = $this->fetchTable('AccJournal');
         // $this->autoRender=false;
         $db = ConnectionManager::get('default');
 
@@ -75,13 +75,13 @@ class AccJournalLinesController extends AppController
                 "totalCredit" => 0,
             );
         }
-        
+
         // pr($data);
 
         return $this->response->withType("application/json")->withStringBody(json_encode($json_data));
 
 
-            
+
         /*    $dateJournal = $this->params["url"]["dateJournal"];
             //pr($dateJournal);
             list($filterDateFrom, $filterDateEnd) = explode("^", $dateJournal);
@@ -104,7 +104,7 @@ class AccJournalLinesController extends AppController
                 //'link' => array(
                     "fields" => array(
                         "AccJournalLine.acc_journal_id", "AccJournalLine.id", "AccJournal.date", "DATE_FORMAT(AccJournal.date,'%d/%m/%Y') AS AccJournal__dateJournal", "AccJournalLine.acc_chart_of_account_id", "IF(AccJournalLine.ledger_dc='D','Debit','Credit') AS AccJournalLine__ledgerdc", "AccJournalLine.ledger_dc", "AccJournalLine.name", "AccJournalLine.position", "AccJournalLine.debet", "AccJournalLine.credit", "AccChartOfAccount.id", "AccChartOfAccount.code", "AccChartOfAccount.name", "AccChartOfAccount.customer_id", "CustomerCoa.title", "CustomerCoa.name", "CONCAT('(', AccChartOfAccount.code, ') ',IFNULL(AccChartOfAccount.name, CONCAT(CustomerCoa.title,' ',CustomerCoa.name))) AS AccChartOfAccount__customer_name"),
-                    
+
                     "conditions" => array("AccJournal.journal_type" => "Memorial", $filterCondition),
                     "order" => array("AccJournal.date" => 'DESC', "AccJournal.code" => 'ASC', "AccJournalLine.id" => 'ASC'),
                     "recursive" => 0,
@@ -112,7 +112,7 @@ class AccJournalLinesController extends AppController
               // ),
 
             );
-            
+
             $this->AccJournal->virtualFields['totalDebet'] = 0;
             $this->AccJournal->virtualFields['totalCredit'] = 0;
             $dataJournalLines = $this->AccJournalLine->find("first", array(

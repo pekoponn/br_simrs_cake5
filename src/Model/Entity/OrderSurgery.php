@@ -13,7 +13,7 @@ use Cake\ORM\Entity;
  * @property int|null $registration_id
  * @property int|null $patient_id
  * @property int|null $doctor_id
- * @property \Cake\I18n\FrozenDate|null $surgery_date
+ * @property \Cake\I18n\Date|null $surgery_date
  * @property \Cake\I18n\Time|null $surgery_time
  * @property int|null $operator_id
  * @property string|null $operator_name
@@ -25,7 +25,7 @@ use Cake\ORM\Entity;
  * @property string|null $approval_note
  * @property string|null $notes
  * @property string|null $approved_queue_no
- * @property \Cake\I18n\FrozenDate|null $approved_date
+ * @property \Cake\I18n\Date|null $approved_date
  * @property \Cake\I18n\Time|null $approved_time
  * @property string|null $operating_room
  * @property string|null $approved_operator
@@ -35,8 +35,8 @@ use Cake\ORM\Entity;
  * @property string $status
  * @property bool $is_active
  * @property bool $is_delete
- * @property \Cake\I18n\FrozenTime|null $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
  *
  * @property \App\Model\Entity\Order $order
  * @property \App\Model\Entity\Registration $registration
@@ -56,7 +56,7 @@ class OrderSurgery extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'order_id' => true,
         'registration_id' => true,
         'patient_id' => true,

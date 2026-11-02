@@ -32,9 +32,7 @@ class MasterSupportsController extends AppController
      */
     public function view($id = null)
     {
-        $masterSupport = $this->MasterSupports->get($id, [
-            'contain' => [],
-        ]);
+        $masterSupport = $this->MasterSupports->get($id, contain: []);
 
         $this->set(compact('masterSupport'));
     }
@@ -68,9 +66,7 @@ class MasterSupportsController extends AppController
      */
     public function edit($id = null)
     {
-        $masterSupport = $this->MasterSupports->get($id, [
-            'contain' => [],
-        ]);
+        $masterSupport = $this->MasterSupports->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $masterSupport = $this->MasterSupports->patchEntity($masterSupport, $this->request->getData());
             if ($this->MasterSupports->save($masterSupport)) {

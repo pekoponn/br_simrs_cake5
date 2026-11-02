@@ -20,14 +20,14 @@ use Cake\ORM\Entity;
  * @property string|null $room_name
  * @property int|null $bed_id
  * @property string|null $bed_no
- * @property \Cake\I18n\FrozenTime|null $check_in_date
- * @property \Cake\I18n\FrozenDate|null $planned_discharge_date
- * @property \Cake\I18n\FrozenTime|null $check_out_date
+ * @property \Cake\I18n\DateTime|null $check_in_date
+ * @property \Cake\I18n\Date|null $planned_discharge_date
+ * @property \Cake\I18n\DateTime|null $check_out_date
  * @property string|null $notes
  * @property string $status
  * @property bool $is_active
- * @property \Cake\I18n\FrozenTime|null $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
  *
  * @property \App\Model\Entity\Registration $registration
  * @property \App\Model\Entity\Patient $patient
@@ -46,7 +46,7 @@ class InpatientEntry extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'registration_id' => true,
         'registration_no' => true,
         'patient_id' => true,

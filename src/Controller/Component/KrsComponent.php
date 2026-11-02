@@ -27,9 +27,9 @@ class KrsComponent extends Component
 		if(empty($id) || $id == null || $id=='N') {
 		 	$dataOld = array();
 		} else {
-			$model = TableRegistry::get($table);
+			$model = \Cake\ORM\TableRegistry::getTableLocator()->get($table);
 						
-			$dataRows = $model->find('all', ['conditions' => ['id' => $id]])->first();
+			$dataRows = $model->find('all', conditions: ['id' => $id])->first();
 
 			$dataOlds = (isset($dataRows->is_log)) ? $dataRows->is_log : '';
 			$dataOld = (empty($dataOlds)) ? array():json_decode($dataOlds, true);		

@@ -35,9 +35,7 @@ class OrderSurgeriesController extends AppController
      */
     public function view($id = null)
     {
-        $orderSurgery = $this->OrderSurgeries->get($id, [
-            'contain' => ['Orders', 'Registrations', 'Patients', 'Doctors', 'Operators', 'OperationTypes'],
-        ]);
+        $orderSurgery = $this->OrderSurgeries->get($id, contain: ['Orders', 'Registrations', 'Patients', 'Doctors', 'Operators', 'OperationTypes']);
 
         $this->set(compact('orderSurgery'));
     }
@@ -77,9 +75,7 @@ class OrderSurgeriesController extends AppController
      */
     public function edit($id = null)
     {
-        $orderSurgery = $this->OrderSurgeries->get($id, [
-            'contain' => [],
-        ]);
+        $orderSurgery = $this->OrderSurgeries->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $orderSurgery = $this->OrderSurgeries->patchEntity($orderSurgery, $this->request->getData());
             if ($this->OrderSurgeries->save($orderSurgery)) {

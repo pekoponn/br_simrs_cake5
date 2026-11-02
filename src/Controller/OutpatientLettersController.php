@@ -37,9 +37,7 @@ class OutpatientLettersController extends AppController
      */
     public function view($id = null)
     {
-        $outpatientLetter = $this->OutpatientLetters->get($id, [
-            'contain' => ['OutpatientVisits', 'Registrations', 'Patients', 'Doctors'],
-        ]);
+        $outpatientLetter = $this->OutpatientLetters->get($id, contain: ['OutpatientVisits', 'Registrations', 'Patients', 'Doctors']);
 
         $this->set(compact('outpatientLetter'));
     }
@@ -77,9 +75,7 @@ class OutpatientLettersController extends AppController
      */
     public function edit($id = null)
     {
-        $outpatientLetter = $this->OutpatientLetters->get($id, [
-            'contain' => [],
-        ]);
+        $outpatientLetter = $this->OutpatientLetters->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $outpatientLetter = $this->OutpatientLetters->patchEntity($outpatientLetter, $this->request->getData());
             if ($this->OutpatientLetters->save($outpatientLetter)) {
@@ -163,7 +159,7 @@ class OutpatientLettersController extends AppController
         $this->autoRender = false;
 
         // OutpatientVisits tidak otomatis ter-load di controller ini, jadi harus load manual.
-        $this->loadModel('OutpatientVisits');
+        $this->OutpatientVisits = $this->fetchTable('OutpatientVisits');
         $visit = $this->OutpatientVisits->get($visitId);
 
         $data = $this->request->getData();
@@ -252,7 +248,7 @@ class OutpatientLettersController extends AppController
         $this->request->allowMethod(['post']);
         $this->autoRender = false;
  
-        $this->loadModel('OutpatientVisits');
+        $this->OutpatientVisits = $this->fetchTable('OutpatientVisits');
         $visit = $this->OutpatientVisits->get($id);
         $data  = $this->request->getData();
  
@@ -339,7 +335,7 @@ class OutpatientLettersController extends AppController
         $this->request->allowMethod(['post']);
         $this->autoRender = false;
 
-        $this->loadModel('OutpatientVisits');
+        $this->OutpatientVisits = $this->fetchTable('OutpatientVisits');
         $visit = $this->OutpatientVisits->get($id);
         $data  = $this->request->getData();
 
@@ -392,9 +388,7 @@ class OutpatientLettersController extends AppController
      */
     public function cetakSuratSakit($letterId = null)
     {
-        $letter = $this->OutpatientLetters->get($letterId, [
-            'contain' => ['Patients', 'Doctors', 'OutpatientVisits'],
-        ]);
+        $letter = $this->OutpatientLetters->get($letterId, contain: ['Patients', 'Doctors', 'OutpatientVisits']);
 
         $this->assignSequentialLetterNo($letter, 'SKS');
 
@@ -410,9 +404,7 @@ class OutpatientLettersController extends AppController
 
     public function cetakSuratKonsultasi($letterId = null)
     {
-        $letter = $this->OutpatientLetters->get($letterId, [
-            'contain' => ['Patients', 'Doctors', 'OutpatientVisits'],
-        ]);
+        $letter = $this->OutpatientLetters->get($letterId, contain: ['Patients', 'Doctors', 'OutpatientVisits']);
 
         if ($letter->letter_type !== 'konsultasi') {
             throw new \Cake\Http\Exception\NotFoundException('Surat konsultasi tidak ditemukan.');
@@ -459,7 +451,7 @@ class OutpatientLettersController extends AppController
         $this->request->allowMethod(['post']);
         $this->autoRender = false;
 
-        $this->loadModel('OutpatientVisits');
+        $this->OutpatientVisits = $this->fetchTable('OutpatientVisits');
         $visit = $this->OutpatientVisits->get($visitId);
         $data  = $this->request->getData();
 
@@ -504,7 +496,7 @@ class OutpatientLettersController extends AppController
     {
         $this->request->allowMethod(['get']);
 
-        $this->loadModel('OutpatientVisits');
+        $this->OutpatientVisits = $this->fetchTable('OutpatientVisits');
         $visit = $this->OutpatientVisits->get($visitId, [
             'contain' => ['Patients', 'Doctors', 'Registrations'],
         ]);
@@ -529,9 +521,7 @@ class OutpatientLettersController extends AppController
             $this->OutpatientLetters->save($letter, ['checkRules' => false]);
         }
 
-        $letter = $this->OutpatientLetters->get($letter->id, [
-            'contain' => ['Patients', 'Doctors', 'OutpatientVisits'],
-        ]);
+        $letter = $this->OutpatientLetters->get($letter->id, contain: ['Patients', 'Doctors', 'OutpatientVisits']);
 
         $this->assignSequentialLetterNo($letter, 'SPRI');
 
@@ -578,7 +568,7 @@ class OutpatientLettersController extends AppController
         $this->request->allowMethod(['post']);
         $this->autoRender = false;
 
-        $this->loadModel('OutpatientVisits');
+        $this->OutpatientVisits = $this->fetchTable('OutpatientVisits');
         $visit = $this->OutpatientVisits->get($visitId);
         $data  = $this->request->getData();
 
@@ -642,9 +632,7 @@ class OutpatientLettersController extends AppController
 
     public function cetakSuratBuktiRajal($letterId = null)
     {
-        $letter = $this->OutpatientLetters->get($letterId, [
-            'contain' => ['Patients', 'Doctors', 'OutpatientVisits'],
-        ]);
+        $letter = $this->OutpatientLetters->get($letterId, contain: ['Patients', 'Doctors', 'OutpatientVisits']);
 
         if ($letter->letter_type !== 'bukti_rajal') {
             throw new \Cake\Http\Exception\NotFoundException('Surat bukti rawat jalan tidak ditemukan.');
@@ -652,7 +640,7 @@ class OutpatientLettersController extends AppController
 
         $this->assignSequentialLetterNo($letter, 'SBRJ');
 
-        $this->loadModel('Doctors');
+        $this->Doctors = $this->fetchTable('Doctors');
         $dischargedByDoctor = !empty($letter->discharged_by_doctor_id)
             ? $this->Doctors->find()->where(['id' => $letter->discharged_by_doctor_id])->first()
             : null;
@@ -723,7 +711,7 @@ class OutpatientLettersController extends AppController
         $this->request->allowMethod(['post']);
         $this->autoRender = false;
 
-        $this->loadModel('OutpatientVisits');
+        $this->OutpatientVisits = $this->fetchTable('OutpatientVisits');
         $visit = $this->OutpatientVisits->get($visitId);
         $data  = $this->request->getData();
 
@@ -776,9 +764,7 @@ class OutpatientLettersController extends AppController
 
     public function cetakSuratSkdp($letterId = null)
     {
-        $letter = $this->OutpatientLetters->get($letterId, [
-            'contain' => ['Patients', 'Doctors', 'OutpatientVisits'],
-        ]);
+        $letter = $this->OutpatientLetters->get($letterId, contain: ['Patients', 'Doctors', 'OutpatientVisits']);
 
         if ($letter->letter_type !== 'skdp') {
             throw new \Cake\Http\Exception\NotFoundException('Surat SKDP tidak ditemukan.');
@@ -841,7 +827,7 @@ public function simpanSuratKontrolBpjs($visitId = null)
     $this->request->allowMethod(['post']);
     $this->autoRender = false;
 
-    $this->loadModel('OutpatientVisits');
+    $this->OutpatientVisits = $this->fetchTable('OutpatientVisits');
     $visit = $this->OutpatientVisits->get($visitId);
     $data  = $this->request->getData();
 
@@ -892,9 +878,7 @@ public function simpanSuratKontrolBpjs($visitId = null)
 
     public function cetakSuratKontrolBpjs($letterId = null)
     {
-        $letter = $this->OutpatientLetters->get($letterId, [
-            'contain' => ['Patients', 'Doctors', 'OutpatientVisits'],
-        ]);
+        $letter = $this->OutpatientLetters->get($letterId, contain: ['Patients', 'Doctors', 'OutpatientVisits']);
 
         $this->assignSequentialLetterNo($letter, 'SKB');
 
@@ -944,7 +928,7 @@ public function simpanSuratKontrolBpjs($visitId = null)
         $this->request->allowMethod(['post']);
         $this->autoRender = false;
  
-        $this->loadModel('OutpatientVisits');
+        $this->OutpatientVisits = $this->fetchTable('OutpatientVisits');
         $visit = $this->OutpatientVisits->get($visitId);
  
         $data = $this->request->getData();
@@ -1001,9 +985,7 @@ public function simpanSuratKontrolBpjs($visitId = null)
  
     public function cetakSuratSehat($letterId = null)
     {
-        $letter = $this->OutpatientLetters->get($letterId, [
-            'contain' => ['Patients', 'Doctors', 'OutpatientVisits'],
-        ]);
+        $letter = $this->OutpatientLetters->get($letterId, contain: ['Patients', 'Doctors', 'OutpatientVisits']);
  
         if ($letter->letter_type !== 'sehat') {
             throw new \Cake\Http\Exception\NotFoundException('Surat keterangan sehat tidak ditemukan.');
@@ -1035,7 +1017,7 @@ public function simpanSuratKontrolBpjs($visitId = null)
                 'letter_type' => $letter->letter_type,
                 'letter_no LIKE' => $likePattern,
             ])
-            ->order(['id' => 'DESC'])
+            ->orderBy(['id' => 'DESC'])
             ->first();
 
         $nextSeq = 1;

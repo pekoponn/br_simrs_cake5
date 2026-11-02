@@ -41,7 +41,7 @@ use Cake\Routing\Router;
  * inconsistently cased URLs when used with `:plugin`, `:controller` and
  * `:action` markers.
  */
-/** @var \Cake\Routing\RouteBuilder $routes */
+return static function (RouteBuilder $routes): void {
 $routes->setRouteClass(DashedRoute::class);
 
 $routes->scope('/', function (RouteBuilder $builder) {
@@ -52,7 +52,7 @@ $routes->scope('/', function (RouteBuilder $builder) {
      * to use (in this case, templates/Pages/home.php)...
      */
     //$builder->connect('/', ['controller' => 'Pages', 'action' => 'display', 'home']);
-    
+
     // Diseting seperti ini karena Users tidak semua user mendapat akses 'Users'
     //$builder->connect('/', ['controller' => 'Home', 'action' => 'index', 'login']);
     $builder->connect('/', ['controller' => 'Dashboard', 'action' => 'index', 'login']);
@@ -104,13 +104,13 @@ $routes->scope('/', function (RouteBuilder $builder) {
 });
 
 //prefix Accounting 
-Router::prefix('acc', function (RouteBuilder $routes) {
+$routes->prefix('acc', function (RouteBuilder $routes) {
     $routes->connect('/', ['controller' => 'Acc', 'action' => 'index']);
     $routes->fallbacks(DashedRoute::class);
 });
 
 // prefix HR
-Router::prefix('hr', function (RouteBuilder $routes) {
+$routes->prefix('hr', function (RouteBuilder $routes) {
     $routes->connect('/', ['controller' => 'Hr', 'action' => 'index']);
     $routes->fallbacks(DashedRoute::class);
 });
@@ -146,7 +146,7 @@ Router::prefix('hr', function (RouteBuilder $routes) {
 // });
 
 // prefix Master 
-Router::prefix('master', function (RouteBuilder $routes) {
+$routes->prefix('master', function (RouteBuilder $routes) {
     $routes->connect('/', ['controller' => 'Master', 'action' => 'index']);
     $routes->fallbacks(DashedRoute::class);
 });
@@ -172,3 +172,4 @@ Router::prefix('master', function (RouteBuilder $routes) {
  * });
  * ```
  */
+};

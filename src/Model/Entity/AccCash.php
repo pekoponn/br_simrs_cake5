@@ -13,19 +13,19 @@ use Cake\ORM\Entity;
  * @property int|null $customer_id
  * @property string|null $cash_type
  * @property string|null $penyetor_penerima
- * @property \Cake\I18n\FrozenDate|null $date
+ * @property \Cake\I18n\Date|null $date
  * @property string|null $payment_type
  * @property string|null $no_cek
- * @property \Cake\I18n\FrozenDate|null $warkat_date
+ * @property \Cake\I18n\Date|null $warkat_date
  * @property int|null $balance
  * @property string|null $total
  * @property string|null $description
  * @property string|null $who_create
- * @property \Cake\I18n\FrozenTime|null $created
+ * @property \Cake\I18n\DateTime|null $created
  * @property string|null $who_update
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $modified
  * @property string|null $who_delete
- * @property \Cake\I18n\FrozenTime|null $deleted
+ * @property \Cake\I18n\DateTime|null $deleted
  * @property string|null $status
  *
  * @property \App\Model\Entity\Customer $customer
@@ -42,7 +42,7 @@ class AccCash extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'number' => true,
         'customer_id' => true,
         'cash_type' => true,

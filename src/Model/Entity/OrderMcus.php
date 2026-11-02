@@ -13,15 +13,15 @@ use Cake\ORM\Entity;
  * @property int|null $registration_id
  * @property int|null $patient_id
  * @property int|null $doctor_id
- * @property \Cake\I18n\FrozenDate|null $mcu_date
+ * @property \Cake\I18n\Date|null $mcu_date
  * @property \Cake\I18n\Time|null $mcu_time
  * @property string|null $mcu_type
  * @property string|null $notes
  * @property string $status
  * @property bool $is_active
  * @property bool $is_delete
- * @property \Cake\I18n\FrozenTime|null $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
  *
  * @property \App\Model\Entity\Order $order
  * @property \App\Model\Entity\Registration $registration
@@ -39,7 +39,7 @@ class OrderMcus extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'order_id' => true,
         'registration_id' => true,
         'patient_id' => true,

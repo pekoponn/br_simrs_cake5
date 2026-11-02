@@ -32,9 +32,7 @@ class PolyclinicsController extends AppController
      */
     public function view($id = null)
     {
-        $polyclinic = $this->Polyclinics->get($id, [
-            'contain' => ['Doctors'],
-        ]);
+        $polyclinic = $this->Polyclinics->get($id, contain: ['Doctors']);
 
         $this->set(compact('polyclinic'));
     }
@@ -68,9 +66,7 @@ class PolyclinicsController extends AppController
      */
     public function edit($id = null)
     {
-        $polyclinic = $this->Polyclinics->get($id, [
-            'contain' => [],
-        ]);
+        $polyclinic = $this->Polyclinics->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $polyclinic = $this->Polyclinics->patchEntity($polyclinic, $this->request->getData());
             if ($this->Polyclinics->save($polyclinic)) {

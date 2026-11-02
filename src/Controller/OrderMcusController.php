@@ -35,9 +35,7 @@ class OrderMcusController extends AppController
      */
     public function view($id = null)
     {
-        $orderMcus = $this->OrderMcus->get($id, [
-            'contain' => ['Orders', 'Registrations', 'Patients', 'Doctors'],
-        ]);
+        $orderMcus = $this->OrderMcus->get($id, contain: ['Orders', 'Registrations', 'Patients', 'Doctors']);
 
         $this->set(compact('orderMcus'));
     }
@@ -75,9 +73,7 @@ class OrderMcusController extends AppController
      */
     public function edit($id = null)
     {
-        $orderMcus = $this->OrderMcus->get($id, [
-            'contain' => [],
-        ]);
+        $orderMcus = $this->OrderMcus->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $orderMcus = $this->OrderMcus->patchEntity($orderMcus, $this->request->getData());
             if ($this->OrderMcus->save($orderMcus)) {

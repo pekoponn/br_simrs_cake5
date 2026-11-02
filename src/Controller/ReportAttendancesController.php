@@ -20,13 +20,13 @@ class ReportAttendancesController extends AppController
     public function initialize(): void
     {
         parent::initialize();
-        $this->loadModel('Absences');
-        $this->loadModel('Leaves');
-        $this->loadModel('LicenseEarlyLeaves');
-        $this->loadModel('LicenseAbsents');
-        $this->loadModel('Overtimes');
-        $this->loadModel('Users'); 
-        $this->loadModel('AbsentIssues');
+        $this->Absences = $this->fetchTable('Absences');
+        $this->Leaves = $this->fetchTable('Leaves');
+        $this->LicenseEarlyLeaves = $this->fetchTable('LicenseEarlyLeaves');
+        $this->LicenseAbsents = $this->fetchTable('LicenseAbsents');
+        $this->Overtimes = $this->fetchTable('Overtimes');
+        $this->Users = $this->fetchTable('Users'); 
+        $this->AbsentIssues = $this->fetchTable('AbsentIssues');
     }
 
     public function index()

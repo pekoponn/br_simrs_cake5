@@ -24,9 +24,9 @@ use Cake\ORM\Entity;
  * @property string|null $satuan
  * @property string|null $keterangan
  * @property bool $is_active
- * @property \Cake\I18n\FrozenTime $created
- * @property \Cake\I18n\FrozenTime $modified
- * 
+ * @property \Cake\I18n\DateTime $created
+ * @property \Cake\I18n\DateTime $modified
+ *
  * @property float $komisi_dokter_umum Nilai komisi dokter (Rp), dihitung otomatis dari harga_umum × persen_dokter_umum
  * @property float $jasa_rs_umum Sisa jasa RS (Rp) = harga_umum − komisi_dokter_umum
  * @property float $komisi_dokter_bpjs
@@ -47,7 +47,7 @@ class MasterTindakan extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'kode' => true,
         'nama' => true,
         'kategori' => true,
@@ -69,7 +69,7 @@ class MasterTindakan extends Entity
         'outpatient_actions' => true,
     ];
 
-    protected $_virtual = [
+    protected array $_virtual = [
         'komisi_dokter_umum', 'jasa_rs_umum',
         'komisi_dokter_bpjs', 'jasa_rs_bpjs',
         'komisi_dokter_reimbes', 'jasa_rs_reimbes',

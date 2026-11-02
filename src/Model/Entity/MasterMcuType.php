@@ -14,8 +14,8 @@ use Cake\ORM\Entity;
  * @property string|null $description
  * @property bool $is_active
  * @property bool $is_delete
- * @property \Cake\I18n\FrozenTime|null $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
  */
 class MasterMcuType extends Entity
 {
@@ -28,7 +28,7 @@ class MasterMcuType extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'code' => true,
         'name' => true,
         'description' => true,

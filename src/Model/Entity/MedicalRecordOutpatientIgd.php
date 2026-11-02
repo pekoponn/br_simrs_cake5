@@ -15,8 +15,8 @@ use Cake\ORM\Entity;
  * @property string|null $cara_bayar
  * @property string|null $cara_masuk
  * @property string|null $catatan
- * @property \Cake\I18n\FrozenTime|null $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
  *
  * @property \App\Model\Entity\MedicalRecord $medical_record
  */
@@ -31,7 +31,7 @@ class MedicalRecordOutpatientIgd extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'medical_record_id' => true,
         'triage' => true,
         'keadaan_keluar' => true,

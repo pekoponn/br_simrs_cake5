@@ -35,9 +35,7 @@ class OrderPrescriptionsController extends AppController
      */
     public function view($id = null)
     {
-        $orderPrescription = $this->OrderPrescriptions->get($id, [
-            'contain' => ['Orders', 'Medicines'],
-        ]);
+        $orderPrescription = $this->OrderPrescriptions->get($id, contain: ['Orders', 'Medicines']);
 
         $this->set(compact('orderPrescription'));
     }
@@ -73,9 +71,7 @@ class OrderPrescriptionsController extends AppController
      */
     public function edit($id = null)
     {
-        $orderPrescription = $this->OrderPrescriptions->get($id, [
-            'contain' => [],
-        ]);
+        $orderPrescription = $this->OrderPrescriptions->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $orderPrescription = $this->OrderPrescriptions->patchEntity($orderPrescription, $this->request->getData());
             if ($this->OrderPrescriptions->save($orderPrescription)) {

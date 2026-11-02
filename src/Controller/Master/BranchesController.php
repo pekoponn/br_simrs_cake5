@@ -38,9 +38,7 @@ class BranchesController extends AppController
      */
     public function view($id = null)
     {
-        $branch = $this->Branches->get($id, [
-            'contain' => ['Transporters', 'AccAccountMappings', 'AccAccounts', 'AccBeginningBalances', 'AccChartOfAccounts', 'AccJournalBankLines', 'AccJournalBanks', 'AccJournalCashLines', 'AccJournalCashes', 'AccJournalLines', 'AccJournalMappings', 'AccJournalMemorialLines', 'AccJournalMemorials', 'AccJournals', 'Calks', 'Certificates', 'CommissionDetails', 'Commissions', 'Creditors', 'Customers', 'CustomersOri', 'DataInvoices', 'DataTaxes', 'Deposits', 'Depreciations', 'Depreciationse', 'Depreciationss', 'Drivers', 'InvoiceDeposits', 'InvoiceEntries', 'InvoiceHutangs', 'InvoiceOuts', 'Invoices', 'Logs', 'ManifestDirects', 'ManifestInsides', 'ManifestLogbooks', 'ManifestProcessors', 'Manifests', 'MouCs', 'Mouses', 'Numbers', 'Offers', 'OperationalLines', 'Operationals', 'OrderRegulars', 'Orders', 'Orders230129', 'OrdersOri', 'Payments', 'Permits', 'PettyCashBankTopups', 'PettyCashBanks', 'PettyCashTopups', 'PettyCashes', 'ProcessorPrices', 'Processors', 'Projects', 'RecipientPayers', 'Settings', 'Templates', 'TransporterPrices', 'TruckInspections', 'TruckSchedules', 'Trucks', 'TrucksOri', 'UnidentifiedIncomes', 'Users', 'WastePrices', 'WasteTypes', 'Wastes'],
-        ]);
+        $branch = $this->Branches->get($id, contain: ['Transporters', 'AccAccountMappings', 'AccAccounts', 'AccBeginningBalances', 'AccChartOfAccounts', 'AccJournalBankLines', 'AccJournalBanks', 'AccJournalCashLines', 'AccJournalCashes', 'AccJournalLines', 'AccJournalMappings', 'AccJournalMemorialLines', 'AccJournalMemorials', 'AccJournals', 'Calks', 'Certificates', 'CommissionDetails', 'Commissions', 'Creditors', 'Customers', 'CustomersOri', 'DataInvoices', 'DataTaxes', 'Deposits', 'Depreciations', 'Depreciationse', 'Depreciationss', 'Drivers', 'InvoiceDeposits', 'InvoiceEntries', 'InvoiceHutangs', 'InvoiceOuts', 'Invoices', 'Logs', 'ManifestDirects', 'ManifestInsides', 'ManifestLogbooks', 'ManifestProcessors', 'Manifests', 'MouCs', 'Mouses', 'Numbers', 'Offers', 'OperationalLines', 'Operationals', 'OrderRegulars', 'Orders', 'Orders230129', 'OrdersOri', 'Payments', 'Permits', 'PettyCashBankTopups', 'PettyCashBanks', 'PettyCashTopups', 'PettyCashes', 'ProcessorPrices', 'Processors', 'Projects', 'RecipientPayers', 'Settings', 'Templates', 'TransporterPrices', 'TruckInspections', 'TruckSchedules', 'Trucks', 'TrucksOri', 'UnidentifiedIncomes', 'Users', 'WastePrices', 'WasteTypes', 'Wastes']);
 
         $this->set(compact('branch'));
     }
@@ -74,9 +72,7 @@ class BranchesController extends AppController
      */
     public function edit($id = null)
     {
-        $branch = $this->Branches->get($id, [
-            'contain' => [],
-        ]);
+        $branch = $this->Branches->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $branch = $this->Branches->patchEntity($branch, $this->request->getData());
             if ($this->Branches->save($branch)) {
@@ -158,7 +154,7 @@ class BranchesController extends AppController
         $sheet->setCellValue('C2', 'Informasi Nama Cabang');
         
 
-        $report = $this->Branches->find('all')->where(['Branches.is_active' => 'Y'])->order(['Branches.name' => 'ASC'])->toArray();
+        $report = $this->Branches->find('all')->where(['Branches.is_active' => 'Y'])->orderBy(['Branches.name' => 'ASC'])->toArray();
 
         $row = 3;
         foreach ($report as $index => $data) {

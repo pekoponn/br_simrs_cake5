@@ -52,7 +52,7 @@ class ReturPembeliansController extends AppController
             ->find()
             ->select(['id', 'code', 'name', 'generic_name', 'unit_1', 'hna'])
             ->where(['is_active' => 'Y'])
-            ->order(['name' => 'ASC'])
+            ->orderBy(['name' => 'ASC'])
             ->all();
 
         // TODO: ganti dengan tabel gudang/depo yang sebenarnya kalau sudah ada
@@ -92,7 +92,7 @@ class ReturPembeliansController extends AppController
             ->find()
             ->select(['id', 'code', 'name', 'generic_name', 'unit_1', 'hna'])
             ->where(['is_active' => 'Y'])
-            ->order(['name' => 'ASC'])
+            ->orderBy(['name' => 'ASC'])
             ->all();
 
         $depoList = [

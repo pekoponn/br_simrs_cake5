@@ -32,9 +32,7 @@ class MasterMcuTypesController extends AppController
      */
     public function view($id = null)
     {
-        $masterMcuType = $this->MasterMcuTypes->get($id, [
-            'contain' => [],
-        ]);
+        $masterMcuType = $this->MasterMcuTypes->get($id, contain: []);
 
         $this->set(compact('masterMcuType'));
     }
@@ -68,9 +66,7 @@ class MasterMcuTypesController extends AppController
      */
     public function edit($id = null)
     {
-        $masterMcuType = $this->MasterMcuTypes->get($id, [
-            'contain' => [],
-        ]);
+        $masterMcuType = $this->MasterMcuTypes->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $masterMcuType = $this->MasterMcuTypes->patchEntity($masterMcuType, $this->request->getData());
             if ($this->MasterMcuTypes->save($masterMcuType)) {

@@ -18,8 +18,8 @@ class OutPermitsController extends AppController
     public function initialize(): void
     {
         parent::initialize();
-        $this->loadModel('OutPermits');
-        $this->loadModel('Users');
+        $this->OutPermits = $this->fetchTable('OutPermits');
+        $this->Users = $this->fetchTable('Users');
         $this->loadComponent('Telegram');
       
     }

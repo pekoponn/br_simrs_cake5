@@ -15,11 +15,11 @@ use Cake\ORM\Entity;
  * @property int|null $doctor_id
  * @property int|null $created_by
  * @property int $status_id
- * @property \Cake\I18n\FrozenTime $tgl_order
+ * @property \Cake\I18n\DateTime $tgl_order
  * @property string|null $lokasi_depo
  * @property string|null $catatan
- * @property \Cake\I18n\FrozenTime|null $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
  *
  * @property \App\Model\Entity\Registration $registration
  * @property \App\Model\Entity\Patient $patient
@@ -38,7 +38,7 @@ class Order extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'no_order' => true,
         'registration_id' => true,
         'patient_id' => true,

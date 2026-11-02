@@ -24,7 +24,7 @@ class AbsencesController extends AppController
     public function initialize(): void
     {
         parent::initialize();
-        $this->loadModel('Absences');
+        $this->Absences = $this->fetchTable('Absences');
       
     }
     /**
@@ -89,7 +89,7 @@ class AbsencesController extends AppController
         $this->set('getUser', $getUser);
         $timezone = $this->Krs->getTimezoneUser($user->zona ?? 'WIB');
         $dateNow = new \DateTime('now', new \DateTimeZone($timezone));
-        $this->loadModel('Assignments');
+        $this->Assignments = $this->fetchTable('Assignments');
         $checkAssignmentToday = null;
         if (!empty($currentUserId)) {
             $checkAssignmentToday = $this->Assignments->find()
@@ -262,7 +262,7 @@ class AbsencesController extends AppController
                 ->where(['Users.id' => $dataId])
                 ->first();
             // cek izin keluar / meeting luar
-            $this->loadModel('Assignments');
+            $this->Assignments = $this->fetchTable('Assignments');
             $checkAssignment = $this->Assignments->find()
                 ->where([
                     'Assignments.is_create' => $dataId,

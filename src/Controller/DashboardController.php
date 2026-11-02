@@ -39,7 +39,7 @@ class DashboardController extends AppController
         $session = $this->getRequest()->getSession();
         $dataSession = $session->read('Auth');
         $currentUserId = $dataSession['id'];
-        $this->loadModel('Users');
+        $this->Users = $this->fetchTable('Users');
         $user = $this->Users->get($currentUserId);
         $telegramChatId = $user->telegram_chat_id;
         $botUsername = Configure::read('Telegram.botUsername');
@@ -53,8 +53,8 @@ class DashboardController extends AppController
     /** Ringkasan kehadiran pegawai aktif berdasarkan absen masuk pertama hari ini. */
     private function getTodayPresence(): array
     {
-        $this->loadModel('Users');
-        $this->loadModel('Absences');
+        $this->Users = $this->fetchTable('Users');
+        $this->Absences = $this->fetchTable('Absences');
         $today = date('Y-m-d');
         $total = $this->Users->find()->where(['is_active' => 'Y'])->count();
         $present = $this->Absences->find()
@@ -67,12 +67,12 @@ class DashboardController extends AppController
 
     private function getTodaySummary(): array
     {
-        $this->loadModel('Users');
-        $this->loadModel('Absences');
-        $this->loadModel('Leaves');
-        $this->loadModel('LicenseAbsents');
-        $this->loadModel('PermissionLates');
-        $this->loadModel('LicenseEarlyLeaves');
+        $this->Users = $this->fetchTable('Users');
+        $this->Absences = $this->fetchTable('Absences');
+        $this->Leaves = $this->fetchTable('Leaves');
+        $this->LicenseAbsents = $this->fetchTable('LicenseAbsents');
+        $this->PermissionLates = $this->fetchTable('PermissionLates');
+        $this->LicenseEarlyLeaves = $this->fetchTable('LicenseEarlyLeaves');
 
         $today = date('Y-m-d');
         $lateAfter = '08:00:00'; // Jam masuk standar, ubah di sini bila kebijakan berubah.
@@ -133,7 +133,7 @@ class DashboardController extends AppController
             return $data;
         }
 
-        $this->loadModel('Absences');
+        $this->Absences = $this->fetchTable('Absences');
 
         $today = date('Y-m-d');
 
@@ -174,7 +174,7 @@ class DashboardController extends AppController
     private function getWorkOrderNotifications()
     {
         $userId = $this->Authentication->getIdentity()->id;
-        $this->loadModel('WorkOrders');
+        $this->WorkOrders = $this->fetchTable('WorkOrders');
         return $this->WorkOrders->find()
             ->select([
                 'WorkOrders.id',
@@ -237,11 +237,11 @@ class DashboardController extends AppController
             return [];
         }
 
-        $this->loadModel('Leaves');
-        $this->loadModel('LicenseAbsents');
-        $this->loadModel('LicenseEarlyLeaves');
-        $this->loadModel('Overtimes');
-        $this->loadModel('Assignments');
+        $this->Leaves = $this->fetchTable('Leaves');
+        $this->LicenseAbsents = $this->fetchTable('LicenseAbsents');
+        $this->LicenseEarlyLeaves = $this->fetchTable('LicenseEarlyLeaves');
+        $this->Overtimes = $this->fetchTable('Overtimes');
+        $this->Assignments = $this->fetchTable('Assignments');
 
         $moduleConfigs = [
             [
@@ -348,8 +348,8 @@ class DashboardController extends AppController
 
     public function getTodayAbsenceSummaryByUbs()
     {
-        $this->loadModel('Users');
-        $this->loadModel('Absences');
+        $this->Users = $this->fetchTable('Users');
+        $this->Absences = $this->fetchTable('Absences');
 
         $todayStart = date('Y-m-d') . ' 00:00:00';
         $todayEnd   = date('Y-m-d') . ' 23:59:59';
@@ -407,8 +407,8 @@ class DashboardController extends AppController
 
     public function getLicenseAbsents()
     {
-        $this->loadModel('Users');
-        $this->loadModel('LicenseAbsents');
+        $this->Users = $this->fetchTable('Users');
+        $this->LicenseAbsents = $this->fetchTable('LicenseAbsents');
 
         $todayStart = date('Y-m-d') . ' 00:00:00';
         $todayEnd   = date('Y-m-d') . ' 23:59:59';
@@ -463,8 +463,8 @@ class DashboardController extends AppController
 
     public function getLeaves()
     {
-        $this->loadModel('Users');
-        $this->loadModel('Leaves');
+        $this->Users = $this->fetchTable('Users');
+        $this->Leaves = $this->fetchTable('Leaves');
 
         $todayStart = date('Y-m-d') . ' 00:00:00';
         $todayEnd   = date('Y-m-d') . ' 23:59:59';

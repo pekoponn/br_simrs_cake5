@@ -271,10 +271,9 @@ class AccChartOfAccountsTable extends Table
         if(!empty($codeParent))
         {
             $condLevel = (isset($levelParent)) ? $levelParent:'-1';
-            $dataRows = $this->find('all',[
-            'fields' => array('codes' => 'MAX(CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(code, ".", '.$levelParent.'), ".", -1) AS SIGNED INTEGER))+1'),
-            'conditions' => array('parent_account' => $codeParent)
-            ]); 
+            $dataRows = $this->find('all',
+            fields: array('codes' => 'MAX(CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(code, ".", '.$levelParent.'), ".", -1) AS SIGNED INTEGER))+1'),
+            conditions: array('parent_account' => $codeParent)); 
 
             $dataRows = $dataRows->first();
             $dataResult = $dataRows->codes;
@@ -303,7 +302,7 @@ class AccChartOfAccountsTable extends Table
         $condLevel = (isset($level)) ? $level:array(1,2,3,4);
         $condDataName = (empty($dataSearch)) ? array() : array('AccChartOfAccounts.name LIKE' => '%'.$dataSearch.'%');
 
-        $queries = $this->find()->select(['coaGroupId' => "CONCAT(AccChartOfAccounts.id,'^',AccChartOfAccounts.code,'^',AccChartOfAccounts.header_account,'^',AccChartOfAccounts.sub_header_account,'^',AccChartOfAccounts.groups,'^','(',AccChartOfAccounts.code,')',AccChartOfAccounts.name)",'coaGroupName' => "CONCAT('(',AccChartOfAccounts.code,')',AccChartOfAccounts.name)"])->where([$condDataName, 'AccChartOfAccounts.level IN' => $condLevel]) ->order(['AccChartOfAccounts.lft' => 'ASC']);
+        $queries = $this->find()->select(['coaGroupId' => "CONCAT(AccChartOfAccounts.id,'^',AccChartOfAccounts.code,'^',AccChartOfAccounts.header_account,'^',AccChartOfAccounts.sub_header_account,'^',AccChartOfAccounts.groups,'^','(',AccChartOfAccounts.code,')',AccChartOfAccounts.name)",'coaGroupName' => "CONCAT('(',AccChartOfAccounts.code,')',AccChartOfAccounts.name)"])->where([$condDataName, 'AccChartOfAccounts.level IN' => $condLevel]) ->orderBy(['AccChartOfAccounts.lft' => 'ASC']);
 
         // $queries = $this->find()
         //             ->select(['coaGroupId' => "CONCAT(AccChartOfAccounts.id,'^', AccChartOfAccounts.code,'^',AccChartOfAccounts.header_account,'^',AccChartOfAccounts.sub_header_account,'^',AccChartOfAccounts.groups,'^',IFNULL(CONCAT('(',AccChartOfAccounts.code,') ', AccChartOfAccounts.name), CONCAT('(',AccChartOfAccounts.code,') ', Customers.title,' ',Customers.name)))", 'coaGroupName' => "IFNULL(CONCAT('(',AccChartOfAccounts.code,') ', AccChartOfAccounts.name), CONCAT('(',AccChartOfAccounts.code,') ', Customers.title,' ',Customers.name))"])
@@ -333,9 +332,9 @@ class AccChartOfAccountsTable extends Table
                         'coaGroupId' => "CONCAT(AccChartOfAccounts.id,'^', AccChartOfAccounts.code,'^',AccChartOfAccounts.header_account,'^',AccChartOfAccounts.sub_header_account,'^',AccChartOfAccounts.groups,'^',IFNULL(CONCAT('(',AccChartOfAccounts.code,') ', AccChartOfAccounts.name), CONCAT('(',AccChartOfAccounts.code,') ', Customers.title,' ',Customers.name)))", 
                         'coaGroupName' => "IFNULL(CONCAT('(',AccChartOfAccounts.code,') ', AccChartOfAccounts.name), CONCAT('(',AccChartOfAccounts.code,') ', Customers.title,' ',Customers.name))"])
                     ->where([$condDataName, 'AccChartOfAccounts.level IN'=>$condLevel])
-                    ->order(['AccChartOfAccounts.code' => 'ASC', 'AccChartOfAccounts.lft' => 'ASC'])
+                    ->orderBy(['AccChartOfAccounts.code' => 'ASC', 'AccChartOfAccounts.lft' => 'ASC'])
                     ->contain(['Customers'])->toArray();
-                    
+
         return $result;
         /*$result = array();
         foreach ($queries as $key => $data) {
@@ -344,7 +343,7 @@ class AccChartOfAccountsTable extends Table
         }
         $queries = $result;*/
 
-        
+
         // return $this->response->withType("application/json")->withStringBody(json_encode($result));
     }
 }

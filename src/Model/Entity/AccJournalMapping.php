@@ -19,11 +19,11 @@ use Cake\ORM\Entity;
  * @property string|null $commentary
  * @property string|null $desc
  * @property string|null $is_create
- * @property \Cake\I18n\FrozenTime|null $created
+ * @property \Cake\I18n\DateTime|null $created
  * @property string|null $is_update
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $modified
  * @property string|null $is_delete
- * @property \Cake\I18n\FrozenTime|null $deleted
+ * @property \Cake\I18n\DateTime|null $deleted
  * @property string|null $status
  * @property string|null $is_active
  *
@@ -41,7 +41,7 @@ class AccJournalMapping extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'branch_id' => true,
         'acc_chart_of_account_id' => true,
         'group' => true,

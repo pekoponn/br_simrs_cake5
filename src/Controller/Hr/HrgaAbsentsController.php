@@ -35,9 +35,7 @@ class HrgaAbsentsController extends AppController
      */
     public function view($id = null)
     {
-        $hrgaAbsent = $this->HrgaAbsents->get($id, [
-            'contain' => ['Employees'],
-        ]);
+        $hrgaAbsent = $this->HrgaAbsents->get($id, contain: ['Employees']);
 
         $this->set(compact('hrgaAbsent'));
     }
@@ -59,7 +57,7 @@ class HrgaAbsentsController extends AppController
             }
             $this->Flash->error(__('The hrga absent could not be saved. Please, try again.'));
         }
-        $employees = $this->HrgaAbsents->Employees->find('list', ['limit' => 200]);
+        $employees = $this->HrgaAbsents->Employees->find('list', limit: 200);
         $this->set(compact('hrgaAbsent', 'employees'));
     }
 
@@ -72,9 +70,7 @@ class HrgaAbsentsController extends AppController
      */
     public function edit($id = null)
     {
-        $hrgaAbsent = $this->HrgaAbsents->get($id, [
-            'contain' => [],
-        ]);
+        $hrgaAbsent = $this->HrgaAbsents->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $hrgaAbsent = $this->HrgaAbsents->patchEntity($hrgaAbsent, $this->request->getData());
             if ($this->HrgaAbsents->save($hrgaAbsent)) {
@@ -84,7 +80,7 @@ class HrgaAbsentsController extends AppController
             }
             $this->Flash->error(__('The hrga absent could not be saved. Please, try again.'));
         }
-        $employees = $this->HrgaAbsents->Employees->find('list', ['limit' => 200]);
+        $employees = $this->HrgaAbsents->Employees->find('list', limit: 200);
         $this->set(compact('hrgaAbsent', 'employees'));
     }
 

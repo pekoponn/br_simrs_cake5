@@ -29,11 +29,11 @@ class HrgaAttendancesController extends AppController
         $filterDateFrom = $this->request->getQuery('filterDateFrom');
         $filterDateEnd = $this->request->getQuery('filterDateEnd');
         $filterEmployee = $this->request->getQuery('filterEmployee');
-        
+
         $data['filterDateFrom'] = array();
         $data['filterDateEnd'] = array();
         $data['filterEmployee'] = array();
-        
+
         $dataWhere = array();
         if (!empty($filterDateFrom) && !empty($filterDateEnd)) {
             $data['filterDateFrom'] = $filterDateFrom;
@@ -45,9 +45,9 @@ class HrgaAttendancesController extends AppController
             $data['filterEmployee'] = $filterEmployee;
             $dataWhere['HrgaEmployees.name like'] = '%' . $filterEmployee . '%';
         }
-        
+
         $dataRow = $this->HrgaAttendances->HrgaAttendanceLines->find('all')->contain(['HrgaEmployees'])->order(['DATE(HrgaAttendanceLines.start_date)' => 'DESC', 'HrgaEmployees.nip' => 'DESC']);
-       
+
         $queries = (!empty($dataWhere)) ? $dataRow->where([$dataWhere]) : $dataRow;
         $paginateRow = $this->paginate($queries, ['limit' => '15']);
         $data['dataRows'] = $paginateRow;
@@ -74,9 +74,7 @@ class HrgaAttendancesController extends AppController
      */
     public function view($id = null)
     {
-        $hrgaAttendance = $this->HrgaAttendances->get($id, [
-            'contain' => [],
-        ]);
+        $hrgaAttendance = $this->HrgaAttendances->get($id, contain: []);
 
         $this->set(compact('hrgaAttendance'));
     }
@@ -215,7 +213,7 @@ class HrgaAttendancesController extends AppController
         $e_stamp = strtotime(str_replace('/', '-', $e_date));
         $end = date('Y-m-d', $e_stamp);
 
-        $this->loadModel('Absences');
+        $this->Absences = $this->fetchTable('Absences');
 
          $attendanceRows = $this->Absences->find()
             ->select([
@@ -289,9 +287,7 @@ class HrgaAttendancesController extends AppController
     {
         $id = (int)$id;
         try {
-            $hrgaAttendance = $this->HrgaAttendances->get($id, [
-                'contain' => ['HrgaAttendanceLines' => ['HrgaEmployees']]
-            ]);
+            $hrgaAttendance = $this->HrgaAttendances->get($id, contain: ['HrgaAttendanceLines' => ['HrgaEmployees']]);
         } catch (\Cake\Datasource\Exception\RecordNotFoundException $e) {
             $this->Flash->error(__('Record tidak ditemukan.'));
             return $this->redirect(['action' => 'index']);
@@ -345,7 +341,7 @@ class HrgaAttendancesController extends AppController
             $this->Flash->error(__('The hrga attendance could not be saved. Please, try again.'));
         }
         $employees = $this->HrgaAttendances->HrgaEmployees->find('all')->where(['HrgaEmployees.id' => $hrgaAttendance->hrga_employee_id])->first();        
-        $this->loadModel('HrgaHolidays');
+        $this->HrgaHolidays = $this->fetchTable('HrgaHolidays');
         // $getHoliday = $this->HrgaHolidays->find('all')->where(['date BETWEEN "' . date_format($hrgaAttendance->start_date, 'Y-m-d') . '" AND "' . date_format($hrgaAttendance->end_date, 'Y-m-d') . '"'])->toArray();
         $this->set(compact('hrgaAttendance', 'employees'/*, 'getHoliday'*/));
     }
@@ -373,7 +369,7 @@ class HrgaAttendancesController extends AppController
     public function getemployee()
     {
         $this->autoRender = false;
-        $this->loadModel('HrgaEmployees');
+        $this->HrgaEmployees = $this->fetchTable('HrgaEmployees');
 
         $search = $this->request->getQuery('search');
 
@@ -407,7 +403,7 @@ class HrgaAttendancesController extends AppController
 
         $daterange = $this->GetDays($s_stamp, $e_stamp);
 
-        $this->loadModel('HrgaHolidays');
+        $this->HrgaHolidays = $this->fetchTable('HrgaHolidays');
         $getHoliday = $this->HrgaHolidays->find('all')->where(['date BETWEEN "' . $start . '" AND "' . $end . '"'])->order(['HrgaHolidays.date' => 'ASC'])->toArray();
 
         $dataArr = array();
@@ -441,10 +437,10 @@ class HrgaAttendancesController extends AppController
     //Rekap Invoice Excel
     public function importExcel($dataLink='')
     {
-        $this->loadModel('HrgaEmployees');
+        $this->HrgaEmployees = $this->fetchTable('HrgaEmployees');
         //Memanggil data Karyawan
         $rowEmployee = $this->HrgaEmployees->find('all')->contain([])->where(['is_active'=>'Y'])->order(['nip'=>'ASC'])->toArray();
-       
+
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
@@ -457,7 +453,7 @@ class HrgaAttendancesController extends AppController
         //     $_chr = chr(65+$a);
         //     $sheet->getColumnDimension($_chr)->setAutoSize(true);
         // }
-            
+
         $styleArray = [
             'font'  => [
                 'bold'  => true,
@@ -471,7 +467,7 @@ class HrgaAttendancesController extends AppController
                 'color' => [
                     'argb' => 'FFEFEFEF',
                 ],
-                
+
             ],
         ]; 
 
@@ -514,7 +510,7 @@ class HrgaAttendancesController extends AppController
             $sheet->setCellValue('A' . $row, $dataRow->id);
             $sheet->setCellValue('B' . $row, $dataRow->name);
             $sheet->setCellValue('C' . $row, $dataRow->nip);
-            
+
             $row++;
         }
 
@@ -596,7 +592,7 @@ class HrgaAttendancesController extends AppController
                         if ($this->HrgaAttendances->save($hrgaAttendances)) {
                             $hrgaAttendanceId = $hrgaAttendances->id;
 
-                            $this->loadModel('HrgaAttendanceLines');
+                            $this->HrgaAttendanceLines = $this->fetchTable('HrgaAttendanceLines');
 
                             $sheet = array_splice($sheets, 1);
                             $dataSave = array();
@@ -625,12 +621,12 @@ class HrgaAttendancesController extends AppController
                                         $this->HrgaAttendanceLines->save($dataSave, array('callbacks' => false));
                                     }
                                     //pr($dataSave);
-                                    
+
 
                                 }
-                                
+
                             }
-                            
+
                             $this->Flash->success(__('Terima kasih, data Upload berhasil disimpan.'));
                             return $this->redirect(['action' => 'index']);
                         }

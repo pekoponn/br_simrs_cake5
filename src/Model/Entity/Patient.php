@@ -17,7 +17,7 @@ use Cake\ORM\Entity;
  * @property string|null $insurance_card_no
  * @property string $gender
  * @property string $blood_type
- * @property \Cake\I18n\FrozenDate|null $birth_date
+ * @property \Cake\I18n\Date|null $birth_date
  * @property string $age
  * @property string|null $address
  * @property string $mother_name
@@ -35,11 +35,11 @@ use Cake\ORM\Entity;
  * @property string $ethnic_group
  * @property string $marital_status
  * @property int $is_create
- * @property \Cake\I18n\FrozenTime|null $created
+ * @property \Cake\I18n\DateTime|null $created
  * @property int $is_update
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $modified
  * @property int $is_delete
- * @property \Cake\I18n\FrozenTime|null $deleted
+ * @property \Cake\I18n\DateTime|null $deleted
  * @property string|null $delete_log
  * @property string $is_active
  * @property string|null $is_log
@@ -58,7 +58,7 @@ class Patient extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'code' => true,
         'title' => true,
         'full_name' => true,

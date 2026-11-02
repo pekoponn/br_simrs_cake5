@@ -33,11 +33,11 @@ use Cake\ORM\Entity;
  * @property string $code_additional
  * @property int $additional
  * @property string|null $is_create
- * @property \Cake\I18n\FrozenTime|null $created
+ * @property \Cake\I18n\DateTime|null $created
  * @property string|null $is_update
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $modified
  * @property string|null $is_delete
- * @property \Cake\I18n\FrozenTime|null $deleted
+ * @property \Cake\I18n\DateTime|null $deleted
  * @property string|null $status
  * @property string|null $is_active
  *
@@ -64,7 +64,7 @@ class AccChartOfAccount extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         // 'branch_id' => true,
         // 'parent_id' => true,
         // 'lft' => true,

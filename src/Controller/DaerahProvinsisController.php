@@ -32,9 +32,7 @@ class DaerahProvinsisController extends AppController
      */
     public function view($id = null)
     {
-        $daerahProvinsi = $this->DaerahProvinsis->get($id, [
-            'contain' => [],
-        ]);
+        $daerahProvinsi = $this->DaerahProvinsis->get($id, contain: []);
 
         $this->set(compact('daerahProvinsi'));
     }
@@ -68,9 +66,7 @@ class DaerahProvinsisController extends AppController
      */
     public function edit($id = null)
     {
-        $daerahProvinsi = $this->DaerahProvinsis->get($id, [
-            'contain' => [],
-        ]);
+        $daerahProvinsi = $this->DaerahProvinsis->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $daerahProvinsi = $this->DaerahProvinsis->patchEntity($daerahProvinsi, $this->request->getData());
             if ($this->DaerahProvinsis->save($daerahProvinsi)) {

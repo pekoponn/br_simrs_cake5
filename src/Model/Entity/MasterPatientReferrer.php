@@ -14,8 +14,8 @@ use Cake\ORM\Entity;
  * @property string|null $referral_origin
  * @property string|null $doctor_sender
  * @property string|null $is_active
- * @property \Cake\I18n\FrozenTime|null $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
  */
 class MasterPatientReferrer extends Entity
 {
@@ -28,7 +28,7 @@ class MasterPatientReferrer extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'code' => true,
         'name' => true,
         'referral_origin' => true,

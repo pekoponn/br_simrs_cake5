@@ -62,9 +62,7 @@ class MasterTindakanController extends AppController
      */
     public function view($id = null)
     {
-        $masterTindakan = $this->MasterTindakan->get($id, [
-            'contain' => [],
-        ]);
+        $masterTindakan = $this->MasterTindakan->get($id, contain: []);
 
         $this->set(compact('masterTindakan'));
     }
@@ -272,7 +270,7 @@ class MasterTindakanController extends AppController
                     'keterangan',
                 ])
                 ->where($conditions)
-                ->order([
+                ->orderBy([
                     'MasterTindakan.nama' => 'ASC',
                 ])
                 ->limit($limit)
@@ -280,7 +278,7 @@ class MasterTindakanController extends AppController
 
             // Prioritaskan yang namanya dimulai dengan query — hanya relevan kalau q ada.
             if ($q !== '') {
-                $query->order([
+                $query->orderBy([
                     'CASE WHEN MasterTindakan.nama LIKE \'' . $q . '%\' THEN 0 ELSE 1 END' => 'ASC',
                 ], true); // true = prepend, jadi urutan prioritas ini didahulukan sebelum nama ASC
             }

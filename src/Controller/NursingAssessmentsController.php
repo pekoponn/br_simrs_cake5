@@ -8,9 +8,9 @@ class NursingAssessmentsController extends AppController
     public function add()
     {
         $this->request->allowMethod(['post']);
-        $this->loadModel('EmergencyNursingAssessments');
-        $this->loadModel('Registrations');
-        $this->loadModel('MasterTenagaMedis');
+        $this->EmergencyNursingAssessments = $this->fetchTable('EmergencyNursingAssessments');
+        $this->Registrations = $this->fetchTable('Registrations');
+        $this->MasterTenagaMedis = $this->fetchTable('MasterTenagaMedis');
 
         $data = $this->request->getData();
         $registrationId = (int)($data['registration_id'] ?? 0);
@@ -92,7 +92,7 @@ class NursingAssessmentsController extends AppController
     public function get($registrationId = null)
     {
         $this->request->allowMethod(['get']);
-        $this->loadModel('EmergencyNursingAssessments');
+        $this->EmergencyNursingAssessments = $this->fetchTable('EmergencyNursingAssessments');
 
         $assessment = $this->EmergencyNursingAssessments->find()
             ->where([

@@ -29,8 +29,8 @@ class MedicineStocksController extends AppController
     public function initialize(): void
     {
         parent::initialize();
-        $this->loadModel('Medicines');
-        $this->loadModel('MedicineStocks');
+        $this->Medicines = $this->fetchTable('Medicines');
+        $this->MedicineStocks = $this->fetchTable('MedicineStocks');
     }
 
     public function index()

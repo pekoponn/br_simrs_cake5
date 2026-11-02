@@ -32,9 +32,7 @@ class OrderStatusesController extends AppController
      */
     public function view($id = null)
     {
-        $orderStatus = $this->OrderStatuses->get($id, [
-            'contain' => [],
-        ]);
+        $orderStatus = $this->OrderStatuses->get($id, contain: []);
 
         $this->set(compact('orderStatus'));
     }
@@ -68,9 +66,7 @@ class OrderStatusesController extends AppController
      */
     public function edit($id = null)
     {
-        $orderStatus = $this->OrderStatuses->get($id, [
-            'contain' => [],
-        ]);
+        $orderStatus = $this->OrderStatuses->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $orderStatus = $this->OrderStatuses->patchEntity($orderStatus, $this->request->getData());
             if ($this->OrderStatuses->save($orderStatus)) {

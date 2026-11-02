@@ -7,7 +7,7 @@ use Cake\ORM\Entity;
 
 class OutpatientInitialMedicalAssessment extends Entity
 {
-    protected $_accessible = [
+    protected array $_accessible = [
         'outpatient_visit_id' => true,
         'registration_id' => true,
         'patient_id' => true,

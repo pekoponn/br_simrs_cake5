@@ -127,7 +127,7 @@ class AccJournalsController extends AppController
             $dataLink['filterStatusPosting'] = "";
         }        
 
-        
+
          // => function(\Cake\ORM\Query $q) { return $q->where(['AccJournalLines.name LIKE ' => '%'.$dataRow['filterDesc'].'%']); }
         $dataWheres = (empty($getLink['search'])) ? "" : $this->Krs->fdecode($getLink['search']);
         $dataWhereLines = (empty($getLink['searchLine'])) ? "" : $this->Krs->fdecode($getLink['searchLine']);
@@ -144,9 +144,9 @@ class AccJournalsController extends AppController
                 'code' => 'asc',
             ],
         ];
-        
+
         $accJournals = $this->paginate($queries, $settings);
-        
+
         $this->set(compact('accJournals', 'dataLink'));
         // pr($accJournals);
 
@@ -298,7 +298,7 @@ class AccJournalsController extends AppController
     public function addMany()
     {
         
-        $this->loadModel('AccJournalLines');
+        $this->AccJournalLines = $this->fetchTable('AccJournalLines');
 
         $accJournal = $this->AccJournals->newEmptyEntity();
         if ($this->request->is('post')) {
@@ -347,18 +347,18 @@ class AccJournalsController extends AppController
                         foreach ($dataCarts as $keyCart => $valueCart) {
                             $filterKeywordReplace1 = str_replace( array( '[' ), '.', $keyCart);
                             $filterKeywordReplace2 = str_replace( array( ']' ), '', $filterKeywordReplace1);
-                            
+
                             list($nameCart, $field, $number) = explode(".", $filterKeywordReplace2);
-                            
+
                             $dataCart[$cartId.$number]['noCart'] = $number;
                             $dataCart[$cartId.$number]['idCart'] = $cartId;
                             $dataCart[$cartId.$number][$field] = $valueCart;
                         }
 
-                                                
+
                         //pr($decodeCart);
                         //$a = 0;
-                        
+
                         foreach ($dataCart as $cartValue) {
                             $noCart = (isset($cartValue['noCart'])) ? $cartValue['noCart'] : "";
                             $idCart = (isset($cartValue['idCart'])) ? $cartValue['idCart'] : "";
@@ -367,7 +367,7 @@ class AccJournalsController extends AppController
                             $debetAmount = (isset($cartValue['debet_amount'])) ? $this->Krs->nom2Dec($cartValue['debet_amount']) : "";
                             $creditAmount = (isset($cartValue['credit_amount'])) ? $this->Krs->nom2Dec($cartValue['credit_amount']) : "";
                             $ledgerId = (isset($cartValue['ledger_id'])) ? $cartValue['ledger_id'] : "";
-                                
+
                             if(!empty($ledgerId)) {
                                 list($coaId, $coaCode, $coaHeaderCode, $coaSubHeaderCode, $coaGroup, $coaName) = explode("^", $ledgerId);
                             } else {
@@ -409,7 +409,7 @@ class AccJournalsController extends AppController
 
                         $dataLine = Hash::insert($dataLine, '{n}.acc_journal_id', $accJournalId);
                         $accJournalLine = $this->AccJournalLines->newEntities($dataLine);
-                       
+
                         // $accJournalLine = Hash::insert($accJournalLine, '{n}', ['acc_journal_id'=>$accJournalId]);
 
                         $accJournalLineResult = $this->AccJournalLines->saveMany($accJournalLine, array('deep'=>false, 'validate'=>false, 'atomic' => false));
@@ -424,7 +424,7 @@ class AccJournalsController extends AppController
                 }
             }
 
-            
+
 
 
             /*$accJournal = $this->AccJournals->patchEntity($accJournal, $this->request->getData());
@@ -444,8 +444,8 @@ class AccJournalsController extends AppController
         // // Call for number.
         // $data['maxNumber'] = $this->Krs->getMaxCodeJournal("AccJournal", "Memorial");
         $data['maxNumber'] = $this->AccJournals->getMax('Memorial');
-        $this->loadModel('RecipientPayers');
-        $this->loadModel('Customers');
+        $this->RecipientPayers = $this->fetchTable('RecipientPayers');
+        $this->Customers = $this->fetchTable('Customers');
 
         $data['getListBranch'] = $this->AccJournals->Branches->find('list', ['keyField' => 'id', 'valueField' => 'name'])->where(['is_active' => 'Y'])->toArray();
         // $rowRecipientPayers = $this->RecipientPayers->find('list', ['keyField' => 'name', 'valueField' => 'name'])->where(['is_active' => 'Y'])->toArray();
@@ -462,10 +462,10 @@ class AccJournalsController extends AppController
     public function editMany($id)
     {
         
-        $this->loadModel('AccJournalLines');
-        $this->loadModel('AccChartOfAccounts');
-        $this->loadModel('RecipientPayers');
-        // $this->loadModel('Customers');
+        $this->AccJournalLines = $this->fetchTable('AccJournalLines');
+        $this->AccChartOfAccounts = $this->fetchTable('AccChartOfAccounts');
+        $this->RecipientPayers = $this->fetchTable('RecipientPayers');
+        // $this->Customers = $this->fetchTable('Customers');
 
         $accJournal = $this->AccJournals->get($id, [
             'contain' => [],
@@ -481,7 +481,7 @@ class AccJournalsController extends AppController
 
             $dataBranchId = array('branch_id' => $dataRow['branch_id']);
             $dataUserId = array('is_create' => $isUser);
-            
+
             // $dataCekBg = array('cek_bg' => $dataRow['cek_bg']);
             // $dataNoRef = array('no_ref' => $dataRow['no_ref']);
             $dataRecipientPayerName = array('recipient_payer_name' => $dataRow['recipient_payer_name']);
@@ -500,7 +500,7 @@ class AccJournalsController extends AppController
                 $dataCodes = $this->AccJournals->getMax($dataRow['journal_type'], $yymmdd);
             }
             $dataCode = array('code' => $dataCodes);
-            
+
             $dataDate = array('date' => $rowDateJournal);
             $dataGrandTotal = array('grand_total' => $dataRow['totalLine']);          
 
@@ -577,7 +577,7 @@ class AccJournalsController extends AppController
             if(!empty($dataGridCek)) {
                 $countData = array_count_values($dataGridCek);
                 $dataYes = (empty($countData['y'])) ? 0 : $countData['y'];
-                
+
                 if($dataYes>0) {
                     $dataDate = (!empty($dataRow['date_journals'])) ? $this->Krs->dateTo($dataRow['date_journals']) : '';
 
@@ -610,23 +610,23 @@ class AccJournalsController extends AppController
         // $this->set(compact('pettyCash'));
         /*if ($this->request->is('post') || $this->request->is('put')) {
             $accJournal = $this->request->data['accJournal'];
-            
+
             $dataGridCek = Set::combine($accJournal['dataGrid'], '{n}.journalId', '{n}.cek');
-            
+
             // pr($dataGridCek);
-            
+
             if(!empty($dataGridCek)) {
                 $countData = array_count_values($dataGridCek);
                 $dataYes = (empty($countData['y'])) ? 0 : $countData['y'];
-                
+
                 if($dataYes>0) {
-                    // $this->loadModel('accJournal');
-                    // $this->loadModel('AccJournalLine');
+                    // $this->accJournal = $this->fetchTable('accJournal');
+                    // $this->AccJournalLine = $this->fetchTable('AccJournalLine');
 
                     // pr($dataGridCek);
 
                     $dataDate = (!empty($accJournal['date_journal'])) ? $this->Krs->_convertDate($accJournal['date_journal']) : '';
-                    
+
                     // $dataJournal = array();
                     // $a = 0;
                     foreach ($dataGridCek as $journalMemorialId => $journalMemorialCek) {
@@ -653,14 +653,14 @@ class AccJournalsController extends AppController
 
     public function generalLedgerReport() {
         $accJournal = $this->AccJournals->newEmptyEntity();
-        $this->loadModel('RecipientPayers');
-        // $this->loadModel('Customers');
-        
+        $this->RecipientPayers = $this->fetchTable('RecipientPayers');
+        // $this->Customers = $this->fetchTable('Customers');
+
         $dataLink = array();
         if ($this->request->is('post')) {
             $dataRow = $this->request->getData();
             // pr($dataRow);
-            
+
             $dataWhere = array();
             $dataLink['filterCheckShow'] = $dataRow['filterCheckShow'];
 
@@ -684,7 +684,7 @@ class AccJournalsController extends AppController
                 // list($coaId, $coaCode, $coaHeaderAccount, $coaSubHeaderAccount, $coaGroup, $coaName) = explode('^', $dataRow['filterLedgerGroupMulti']);
                 list($coaId, $coaCode, $coaHeaderAccount, $coaSubHeaderAccount, $coaGroup, $coaName) = explode('^', $value);
 
-                $this->loadModel('AccChartOfAccounts');
+                $this->AccChartOfAccounts = $this->fetchTable('AccChartOfAccounts');
                 $queryCoa = $this->AccChartOfAccounts->find()
                     ->select(['AccChartOfAccounts.id', 'AccChartOfAccounts.code'])
                     ->where(['AccChartOfAccounts.parent_id'=>$coaId])
@@ -752,7 +752,7 @@ class AccJournalsController extends AppController
                 $dataLink['filterDateEnd'] = $dataRow['filterDateEnd'];
                 // pr($filterDateFroms);
                 // $data['dateTitle'] = '';
-                
+
                 $data['dateTitle'] = $this->Krs->fDate($filterDateFroms, 'd M Y').' Sampai '.$this->Krs->fDate($filterDateEnds, 'd M Y');
                 // $data['dateTitle'] = date_format(date_create($filterDateFroms), 'd M Y').' Sampai '.date_format(date_create($filterDateEnds), 'd M Y');
             } else {
@@ -760,10 +760,10 @@ class AccJournalsController extends AppController
             }
 
             //pr($dataWhere);
-            
+
 
             // pr(implode(' AND ', $dataWhere));
-            $this->loadModel('AccJournalLines');
+            $this->AccJournalLines = $this->fetchTable('AccJournalLines');
             //, 'accJournalLineDebet' => 'FORMAT(AccJournalLines.debet, 2, "de_DE")', 'accJournalLineCredit' => 'FORMAT(AccJournalLines.credit, 2, "de_DE")'
             $dataRows = $this->AccJournalLines->find()
             ->select(['AccJournalLines.id', 'AccJournalLines.acc_chart_of_account_id', 'AccJournalLines.ledger_dc', 'AccJournalLines.name', 'AccJournalLines.debet', 'AccJournalLines.credit'])
@@ -821,7 +821,7 @@ class AccJournalsController extends AppController
                 // pr()    
                 $dataRowId = str_replace('.','',$accCoa['code']);
                 $totalBeginningBalance = $accCoa['beginning_balance_debet']-$accCoa['beginning_balance_credit'];
-                
+
                 $rowData[$dataRowId]['title'] = $accCoa['code'].'^'.$accCoa['name'].'^'.$dataRow['coaGroupName'].'^'.$totalBeginningBalance.'^'.$accCoa['groups'].'^'.$accCoa['journal_type'];
                 // $rowData[$dataRowId]['recipient'][$dataRow['id']] = $accJournal['recipient_payer_name'];
                 $rowData[$dataRowId]['data'][$dataRow['id']] = $accBranch['name'].'^'.$dataRow['id'].'^'.$accJournal['code'].'^'.$dataRow['accJournalDate'].'^'.$dataRow['name'].'^'.$dataRow['ledger_dc'].'^'.$dataRow['debet'].'^'.$dataRow['credit'].'^'.$accJournal['recipient_payer_name'].'^'.$coaLineLawan;
@@ -848,12 +848,12 @@ class AccJournalsController extends AppController
 
         $this->set(compact('accJournal', 'rowData', 'data', 'dataRowRecipientPayer', 'dataLink'));
             /*cara terakhir $db = ConnectionManager::get('default');
-        
+
             $dataRows = $db->execute("SELECT AccJournals.id, AccJournals.branch_id, AccJournals.journal_sub_id, AccJournals.code, AccJournals.journal_type, AccJournals.name, AccJournals.date, AccJournals.date_posting, AccJournals.grand_total, AccJournals.balance, AccJournalLines.id, AccJournalLines.acc_chart_of_account_id, AccJournalLines.ledger_dc, AccJournalLines.name, AccJournalLines.debet, AccJournalLines.credit, AccChartOfAccounts.beginning_balance, AccChartOfAccounts.id, AccChartOfAccounts.code, AccChartOfAccounts.name, AccChartOfAccounts.groups, AccChartOfAccounts.type, AccChartOfAccounts.journal_type, IFNULL(CONCAT('(',AccChartOfAccounts.code,') ', AccChartOfAccounts.name), CONCAT('(',AccChartOfAccounts.code,') ', Customers.title,' ',Customers.name)) AS coaGroupName FROM acc_journal_lines AccJournalLines INNER JOIN acc_journals AccJournals ON AccJournals.id = (AccJournalLines.acc_journal_id) LEFT JOIN acc_chart_of_accounts AccChartOfAccounts ON AccChartOfAccounts.id = (AccJournalLines.acc_chart_of_account_id) LEFT JOIN customers Customers ON Customers.id = (AccChartOfAccounts.customer_id) WHERE $condCoaMultiId LIMIT 10")->fetchAll('assoc');*/
             //->select(['AccJournals.id', 'AccJournals.branch_id', 'AccJournals.journal_sub_id', 'AccJournals.code', 'AccJournals.journal_type', 'AccJournals.name', 'AccJournals.date', 'AccJournals.date_posting', 'AccJournals.grand_total', 'AccJournals.balance', 'AccJournalLines.id', 'AccJournalLines.acc_chart_of_account_id', 'AccJournalLines.ledger_dc', 'AccJournalLines.name', 'AccJournalLines.debet', 'AccJournalLines.credit', 'AccChartOfAccounts.beginning_balance', 'AccChartOfAccounts.id', 'AccChartOfAccounts.code', 'AccChartOfAccounts.name', 'AccChartOfAccounts.group', 'AccChartOfAccounts.type', 'AccChartOfAccounts.journal_type'])
-            
+
             //->order(['AccChartOfAccounts.code' => 'ASC', 'AccJournals.code' => 'ASC', 'AccJournals.date' => 'ASC', 'AccJournalLines.id' => 'ASC'])
-            
+
             //'coaGroupName' => "IFNULL(CONCAT('(',AccChartOfAccounts.code,') ', AccChartOfAccounts.name), CONCAT('(',AccChartOfAccounts.code,') ', Customers.title,' ',Customers.name))"
             //'contain' => ['Bids' => ['Users' => ['Drivers']]]
 
@@ -866,7 +866,7 @@ class AccJournalsController extends AppController
             // foreach ($dataRows->all() as $row) {
             // debug($row);
             // }
-            
+
             // pr($dataRows);
             /*$data['rows'] = $this->AccJournal->AccJournalLine->find('all', array(
                             'fields' => array('AccJournals.id', 'AccJournals.branch_id', 'AccJournals.journal_sub_id', 'AccJournals.code', 'AccJournals.journal_type', 'AccJournals.name', 'AccJournals.date', 'AccJournals.date_posting', 'AccJournals.grand_total', 'AccJournals.balance', 'AccJournalLine.id', 'AccJournalLine.acc_chart_of_account_id', 'AccJournalLine.ledger_dc', 'AccJournalLine.name', 'AccJournalLine.debet', 'AccJournalLine.credit', 'AccChartOfAccount.beginning_balance', 'AccChartOfAccount.id', 'AccChartOfAccount.code', 'AccChartOfAccount.name', 'AccChartOfAccount.group', 'AccChartOfAccount.type', 'AccChartOfAccount.journal_type', 'CustomerCoa.title', 'CustomerCoa.name'),
@@ -888,7 +888,7 @@ class AccJournalsController extends AppController
                 $filterDate = (empty($dateFrom) && empty($dateTo)) ? array() : array('AccJournals.date BETWEEN ? AND ?' => array($dateFrom, $dateTo));
                 $filterCondition = array_merge($filterDate);
 
-            
+
                 $data['rows'] = $this->AccJournal->AccJournalLine->find('all', array(
                             'fields' => array('AccJournals.id', 'AccJournals.branch_id', 'AccJournals.journal_sub_id', 'AccJournals.code', 'AccJournals.journal_type', 'AccJournals.name', 'AccJournals.date', 'AccJournals.date_posting', 'AccJournals.grand_total', 'AccJournals.balance', 'AccJournalLine.id', 'AccJournalLine.acc_chart_of_account_id', 'AccJournalLine.ledger_dc', 'AccJournalLine.name', 'AccJournalLine.debet', 'AccJournalLine.credit', 'AccChartOfAccount.id', 'AccChartOfAccount.code', 'AccChartOfAccount.name', 'AccChartOfAccount.type'),
                             'conditions' => array('AccJournals.journal_type' => 'Memorial', $filterCondition),
@@ -1126,7 +1126,7 @@ class AccJournalsController extends AppController
                                 $data['showExl'][$a][] = $xlsBranchId.'^'.$xlsJournalType.'^'.$xlsTanggal.'^'.$xlsPenanggungJawab.'^'.$xlsJudul.'^'.$xlsCodeCoa.'^'.$xlsUraian.'^'.$xlsDebet.'^'.$xlsKredit;
                                 //$data['showExl'][$a][] = $excel[0].'^'.$excel[1].'^'.$excel[2].'^'.$excel[3].'^'.$excel[4].'^'.$excel[5].'^'.$excel[6].'^'.$excel[7];
                             }
-                            
+
 
                             // $auditLog = $this->Krs->auditLog($this->request->getParam('controller'), $xlsId,  $isUser, "edit from upload excel"); 
                             // $dataAuditLog = array('is_log' => $auditLog);
@@ -1363,7 +1363,7 @@ class AccJournalsController extends AppController
                                 $data['showExl'][$a][] = $xlsBranchId.'^'.$xlsJournalType.'^'.$xlsTanggal.'^'.$xlsPenanggungJawab.'^'.$xlsJudul.'^'.$xlsCodeCoa.'^'.$xlsUraian.'^'.$xlsDebet.'^'.$xlsKredit;
                                 //$data['showExl'][$a][] = $excel[0].'^'.$excel[1].'^'.$excel[2].'^'.$excel[3].'^'.$excel[4].'^'.$excel[5].'^'.$excel[6].'^'.$excel[7];
                             }
-                            
+
 
                             // $auditLog = $this->Krs->auditLog($this->request->getParam('controller'), $xlsId,  $isUser, "edit from upload excel"); 
                             // $dataAuditLog = array('is_log' => $auditLog);
@@ -1391,7 +1391,7 @@ class AccJournalsController extends AppController
                     // ==========================================================
                     // BANGUN PETA KODE COA -> ID (sekali saja, di luar loop)
                     // ==========================================================
-                    $this->loadModel('AccChartOfAccounts');
+                    $this->AccChartOfAccounts = $this->fetchTable('AccChartOfAccounts');
                     $coaMap = $this->AccChartOfAccounts
                         ->find('list', ['keyField' => 'code', 'valueField' => 'id'])
                         ->toArray();
@@ -1644,7 +1644,7 @@ class AccJournalsController extends AppController
 
     public function incomeMultiReport() {
         $accJournal = $this->AccJournals->newEmptyEntity();
-        $this->loadModel('AccChartOfAccounts');
+        $this->AccChartOfAccounts = $this->fetchTable('AccChartOfAccounts');
 
         if ($this->request->is('post')) {
             $dataRow = $this->request->getData();
@@ -1808,7 +1808,7 @@ class AccJournalsController extends AppController
         $accJournal = $this->AccJournals->newEmptyEntity();       
 
         if ($this->request->is('post')) {
-            $this->loadModel('AccChartOfAccounts');
+            $this->AccChartOfAccounts = $this->fetchTable('AccChartOfAccounts');
             $dataRow = $this->request->getData();
 
             $dataFilterDate = $dataRow['filterDate'];
@@ -1864,7 +1864,7 @@ class AccJournalsController extends AppController
     public function trialBalanceReport_230703()
     {
         $accJournal = $this->AccJournals->newEmptyEntity();
-        $this->loadModel('AccChartOfAccounts');
+        $this->AccChartOfAccounts = $this->fetchTable('AccChartOfAccounts');
 
         if ($this->request->is('post')) {
             $dataRow = $this->request->getData();
@@ -2287,7 +2287,7 @@ class AccJournalsController extends AppController
         $accJournal = $this->AccJournals->newEmptyEntity();       
 
         if ($this->request->is('post')) {
-             $this->loadModel('AccChartOfAccounts');
+             $this->AccChartOfAccounts = $this->fetchTable('AccChartOfAccounts');
             $dataRow = $this->request->getData();
 
             $dataFilterDateFrom = $dataRow['filterDateFrom'];
@@ -2351,7 +2351,7 @@ class AccJournalsController extends AppController
     public function workSheetBalanceReport230306()
     {
         $accJournal = $this->AccJournals->newEmptyEntity();
-        $this->loadModel('AccChartOfAccounts');
+        $this->AccChartOfAccounts = $this->fetchTable('AccChartOfAccounts');
 
         if ($this->request->is('post')) {
             $dataRow = $this->request->getData();
@@ -3012,7 +3012,7 @@ class AccJournalsController extends AppController
         } else {
         //    $dataSessionCart = $session->read('JurnalCart');
         }
-        
+
         $dataSessionCart = $session->read('JurnalCart');
 
         $countData = (!empty($session->read('JurnalCart'))) ? count($session->read('JurnalCart')) : 0;
@@ -3043,9 +3043,9 @@ class AccJournalsController extends AppController
             //$data['rowAccount'] = $this->Krs->datarowCOA(5);
             /*
             sementara dulu
-            $this->loadModel('AccChartOfAccounts');
+            $this->AccChartOfAccounts = $this->fetchTable('AccChartOfAccounts');
             $data['rowAccount'] = $this->AccChartOfAccounts->getCoaData(5);*/
-            
+
             // $accController =  new \App\Controller\acc\AccChartOfAccountsController(); 
             //$data['rowAccount'] = $this->AccChartOfAccounts->getCoa(5);
             // $data['rowAccount'] = $accController->getCoa(5);
@@ -3055,10 +3055,10 @@ class AccJournalsController extends AppController
     }
 
     public function checkcodeByType() {
-                        
+
         // if($this->RequestHandler->isAjax()) {
             $this->autoRender=false;
-            
+
             $getBranch = $this->request->getQuery('branch');
             $getType = $this->request->getQuery('type');
             $getDate = $this->Krs->dateTo($this->request->getQuery('dates'), 'A');
@@ -3066,7 +3066,7 @@ class AccJournalsController extends AppController
             // $date = date("ymd");
 
             //$date = date('ym');
-           
+
             // $result = $this->AccJournals->find('all',[
             // 'fields' => array('codes' => 'MAX(CAST(SUBSTR(AccJournals.code, 7) AS UNSIGNED))+1'),
             // 'conditions' => array('AccJournals.branch_id' => $getBranch, 'AccJournals.journal_type' => $getType, 'SUBSTRING(AccJournals.code, 1, 4)' => $date, 'AccJournals.deleted ='=>NULL)
@@ -3096,7 +3096,7 @@ class AccJournalsController extends AppController
             //         ->contain(['Customers']);
             // $this->set("result", $this->AccJournal->find("first", array("fields" => array("MAX(CAST(SUBSTR(AccJournals.code, 7) AS UNSIGNED))+1 AS codes"), "conditions" => array("AccJournals.branch_id" => $getBranch, "AccJournals.journal_type" => $getType, "SUBSTRING(AccJournals.code, 1, 4)" => $date, 'AccJournals.deleted'=>NULL), "recursive" => -1)));
             // $this->set("result", $this->AccJournalCash->find("first", array("fields" => array("MAX(SUBSTR(Customer.code, 2))+1 AS code"), "conditions" => array("Customer.group" => $get_id), "recursive" => -1)));
-                  
+
             // pr($result);
         // }
     }
@@ -3133,7 +3133,7 @@ class AccJournalsController extends AppController
 
     public function incomeGlobalReport() {
         $accJournal = $this->AccJournals->newEmptyEntity();
-        $this->loadModel('AccChartOfAccounts');
+        $this->AccChartOfAccounts = $this->fetchTable('AccChartOfAccounts');
 
         if ($this->request->is('post')) {
             $dataRow = $this->request->getData();
@@ -3173,7 +3173,7 @@ class AccJournalsController extends AppController
 
 
     // Function untuk Laba/Rugi
-    public function dataLabaRugi($filterConditionDateNow='', $filterConditionDateAfter='', &$listCOAPendapatan, &$listCOAReturPendapatan, &$listCOAPotonganPendapatan, &$listCOABebanPokokPendapatan, &$listCOABebanPendapatan, &$listCOABebanAdministrasiUmum, &$listCOAPendapatanNonOperasional, &$listCOABebanNonOperasional)
+    public function dataLabaRugi($filterConditionDateNow, $filterConditionDateAfter, &$listCOAPendapatan, &$listCOAReturPendapatan, &$listCOAPotonganPendapatan, &$listCOABebanPokokPendapatan, &$listCOABebanPendapatan, &$listCOABebanAdministrasiUmum, &$listCOAPendapatanNonOperasional, &$listCOABebanNonOperasional)
     {
         // Memanggil data COA.
         $dataCOAs = $this->AccChartOfAccounts->datarowCOA();             
@@ -3186,7 +3186,7 @@ class AccJournalsController extends AppController
         $dataCOAPendapatan = Hash::extract($dataCOAs, '{n}[journal_type=pendapatan]');
         $dataCOAPendapatans = Hash::extract($dataCOAPendapatan, '{n}[level=5]');
         $extractCOALevelPendapatan = (!empty($dataCOAPendapatans)) ? Hash::extract($dataCOAPendapatans, '{n}.id') : array();
-        
+
         // Mengambil Id Retur Pendapatan
         $dataCOAReturPendapatan = Hash::extract($dataCOAs, '{n}[journal_type=retur_pendapatan]');
         $dataCOAReturPendapatans = Hash::extract($dataCOAReturPendapatan, '{n}[level=5]');
@@ -3285,7 +3285,7 @@ class AccJournalsController extends AppController
     public function balanceSheetPercentReport()
     {
         $accJournal = $this->AccJournals->newEmptyEntity();
-        $this->loadModel('AccChartOfAccounts');
+        $this->AccChartOfAccounts = $this->fetchTable('AccChartOfAccounts');
 
         if ($this->request->is('post')) {
             $dataRow = $this->request->getData();
@@ -3381,7 +3381,7 @@ class AccJournalsController extends AppController
 
 
     // #Update 230405
-    public function dataBalanceActivaPasiva($filterConditionDate=null, &$listCOAAset, &$listCOAAsetLancar, &$listCOAKasSetaraKas, &$listCOAInvestasi, &$listCOAInvestasiJangkaPanjang, &$listCOAPiutang, &$listCOAPiutangPemegangSaham, &$listCOAPiutangAfiliasi, &$listCOAPiutangKaryawan, &$listCOAPiutangLainLain, &$listCOAPiutangPajak, &$listCOAPersediaanBarang, &$listCOAUangMukaPembelian, &$listCOAPajakDibayarDimuka, &$listCOABebanDibayarDimuka, &$listCOAAsetTidakLancar, &$listCOAAsetTetap, &$listCOAAkumulasiDepresiasi, &$listCOAAsetLainLain, &$listCOAKewajiban, &$listCOAKewajibanLancar, &$listCOAHutangUsaha, &$listCOAHutangAfiliasi, &$listCOAPendapatanDiterimaDimuka, &$listCOABiayaYangMasihHarusDibayar, &$listCOAHutangPajak, &$listCOAHutangBank, &$listCOAHutangLeasing, &$listCOAHutangPemegangSaham, &$listCOAHutangKaryawan, &$listCOAHutangLainLain, &$listCOAKewajibanTidakLancar, &$listCOAKewajibanPajakTangguhan, &$listCOAEkuitas, &$countData) {
+    public function dataBalanceActivaPasiva($filterConditionDate, &$listCOAAset, &$listCOAAsetLancar, &$listCOAKasSetaraKas, &$listCOAInvestasi, &$listCOAInvestasiJangkaPanjang, &$listCOAPiutang, &$listCOAPiutangPemegangSaham, &$listCOAPiutangAfiliasi, &$listCOAPiutangKaryawan, &$listCOAPiutangLainLain, &$listCOAPiutangPajak, &$listCOAPersediaanBarang, &$listCOAUangMukaPembelian, &$listCOAPajakDibayarDimuka, &$listCOABebanDibayarDimuka, &$listCOAAsetTidakLancar, &$listCOAAsetTetap, &$listCOAAkumulasiDepresiasi, &$listCOAAsetLainLain, &$listCOAKewajiban, &$listCOAKewajibanLancar, &$listCOAHutangUsaha, &$listCOAHutangAfiliasi, &$listCOAPendapatanDiterimaDimuka, &$listCOABiayaYangMasihHarusDibayar, &$listCOAHutangPajak, &$listCOAHutangBank, &$listCOAHutangLeasing, &$listCOAHutangPemegangSaham, &$listCOAHutangKaryawan, &$listCOAHutangLainLain, &$listCOAKewajibanTidakLancar, &$listCOAKewajibanPajakTangguhan, &$listCOAEkuitas, &$countData) {
         if(!empty($filterConditionDate)) {
             // Memanggil data COA.
             $dataCOAs = $this->AccChartOfAccounts->datarowCOA();  
@@ -3758,7 +3758,7 @@ class AccJournalsController extends AppController
 
 
     // #Update 230409
-    public function dataLabaRugiBerjalan($filterConditionDateNow=null, $filterConditionDateAfter=null, &$grandTotalLabaRugiBerjalan) {
+    public function dataLabaRugiBerjalan($filterConditionDateNow, $filterConditionDateAfter, &$grandTotalLabaRugiBerjalan) {
 
         $this->dataLabaRugi($filterConditionDateNow, $filterConditionDateAfter, $listCOAPendapatan, $listCOAReturPendapatan, $listCOAPotonganPendapatan, $listCOABebanPokokPendapatan, $listCOABebanPendapatan, $listCOABebanAdministrasiUmum, $listCOAPendapatanNonOperasional, $listCOABebanNonOperasional);
 
@@ -3948,7 +3948,7 @@ class AccJournalsController extends AppController
     /*public function balanceSheetPercentReport230511()
     {
         $accJournal = $this->AccJournals->newEmptyEntity();
-        $this->loadModel('AccChartOfAccounts');
+        $this->AccChartOfAccounts = $this->fetchTable('AccChartOfAccounts');
 
         if ($this->request->is('post')) {
             $dataRow = $this->request->getData();

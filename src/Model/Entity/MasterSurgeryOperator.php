@@ -16,8 +16,8 @@ use Cake\ORM\Entity;
  * @property string|null $phone
  * @property string|null $notes
  * @property bool|null $is_active
- * @property \Cake\I18n\FrozenTime|null $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
  *
  * @property \App\Model\Entity\Doctor $doctor
  */
@@ -32,7 +32,7 @@ class MasterSurgeryOperator extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'code' => true,
         'doctor_id' => true,
         'name' => true,

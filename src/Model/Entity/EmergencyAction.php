@@ -17,8 +17,8 @@ use Cake\ORM\Entity;
  * @property string $unit_price
  * @property string $total_price
  * @property string|null $notes
- * @property \Cake\I18n\FrozenTime|null $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
  *
  * @property \App\Model\Entity\Registration $registration
  */
@@ -33,7 +33,7 @@ class EmergencyAction extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'registration_id' => true,
         'action_code' => true,
         'action_name' => true,

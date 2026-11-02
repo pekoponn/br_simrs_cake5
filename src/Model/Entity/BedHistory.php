@@ -13,14 +13,14 @@ use Cake\ORM\Entity;
  * @property int $room_id
  * @property string|null $patient_name
  * @property string|null $registration_no
- * @property \Cake\I18n\FrozenDate|null $check_in_date
- * @property \Cake\I18n\FrozenDate|null $check_out_date
+ * @property \Cake\I18n\Date|null $check_in_date
+ * @property \Cake\I18n\Date|null $check_out_date
  * @property bool|null $status_before
  * @property bool|null $status_after
  * @property string|null $notes
  * @property string|null $created_by
- * @property \Cake\I18n\FrozenTime|null $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
  *
  * @property \App\Model\Entity\Bed $bed
  * @property \App\Model\Entity\Room $room
@@ -36,7 +36,7 @@ class BedHistory extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'bed_id' => true,
         'room_id' => true,
         'patient_name' => true,

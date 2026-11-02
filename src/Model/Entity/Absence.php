@@ -17,18 +17,18 @@ use Cake\ORM\Entity;
  * @property string|null $location
  * @property string|null $expression
  * @property string $inout_mode
- * @property \Cake\I18n\FrozenDate|null $date
+ * @property \Cake\I18n\Date|null $date
  * @property string|null $time_in
  * @property string|null $time_out
  * @property string|null $description
  * @property string|null $device
  * @property string|null $browser_type
  * @property int $is_create
- * @property \Cake\I18n\FrozenTime|null $created
+ * @property \Cake\I18n\DateTime|null $created
  * @property int $is_update
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $modified
  * @property int $is_delete
- * @property \Cake\I18n\FrozenTime|null $deleted
+ * @property \Cake\I18n\DateTime|null $deleted
  * @property string|null $delete_log
  * @property string $is_active
  * @property string|null $is_log
@@ -47,7 +47,7 @@ class Absence extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'branch_id' => true,
         'user_id' => true,
         'latitude' => true,

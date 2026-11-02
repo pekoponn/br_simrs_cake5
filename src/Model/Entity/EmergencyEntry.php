@@ -37,7 +37,7 @@ use Cake\ORM\Entity;
  * @property int|null $flacc_menangis
  * @property int|null $flacc_bersuara
  * @property int|null $flacc_total
- * @property \Cake\I18n\FrozenDate|null $service_date
+ * @property \Cake\I18n\Date|null $service_date
  * @property \Cake\I18n\Time|null $service_time
  * @property string|null $chief_complaint
  * @property string|null $triage_category
@@ -51,8 +51,8 @@ use Cake\ORM\Entity;
  * @property string|null $notes
  * @property string $status
  * @property bool $is_active
- * @property \Cake\I18n\FrozenTime|null $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
  *
  * @property \App\Model\Entity\Registration $registration
  * @property \App\Model\Entity\Patient $patient
@@ -69,7 +69,7 @@ class EmergencyEntry extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'registration_id' => true,
         'registration_no' => true,
         'triase_no' => true,

@@ -15,7 +15,7 @@ class HealthFacilitiesController extends AppController
     {
         parent::initialize();
 
-        $this->loadModel('HealthFacilities');
+        $this->HealthFacilities = $this->fetchTable('HealthFacilities');
     }
     /**
      * Index method
@@ -38,9 +38,7 @@ class HealthFacilitiesController extends AppController
      */
     public function view($id = null)
     {
-        $healthFacility = $this->HealthFacilities->get($id, [
-            'contain' => [],
-        ]);
+        $healthFacility = $this->HealthFacilities->get($id, contain: []);
 
         $this->set(compact('healthFacility'));
     }
@@ -74,9 +72,7 @@ class HealthFacilitiesController extends AppController
      */
     public function edit($id = null)
     {
-        $healthFacility = $this->HealthFacilities->get($id, [
-            'contain' => [],
-        ]);
+        $healthFacility = $this->HealthFacilities->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $healthFacility = $this->HealthFacilities->patchEntity($healthFacility, $this->request->getData());
             if ($this->HealthFacilities->save($healthFacility)) {

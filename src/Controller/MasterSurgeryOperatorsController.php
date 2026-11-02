@@ -35,9 +35,7 @@ class MasterSurgeryOperatorsController extends AppController
      */
     public function view($id = null)
     {
-        $masterSurgeryOperator = $this->MasterSurgeryOperators->get($id, [
-            'contain' => ['Doctors'],
-        ]);
+        $masterSurgeryOperator = $this->MasterSurgeryOperators->get($id, contain: ['Doctors']);
 
         $this->set(compact('masterSurgeryOperator'));
     }
@@ -72,9 +70,7 @@ class MasterSurgeryOperatorsController extends AppController
      */
     public function edit($id = null)
     {
-        $masterSurgeryOperator = $this->MasterSurgeryOperators->get($id, [
-            'contain' => [],
-        ]);
+        $masterSurgeryOperator = $this->MasterSurgeryOperators->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $masterSurgeryOperator = $this->MasterSurgeryOperators->patchEntity($masterSurgeryOperator, $this->request->getData());
             if ($this->MasterSurgeryOperators->save($masterSurgeryOperator)) {

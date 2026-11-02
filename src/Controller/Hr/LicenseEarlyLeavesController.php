@@ -22,7 +22,7 @@ class LicenseEarlyLeavesController extends AppController
     public function initialize(): void
     {
         parent::initialize();
-        $this->loadModel('Users');
+        $this->Users = $this->fetchTable('Users');
         $this->loadComponent('Telegram');
     }
     /**
@@ -49,7 +49,7 @@ class LicenseEarlyLeavesController extends AppController
         $data['HRISApproved'] = $dataSession->hris_approved;
         $data['HRISKnowing'] = $dataSession->hris_knowing;
         $data['HRISFullAccess'] = $dataSession->hris_full_access;
-        
+
         if($data['HRISKnowing']=='Y' || $data['HRISFullAccess']=='Y') {
             $arrayDevision = array();
         } elseif($data['HRISApproved']=='Y') {
@@ -58,12 +58,12 @@ class LicenseEarlyLeavesController extends AppController
         } else {
             $arrayDevision = array('LicenseAbsents.applicant'=>$dataId);           
         }
-        
+
         $filterDateFrom = $this->request->getQuery('filterDateFrom');
         $filterDateEnd = $this->request->getQuery('filterDateEnd');
         $filterApplicant = $this->request->getQuery('filterApplicant');
         $filterDevision = $this->request->getQuery('filterDevision');
-        
+
         $data['filterDateFrom'] = array();
         $data['filterDateEnd'] = array();
         $data['filterApplicant'] = array();
@@ -84,7 +84,7 @@ class LicenseEarlyLeavesController extends AppController
             $data['filterDevision'] = $filterDevision;
             $dataWhere['LicenseEarlyLeaves.devision'] = $filterDevision;
         }
-        
+
         // Auth user & rules
         $currentUserId = $dataSession['id']; 
         $rulesString   = $dataSession['rules'];
@@ -93,7 +93,7 @@ class LicenseEarlyLeavesController extends AppController
         $canViewDevision = isset($rules['licenseearlyleaves']['viewDevision']) ? $rules['licenseearlyleaves']['viewDevision'] : 0;
         // pr($canViewDevision);
 
-        $dataRow = $this->LicenseEarlyLeaves->find('all')->contain(['Users','Mengetahui','Menyetujui'])->order(['DATE(LicenseEarlyLeaves.date)' => 'DESC', 'Users.name' => 'DESC']);
+        $dataRow = $this->LicenseEarlyLeaves->find('all')->contain(['Users','Mengetahui','Menyetujui'])->orderBy(['DATE(LicenseEarlyLeaves.date)' => 'DESC', 'Users.name' => 'DESC']);
 
         if ($canViewAll == '1') {
             // $dataRow->where(['LicenseEarlyLeaves.is_create' => $currentUserId]);
@@ -139,9 +139,7 @@ class LicenseEarlyLeavesController extends AppController
     public function view($id = null)
     {
         list($dataId, $dataUserId) = explode('^', $this->Krs->fDecode($id));
-        $licenseEarlyLeave = $this->LicenseEarlyLeaves->get($dataId, [
-            'contain' => ['Users','Mengetahui','Menyetujui'],
-        ]);
+        $licenseEarlyLeave = $this->LicenseEarlyLeaves->get($dataId, contain: ['Users','Mengetahui','Menyetujui']);
         $data['dataRows'] = $licenseEarlyLeave;
         $this->set(compact('data'));
     }
@@ -218,9 +216,7 @@ class LicenseEarlyLeavesController extends AppController
      */
     public function edit($id = null)
     {
-        $licenseEarlyLeave = $this->LicenseEarlyLeaves->get($id, [
-            'contain' => [],
-        ]);
+        $licenseEarlyLeave = $this->LicenseEarlyLeaves->get($id, contain: []);
         if ($licenseEarlyLeave->approved !== null) {
             $this->Flash->error('Data sudah disetujui, tidak bisa diedit.');
             return $this->redirect(['action' => 'index']);
@@ -287,9 +283,7 @@ class LicenseEarlyLeavesController extends AppController
 
     public function approve($id = null)
     {
-        $licenseEarlyLeave = $this->LicenseEarlyLeaves->get($id, [
-            'contain' => ['Users'],
-        ]);
+        $licenseEarlyLeave = $this->LicenseEarlyLeaves->get($id, contain: ['Users']);
         if ($licenseEarlyLeave->approved_date !== null) {
             $this->Flash->error('Data ini sudah disetujui sebelumnya.');
             return $this->redirect(['action' => 'index']);
@@ -320,9 +314,7 @@ class LicenseEarlyLeavesController extends AppController
 
     public function knowing($id = null)
     {
-        $licenseEarlyLeave = $this->LicenseEarlyLeaves->get($id, [
-            'contain' => ['Users'],
-        ]);
+        $licenseEarlyLeave = $this->LicenseEarlyLeaves->get($id, contain: ['Users']);
         if ($licenseEarlyLeave->approved === null) {
             $this->Flash->error('Data belum disetujui, belum bisa diketahui.');
             return $this->redirect(['action' => 'index']);
@@ -387,7 +379,7 @@ class LicenseEarlyLeavesController extends AppController
 
         $query = $this->LicenseEarlyLeaves->find('all')
             ->contain(['Users', 'Mengetahui', 'Menyetujui'])
-            ->order([
+            ->orderBy([
                 'DATE(LicenseEarlyLeaves.date)' => 'DESC',
                 'Users.name' => 'DESC'
             ]);

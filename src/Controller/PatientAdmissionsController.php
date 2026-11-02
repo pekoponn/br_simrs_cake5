@@ -18,10 +18,10 @@ class PatientAdmissionsController extends AppController
     {
         parent::initialize();
 
-        $this->loadModel('Registrations');
-        $this->loadModel('OutpatientVisits');
-        $this->loadModel('PraRegistrations');
-        $this->loadModel('PolyclinicQueues');
+        $this->Registrations = $this->fetchTable('Registrations');
+        $this->OutpatientVisits = $this->fetchTable('OutpatientVisits');
+        $this->PraRegistrations = $this->fetchTable('PraRegistrations');
+        $this->PolyclinicQueues = $this->fetchTable('PolyclinicQueues');
     }
 
     public function index()

@@ -19,17 +19,12 @@ declare(strict_types=1);
  * Configure paths required to find CakePHP + general filepath constants
  */
 require __DIR__ . DIRECTORY_SEPARATOR . 'paths.php';
-
-/*
- * Bootstrap CakePHP.
- *
- * Does the various bits of setup that CakePHP needs to do.
- * This includes:
- *
- * - Registering the CakePHP autoloader.
- * - Setting the default application paths.
- */
-require CORE_PATH . 'config' . DS . 'bootstrap.php';
+require ROOT . DS . 'vendor' . DS . 'cakephp' . DS . 'cakephp' . DS . 'src' . DS . 'Core' . DS . 'functions_global.php';
+require CAKE . 'Core' . DS . 'functions_global.php';
+require CAKE . 'I18n' . DS . 'functions_global.php';
+require CAKE . 'Collection' . DS . 'functions_global.php';
+require CAKE . 'Routing' . DS . 'functions_global.php';
+require CAKE . 'Error' . DS . 'functions_global.php';
 
 use Cake\Cache\Cache;
 use Cake\Core\Configure;
@@ -37,8 +32,8 @@ use Cake\Core\Configure\Engine\PhpConfig;
 use Cake\Database\TypeFactory;
 use Cake\Database\Type\StringType;
 use Cake\Datasource\ConnectionManager;
-use Cake\Error\ConsoleErrorHandler;
-use Cake\Error\ErrorHandler;
+use Cake\Error\ErrorTrap;
+use Cake\Error\ExceptionTrap;
 use Cake\Http\ServerRequest;
 use Cake\Log\Log;
 use Cake\Mailer\Mailer;
@@ -123,11 +118,8 @@ ini_set('intl.default_locale', Configure::read('App.defaultLocale'));
  * Register application error and exception handlers.
  */
 $isCli = PHP_SAPI === 'cli';
-if ($isCli) {
-    (new ConsoleErrorHandler(Configure::read('Error')))->register();
-} else {
-    (new ErrorHandler(Configure::read('Error')))->register();
-}
+(new ErrorTrap(Configure::read('Error')))->register();
+(new ExceptionTrap(Configure::read('Error')))->register();
 
 /*
  * Include the CLI bootstrap overrides.
@@ -253,4 +245,6 @@ define('DOMPDF_ENABLE_AUTOLOAD', false);
 define('DOMPDF_ENABLE_HTML5PARSER', true);
 define('DOMPDF_ENABLE_REMOTE', true);
 
-header('Access-Control-Allow-Origin: *');
+if (PHP_SAPI !== 'cli') {
+    header('Access-Control-Allow-Origin: *');
+}

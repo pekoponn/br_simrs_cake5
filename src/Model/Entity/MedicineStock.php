@@ -11,7 +11,7 @@ use Cake\ORM\Entity;
  * @property int $id
  * @property int $branch_id
  * @property int $medicine_id
- * @property \Cake\I18n\FrozenDate|null $last_so_date
+ * @property \Cake\I18n\Date|null $last_so_date
  * @property string $hasil_so
  * @property string $adjustment
  * @property string $terima
@@ -19,8 +19,8 @@ use Cake\ORM\Entity;
  * @property string $saldo_akhir
  * @property string $max_stock
  * @property string $is_valid
- * @property \Cake\I18n\FrozenTime|null $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
  *
  * @property \App\Model\Entity\Branch $branch
  * @property \App\Model\Entity\Medicine $medicine
@@ -36,7 +36,7 @@ class MedicineStock extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'branch_id' => true,
         'medicine_id' => true,
         'last_so_date' => true,

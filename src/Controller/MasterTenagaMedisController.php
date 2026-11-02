@@ -96,9 +96,7 @@ class MasterTenagaMedisController extends AppController
      */
     public function view($id = null)
     {
-        $masterTenagaMedi = $this->MasterTenagaMedis->get($id, [
-            'contain' => [],
-        ]);
+        $masterTenagaMedi = $this->MasterTenagaMedis->get($id, contain: []);
 
         $this->set(compact('masterTenagaMedi'));
     }
@@ -132,9 +130,7 @@ class MasterTenagaMedisController extends AppController
      */
     public function edit($id = null)
     {
-        $masterTenagaMedi = $this->MasterTenagaMedis->get($id, [
-            'contain' => [],
-        ]);
+        $masterTenagaMedi = $this->MasterTenagaMedis->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $masterTenagaMedi = $this->MasterTenagaMedis->patchEntity($masterTenagaMedi, $this->request->getData());
             if ($this->MasterTenagaMedis->save($masterTenagaMedi)) {
@@ -182,7 +178,7 @@ class MasterTenagaMedisController extends AppController
 
         $query = $this->MasterTenagaMedis->find()
             ->select(['id', 'kode', 'nama', 'status'])
-            ->order(['nama' => 'ASC'])
+            ->orderBy(['nama' => 'ASC'])
             ->limit(50);
 
         if ($keyword !== '') {
@@ -235,7 +231,7 @@ class MasterTenagaMedisController extends AppController
         $lastRecord = $this->MasterTenagaMedis->find()
             ->select(['kode'])
             ->where(['kode LIKE' => $prefix . '-%'])
-            ->order(['id' => 'DESC'])
+            ->orderBy(['id' => 'DESC'])
             ->first();
 
         $nextNumber = 1;

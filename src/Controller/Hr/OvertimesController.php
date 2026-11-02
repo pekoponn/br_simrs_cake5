@@ -21,7 +21,7 @@ class OvertimesController extends AppController
     public function initialize(): void
     {
         parent::initialize();
-        $this->loadModel('Users');
+        $this->Users = $this->fetchTable('Users');
         $this->loadComponent('Telegram');
     }
     /**
@@ -40,12 +40,12 @@ class OvertimesController extends AppController
         $dataDevision = $dataSession->devision;
         $dataPettyCashDevision = $dataSession->pettycash_devision;
         $dataUserTeam = $dataSession['user_team'] ?? '';
-        
+
         $data['HRISApproved'] = $dataSession->hris_approved;
         $data['HRISKnowing'] = $dataSession->hris_knowing;
         $data['HRISFullAccess'] = $dataSession->hris_full_access;
         $data['UBSFullAccess'] = $dataSession->project_status;
-        
+
         if($data['HRISKnowing']=='Y' || $data['HRISFullAccess']=='Y') {
             $arrayDevision = array();
         } elseif($data['HRISApproved']=='Y') {
@@ -59,7 +59,7 @@ class OvertimesController extends AppController
         $filterDateEnd = $this->request->getQuery('filterDateEnd');
         $filterApplicant = $this->request->getQuery('filterApplicant');
         $filterDevision = $this->request->getQuery('filterDevision');
-        
+
         $data['filterDateFrom'] = array();
         $data['filterDateEnd'] = array();
         $data['filterApplicant'] = array();
@@ -81,7 +81,7 @@ class OvertimesController extends AppController
             $dataWhere['Overtimes.devision'] = $filterDevision;
         }
 
-        
+
          // Auth user & rules
         $currentUserId = $dataSession['id']; 
         $rulesString   = $dataSession['rules'];
@@ -90,7 +90,7 @@ class OvertimesController extends AppController
         $canViewDevision = isset($rules['overtimes']['viewDevision']) ? $rules['overtimes']['viewDevision'] : 0;
         // $canViewUbs = isset($rules['overtimes']['viewUbs']) ? $rules['overtimes']['viewUbs'] : 0;
 
-        $dataRow = $this->Overtimes->find('all')->contain(['Users','Mengetahui','Menyetujui'])->order(['DATE(Overtimes.date)' => 'DESC', 'Users.name' => 'DESC']);
+        $dataRow = $this->Overtimes->find('all')->contain(['Users','Mengetahui','Menyetujui'])->orderBy(['DATE(Overtimes.date)' => 'DESC', 'Users.name' => 'DESC']);
 
         // pr($canViewAll);
         // pr($canViewDevision);
@@ -155,9 +155,7 @@ class OvertimesController extends AppController
     public function view($id = null)
     {
         list($dataId, $dataUserId) = explode('^', $this->Krs->fDecode($id));
-        $overtime = $this->Overtimes->get($dataId, [
-            'contain' => ['Users','Mengetahui','Menyetujui', 'WorkOrders', 'WorkOrders.WorkOrderLines'],
-        ]);
+        $overtime = $this->Overtimes->get($dataId, contain: ['Users','Mengetahui','Menyetujui', 'WorkOrders', 'WorkOrders.WorkOrderLines']);
         $data['dataRows'] = $overtime;
         // pr($licenseLate);
         $this->set(compact('data'));
@@ -253,9 +251,7 @@ class OvertimesController extends AppController
      */
     public function edit($id = null)
     {
-        $overtime = $this->Overtimes->get($id, [
-            'contain' => [],
-        ]);
+        $overtime = $this->Overtimes->get($id, contain: []);
 
         if ($overtime->approved !== null) {
             $this->Flash->error('Data sudah disetujui, tidak bisa diedit.');
@@ -319,8 +315,8 @@ class OvertimesController extends AppController
                     ]));
             }
 
-            $this->loadModel('WorkOrders');
-            $this->loadModel('Overtimes');
+            $this->WorkOrders = $this->fetchTable('WorkOrders');
+            $this->Overtimes = $this->fetchTable('Overtimes');
 
             // ambil user session
             $session = $this->getRequest()->getSession();
@@ -405,9 +401,7 @@ class OvertimesController extends AppController
      */
     public function approve($id = null)
     {
-        $overtime = $this->Overtimes->get($id, [
-            'contain' => ['Users', 'WorkOrders', 'WorkOrders.WorkOrderLines'],
-        ]);
+        $overtime = $this->Overtimes->get($id, contain: ['Users', 'WorkOrders', 'WorkOrders.WorkOrderLines']);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $dataRow = $this->request->getData();
             $isUser = $dataRow['approved'];
@@ -435,9 +429,7 @@ class OvertimesController extends AppController
      */
     public function knowing($id = null)
     {
-        $overtime = $this->Overtimes->get($id, [
-            'contain' => ['Users', 'WorkOrders', 'WorkOrders.WorkOrderLines'],
-        ]);
+        $overtime = $this->Overtimes->get($id, contain: ['Users', 'WorkOrders', 'WorkOrders.WorkOrderLines']);
         if ($overtime->approved === null) {
             $this->Flash->error('Data belum disetujui, belum bisa diketahui.');
             return $this->redirect(['action' => 'index']);

@@ -19,9 +19,9 @@ use Cake\ORM\Entity;
  * @property string|null $total_price
  * @property string|null $notes
  * @property string|null $performed_by
- * @property \Cake\I18n\FrozenTime|null $performed_at
- * @property \Cake\I18n\FrozenTime|null $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $performed_at
+ * @property \Cake\I18n\DateTime|null $created
+ * @property \Cake\I18n\DateTime|null $modified
  *
  * @property \App\Model\Entity\OutpatientVisit $outpatient_visit
  * @property \App\Model\Entity\MasterTindakan $master_tindakan
@@ -37,7 +37,7 @@ class OutpatientAction extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'outpatient_visit_id' => true,
         'master_tindakan_id' => true,
         'action_code' => true,

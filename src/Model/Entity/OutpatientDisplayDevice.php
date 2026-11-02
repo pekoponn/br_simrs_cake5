@@ -4,5 +4,5 @@ namespace App\Model\Entity;
 use Cake\ORM\Entity;
 class OutpatientDisplayDevice extends Entity
 {
-    protected $_accessible = ['*' => true, 'id' => false];
+    protected array $_accessible = ['*' => true, 'id' => false];
 }

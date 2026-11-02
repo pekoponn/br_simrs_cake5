@@ -10,11 +10,11 @@ use Cake\ORM\Entity;
  *
  * @property int $id
  * @property int $doctor_schedule_id
- * @property \Cake\I18n\FrozenDate $cycle_date
+ * @property \Cake\I18n\Date $cycle_date
  * @property int $quota
  * @property int $quota_used
- * @property \Cake\I18n\FrozenTime $created
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime $created
+ * @property \Cake\I18n\DateTime|null $modified
  *
  * @property \App\Model\Entity\DoctorSchedule $doctor_schedule
  */
@@ -29,7 +29,7 @@ class DoctorScheduleQuotaHistory extends Entity
      *
      * @var array
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'doctor_schedule_id' => true,
         'cycle_date' => true,
         'quota' => true,

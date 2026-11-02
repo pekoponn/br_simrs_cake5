@@ -35,9 +35,7 @@ class MedicineGroupsController extends AppController
      */
     public function view($id = null)
     {
-        $medicineGroup = $this->MedicineGroups->get($id, [
-            'contain' => ['Medicines'],
-        ]);
+        $medicineGroup = $this->MedicineGroups->get($id, contain: ['Medicines']);
 
         $this->set(compact('medicineGroup'));
     }
@@ -71,9 +69,7 @@ class MedicineGroupsController extends AppController
      */
     public function edit($id = null)
     {
-        $medicineGroup = $this->MedicineGroups->get($id, [
-            'contain' => [],
-        ]);
+        $medicineGroup = $this->MedicineGroups->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $medicineGroup = $this->MedicineGroups->patchEntity($medicineGroup, $this->request->getData());
             if ($this->MedicineGroups->save($medicineGroup)) {

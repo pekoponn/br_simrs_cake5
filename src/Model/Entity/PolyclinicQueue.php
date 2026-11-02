@@ -14,22 +14,22 @@ use Cake\ORM\Entity;
  * @property string|null $booking_code
  * @property string|null $bpjs_number
  * @property string|null $identity_number
- * @property \Cake\I18n\FrozenDate|null $visit_date
+ * @property \Cake\I18n\Date|null $visit_date
  * @property string|null $checkin_status
- * @property \Cake\I18n\FrozenTime|null $checkin_time
+ * @property \Cake\I18n\DateTime|null $checkin_time
  * @property string|null $call_status
- * @property \Cake\I18n\FrozenTime|null $called_time
+ * @property \Cake\I18n\DateTime|null $called_time
  * @property int|null $call_count
  * @property string|null $poly_name
  * @property string|null $patients_name
  * @property string|null $no_telp
  * @property int|null $queue_number
  * @property int|null $is_create
- * @property \Cake\I18n\FrozenTime|null $created
+ * @property \Cake\I18n\DateTime|null $created
  * @property int|null $is_update
- * @property \Cake\I18n\FrozenTime|null $modified
+ * @property \Cake\I18n\DateTime|null $modified
  * @property int|null $is_delete
- * @property \Cake\I18n\FrozenTime|null $deleted
+ * @property \Cake\I18n\DateTime|null $deleted
  * @property string|null $delete_log
  * @property string|null $is_active
  */
@@ -40,7 +40,7 @@ class PolyclinicQueue extends Entity
      *
      * @var array<string, bool>
      */
-    protected $_accessible = [
+    protected array $_accessible = [
         'code' => true,
         'source' => true,
         'booking_code' => true,

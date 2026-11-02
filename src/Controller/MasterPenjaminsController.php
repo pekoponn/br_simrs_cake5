@@ -220,7 +220,7 @@ class MasterPenjaminsController extends AppController
         $last = $this->MasterPenjamins
             ->find()
             ->select(['id'])
-            ->order([
+            ->orderBy([
                 'MasterPenjamins.id' => 'DESC'
             ])
             ->first();

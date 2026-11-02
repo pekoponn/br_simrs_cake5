@@ -22,7 +22,7 @@ class LicenseAbsentsController extends AppController
     public function initialize(): void
     {
         parent::initialize();
-        $this->loadModel('Users');
+        $this->Users = $this->fetchTable('Users');
         $this->loadComponent('Telegram');
     }
     /**
@@ -49,7 +49,7 @@ class LicenseAbsentsController extends AppController
         $data['HRISApproved'] = $dataSession->hris_approved;
         $data['HRISKnowing'] = $dataSession->hris_knowing;
         $data['HRISFullAccess'] = $dataSession->hris_full_access;
-        
+
         if($data['HRISKnowing']=='Y' || $data['HRISFullAccess']=='Y') {
             $arrayDevision = array();
         } elseif($data['HRISApproved']=='Y') {
@@ -58,12 +58,12 @@ class LicenseAbsentsController extends AppController
         } else {
             $arrayDevision = array('LicenseAbsents.applicant'=>$dataId);           
         }
-        
+
         $filterDateFrom = $this->request->getQuery('filterDateFrom');
         $filterDateEnd = $this->request->getQuery('filterDateEnd');
         $filterApplicant = $this->request->getQuery('filterApplicant');
         $filterDevision = $this->request->getQuery('filterDevision');
-        
+
         $data['filterDateFrom'] = array();
         $data['filterDateEnd'] = array();
         $data['filterApplicant'] = array();
@@ -84,7 +84,7 @@ class LicenseAbsentsController extends AppController
             $data['filterDevision'] = $filterDevision;
             $dataWhere['LicenseAbsents.devision'] = $filterDevision;
         }
-        
+
         // Auth user & rules
         $currentUserId = $dataSession['id']; 
         $rulesString   = $dataSession['rules'];
@@ -93,7 +93,7 @@ class LicenseAbsentsController extends AppController
         $canViewDevision = isset($rules['licenseabsents']['viewDevision']) ? $rules['licenseabsents']['viewDevision'] : 0;
         // pr($canViewDevision);
 
-        $dataRow = $this->LicenseAbsents->find('all')->contain(['Users','Mengetahui','Menyetujui'])->order(['DATE(LicenseAbsents.date_from)' => 'DESC', 'Users.name' => 'DESC']);
+        $dataRow = $this->LicenseAbsents->find('all')->contain(['Users','Mengetahui','Menyetujui'])->orderBy(['DATE(LicenseAbsents.date_from)' => 'DESC', 'Users.name' => 'DESC']);
 
         if ($canViewAll == '1') {
             // $dataRow->where(['LicenseAbsents.is_create' => $currentUserId]);
@@ -143,9 +143,7 @@ class LicenseAbsentsController extends AppController
     public function view($id = null)
     {
         list($dataId, $dataUserId) = explode('^', $this->Krs->fDecode($id));
-        $licenseAbsent = $this->LicenseAbsents->get($dataId, [
-            'contain' => ['Users','Mengetahui','Menyetujui'],
-        ]);
+        $licenseAbsent = $this->LicenseAbsents->get($dataId, contain: ['Users','Mengetahui','Menyetujui']);
         $data['dataRows'] = $licenseAbsent;
         $this->set(compact('data'));
     }
@@ -230,9 +228,7 @@ class LicenseAbsentsController extends AppController
      */
     public function edit($id = null)
     {
-        $licenseAbsent = $this->LicenseAbsents->get($id, [
-            'contain' => [],
-        ]);
+        $licenseAbsent = $this->LicenseAbsents->get($id, contain: []);
         if ($licenseAbsent->approved !== null) {
             $this->Flash->error('Data sudah disetujui, tidak bisa diedit.');
             return $this->redirect(['action' => 'index']);
@@ -304,9 +300,7 @@ class LicenseAbsentsController extends AppController
 
     public function approve($id = null)
     {
-        $licenseAbsent = $this->LicenseAbsents->get($id, [
-            'contain' => ['Users'],
-        ]);
+        $licenseAbsent = $this->LicenseAbsents->get($id, contain: ['Users']);
         if ($licenseAbsent->approved_date !== null) {
             $this->Flash->error('Data ini sudah disetujui sebelumnya.');
             return $this->redirect(['action' => 'index']);
@@ -333,9 +327,7 @@ class LicenseAbsentsController extends AppController
 
     public function knowing($id = null)
     {
-        $licenseAbsent = $this->LicenseAbsents->get($id, [
-            'contain' => ['Users'],
-        ]);
+        $licenseAbsent = $this->LicenseAbsents->get($id, contain: ['Users']);
         if ($licenseAbsent->approved === null) {
             $this->Flash->error('Data belum disetujui, belum bisa diketahui.');
             return $this->redirect(['action' => 'index']);
@@ -401,7 +393,7 @@ class LicenseAbsentsController extends AppController
 
         $query = $this->LicenseAbsents->find('all')
             ->contain(['Users', 'Mengetahui', 'Menyetujui'])
-            ->order([
+            ->orderBy([
                 'DATE(LicenseAbsents.date_from)' => 'DESC',
                 'Users.name' => 'DESC'
             ]);

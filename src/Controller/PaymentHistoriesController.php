@@ -9,10 +9,10 @@ class PaymentHistoriesController extends AppController
     public function initialize(): void
     {
         parent::initialize();
-        $this->loadModel('Patients');
-        $this->loadModel('OutpatientBillings');
-        $this->loadModel('OutpatientBillingItems');
-        $this->loadModel('OutpatientBillingPayments');
+        $this->Patients = $this->fetchTable('Patients');
+        $this->OutpatientBillings = $this->fetchTable('OutpatientBillings');
+        $this->OutpatientBillingItems = $this->fetchTable('OutpatientBillingItems');
+        $this->OutpatientBillingPayments = $this->fetchTable('OutpatientBillingPayments');
     }
 
     public function index()

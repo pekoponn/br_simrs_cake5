@@ -38,9 +38,7 @@ class AccJournalMappingsController extends AppController
      */
     public function view($id = null)
     {
-        $accJournalMapping = $this->AccJournalMappings->get($id, [
-            'contain' => ['Branches', 'AccChartOfAccounts'],
-        ]);
+        $accJournalMapping = $this->AccJournalMappings->get($id, contain: ['Branches', 'AccChartOfAccounts']);
 
         $this->set(compact('accJournalMapping'));
     }
@@ -76,9 +74,7 @@ class AccJournalMappingsController extends AppController
      */
     public function edit($id = null)
     {
-        $accJournalMapping = $this->AccJournalMappings->get($id, [
-            'contain' => [],
-        ]);
+        $accJournalMapping = $this->AccJournalMappings->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $accJournalMapping = $this->AccJournalMappings->patchEntity($accJournalMapping, $this->request->getData());
             if ($this->AccJournalMappings->save($accJournalMapping)) {

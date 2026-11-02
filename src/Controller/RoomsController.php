@@ -58,9 +58,7 @@ class RoomsController extends AppController
      */
     public function view($id = null)
     {
-        $room = $this->Rooms->get($id, [
-            'contain' => [],
-        ]);
+        $room = $this->Rooms->get($id, contain: []);
 
         $this->set(compact('room'));
     }
@@ -103,9 +101,7 @@ class RoomsController extends AppController
      */
     public function edit($id = null)
     {
-        $room = $this->Rooms->get($id, [
-            'contain' => [],
-        ]);
+        $room = $this->Rooms->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
             $room = $this->Rooms->patchEntity($room, $this->request->getData());
             if ($this->Rooms->save($room)) {
@@ -141,7 +137,7 @@ class RoomsController extends AppController
     private function generateRoomCode()
     {
         $lastRoom = $this->Rooms->find()
-            ->order(['id' => 'DESC'])
+            ->orderBy(['id' => 'DESC'])
             ->first();
 
         $next = $lastRoom ? ((int)$lastRoom->id + 1) : 1;
@@ -162,7 +158,7 @@ class RoomsController extends AppController
                     ['Rooms.is_active IS' => null],
                 ]
             ])
-            ->order([
+            ->orderBy([
                 'Rooms.room_class' => 'ASC',
                 'Rooms.floor' => 'ASC',
                 'Rooms.room_name' => 'ASC',
