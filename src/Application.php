@@ -188,20 +188,26 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
     {
         //Menuntukan letak halaman Login
         $authenticationService = new AuthenticationService([
-            'unauthenticatedRedirect' => Router::url('/auth/login'), 'queryParam' => 'redirect',
-        ]);
-        
-        // Identifier: cek kolom 'code' dan 'password_new' di tabel users
-        $authenticationService->loadIdentifier('Authentication.Password', [
-            'fields' => [
-                'username' => 'code',
-                'password' => 'password_new',
-            ],
+            'unauthenticatedRedirect' => Router::url('/auth/login'),
+            'queryParam' => 'redirect',
         ]);
 
+        // Identifier: cek kolom 'code' dan 'password_new' di tabel users
+        $identifier = [
+            'Authentication.Password' => [
+                'fields' => [
+                    'username' => 'code',
+                    'password' => 'password_new',
+                ],
+            ],
+        ];
+
         // Authenticator: session dulu, lalu form login
-        $authenticationService->loadAuthenticator('Authentication.Session');
+        $authenticationService->loadAuthenticator('Authentication.Session', [
+            'identifier' => $identifier,
+        ]);
         $authenticationService->loadAuthenticator('Authentication.Form', [
+            'identifier' => $identifier,
             'fields' => [
                 'username' => 'code',
                 'password' => 'password',

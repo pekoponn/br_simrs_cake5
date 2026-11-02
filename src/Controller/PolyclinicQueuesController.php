@@ -114,7 +114,7 @@ class PolyclinicQueuesController extends AppController
             ->contain(['Registrations'])
             ->where($calledQueueConditions)
             ->where(function ($exp) {
-                return $exp->or_([
+                return $exp->or([
                     'PolyclinicQueues.source !=' => self::SOURCE_MOBILE_JKN,
                     'PolyclinicQueues.source IS' => null,
                 ]);
@@ -1139,9 +1139,9 @@ private function getPolyclinicButtonData(?string $visitDate = null): array
         $endDate = $visitDate . ' 23:59:59';
 
         return $query->where(function ($expression) use ($visitDate, $startDate, $endDate) {
-            return $expression->or_([
+            return $expression->or([
                 'PolyclinicQueues.visit_date' => $visitDate,
-                $expression->and_([
+                $expression->and([
                     'PolyclinicQueues.visit_date IS' => null,
                     'PolyclinicQueues.created >=' => $startDate,
                     'PolyclinicQueues.created <=' => $endDate,
@@ -1429,9 +1429,9 @@ private function getPolyclinicButtonData(?string $visitDate = null): array
                 'PolyclinicQueues.is_active' => 'Y',
             ])
             ->where(function ($expression) use ($visitDate, $startDate, $endDate) {
-                return $expression->or_([
+                return $expression->or([
                     'PolyclinicQueues.visit_date' => $visitDate,
-                    $expression->and_([
+                    $expression->and([
                         'PolyclinicQueues.visit_date IS' => null,
                         'PolyclinicQueues.created >=' => $startDate,
                         'PolyclinicQueues.created <=' => $endDate,
@@ -1459,9 +1459,9 @@ private function getPolyclinicButtonData(?string $visitDate = null): array
                 'PolyclinicQueues.code LIKE' => $codePrefix . '-%',
             ])
             ->where(function ($expression) use ($visitDate, $startDate, $endDate) {
-                return $expression->or_([
+                return $expression->or([
                     'PolyclinicQueues.visit_date' => $visitDate,
-                    $expression->and_([
+                    $expression->and([
                         'PolyclinicQueues.visit_date IS' => null,
                         'PolyclinicQueues.created >=' => $startDate,
                         'PolyclinicQueues.created <=' => $endDate,

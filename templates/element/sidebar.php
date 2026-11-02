@@ -536,6 +536,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 								<?= $this->Html->link(
 									'Antrian Pasien',
 									[
+										'prefix' => false,
 										'controller' => 'PolyclinicQueues',
 										'action' => 'index'
 									],
@@ -550,6 +551,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 								<?= $this->Html->link(
 									'Kiosk',
 									[
+										'prefix' => false,
 										'controller' => 'PolyclinicQueues',
 										'action' => 'kiosk'
 									],
@@ -565,6 +567,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 									<?= $this->Html->link(
 										'Kiosk New',
 										[
+											'prefix' => false,
 											'controller' => 'PolyclinicQueues',
 											'action' => 'kioskNew'
 										],
@@ -577,6 +580,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 								<?= $this->Html->link(
 									'Registration',
 									[
+										'prefix' => false,
 										'controller' => 'Registrations',
 										'action' => 'index'
 									],
@@ -594,6 +598,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 									<?= $this->Html->link(
 										'Pra Registration',
 										[
+											'prefix' => false,
 											'controller' => 'PraRegistrations',
 											'action' => 'index'
 										],
@@ -614,6 +619,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 									<?= $this->Html->link(
 										'Pendaftaran Pasien',
 										[
+											'prefix' => false,
 											'controller' => 'PatientAdmissions',
 											'action' => 'index'
 										],
@@ -656,6 +662,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 									<?= $this->Html->link(
 										'Kunjungan Rawat Jalan',
 										[
+											'prefix' => false,
 											'controller' => 'OutpatientVisits',
 											'action' => 'index'
 										],
@@ -666,7 +673,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 									) ?>
 								</li>
 								<?php if (!empty($outpatientVisit['doctorQueue'])): ?><li <?= ($getController == 'outpatientvisits' && $action == 'doctorQueue') ? ' class="active"' : '' ?>>
-									<?= $this->Html->link('Menu Dokter - Daftar Pasien', ['controller' => 'OutpatientVisits', 'action' => 'doctorQueue'], ['fullBase' => true]) ?>
+									<?= $this->Html->link('Menu Dokter - Daftar Pasien', ['prefix' => false, 'controller' => 'OutpatientVisits', 'action' => 'doctorQueue'], ['fullBase' => true]) ?>
 								</li>
 								<?php endif; ?>
 							<?php
@@ -677,13 +684,13 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 								<li <?= $menuOutpatientVisitDisplay ?>>
 									<?= $this->Html->link(
 										'Display Antrean Poli',
-										['controller' => 'OutpatientVisits', 'action' => 'display'],
+										['prefix' => false, 'controller' => 'OutpatientVisits', 'action' => 'display'],
 										['fullBase' => true, 'escape' => false]
 									) ?>
 								</li>
 							<?php } ?>
 							<?php if (!empty($outpatientVisit['displaySettings'])) { ?>
-								<li <?= $menuOutpatientVisitDisplaySettings ?>><?= $this->Html->link('Pengaturan Display', ['controller'=>'OutpatientVisits','action'=>'displaySettings']) ?></li>
+								<li <?= $menuOutpatientVisitDisplaySettings ?>><?= $this->Html->link('Pengaturan Display', ['prefix' => false, 'controller' =>'OutpatientVisits','action'=>'displaySettings']) ?></li>
 							<?php } ?>
 
 							<?php
@@ -693,6 +700,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 									<?= $this->Html->link(
 										'Rekam Medis',
 										[
+											'prefix' => false,
 											'controller' => 'MedicalRecords',
 											'action' => 'index'
 										],
@@ -711,6 +719,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 									<?= $this->Html->link(
 										'Surat Rawat Jalan',
 										[
+											'prefix' => false,
 											'controller' => 'OutpatientLetters',
 											'action' => 'index'
 										],
@@ -749,6 +758,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 									<?= $this->Html->link(
 										'Kasir Sentral',
 										[
+											'prefix' => false,
 											'controller' => 'OutpatientBillings',
 											'action' => 'index'
 										],
@@ -767,6 +777,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 									<?= $this->Html->link(
 										'Historis Kasir',
 										[
+											'prefix' => false,
 											'controller' => 'PaymentHistories',
 											'action' => 'index'
 										],
@@ -801,6 +812,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 								<?= $this->Html->link(
 									'Daftar Pasien IGD',
 									[
+										'prefix' => false,
 										'controller' => 'EmergencyEntries',
 										'action' => 'index'
 									],
@@ -832,6 +844,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 								<?= $this->Html->link(
 									'Pasien Rawat Inap',
 									[
+										'prefix' => false,
 										'controller' => 'InpatientEntries',
 										'action' => 'index'
 									],
@@ -1127,7 +1140,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 							if ($rooms['index'] == 1) {
 							?>
 								<li <?= $menuRoomIndex ?>>
-									<?= $this->Html->link('Rooms', ['controller' => 'Rooms', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+									<?= $this->Html->link('Rooms', ['prefix' => false, 'controller' => 'Rooms', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
 							<?php
 							}
@@ -1135,7 +1148,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 							if ($beds['index'] == 1) {
 							?>
 								<li <?= $menuBedIndex ?>>
-									<?= $this->Html->link('Bed Management', ['controller' => 'Beds', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+									<?= $this->Html->link('Bed Management', ['prefix' => false, 'controller' => 'Beds', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
 							<?php
 							}
@@ -1190,14 +1203,14 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 					if ($branch['index'] == 1) {
 					?>
 						<li<?= $menuBranches ?>>
-							<?= $this->Html->link('Cabang', ['controller' => 'Branches', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+							<?= $this->Html->link('Cabang', ['prefix' => false, 'controller' => 'Branches', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 							</li>
 						<?php
 					}
 					if ($settings['index'] == 1) {
 					?>
 					<li<?= $menuSettings ?>>
-						<?= $this->Html->link('Perusahaan', ['controller' => 'Settings', 'action' => 'edit/1'], ['fullBase' => true, 'escape' => false]) ?>
+						<?= $this->Html->link('Perusahaan', ['prefix' => false, 'controller' => 'Settings', 'action' => 'edit/1'], ['fullBase' => true, 'escape' => false]) ?>
 						</li>
 					<?php } ?>
 			</ul>

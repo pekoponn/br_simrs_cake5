@@ -301,9 +301,9 @@ class PatientAdmissionsController extends AppController
             ->select(['queue_number'])
             ->where(['PolyclinicQueues.code LIKE' => $prefix . '-%'])
             ->where(function ($exp) use ($visitDate, $startDate, $endDate) {
-                return $exp->or_([
+                return $expression->or([
                     'PolyclinicQueues.visit_date' => $visitDate,
-                    $exp->and_([
+                    $expression->and([
                         'PolyclinicQueues.visit_date IS' => null,
                         'PolyclinicQueues.created >=' => $startDate,
                         'PolyclinicQueues.created <=' => $endDate,
@@ -389,7 +389,7 @@ class PatientAdmissionsController extends AppController
         switch ($tab) {
             case 'jkn':
                 $query->where(function ($exp) {
-                    return $exp->or_([
+                    return $exp->or([
                         'Registrations.insurance_card_no IS NOT' => null,
                         'Registrations.sep_no IS NOT' => null,
                         'Registrations.bpjs_nik IS NOT' => null,
@@ -417,7 +417,7 @@ class PatientAdmissionsController extends AppController
 
             case 'rencana_rawat_inap':
                 $query->where(function ($exp) {
-                    return $exp->or_([
+                    return $exp->or([
                         'Registrations.service_type' => 'rencana_rawat_inap',
                         'Registrations.status IN' => ['rencana_rawat_inap', 'planned_inpatient', 'rencana'],
                     ]);
