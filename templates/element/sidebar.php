@@ -1,4 +1,9 @@
 <?php
+$medicineMerk = (isset($checkUrl['medicinemerks'])) ? $checkUrl['medicinemerks'] : array();
+$medicineGroup = (isset($checkUrl['medicinegroups'])) ? $checkUrl['medicinegroups'] : array();
+?>
+
+<?php
 // Memanggil action yang aktif
 $action = $this->request->getParam('action');
 
@@ -426,19 +431,6 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 				</li>
 				<?php
 				} 
-				if ($purchaseOfGood['index'] == 1 || $placementOfGood['index'] == 1 || $mutation['index'] == 1 || $truckSchedule['index'] == 1 || $warehouseReceive['index'] == 1 || $submission['index'] == 1) {
-
-					$menuDataLink = ($getController == 'purchaseofgoods' || $getController == 'placementofgoods' || $getController == 'mutations' || $getController == 'submissions' || $getController == 'warehousereceives' || $getController == 'truckschedules') ? 'active' : '';
-
-					//Menu Data-Warehouse
-					$menuLinkWarehouseReceives = ($getController == 'warehousereceives') ? 'active' : '';
-					$menuDataWarehouseReceiveIndex = ($getController == 'warehousereceives' && ($getAction == 'index' || $getAction == 'add' || $getAction == 'addDriver' || $getAction == 'edit')) ? ' class="active"' : '';
-					$menuDataTruckSchedule = ($getController == 'truckschedules') ? ' class="active"' : '';
-					$menuDataPurchaseOfGood = ($getController == 'purchaseofgoods') ? ' class="active"' : '';
-					$menuDataPlacementOfGood = ($getController == 'placementofgoods') ? ' class="active"' : '';
-					$menuDataMutation = ($getController == 'mutations') ? ' class="active"' : '';
-					$menuDataSubmission = ($getController == 'submissions') ? ' class="active"' : '';
-				} //
 				if (
 					!empty($order['antrianFarmasi']) ||
 					!empty($order['proses']) ||
@@ -856,8 +848,8 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 
 				if (
 					$medicine['index'] == 1 ||
-					$medicineMerk['index'] == 1 ||
-					$medicineGroup['index'] == 1 ||
+					($medicineMerk['index'] ?? 0) == 1 ||
+					($medicineGroup['index'] ?? 0) == 1 ||
 					$patient['index'] == 1 ||
 					$doctor['index'] == 1 ||
 					$doctorSchedule['index'] == 1 ||
@@ -948,8 +940,8 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 							<?php
 							if (
 								$medicine['index'] == 1 ||
-								$medicineMerk['index'] == 1 ||
-								$medicineGroup['index'] == 1
+								($medicineMerk['index'] ?? 0) == 1 ||
+								($medicineGroup['index'] ?? 0) == 1
 							) {
 							?>
 								<li class="has-sub <?= $menuMedicine ?>">
@@ -968,7 +960,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 										<?php
 										}
 
-										if ($medicineMerk['index'] == 1) {
+										if (($medicineMerk['index'] ?? 0) == 1) {
 										?>
 											<li <?= $menuMasterMedicineMerk ?>>
 												<?= $this->Html->link('Merk', ['prefix' => false,'controller' => 'MedicineMerks', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
@@ -976,7 +968,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 										<?php
 										}
 
-										if ($medicineGroup['index'] == 1) {
+										if (($medicineGroup['index'] ?? 0) == 1) {
 										?>
 											<li <?= $menuMasterMedicineGroup ?>>
 												<?= $this->Html->link('Group', ['prefix' => false,'controller' => 'MedicineGroups', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
