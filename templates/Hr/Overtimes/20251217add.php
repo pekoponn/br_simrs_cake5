@@ -85,7 +85,7 @@ $dataChild = $this->Html->link('Lembur', ['action' => 'index'], ['full_base' => 
 <script>
     $(document).ready(function() {
         var confirmTitle = "Apakah anda ingin menyimpan data tersebut ?";
-        var formAction = "<?php echo $this->Url->build(['prefix' => 'Hga', 'controller' => 'Overtimes', 'action' => 'add'], ['fullBase' => true]); ?>";
+        var formAction = "<?php echo $this->Url->build(['prefix' => 'Hr', 'controller' => 'Overtimes', 'action' => 'add'], ['fullBase' => true]); ?>";
         handleFormConfirmSubmitValid('GroupAddForm', 'btn-add', confirmTitle, formAction);
 
         $('.clockpicker').clockpicker({

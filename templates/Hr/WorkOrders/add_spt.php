@@ -136,7 +136,7 @@ $linkPettyCash = $checkUrl['workorders'];
 <script>
 $(document).ready(function() {
     var confirmTitle = "Apakah anda ingin menyimpan data tersebut ?";
-    var formAction = "<?php echo $this->Url->build(['prefix'=>'Hga', 'controller'=>'WorkOrders', 'action' => 'addSpt'], ['fullBase' => true]); ?>";
+    var formAction = "<?php echo $this->Url->build(['prefix' => 'Hr', 'controller' => 'WorkOrders', 'action' => 'addSpt'], ['fullBase' => true]); ?>";
     handleFormConfirmSubmitValid('PettyCashAddForm', 'btn-add', confirmTitle, formAction);
 
     $("#datepicker-autoClose").datepicker({

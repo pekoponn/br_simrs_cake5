@@ -20,7 +20,7 @@
             <table>
                 <tr>
                     <th><?= __('Registration') ?></th>
-                    <td><?= $inpatientEntry->has('registration') ? $this->Html->link($inpatientEntry->registration->id, ['controller' => 'Registrations', 'action' => 'view', $inpatientEntry->registration->id]) : '' ?></td>
+                    <td><?= $inpatientEntry->has('registration') ? $this->Html->link($inpatientEntry->registration->id, ['prefix' => 'Registrasi', 'controller' => 'Registrations', 'action' => 'view', $inpatientEntry->registration->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Registration No') ?></th>
@@ -28,7 +28,7 @@
                 </tr>
                 <tr>
                     <th><?= __('Patient') ?></th>
-                    <td><?= $inpatientEntry->has('patient') ? $this->Html->link($inpatientEntry->patient->id, ['controller' => 'Patients', 'action' => 'view', $inpatientEntry->patient->id]) : '' ?></td>
+                    <td><?= $inpatientEntry->has('patient') ? $this->Html->link($inpatientEntry->patient->id, ['prefix' => 'Registrasi', 'controller' => 'Patients', 'action' => 'view', $inpatientEntry->patient->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Patient Name') ?></th>
@@ -40,7 +40,7 @@
                 </tr>
                 <tr>
                     <th><?= __('Doctor') ?></th>
-                    <td><?= $inpatientEntry->has('doctor') ? $this->Html->link($inpatientEntry->doctor->doctor_name, ['controller' => 'Doctors', 'action' => 'view', $inpatientEntry->doctor->id]) : '' ?></td>
+                    <td><?= $inpatientEntry->has('doctor') ? $this->Html->link($inpatientEntry->doctor->doctor_name, ['prefix' => 'Master', 'controller' => 'Doctors', 'action' => 'view', $inpatientEntry->doctor->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Doctor Name') ?></th>
@@ -48,7 +48,7 @@
                 </tr>
                 <tr>
                     <th><?= __('Room') ?></th>
-                    <td><?= $inpatientEntry->has('room') ? $this->Html->link($inpatientEntry->room->id, ['controller' => 'Rooms', 'action' => 'view', $inpatientEntry->room->id]) : '' ?></td>
+                    <td><?= $inpatientEntry->has('room') ? $this->Html->link($inpatientEntry->room->id, ['prefix' => 'Master', 'controller' => 'Rooms', 'action' => 'view', $inpatientEntry->room->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Room Name') ?></th>
@@ -56,7 +56,7 @@
                 </tr>
                 <tr>
                     <th><?= __('Bed') ?></th>
-                    <td><?= $inpatientEntry->has('bed') ? $this->Html->link($inpatientEntry->bed->name, ['controller' => 'Beds', 'action' => 'view', $inpatientEntry->bed->id]) : '' ?></td>
+                    <td><?= $inpatientEntry->has('bed') ? $this->Html->link($inpatientEntry->bed->name, ['prefix' => 'Master', 'controller' => 'Beds', 'action' => 'view', $inpatientEntry->bed->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Bed No') ?></th>

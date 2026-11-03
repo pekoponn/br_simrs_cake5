@@ -168,7 +168,7 @@
 <script>
 $(document).ready(function() {
     var confirmTitle = "Apakah anda ingin menyimpan data tersebut ?"
-    var formAction = "<?php echo $this->Url->build(['prefix'=>'Hr', 'controller'=>'WorkOrders', 'action' => 'add'], ['fullBase' => true]) ?>"
+    var formAction = "<?php echo $this->Url->build(['prefix' => 'Hr', 'controller' => 'WorkOrders', 'action' => 'add'], ['fullBase' => true]) ?>"
     handleFormConfirmSubmitValid('PettyCashAddForm', 'btn-add', confirmTitle, formAction)
 
     $("#datepicker-autoClose").datepicker({

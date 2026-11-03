@@ -69,7 +69,7 @@ $dataChild = $this->Html->link('Akun Bank', ['action' => 'index'], ['full_base' 
 <script>
 $(document).ready(function() {
     var confirmTitle = "Apakah anda ingin menyimpan data tersebut ?";
-    var formAction = "<?php echo $this->Url->build(['prefix' => false, 'controller' => 'BankAccounts', 'action' => 'edit', $bankAccount->id ], ['fullBase' => true]); ?>";
+    var formAction = "<?php echo $this->Url->build(['prefix' => 'Master', 'controller' => 'BankAccounts', 'action' => 'edit', $bankAccount->id ], ['fullBase' => true]); ?>";
     handleFormConfirmSubmitValid('GroupAddForm', 'btn-add', confirmTitle, formAction);
 
     $(".satuan").select2({

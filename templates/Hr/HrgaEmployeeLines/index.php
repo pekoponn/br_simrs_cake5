@@ -40,7 +40,7 @@
                 <?php foreach ($hrgaEmployeeLines as $hrgaEmployeeLine): ?>
                 <tr>
                     <td><?= $this->Number->format($hrgaEmployeeLine->id) ?></td>
-                    <td><?= $hrgaEmployeeLine->has('hrga_employee') ? $this->Html->link($hrgaEmployeeLine->hrga_employee->name, ['controller' => 'HrgaEmployees', 'action' => 'view', $hrgaEmployeeLine->hrga_employee->id]) : '' ?></td>
+                    <td><?= $hrgaEmployeeLine->has('hrga_employee') ? $this->Html->link($hrgaEmployeeLine->hrga_employee->name, ['prefix' => 'Hr', 'controller' => 'HrgaEmployees', 'action' => 'view', $hrgaEmployeeLine->hrga_employee->id]) : '' ?></td>
                     <td><?= h($hrgaEmployeeLine->name) ?></td>
                     <td><?= h($hrgaEmployeeLine->status_family) ?></td>
                     <td><?= h($hrgaEmployeeLine->address) ?></td>

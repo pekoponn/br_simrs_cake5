@@ -340,8 +340,7 @@ $checkinTime = !empty($polyclinicQueue->checkin_time)
 
                                 <?= $this->Html->link(
                                     '<i class="fa fa-check"></i> Lihat Registrasi',
-                                    [
-                                        'controller' => 'Registrations',
+                                    ['prefix' => 'Registrasi', 'controller' => 'Registrations',
                                         'action' => 'view',
                                         $registration->id,
                                     ],
@@ -372,8 +371,7 @@ $checkinTime = !empty($polyclinicQueue->checkin_time)
                                     <?php elseif (!$isMobileJkn): ?>
                                         <?= $this->Html->link(
                                             '<i class="fa fa-clipboard"></i> Daftar Registrasi',
-                                            [
-                                                'controller' => 'Registrations',
+                                            ['prefix' => 'Registrasi', 'controller' => 'Registrations',
                                                 'action' => 'add',
                                                 '?' => [
                                                     'queue_id' => $polyclinicQueue->id,

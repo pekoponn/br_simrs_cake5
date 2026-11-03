@@ -29,7 +29,7 @@
                 <?php foreach ($hrgaEmployeeTrainings as $hrgaEmployeeTraining): ?>
                 <tr>
                     <td><?= $this->Number->format($hrgaEmployeeTraining->id) ?></td>
-                    <td><?= $hrgaEmployeeTraining->has('hrga_employee') ? $this->Html->link($hrgaEmployeeTraining->hrga_employee->name, ['controller' => 'HrgaEmployees', 'action' => 'view', $hrgaEmployeeTraining->hrga_employee->id]) : '' ?></td>
+                    <td><?= $hrgaEmployeeTraining->has('hrga_employee') ? $this->Html->link($hrgaEmployeeTraining->hrga_employee->name, ['prefix' => 'Hr', 'controller' => 'HrgaEmployees', 'action' => 'view', $hrgaEmployeeTraining->hrga_employee->id]) : '' ?></td>
                     <td><?= h($hrgaEmployeeTraining->skill) ?></td>
                     <td><?= h($hrgaEmployeeTraining->start_date) ?></td>
                     <td><?= h($hrgaEmployeeTraining->end_date) ?></td>

@@ -162,7 +162,7 @@ $dataApprove = $dataRows->approved == null
             <table>
                 <tr>
                     <th><?= __('Branch') ?></th>
-                    <td><?= $leave->has('branch') ? $this->Html->link($leave->branch->name, ['controller' => 'Branches', 'action' => 'view', $leave->branch->id]) : '' ?></td>
+                    <td><?= $leave->has('branch') ? $this->Html->link($leave->branch->name, ['prefix' => 'Pengaturan', 'controller' => 'Branches', 'action' => 'view', $leave->branch->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Code') ?></th>

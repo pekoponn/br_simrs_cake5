@@ -20,7 +20,7 @@
             <table>
                 <tr>
                     <th><?= __('Branch') ?></th>
-                    <td><?= $accJournal->has('branch') ? $this->Html->link($accJournal->branch->name, ['controller' => 'Branches', 'action' => 'view', $accJournal->branch->id]) : '' ?></td>
+                    <td><?= $accJournal->has('branch') ? $this->Html->link($accJournal->branch->name, ['prefix' => 'Pengaturan', 'controller' => 'Branches', 'action' => 'view', $accJournal->branch->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Number') ?></th>
@@ -36,7 +36,7 @@
                 </tr>
                 <tr>
                     <th><?= __('Customer') ?></th>
-                    <td><?= $accJournal->has('customer') ? $this->Html->link($accJournal->customer->name, ['controller' => 'Customers', 'action' => 'view', $accJournal->customer->id]) : '' ?></td>
+                    <td><?= $accJournal->has('customer') ? $this->Html->link($accJournal->customer->name, ['prefix' => 'Master', 'controller' => 'Customers', 'action' => 'view', $accJournal->customer->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Journal Type') ?></th>
@@ -206,9 +206,9 @@
                             <td><?= h($accJournalLines->deleted) ?></td>
                             <td><?= h($accJournalLines->status) ?></td>
                             <td class="actions">
-                                <?= $this->Html->link(__('View'), ['controller' => 'AccJournalLines', 'action' => 'view', $accJournalLines->id]) ?>
-                                <?= $this->Html->link(__('Edit'), ['controller' => 'AccJournalLines', 'action' => 'edit', $accJournalLines->id]) ?>
-                                <?= $this->Form->postLink(__('Delete'), ['controller' => 'AccJournalLines', 'action' => 'delete', $accJournalLines->id], ['confirm' => __('Are you sure you want to delete # {0}?', $accJournalLines->id)]) ?>
+                                <?= $this->Html->link(__('View'), ['prefix' => 'Acc', 'controller' => 'AccJournalLines', 'action' => 'view', $accJournalLines->id]) ?>
+                                <?= $this->Html->link(__('Edit'), ['prefix' => 'Acc', 'controller' => 'AccJournalLines', 'action' => 'edit', $accJournalLines->id]) ?>
+                                <?= $this->Form->postLink(__('Delete'), ['prefix' => 'Acc', 'controller' => 'AccJournalLines', 'action' => 'delete', $accJournalLines->id], ['confirm' => __('Are you sure you want to delete # {0}?', $accJournalLines->id)]) ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>

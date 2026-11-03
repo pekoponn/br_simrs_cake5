@@ -132,8 +132,8 @@
                 <?php foreach ($accChartOfAccounts as $accChartOfAccount): ?>
                 <tr>
                     <td><?= $this->Number->format($accChartOfAccount->id) ?></td>
-                    <td><?= $accChartOfAccount->has('branch') ? $this->Html->link($accChartOfAccount->branch->name, ['controller' => 'Branches', 'action' => 'view', $accChartOfAccount->branch->id]) : '' ?></td>
-                    <td><?= $accChartOfAccount->has('parent_acc_chart_of_account') ? $this->Html->link($accChartOfAccount->parent_acc_chart_of_account->name, ['controller' => 'AccChartOfAccounts', 'action' => 'view', $accChartOfAccount->parent_acc_chart_of_account->id]) : '' ?></td>
+                    <td><?= $accChartOfAccount->has('branch') ? $this->Html->link($accChartOfAccount->branch->name, ['prefix' => 'Pengaturan', 'controller' => 'Branches', 'action' => 'view', $accChartOfAccount->branch->id]) : '' ?></td>
+                    <td><?= $accChartOfAccount->has('parent_acc_chart_of_account') ? $this->Html->link($accChartOfAccount->parent_acc_chart_of_account->name, ['prefix' => 'Acc', 'controller' => 'AccChartOfAccounts', 'action' => 'view', $accChartOfAccount->parent_acc_chart_of_account->id]) : '' ?></td>
                     <td><?= $this->Number->format($accChartOfAccount->level) ?></td>
                     <td><?= h($accChartOfAccount->parent_account) ?></td>
                     <td><?= h($accChartOfAccount->header_account) ?></td>

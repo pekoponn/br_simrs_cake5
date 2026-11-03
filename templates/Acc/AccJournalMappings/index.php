@@ -36,8 +36,8 @@
                 <?php foreach ($accJournalMappings as $accJournalMapping): ?>
                 <tr>
                     <td><?= $this->Number->format($accJournalMapping->id) ?></td>
-                    <td><?= $accJournalMapping->has('branch') ? $this->Html->link($accJournalMapping->branch->name, ['controller' => 'Branches', 'action' => 'view', $accJournalMapping->branch->id]) : '' ?></td>
-                    <td><?= $accJournalMapping->has('acc_chart_of_account') ? $this->Html->link($accJournalMapping->acc_chart_of_account->name, ['controller' => 'AccChartOfAccounts', 'action' => 'view', $accJournalMapping->acc_chart_of_account->id]) : '' ?></td>
+                    <td><?= $accJournalMapping->has('branch') ? $this->Html->link($accJournalMapping->branch->name, ['prefix' => 'Pengaturan', 'controller' => 'Branches', 'action' => 'view', $accJournalMapping->branch->id]) : '' ?></td>
+                    <td><?= $accJournalMapping->has('acc_chart_of_account') ? $this->Html->link($accJournalMapping->acc_chart_of_account->name, ['prefix' => 'Acc', 'controller' => 'AccChartOfAccounts', 'action' => 'view', $accJournalMapping->acc_chart_of_account->id]) : '' ?></td>
                     <td><?= h($accJournalMapping->group) ?></td>
                     <td><?= h($accJournalMapping->sub_group) ?></td>
                     <td><?= h($accJournalMapping->type) ?></td>

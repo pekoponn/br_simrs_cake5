@@ -2592,7 +2592,7 @@ echo '<tr>
 <script type="text/javascript">
 jQuery(document).ready(function() {
 	var confirmTitle = "Apakah anda ingin menampilkan data tersebut ?";
-    var formAction = "<?php echo $this->Url->build(['controller'=>'AccJournals', 'action' => 'balance_sheet_percent_report'], ['fullBase' => true]); ?>";
+    var formAction = "<?php echo $this->Url->build(['prefix' => 'Acc', 'controller' => 'AccJournals', 'action' => 'balance_sheet_percent_report'], ['fullBase' => true]); ?>";
     handleFormConfirmSubmitValid('AccJournalIncomeGlobalReportForm', 'btn-search', confirmTitle, formAction);
 
     $("#datepicker-autoClose").datepicker({

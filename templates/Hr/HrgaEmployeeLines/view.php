@@ -20,7 +20,7 @@
             <table>
                 <tr>
                     <th><?= __('Hrga Employee') ?></th>
-                    <td><?= $hrgaEmployeeLine->has('hrga_employee') ? $this->Html->link($hrgaEmployeeLine->hrga_employee->name, ['controller' => 'HrgaEmployees', 'action' => 'view', $hrgaEmployeeLine->hrga_employee->id]) : '' ?></td>
+                    <td><?= $hrgaEmployeeLine->has('hrga_employee') ? $this->Html->link($hrgaEmployeeLine->hrga_employee->name, ['prefix' => 'Hr', 'controller' => 'HrgaEmployees', 'action' => 'view', $hrgaEmployeeLine->hrga_employee->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Name') ?></th>

@@ -106,11 +106,11 @@ $dataChild = $this->Html->link('Perpindahan Buku', ['action' => 'index'], ['full
 <script>
 $(document).ready(function() {
     // var confirmTitle = "Apakah anda ingin menyimpan data tersebut ?";
-    // var formAction = "<?php echo $this->Url->build(['prefix' => false, 'controller' => 'BankTopups', 'action' => 'add'], ['fullBase' => true]); ?>";
+    // var formAction = "<?php echo $this->Url->build(['prefix' => 'Acc', 'controller' => 'BankTopups', 'action' => 'add'], ['fullBase' => true]); ?>";
     // handleFormConfirmSubmitValid('GroupAddForm', 'btn-add', confirmTitle, formAction);
-    var checkListCoaCash = "<?php echo $this->Url->build(['controller' => 'BankTopups', 'action' => 'getList']); ?>";
+    var checkListCoaCash = "<?php echo $this->Url->build(['prefix' => 'Acc', 'controller' => 'BankTopups', 'action' => 'getList']); ?>";
 	handleFormSelect2Search('checkCOACash', 'Masukkan Nama Perkiraan Kas', 2, checkListCoaCash);
-    var checkListCoaTo = "<?php echo $this->Url->build(['controller' => 'BankTopups', 'action' => 'getList']); ?>";
+    var checkListCoaTo = "<?php echo $this->Url->build(['prefix' => 'Acc', 'controller' => 'BankTopups', 'action' => 'getList']); ?>";
 	handleFormSelect2Search('checkCOATo', 'Masukkan Nama Perkiraan Kas', 2, checkListCoaTo);
 
     $('.select2Form').select2({ autoclose: true });

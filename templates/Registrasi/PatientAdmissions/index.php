@@ -154,7 +154,7 @@ $tabs = [
     'rencana_rawat_inap' => ['label' => 'Pasien Rencana Rawat Inap', 'icon' => 'fa-calendar-check'],
 ];
 
-$baseUrl = ['controller' => 'PatientAdmissions', 'action' => 'index'];
+$baseUrl = ['prefix' => 'Registrasi', 'controller' => 'PatientAdmissions', 'action' => 'index'];
 ?>
 
 <?= $this->Krs->breadcrumb('Patient Admissions', 'Pendaftaran Pasien') ?>
@@ -313,7 +313,7 @@ $baseUrl = ['controller' => 'PatientAdmissions', 'action' => 'index'];
                                 ?>
                                 <?php if ($isBelumRegistrasi && $callQueueId): ?>
                                     <?= $this->Form->create(null, [
-                                        'url' => ['controller' => 'PolyclinicQueues', 'action' => 'callQueue', $callQueueId],
+                                        'url' => ['prefix' => 'Registrasi', 'controller' => 'PolyclinicQueues', 'action' => 'callQueue', $callQueueId],
                                         'id' => $callFormId,
                                         'style' => 'display:none;',
                                     ]) ?>
@@ -396,8 +396,7 @@ $baseUrl = ['controller' => 'PatientAdmissions', 'action' => 'index'];
                                     <td class="text-center">
                                         <?= $this->Html->link(
                                             'Proses',
-                                            [
-                                                'controller' => 'Registrations',
+                                            ['prefix' => 'Registrasi', 'controller' => 'Registrations',
                                                 'action' => 'add',
                                                 '?' => [
                                                     'from_planned_inpatient' => 1,

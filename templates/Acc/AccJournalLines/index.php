@@ -41,16 +41,16 @@
                 <?php foreach ($accJournalLines as $accJournalLine): ?>
                 <tr>
                     <td><?= $this->Number->format($accJournalLine->id) ?></td>
-                    <td><?= $accJournalLine->has('branch') ? $this->Html->link($accJournalLine->branch->name, ['controller' => 'Branches', 'action' => 'view', $accJournalLine->branch->id]) : '' ?></td>
+                    <td><?= $accJournalLine->has('branch') ? $this->Html->link($accJournalLine->branch->name, ['prefix' => 'Pengaturan', 'controller' => 'Branches', 'action' => 'view', $accJournalLine->branch->id]) : '' ?></td>
                     <td><?= h($accJournalLine->from) ?></td>
-                    <td><?= $accJournalLine->has('acc_journal') ? $this->Html->link($accJournalLine->acc_journal->name, ['controller' => 'AccJournals', 'action' => 'view', $accJournalLine->acc_journal->id]) : '' ?></td>
+                    <td><?= $accJournalLine->has('acc_journal') ? $this->Html->link($accJournalLine->acc_journal->name, ['prefix' => 'Acc', 'controller' => 'AccJournals', 'action' => 'view', $accJournalLine->acc_journal->id]) : '' ?></td>
                     <td><?= $this->Number->format($accJournalLine->journal_sub_id) ?></td>
                     <td><?= $this->Number->format($accJournalLine->journal_sub_line_id) ?></td>
-                    <td><?= $accJournalLine->has('acc_chart_of_account') ? $this->Html->link($accJournalLine->acc_chart_of_account->name, ['controller' => 'AccChartOfAccounts', 'action' => 'view', $accJournalLine->acc_chart_of_account->id]) : '' ?></td>
+                    <td><?= $accJournalLine->has('acc_chart_of_account') ? $this->Html->link($accJournalLine->acc_chart_of_account->name, ['prefix' => 'Acc', 'controller' => 'AccChartOfAccounts', 'action' => 'view', $accJournalLine->acc_chart_of_account->id]) : '' ?></td>
                     <td><?= h($accJournalLine->acc_chart_of_account_code) ?></td>
                     <td><?= $accJournalLine->has('manifest') ? $this->Html->link($accJournalLine->manifest->id, ['controller' => 'Manifests', 'action' => 'view', $accJournalLine->manifest->id]) : '' ?></td>
                     <td><?= $accJournalLine->has('invoice_hutang') ? $this->Html->link($accJournalLine->invoice_hutang->id, ['controller' => 'InvoiceHutangs', 'action' => 'view', $accJournalLine->invoice_hutang->id]) : '' ?></td>
-                    <td><?= $accJournalLine->has('invoice') ? $this->Html->link($accJournalLine->invoice->id, ['controller' => 'Invoices', 'action' => 'view', $accJournalLine->invoice->id]) : '' ?></td>
+                    <td><?= $accJournalLine->has('invoice') ? $this->Html->link($accJournalLine->invoice->id, ['prefix' => 'Farmasi', 'controller' => 'Invoices', 'action' => 'view', $accJournalLine->invoice->id]) : '' ?></td>
                     <td><?= $this->Number->format($accJournalLine->position) ?></td>
                     <td><?= h($accJournalLine->ledger_dc) ?></td>
                     <td><?= h($accJournalLine->name) ?></td>

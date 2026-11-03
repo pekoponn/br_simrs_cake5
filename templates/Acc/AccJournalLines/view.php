@@ -20,7 +20,7 @@
             <table>
                 <tr>
                     <th><?= __('Branch') ?></th>
-                    <td><?= $accJournalLine->has('branch') ? $this->Html->link($accJournalLine->branch->name, ['controller' => 'Branches', 'action' => 'view', $accJournalLine->branch->id]) : '' ?></td>
+                    <td><?= $accJournalLine->has('branch') ? $this->Html->link($accJournalLine->branch->name, ['prefix' => 'Pengaturan', 'controller' => 'Branches', 'action' => 'view', $accJournalLine->branch->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('From') ?></th>
@@ -28,11 +28,11 @@
                 </tr>
                 <tr>
                     <th><?= __('Acc Journal') ?></th>
-                    <td><?= $accJournalLine->has('acc_journal') ? $this->Html->link($accJournalLine->acc_journal->name, ['controller' => 'AccJournals', 'action' => 'view', $accJournalLine->acc_journal->id]) : '' ?></td>
+                    <td><?= $accJournalLine->has('acc_journal') ? $this->Html->link($accJournalLine->acc_journal->name, ['prefix' => 'Acc', 'controller' => 'AccJournals', 'action' => 'view', $accJournalLine->acc_journal->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Acc Chart Of Account') ?></th>
-                    <td><?= $accJournalLine->has('acc_chart_of_account') ? $this->Html->link($accJournalLine->acc_chart_of_account->name, ['controller' => 'AccChartOfAccounts', 'action' => 'view', $accJournalLine->acc_chart_of_account->id]) : '' ?></td>
+                    <td><?= $accJournalLine->has('acc_chart_of_account') ? $this->Html->link($accJournalLine->acc_chart_of_account->name, ['prefix' => 'Acc', 'controller' => 'AccChartOfAccounts', 'action' => 'view', $accJournalLine->acc_chart_of_account->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Acc Chart Of Account Code') ?></th>
@@ -48,7 +48,7 @@
                 </tr>
                 <tr>
                     <th><?= __('Invoice') ?></th>
-                    <td><?= $accJournalLine->has('invoice') ? $this->Html->link($accJournalLine->invoice->id, ['controller' => 'Invoices', 'action' => 'view', $accJournalLine->invoice->id]) : '' ?></td>
+                    <td><?= $accJournalLine->has('invoice') ? $this->Html->link($accJournalLine->invoice->id, ['prefix' => 'Farmasi', 'controller' => 'Invoices', 'action' => 'view', $accJournalLine->invoice->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Ledger Dc') ?></th>

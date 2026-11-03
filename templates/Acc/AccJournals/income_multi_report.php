@@ -1273,7 +1273,7 @@ echo '</tr>';
 <script type="text/javascript">
 jQuery(document).ready(function() {
 	var confirmTitle = "Apakah anda ingin menampilkan data tersebut ?";
-    var formAction = "<?php echo $this->Url->build(['controller'=>'AccJournals', 'action' => 'income_multi_report'], ['fullBase' => true]); ?>";
+    var formAction = "<?php echo $this->Url->build(['prefix' => 'Acc', 'controller' => 'AccJournals', 'action' => 'income_multi_report'], ['fullBase' => true]); ?>";
     handleFormConfirmSubmitValid('AccJournalIncomeGlobalReportForm', 'btn-search', confirmTitle, formAction);
 
 	handleDateRange('filterMonthYear', 'filterMonthYearReset', 'filterDatePicker', 'mm-yyyy', 'y', 'filterMonthYear1');

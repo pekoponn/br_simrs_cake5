@@ -123,7 +123,7 @@ $(document).ready(function () {
     var confirmTitle = "Apakah anda ingin menyimpan perubahan data tersebut ?";
 
     var formAction = "<?= $this->Url->build([
-        'prefix' => 'Master',
+        'prefix' => 'Pengaturan',
         'controller' => 'Branches',
         'action' => 'edit',
         $branch->id

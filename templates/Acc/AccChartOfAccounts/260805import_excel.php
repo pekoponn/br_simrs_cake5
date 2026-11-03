@@ -27,7 +27,7 @@
                                     <a href="javascript:(void);" class="btn btn-inverse"><i class="fa fa-download"></i></a>
                                     <a href="javascript:(void);" class="btn btn-inverse dropdown-toggle" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-caret-down"></i></a>
                                     <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                        <?= $this->Html->link('Contoh Excel COA', ['controller' => 'AccChartOfAccounts', 'action' => 'templateExcel'], ['class' => 'dropdown-item', 'escape' => false, 'fullBase' => true]) ?>
+                                        <?= $this->Html->link('Contoh Excel COA', ['prefix' => 'Acc', 'controller' => 'AccChartOfAccounts', 'action' => 'templateExcel'], ['class' => 'dropdown-item', 'escape' => false, 'fullBase' => true]) ?>
                                     </div>
                                 </div>
                                 <br>
@@ -156,7 +156,7 @@ $(document).ready(function() {
     });
 
     var confirmTitle = "Apakah anda yakin ingin mengimpor data COA tersebut ?";
-    var formAction = "<?php echo $this->Url->build(['controller' => 'AccChartOfAccounts', 'action' => 'importExcel', 'save'], ['fullBase' => true]); ?>";
+    var formAction = "<?php echo $this->Url->build(['prefix' => 'Acc', 'controller' => 'AccChartOfAccounts', 'action' => 'importExcel', 'save'], ['fullBase' => true]); ?>";
     handleFormConfirmSubmitValid('AccChartOfAccountAddForm', 'btn-add', confirmTitle, formAction);
 });
 </script>

@@ -221,7 +221,7 @@ $(document).ready(function() {
     $(".select2Form").select2({ allowClear: true });
 
     var confirmTitle = "Apakah anda ingin menyimpan data tersebut ?";
-    var formAction = "<?php echo $this->Url->build(['controller'=>'AccJournals', 'action' => 'postingSave'], ['fullBase' => true]); ?>";
+    var formAction = "<?php echo $this->Url->build(['prefix' => 'Acc', 'controller' => 'AccJournals', 'action' => 'postingSave'], ['fullBase' => true]); ?>";
     handleFormConfirmSubmitValid('AccJournalAddForm', 'btnPosting', confirmTitle, formAction);
 
     // action for CheckAll

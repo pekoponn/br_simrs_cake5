@@ -81,7 +81,7 @@
     function save() {
         $.ajax({
             method: 'POST',
-            url: '<?php echo $this->Url->build(['controller' => 'HrgaHolidays', 'action' => 'edit', $hrgaHoliday->id]) ?>',
+            url: '<?php echo $this->Url->build(['prefix' => 'Hr', 'controller' => 'HrgaHolidays', 'action' => 'edit', $hrgaHoliday->id]) ?>',
             dataType: 'json',
             data: {                
                 desc: $('.desc').val(),

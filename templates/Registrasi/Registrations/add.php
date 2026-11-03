@@ -538,7 +538,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
 
             <?= $this->Form->create($registration, [
                 'type' => 'post',
-                'url' => ['controller' => 'Registrations', 'action' => 'add', '?' => $this->request->getQueryParams()]
+                'url' => ['prefix' => 'Registrasi', 'controller' => 'Registrations', 'action' => 'add', '?' => $this->request->getQueryParams()]
             ]) ?>
 
             <fieldset>
@@ -1587,7 +1587,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
             if (!idProv) return;
 
             $.getJSON(
-                "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'getKabupatens']) ?>", {
+                "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Registrations', 'action' => 'getKabupatens']) ?>", {
                     id_prov: idProv
                 },
                 function(data) {
@@ -1615,7 +1615,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
             if (!idKab) return;
 
             $.getJSON(
-                "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'getKecamatans']) ?>", {
+                "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Registrations', 'action' => 'getKecamatans']) ?>", {
                     id_kab: idKab
                 },
                 function(data) {
@@ -1641,7 +1641,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
             if (!idKec) return;
 
             $.getJSON(
-                "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'getKelurahans']) ?>", {
+                "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Registrations', 'action' => 'getKelurahans']) ?>", {
                     id_kec: idKec
                 },
                 function(data) {
@@ -1739,7 +1739,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
             );
 
             $.getJSON(
-                "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'searchPatients']) ?>", {
+                "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Registrations', 'action' => 'searchPatients']) ?>", {
                     q: keyword || ''
                 },
                 function(response) {
@@ -2021,7 +2021,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
 
         function updateRegistrationNumber(type) {
             $.getJSON(
-                "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'previewRegistrationNo']) ?>",
+                "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Registrations', 'action' => 'previewRegistrationNo']) ?>",
                 { service_type: type },
                 function(data) {
                     if (data && data.registration_no) {
@@ -2052,7 +2052,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
             $('#bed-loading').show();
 
             $.getJSON(
-                "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'getAvailableBeds']) ?>", {
+                "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Registrations', 'action' => 'getAvailableBeds']) ?>", {
                     room_id: roomId,
                     current_bed_id: $('#current-bed-id').val() || ''
                 },
@@ -2171,7 +2171,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
     $('#doctor-schedule-id').html('<option value="">Memuat jadwal...</option>');
 
     $.getJSON(
-        "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'getDoctorSchedules']) ?>", {
+        "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Registrations', 'action' => 'getDoctorSchedules']) ?>", {
             doctor_id: doctorId
         },
         function(data) {
@@ -2578,7 +2578,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        var url = <?= json_encode($this->Url->build(['controller' => 'MedicalRecords', 'action' => 'index'])) ?>
+        var url = <?= json_encode($this->Url->build(['prefix' => 'RekamMedis', 'controller' => 'MedicalRecords', 'action' => 'index'])) ?>
             + '?q=' + encodeURIComponent(patientCode);
 
         window.open(url, '_blank');

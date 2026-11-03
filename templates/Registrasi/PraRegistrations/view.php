@@ -341,7 +341,7 @@ $formatTime = function ($value): string {
                     <div class="praview-item">
                         <label>Master Pasien</label>
                         <div class="praview-value">
-                            <?= $this->Html->link('Lihat Data Pasien', ['controller' => 'Patients', 'action' => 'view', $praRegistration->patient->id]) ?>
+                            <?= $this->Html->link('Lihat Data Pasien', ['prefix' => 'Registrasi', 'controller' => 'Patients', 'action' => 'view', $praRegistration->patient->id]) ?>
                         </div>
                     </div>
                     <?php endif; ?>

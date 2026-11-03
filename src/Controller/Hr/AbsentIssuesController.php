@@ -21,10 +21,10 @@ class AbsentIssuesController extends AppController
      */
     public function index()
     {
-        $this->paginate = [
-            'contain' => ['Users'],
-        ];
-        $absentIssues = $this->paginate($this->AbsentIssues);
+        $query = $this->AbsentIssues->find()
+            ->contain(['Users']);
+
+        $absentIssues = $this->paginate($query);
 
         $this->set(compact('absentIssues'));
     }
@@ -38,9 +38,7 @@ class AbsentIssuesController extends AppController
      */
     public function view($id = null)
     {
-        $absentIssue = $this->AbsentIssues->get($id, [
-            'contain' => ['Users'],
-        ]);
+        $absentIssue = $this->AbsentIssues->get($id, contain: ['Users']);
 
         $this->set(compact('absentIssue'));
     }

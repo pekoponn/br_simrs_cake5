@@ -702,8 +702,7 @@ class PolyclinicQueuesController extends AppController
 
         $this->Flash->success(__('Check-in Mobile JKN berhasil. Silakan lanjutkan pendaftaran pasien.'));
 
-        return $this->redirect([
-            'controller' => 'Registrations',
+        return $this->redirect(['prefix' => 'Registrasi', 'controller' => 'Registrations',
             'action' => 'addTemp',
             '?' => [
                 'queue_id' => $polyclinicQueue->id,

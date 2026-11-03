@@ -86,7 +86,7 @@ ini_set('precision', 14);
             <table>
                 <tr>
                     <th><?= __('Branch') ?></th>
-                    <td><?= $bankTopup->has('branch') ? $this->Html->link($bankTopup->branch->name, ['controller' => 'Branches', 'action' => 'view', $bankTopup->branch->id]) : '' ?></td>
+                    <td><?= $bankTopup->has('branch') ? $this->Html->link($bankTopup->branch->name, ['prefix' => 'Pengaturan', 'controller' => 'Branches', 'action' => 'view', $bankTopup->branch->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Payment Type') ?></th>

@@ -44,7 +44,7 @@ $isSearch = (
                         <a href="javascript:(void);" class="btn btn-inverse"><i class="fa fa-download"></i></a>
                         <a href="javascript:(void);" class="btn btn-inverse dropdown-toggle" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-caret-down"></i></a>
                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                        <?= $this->Html->link('Contoh Excel', ['controller' => 'HrgaAttendances', 'action' => 'importExcel'], ['class'=>'dropdown-item', 'escape' => false, 'fullBase'=>true]) ?>
+                        <?= $this->Html->link('Contoh Excel', ['prefix' => 'Hr', 'controller' => 'HrgaAttendances', 'action' => 'importExcel'], ['class'=>'dropdown-item', 'escape' => false, 'fullBase'=>true]) ?>
                         </div>
 
                     </div>

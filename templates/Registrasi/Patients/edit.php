@@ -404,16 +404,16 @@ $patientFieldValue = function (string $field, $fallback = '') use ($patient) {
 $(function() {
     var regionUrls = {
         kabupatens: [
-            "<?= $this->Url->build(['controller' => 'Patients', 'action' => 'getKabupatens']) ?>",
-            "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'getKabupatens']) ?>"
+            "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Patients', 'action' => 'getKabupatens']) ?>",
+            "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Registrations', 'action' => 'getKabupatens']) ?>"
         ],
         kecamatans: [
-            "<?= $this->Url->build(['controller' => 'Patients', 'action' => 'getKecamatans']) ?>",
-            "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'getKecamatans']) ?>"
+            "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Patients', 'action' => 'getKecamatans']) ?>",
+            "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Registrations', 'action' => 'getKecamatans']) ?>"
         ],
         kelurahans: [
-            "<?= $this->Url->build(['controller' => 'Patients', 'action' => 'getKelurahans']) ?>",
-            "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'getKelurahans']) ?>"
+            "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Patients', 'action' => 'getKelurahans']) ?>",
+            "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Registrations', 'action' => 'getKelurahans']) ?>"
         ]
     };
 

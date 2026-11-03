@@ -136,7 +136,7 @@ $(document).ready(function() {
         var dates = dateFrom+'^'+dateEnd;
         // alert(dates);
 		if(dates.length != 0) {
-			var urlDataTable = "<?php echo $this->Url->build(['controller'=>'AccJournalLines', 'action' => 'getGeneralJournal?dateJournal='], ['fullBase' => true]); ?>"+dates;
+			var urlDataTable = "<?php echo $this->Url->build(['prefix' => 'Acc', 'controller' => 'AccJournalLines', 'action' => 'getGeneralJournal?dateJournal='], ['fullBase' => true]); ?>"+dates;
 			// alert(urlDataTable);
 			// var urlDataTable = "<?php //echo $this->Html->url(array('event_id' => $uuid, 'controller'=>'acc_journal_lines', 'action' => 'get_general_journal?dateJournal=')); ?>"+dates;
 			var oTable = $('#myTable').DataTable({

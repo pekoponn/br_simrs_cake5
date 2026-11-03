@@ -103,7 +103,7 @@ $jsTimezone = $timezoneMap[$userTimezone] ?? 'Asia/Jakarta';
                         </div>
                         <div class="m-b-2 text-truncate">
                         <small class="text-danger">
-                            * Jika mengalami kendala absensi, silahkan screenshot halaman ini dan isi kendala pada <br> <a href="<?= $this->Url->build(['prefix' => false, 'controller' => 'AbsentIssues', 'action' => 'add']) ?>" class="btn btn-warning btn-sm"><i class="fas fa-exclamation-triangle"></i>Kendala Absensi</a>
+                            * Jika mengalami kendala absensi, silahkan screenshot halaman ini dan isi kendala pada <br> <a href="<?= $this->Url->build(['prefix' => 'Hr', 'controller' => 'AbsentIssues', 'action' => 'add']) ?>" class="btn btn-warning btn-sm"><i class="fas fa-exclamation-triangle"></i>Kendala Absensi</a>
                         </small>
                     </div>
                     </div>
@@ -337,7 +337,7 @@ function updateButtonByTime() {
 
 $(document).ready(function() {
     var confirmTitle = "Apakah anda ingin menyimpan data tersebut ?";
-    var formAction = "<?php echo $this->Url->build(['prefix' => false, 'controller' => 'Absences', 'action' => 'add'], ['fullBase' => true]); ?>";
+    var formAction = "<?php echo $this->Url->build(['prefix' => 'Hr', 'controller' => 'Absences', 'action' => 'add'], ['fullBase' => true]); ?>";
     handleFormConfirmSubmitValid('GroupAddForm', 'btn-add', confirmTitle, formAction);
     // $('input[name="condition_type"]').on('change', function () {
     //     $('#conditionField').val($(this).val());

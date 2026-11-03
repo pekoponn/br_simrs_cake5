@@ -15,7 +15,7 @@ use Cake\Utility\Text;
             <div class="table-toolbar">
                 <div class="btn-group">
                     <div class="portlet-body">
-                        <?= $this->Html->link('<i class="fa fa-plus"></i>', ['controller' => 'AccChartOfAccounts', 'action' => 'add'], ['class' => 'btn btn-inverse', 'data-toggle' => 'tooltip', 'data-placement' => 'top', 'data-original-title' => 'Add', 'escape' => false, 'fullBase' => true]) ?>
+                        <?= $this->Html->link('<i class="fa fa-plus"></i>', ['prefix' => 'Acc', 'controller' => 'AccChartOfAccounts', 'action' => 'add'], ['class' => 'btn btn-inverse', 'data-toggle' => 'tooltip', 'data-placement' => 'top', 'data-original-title' => 'Add', 'escape' => false, 'fullBase' => true]) ?>
                         <div class="btn-group dropdown">
                             <a href="javascript:(void);" class="btn btn-lime"><i class="fa fa-download"></i></a>
                             <a href="javascript:(void);" class="btn btn-lime dropdown-toggle" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-caret-down"></i></a>

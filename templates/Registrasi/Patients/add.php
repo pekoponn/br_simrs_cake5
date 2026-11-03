@@ -440,7 +440,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
             if (!idProv) return;
 
             $.getJSON(
-                "<?= $this->Url->build(['controller' => 'Patients', 'action' => 'getKabupatens']) ?>", {
+                "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Patients', 'action' => 'getKabupatens']) ?>", {
                     id_prov: idProv
                 },
                 function(data) {
@@ -471,7 +471,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
             if (!idKab) return;
 
             $.getJSON(
-                "<?= $this->Url->build(['controller' => 'Patients', 'action' => 'getKecamatans']) ?>", {
+                "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Patients', 'action' => 'getKecamatans']) ?>", {
                     id_kab: idKab
                 },
                 function(data) {
@@ -499,7 +499,7 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
             if (!idKec) return;
 
             $.getJSON(
-                "<?= $this->Url->build(['controller' => 'Patients', 'action' => 'getKelurahans']) ?>", {
+                "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Patients', 'action' => 'getKelurahans']) ?>", {
                     id_kec: idKec
                 },
                 function(data) {
@@ -552,16 +552,16 @@ $patientFieldValue = function (string $field, $fallback = '') use ($queuePatient
 $(function() {
     var regionUrls = {
         kabupatens: [
-            "<?= $this->Url->build(['controller' => 'Patients', 'action' => 'getKabupatens']) ?>",
-            "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'getKabupatens']) ?>"
+            "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Patients', 'action' => 'getKabupatens']) ?>",
+            "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Registrations', 'action' => 'getKabupatens']) ?>"
         ],
         kecamatans: [
-            "<?= $this->Url->build(['controller' => 'Patients', 'action' => 'getKecamatans']) ?>",
-            "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'getKecamatans']) ?>"
+            "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Patients', 'action' => 'getKecamatans']) ?>",
+            "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Registrations', 'action' => 'getKecamatans']) ?>"
         ],
         kelurahans: [
-            "<?= $this->Url->build(['controller' => 'Patients', 'action' => 'getKelurahans']) ?>",
-            "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'getKelurahans']) ?>"
+            "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Patients', 'action' => 'getKelurahans']) ?>",
+            "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Registrations', 'action' => 'getKelurahans']) ?>"
         ]
     };
 

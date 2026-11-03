@@ -23,7 +23,7 @@ foreach ($rows as $r) {
 $lemburJam   = floor($totalLembur / 3600);
 $lemburMenit = floor(($totalLembur % 3600) / 60);
 // URL Excel
-$excelUrl = $this->Url->build(['prefix'     => 'Hr', 'controller' => 'ReportAttendances', 'action'     => 'excelSummary', $user['id'],
+$excelUrl = $this->Url->build(['prefix' => 'Hr', 'controller' => 'ReportAttendances', 'action'     => 'excelSummary', $user['id'],
 ]) . '?start_date=' . urlencode($startDate) . '&end_date=' . urlencode($endDate);
 ?>
 

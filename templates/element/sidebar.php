@@ -280,7 +280,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 								<li <?= $menuReportGeneralJournal ?>><?= $this->Html->link('Jurnal Umum', ['prefix' => 'Acc','controller' => 'AccJournals', 'action' => 'general_journal_report'], ['fullBase' => true, 'escape' => false]) ?></li>
 								<li <?= $menuReportGeneralLedger ?>><?= $this->Html->link('Buku Besar', ['prefix' => 'Acc','controller' => 'AccJournals', 'action' => 'generalLedgerReport'], ['fullBase' => true, 'escape' => false]) ?></li>
 								<?php
-								// <li <?= $menuReportEkuitas><?= $this->Html->link('Ekuitas', ['prefix' => false,'controller' => 'AccJournals', 'action' => 'ekuitasReport'], ['fullBase' => true, 'escape' => false])</li>
+								// <li <?= $menuReportEkuitas><?= $this->Html->link('Ekuitas', ['prefix' => 'Acc','controller' => 'AccJournals', 'action' => 'ekuitasReport'], ['fullBase' => true, 'escape' => false])</li>
 								
 								?>
 							</ul>
@@ -473,42 +473,42 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 						<ul class="sub-menu">
 							<?php if (!empty($order['antrianFarmasi'])) { ?>
 								<li <?= $menuAntrianFarmasi ?>>
-									<?= $this->Html->link('Antrian Farmasi', ['prefix' => false,'controller' => 'Orders', 'action' => 'antrianFarmasi'], ['fullBase' => true, 'escape' => false]) ?>
+									<?= $this->Html->link('Antrian Farmasi', ['prefix' => 'Farmasi','controller' => 'Orders', 'action' => 'antrianFarmasi'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
 							<?php } ?>
 							<?php if (!empty($order['proses'])) { ?>
 								<li <?= $menuProsesFarmasi ?>>
-									<?= $this->Html->link('Proses Resep Luar', ['prefix' => false,'controller' => 'Orders', 'action' => 'proses'], ['fullBase' => true, 'escape' => false]) ?>
+									<?= $this->Html->link('Proses Resep Luar', ['prefix' => 'Farmasi','controller' => 'Orders', 'action' => 'proses'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
 							<?php } ?>
 							<?php if (!empty($rencanaPembelian['index'])) { ?>
 								<li <?= $menuRencanaPembelian ?>>
-									<?= $this->Html->link('Rencana Pembelian', ['prefix' => false,'controller' => 'RencanaPembelians', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+									<?= $this->Html->link('Rencana Pembelian', ['prefix' => 'Farmasi','controller' => 'RencanaPembelians', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
 							<?php } ?>
 							<?php if (!empty($orderPembelian['index'])) { ?>
 								<li <?= $menuOrderPembelian ?>>
-									<?= $this->Html->link('Order Pembelian', ['prefix' => false,'controller' => 'OrderPembelians', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+									<?= $this->Html->link('Order Pembelian', ['prefix' => 'Farmasi','controller' => 'OrderPembelians', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
 							<?php } ?>
 							<?php if (!empty($invoice['index'])) { ?>
 								<li <?= $menuInvoiceFarmasi ?>>
-									<?= $this->Html->link('BAPB / Invoice', ['prefix' => false,'controller' => 'Invoices', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+									<?= $this->Html->link('BAPB / Invoice', ['prefix' => 'Farmasi','controller' => 'Invoices', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
 							<?php } ?>
 							<?php if (!empty($returPembelian['index'])) { ?>
 								<li <?= $menuReturPembelian ?>>
-									<?= $this->Html->link('Retur Pembelian', ['prefix' => false,'controller' => 'ReturPembelians', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+									<?= $this->Html->link('Retur Pembelian', ['prefix' => 'Farmasi','controller' => 'ReturPembelians', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
 							<?php } ?>
 							<?php if (!empty($medicineStock['index'])) { ?>
 								<li <?= $menuMedicineStock ?>>
-									<?= $this->Html->link('Informasi Stok', ['prefix' => false,'controller' => 'MedicineStocks', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+									<?= $this->Html->link('Informasi Stok', ['prefix' => 'Farmasi','controller' => 'MedicineStocks', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
 							<?php } ?>
 							<?php if (!empty($kartuStok['index'])) { ?>
 								<li <?= $menuKartuStok ?>>
-									<?= $this->Html->link('Kartu Stok', ['prefix' => false,'controller' => 'KartuStok', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+									<?= $this->Html->link('Kartu Stok', ['prefix' => 'Farmasi','controller' => 'KartuStok', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 								</li>
 							<?php } ?>
 						</ul>
@@ -662,7 +662,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 									<?= $this->Html->link(
 										'Kunjungan Rawat Jalan',
 										[
-											'prefix' => false,
+											'prefix' => 'RawatJalan',
 											'controller' => 'OutpatientVisits',
 											'action' => 'index'
 										],
@@ -673,7 +673,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 									) ?>
 								</li>
 								<?php if (!empty($outpatientVisit['doctorQueue'])): ?><li <?= ($getController == 'outpatientvisits' && $action == 'doctorQueue') ? ' class="active"' : '' ?>>
-									<?= $this->Html->link('Menu Dokter - Daftar Pasien', ['prefix' => false, 'controller' => 'OutpatientVisits', 'action' => 'doctorQueue'], ['fullBase' => true]) ?>
+									<?= $this->Html->link('Menu Dokter - Daftar Pasien', ['prefix' => 'RawatJalan', 'controller' => 'OutpatientVisits', 'action' => 'doctorQueue'], ['fullBase' => true]) ?>
 								</li>
 								<?php endif; ?>
 							<?php
@@ -684,13 +684,13 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 								<li <?= $menuOutpatientVisitDisplay ?>>
 									<?= $this->Html->link(
 										'Display Antrean Poli',
-										['prefix' => false, 'controller' => 'OutpatientVisits', 'action' => 'display'],
+										['prefix' => 'RawatJalan', 'controller' => 'OutpatientVisits', 'action' => 'display'],
 										['fullBase' => true, 'escape' => false]
 									) ?>
 								</li>
 							<?php } ?>
 							<?php if (!empty($outpatientVisit['displaySettings'])) { ?>
-								<li <?= $menuOutpatientVisitDisplaySettings ?>><?= $this->Html->link('Pengaturan Display', ['prefix' => false, 'controller' =>'OutpatientVisits','action'=>'displaySettings']) ?></li>
+								<li <?= $menuOutpatientVisitDisplaySettings ?>><?= $this->Html->link('Pengaturan Display', ['prefix' => 'RawatJalan', 'controller' => 'OutpatientVisits','action'=>'displaySettings']) ?></li>
 							<?php } ?>
 
 							<?php
@@ -700,7 +700,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 									<?= $this->Html->link(
 										'Rekam Medis',
 										[
-											'prefix' => false,
+											'prefix' => 'RekamMedis',
 											'controller' => 'MedicalRecords',
 											'action' => 'index'
 										],
@@ -719,7 +719,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 									<?= $this->Html->link(
 										'Surat Rawat Jalan',
 										[
-											'prefix' => false,
+											'prefix' => 'RawatJalan',
 											'controller' => 'OutpatientLetters',
 											'action' => 'index'
 										],
@@ -758,7 +758,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 									<?= $this->Html->link(
 										'Kasir Sentral',
 										[
-											'prefix' => false,
+											'prefix' => 'Kasir',
 											'controller' => 'OutpatientBillings',
 											'action' => 'index'
 										],
@@ -777,7 +777,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 									<?= $this->Html->link(
 										'Historis Kasir',
 										[
-											'prefix' => false,
+											'prefix' => 'Kasir',
 											'controller' => 'PaymentHistories',
 											'action' => 'index'
 										],
@@ -812,7 +812,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 								<?= $this->Html->link(
 									'Daftar Pasien IGD',
 									[
-										'prefix' => false,
+										'prefix' => 'Igd',
 										'controller' => 'EmergencyEntries',
 										'action' => 'index'
 									],
@@ -844,7 +844,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 								<?= $this->Html->link(
 									'Pasien Rawat Inap',
 									[
-										'prefix' => false,
+										'prefix' => 'Registrasi',
 										'controller' => 'InpatientEntries',
 										'action' => 'index'
 									],
@@ -968,7 +968,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 										if ($medicine['index'] == 1) {
 										?>
 											<li <?= $menuMasterMedicine ?>>
-												<?= $this->Html->link('Daftar', ['prefix' => false,'controller' => 'Medicines', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+												<?= $this->Html->link('Daftar', ['prefix' => 'Farmasi','controller' => 'Medicines', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 											</li>
 										<?php
 										}
@@ -976,7 +976,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 										if (($medicineMerk['index'] ?? 0) == 1) {
 										?>
 											<li <?= $menuMasterMedicineMerk ?>>
-												<?= $this->Html->link('Merk', ['prefix' => false,'controller' => 'MedicineMerks', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+												<?= $this->Html->link('Merk', ['prefix' => 'Farmasi','controller' => 'MedicineMerks', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 											</li>
 										<?php
 										}
@@ -984,7 +984,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 										if (($medicineGroup['index'] ?? 0) == 1) {
 										?>
 											<li <?= $menuMasterMedicineGroup ?>>
-												<?= $this->Html->link('Group', ['prefix' => false,'controller' => 'MedicineGroups', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+												<?= $this->Html->link('Group', ['prefix' => 'Farmasi','controller' => 'MedicineGroups', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 											</li>
 										<?php
 										}
@@ -1098,7 +1098,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 					if ($branch['index'] == 1) {
 					?>
 						<li<?= $menuBranches ?>>
-							<?= $this->Html->link('Cabang', ['prefix' => false, 'controller' => 'Branches', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+							<?= $this->Html->link('Cabang', ['prefix' => 'Pengaturan', 'controller' => 'Branches', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
 							</li>
 						<?php
 					}

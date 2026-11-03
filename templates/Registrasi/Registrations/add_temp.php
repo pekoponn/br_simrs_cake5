@@ -125,7 +125,7 @@ $currentPaymentMethod = $this->request->getData('payment_method') ?? 'PERORANGAN
 
         <?= $this->Form->create($registration, [
             'type' => 'post',
-            'url' => ['controller' => 'Registrations', 'action' => 'addTemp', '?' => $this->request->getQueryParams()],
+            'url' => ['prefix' => 'Registrasi', 'controller' => 'Registrations', 'action' => 'addTemp', '?' => $this->request->getQueryParams()],
         ]) ?>
 
         <fieldset>
@@ -212,7 +212,7 @@ $currentPaymentMethod = $this->request->getData('payment_method') ?? 'PERORANGAN
         </fieldset>
 
         <div class="submit-card">
-            <?= $this->Html->link('Batal', ['controller' => 'PatientAdmissions', 'action' => 'index', '?' => ['tab' => 'rawat_jalan']], ['class' => 'btn btn-default']) ?>
+            <?= $this->Html->link('Batal', ['prefix' => 'Registrasi', 'controller' => 'PatientAdmissions', 'action' => 'index', '?' => ['tab' => 'rawat_jalan']], ['class' => 'btn btn-default']) ?>
             <?= $this->Form->button('Simpan Registrasi', [
                 'type' => 'submit',
                 'class' => 'btn btn-primary',

@@ -88,7 +88,7 @@ $(document).ready(function () {
     var confirmTitle = "Apakah anda ingin menyimpan data tersebut ?";
 
     var formAction = "<?= $this->Url->build([
-        'prefix' => 'Master',
+        'prefix' => 'Pengaturan',
         'controller' => 'Branches',
         'action' => 'add'
     ], ['fullBase' => true]); ?>";

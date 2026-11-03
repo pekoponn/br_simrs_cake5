@@ -62,7 +62,7 @@ function formatInapDate($value, $format = 'd-m-Y H:i')
                     </button>
                     <?= $this->Html->link(
                         '<i class="fa fa-plus"></i> Entry Rawat Inap',
-                        ['controller' => 'Registrations', 'action' => 'add'],
+                        ['prefix' => 'Registrasi', 'controller' => 'Registrations', 'action' => 'add'],
                         ['escape' => false, 'class' => 'btn btn-primary']
                     ) ?>
                 </div>

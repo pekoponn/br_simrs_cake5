@@ -595,7 +595,7 @@ $registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_
 
             if (!$queue) {
                 $this->Flash->error(__('Data antrian tidak ditemukan.'));
-                return $this->redirect(['controller' => 'PolyclinicQueues', 'action' => 'index']);
+                return $this->redirect(['prefix' => 'Registrasi', 'controller' => 'PolyclinicQueues', 'action' => 'index']);
             }
 
             // Cek status antrian hanya kalau kolom is_active memang ada.
@@ -1435,8 +1435,7 @@ $registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_
                     }
 
                     $this->Flash->success(__('Registrasi sementara berhasil disimpan.'));
-                    return $this->redirect([
-                        'controller' => 'PatientAdmissions',
+                    return $this->redirect(['prefix' => 'Registrasi', 'controller' => 'PatientAdmissions',
                         'action' => 'index',
                         '?' => ['tab' => 'rawat_jalan'],
                     ]);
@@ -1649,8 +1648,7 @@ $registrationNo = $this->_generateRegistrationNo($fromPlannedInpatient ? 'rawat_
                     }
 
                     $this->Flash->success(__('Registrasi sementara berhasil disimpan.'));
-                    return $this->redirect([
-                        'controller' => 'PatientAdmissions',
+                    return $this->redirect(['prefix' => 'Registrasi', 'controller' => 'PatientAdmissions',
                         'action' => 'index',
                         '?' => ['tab' => 'rawat_jalan'],
                     ]);

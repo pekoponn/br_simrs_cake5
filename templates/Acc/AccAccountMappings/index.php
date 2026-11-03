@@ -32,8 +32,8 @@
                 <?php foreach ($accAccountMappings as $accAccountMapping): ?>
                 <tr>
                     <td><?= $this->Number->format($accAccountMapping->id) ?></td>
-                    <td><?= $accAccountMapping->has('branch') ? $this->Html->link($accAccountMapping->branch->name, ['controller' => 'Branches', 'action' => 'view', $accAccountMapping->branch->id]) : '' ?></td>
-                    <td><?= $accAccountMapping->has('acc_chart_of_account') ? $this->Html->link($accAccountMapping->acc_chart_of_account->name, ['controller' => 'AccChartOfAccounts', 'action' => 'view', $accAccountMapping->acc_chart_of_account->id]) : '' ?></td>
+                    <td><?= $accAccountMapping->has('branch') ? $this->Html->link($accAccountMapping->branch->name, ['prefix' => 'Pengaturan', 'controller' => 'Branches', 'action' => 'view', $accAccountMapping->branch->id]) : '' ?></td>
+                    <td><?= $accAccountMapping->has('acc_chart_of_account') ? $this->Html->link($accAccountMapping->acc_chart_of_account->name, ['prefix' => 'Acc', 'controller' => 'AccChartOfAccounts', 'action' => 'view', $accAccountMapping->acc_chart_of_account->id]) : '' ?></td>
                     <td><?= h($accAccountMapping->group) ?></td>
                     <td><?= h($accAccountMapping->name) ?></td>
                     <td><?= h($accAccountMapping->desc) ?></td>

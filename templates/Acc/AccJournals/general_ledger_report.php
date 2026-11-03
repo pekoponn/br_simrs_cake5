@@ -283,14 +283,14 @@ use Cake\Utility\Hash;
 <script type="text/javascript">
 jQuery(document).ready(function() {
 	var confirmTitle = "Apakah anda ingin menampilkan data tersebut ?";
-    var formAction = "<?php echo $this->Url->build(['controller'=>'AccJournals', 'action' => 'general_ledger_report'], ['fullBase' => true]); ?>";
+    var formAction = "<?php echo $this->Url->build(['prefix' => 'Acc', 'controller' => 'AccJournals', 'action' => 'general_ledger_report'], ['fullBase' => true]); ?>";
     handleFormConfirmSubmitValid('AccJournalGeneralLedgerReportForm', 'btn-search', confirmTitle, formAction);
 
 	handleDateRange('filterDatePicker', 'resetDate', 'filterDate', 'dd-mm-yyyy');
 	handleDateRange('filterMonthYear', 'filterMonthYearReset', 'filterMY', 'mm-yyyy', 'y');
 
-	var checkCOAbyName = "<?php echo $this->Url->build(['controller'=>'AccChartOfAccounts', 'action' => 'getCoa', 5], ['fullBase' => true]); ?>";
-	var checkCOAbyNameGroup = "<?php echo $this->Url->build(['controller'=>'AccChartOfAccounts', 'action' => 'getCoa', 4], ['fullBase' => true]); ?>";
+	var checkCOAbyName = "<?php echo $this->Url->build(['prefix' => 'Acc', 'controller' => 'AccChartOfAccounts', 'action' => 'getCoa', 5], ['fullBase' => true]); ?>";
+	var checkCOAbyNameGroup = "<?php echo $this->Url->build(['prefix' => 'Acc', 'controller' => 'AccChartOfAccounts', 'action' => 'getCoa', 4], ['fullBase' => true]); ?>";
 
     
     handleFormSelect2Search('ledgerGroupCallId', 'Masukkan Nama Perkiraan (level 4)', 2, checkCOAbyNameGroup);

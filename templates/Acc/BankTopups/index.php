@@ -127,7 +127,7 @@
 </div>
 
 <?php
-$urlGetData = $this->Url->build(['controller' => 'BankTopups', 'action' => 'view', '_full' => true]);
+$urlGetData = $this->Url->build(['prefix' => 'Acc', 'controller' => 'BankTopups', 'action' => 'view', '_full' => true]);
 ?>
 <script>
 $(document).ready(function() {

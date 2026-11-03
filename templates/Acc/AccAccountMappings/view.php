@@ -20,11 +20,11 @@
             <table>
                 <tr>
                     <th><?= __('Branch') ?></th>
-                    <td><?= $accAccountMapping->has('branch') ? $this->Html->link($accAccountMapping->branch->name, ['controller' => 'Branches', 'action' => 'view', $accAccountMapping->branch->id]) : '' ?></td>
+                    <td><?= $accAccountMapping->has('branch') ? $this->Html->link($accAccountMapping->branch->name, ['prefix' => 'Pengaturan', 'controller' => 'Branches', 'action' => 'view', $accAccountMapping->branch->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Acc Chart Of Account') ?></th>
-                    <td><?= $accAccountMapping->has('acc_chart_of_account') ? $this->Html->link($accAccountMapping->acc_chart_of_account->name, ['controller' => 'AccChartOfAccounts', 'action' => 'view', $accAccountMapping->acc_chart_of_account->id]) : '' ?></td>
+                    <td><?= $accAccountMapping->has('acc_chart_of_account') ? $this->Html->link($accAccountMapping->acc_chart_of_account->name, ['prefix' => 'Acc', 'controller' => 'AccChartOfAccounts', 'action' => 'view', $accAccountMapping->acc_chart_of_account->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Group') ?></th>

@@ -147,7 +147,7 @@ $dataChild = $this->Html->link('Lembur', ['action' => 'index'], ['full_base' => 
         if (!workOrderCode) { Swal.fire('Silakan masukkan nomor Work Order'); return; }
 
         $.ajax({
-            url: "<?php echo $this->Url->build(['prefix'=>'Hr','controller'=>'Overtimes','action'=>'getWorkOrder']); ?>",
+            url: "<?php echo $this->Url->build(['prefix' => 'Hr','controller' => 'Overtimes','action'=>'getWorkOrder']); ?>",
             method: "GET",
             data: { code: workOrderCode },
             success: function(response) {

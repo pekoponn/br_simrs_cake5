@@ -300,11 +300,11 @@ $(document).ready(function() {
     handleFormConfirmSubmitValid('AccJournalAddForm', 'btnPosting', confirmTitle, formAction);
 
     // var confirmTitle = "Apakah anda ingin menyimpan data tersebut ?";
-    // var formAction = "<?php //echo $this->Url->build(['controller'=>'AccJournals', 'action' => 'postingSave'], ['fullBase' => true]); ?>";
+    // var formAction = "<?php //echo $this->Url->build(['prefix' => 'Acc', 'controller' => 'AccJournals', 'action' => 'postingSave'], ['fullBase' => true]); ?>";
     // handleFormConfirmSubmitValid('AccJournalAddForm', 'btnPosting', confirmTitle, formAction);
 
     // var confirmTitleDelete = "Apakah anda ingin menghapus data tersebut ?";
-    // var formActionDelete = "<?php //echo $this->Url->build(['controller'=>'AccJournals', 'action' => 'postingDelete'], ['fullBase' => true]); ?>";
+    // var formActionDelete = "<?php //echo $this->Url->build(['prefix' => 'Acc', 'controller' => 'AccJournals', 'action' => 'postingDelete'], ['fullBase' => true]); ?>";
     // handleFormConfirmSubmitValid('AccJournalAddForm', 'btnDelete', confirmTitleDelete, formActionDelete);
 
     // action for CheckAll

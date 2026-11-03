@@ -204,7 +204,7 @@
         };
 
     $.ajax({
-        url: '<?= $this->Url->build(["prefix" => false, "controller" => "AbsentIssues", "action" => "getHistory"]) ?>',
+        url: '<?= $this->Url->build(["prefix" => "Hr", "controller" => "AbsentIssues", "action" => "getHistory"]) ?>',
         method: 'GET',
         data: filters,
         dataType: 'json',
@@ -234,7 +234,7 @@ function loadHistoryData() {
         searching: false, 
         scrollX: true,
         ajax: {
-            url: '<?= $this->Url->build(["prefix" => false, "controller" => "AbsentIssues", "action" => "getHistory"]) ?>',
+            url: '<?= $this->Url->build(["prefix" => "Hr", "controller" => "AbsentIssues", "action" => "getHistory"]) ?>',
             type: 'GET',
             data: function (d) {
                 const dateRange = $('.daterange').val();
@@ -424,7 +424,7 @@ $(document).on('click', '.btn-preview', function () {
 
     $('#modalPreviewAbsences').modal('show');
 });
-<?php $baseUrl = $this->Url->build(['controller' => 'AbsentIssues', 'action' => 'status']); ?>
+<?php $baseUrl = $this->Url->build(['prefix' => 'Hr', 'controller' => 'AbsentIssues', 'action' => 'status']); ?>
 
 $('.data-absenceIssues').on('click', '.btn-status', function () {
     const id = $(this).data('id');

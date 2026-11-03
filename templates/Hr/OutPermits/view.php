@@ -20,7 +20,7 @@
             <table>
                 <tr>
                     <th><?= __('Branch') ?></th>
-                    <td><?= $outPermit->has('branch') ? $this->Html->link($outPermit->branch->name, ['controller' => 'Branches', 'action' => 'view', $outPermit->branch->id]) : '' ?></td>
+                    <td><?= $outPermit->has('branch') ? $this->Html->link($outPermit->branch->name, ['prefix' => 'Pengaturan', 'controller' => 'Branches', 'action' => 'view', $outPermit->branch->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Code') ?></th>

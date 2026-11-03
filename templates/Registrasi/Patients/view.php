@@ -286,7 +286,7 @@ function fmtPatientDate($val, $fmt = 'd-m-Y') {
                 <?php if ($canViewPatientHistory): ?>
                     <?= $this->Html->link(
                         '<i class="fa fa-history"></i> Riwayat Pasien',
-                        ['controller' => 'MedicalRecords', 'action' => 'history', $patient->id],
+                        ['prefix' => 'RekamMedis', 'controller' => 'MedicalRecords', 'action' => 'history', $patient->id],
                         ['class' => 'btn btn-primary btn-sm', 'escape' => false]
                     ) ?>
                 <?php endif; ?>

@@ -128,8 +128,8 @@
 </div>
 
 <?php
-$urlGetData = $this->Url->build(['prefix' => 'Master', 'controller' => 'Branches', 'action' => 'view', '_full' => true]);
-$urlStatusData = $this->Url->build(['prefix'=>'Master' , 'controller' => 'Branches', 'action' => 'changestatus', '_full' => true])
+$urlGetData = $this->Url->build(['prefix' => 'Pengaturan', 'controller' => 'Branches', 'action' => 'view', '_full' => true]);
+$urlStatusData = $this->Url->build(['prefix' => 'Pengaturan' , 'controller' => 'Branches', 'action' => 'changestatus', '_full' => true])
 ?>
 
 <script>

@@ -119,7 +119,7 @@
                         <a href="javascript:(void);" class="btn btn-inverse"><i class="fa fa-download"></i></a>
                         <a href="javascript:(void);" class="btn btn-inverse dropdown-toggle" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-caret-down"></i></a>
                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                        <?= $this->Html->link('Contoh Excel', ['controller' => 'BankAccounts', 'action' => 'importExcel'], ['class'=>'dropdown-item', 'escape' => false, 'fullBase'=>true]) ?>
+                        <?= $this->Html->link('Contoh Excel', ['prefix' => 'Master', 'controller' => 'BankAccounts', 'action' => 'importExcel'], ['class'=>'dropdown-item', 'escape' => false, 'fullBase'=>true]) ?>
                         </div>
 
                     </div> -->
@@ -135,7 +135,7 @@
 </div>
 
 <?php
-$urlGetData = $this->Url->build(['controller' => 'BankAccounts', 'action' => 'view', '_full' => true]);
+$urlGetData = $this->Url->build(['prefix' => 'Master', 'controller' => 'BankAccounts', 'action' => 'view', '_full' => true]);
 ?>
 <script>
 $(document).ready(function() {

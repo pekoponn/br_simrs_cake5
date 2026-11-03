@@ -158,7 +158,7 @@
                 <?php foreach ($users as $user): ?>
                 <tr>
                     <td><?= $this->Number->format($user->id) ?></td>
-                    <td><?= $user->has('branch') ? $this->Html->link($user->branch->name, ['controller' => 'Branches', 'action' => 'view', $user->branch->id]) : '' ?></td>
+                    <td><?= $user->has('branch') ? $this->Html->link($user->branch->name, ['prefix' => 'Pengaturan', 'controller' => 'Branches', 'action' => 'view', $user->branch->id]) : '' ?></td>
                     <td><?= h($user->code) ?></td>
                     <td><?= h($user->staff) ?></td>
                     <td><?= h($user->name) ?></td>

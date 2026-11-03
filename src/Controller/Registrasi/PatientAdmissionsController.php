@@ -275,8 +275,7 @@ class PatientAdmissionsController extends AppController
 
     private function buildQueueAdmissionUrl($queue): string
     {
-        return \Cake\Routing\Router::url([
-            'controller' => 'Registrations',
+        return \Cake\Routing\Router::url(['prefix' => 'Registrasi', 'controller' => 'Registrations',
             'action' => 'addTemp',
             '?' => ['queue_id' => $queue->id],
         ]);
@@ -284,8 +283,7 @@ class PatientAdmissionsController extends AppController
 
         private function buildPraAdmissionUrl($pra): string
     {
-        return \Cake\Routing\Router::url([
-            'controller' => 'Registrations',
+        return \Cake\Routing\Router::url(['prefix' => 'Registrasi', 'controller' => 'Registrations',
             'action' => 'add',
             '?' => [
                 'from_pra_registration' => 1,

@@ -208,8 +208,7 @@
                                         <?php elseif ($queue->is_active == 'Y'): ?>
                                             <?= $this->Html->link(
                                                 '<i class="fa fa-user-plus"></i>',
-                                                [
-                                                    'controller' => 'Registrations',
+                                                ['prefix' => 'Registrasi', 'controller' => 'Registrations',
                                                     'action' => 'addTemp',
                                                     '?' => [
                                                         'queue_id' => $queue->id,

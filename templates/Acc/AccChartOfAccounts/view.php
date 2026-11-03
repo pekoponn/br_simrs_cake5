@@ -20,11 +20,11 @@
             <table>
                 <tr>
                     <th><?= __('Branch') ?></th>
-                    <td><?= $accChartOfAccount->has('branch') ? $this->Html->link($accChartOfAccount->branch->name, ['controller' => 'Branches', 'action' => 'view', $accChartOfAccount->branch->id]) : '' ?></td>
+                    <td><?= $accChartOfAccount->has('branch') ? $this->Html->link($accChartOfAccount->branch->name, ['prefix' => 'Pengaturan', 'controller' => 'Branches', 'action' => 'view', $accChartOfAccount->branch->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Parent Acc Chart Of Account') ?></th>
-                    <td><?= $accChartOfAccount->has('parent_acc_chart_of_account') ? $this->Html->link($accChartOfAccount->parent_acc_chart_of_account->name, ['controller' => 'AccChartOfAccounts', 'action' => 'view', $accChartOfAccount->parent_acc_chart_of_account->id]) : '' ?></td>
+                    <td><?= $accChartOfAccount->has('parent_acc_chart_of_account') ? $this->Html->link($accChartOfAccount->parent_acc_chart_of_account->name, ['prefix' => 'Acc', 'controller' => 'AccChartOfAccounts', 'action' => 'view', $accChartOfAccount->parent_acc_chart_of_account->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Parent Account') ?></th>
@@ -186,9 +186,9 @@
                             <td><?= h($accAccountMappings->status) ?></td>
                             <td><?= h($accAccountMappings->is_active) ?></td>
                             <td class="actions">
-                                <?= $this->Html->link(__('View'), ['controller' => 'AccAccountMappings', 'action' => 'view', $accAccountMappings->id]) ?>
-                                <?= $this->Html->link(__('Edit'), ['controller' => 'AccAccountMappings', 'action' => 'edit', $accAccountMappings->id]) ?>
-                                <?= $this->Form->postLink(__('Delete'), ['controller' => 'AccAccountMappings', 'action' => 'delete', $accAccountMappings->id], ['confirm' => __('Are you sure you want to delete # {0}?', $accAccountMappings->id)]) ?>
+                                <?= $this->Html->link(__('View'), ['prefix' => 'Acc', 'controller' => 'AccAccountMappings', 'action' => 'view', $accAccountMappings->id]) ?>
+                                <?= $this->Html->link(__('Edit'), ['prefix' => 'Acc', 'controller' => 'AccAccountMappings', 'action' => 'edit', $accAccountMappings->id]) ?>
+                                <?= $this->Form->postLink(__('Delete'), ['prefix' => 'Acc', 'controller' => 'AccAccountMappings', 'action' => 'delete', $accAccountMappings->id], ['confirm' => __('Are you sure you want to delete # {0}?', $accAccountMappings->id)]) ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -324,9 +324,9 @@
                             <td><?= h($childAccChartOfAccounts->status) ?></td>
                             <td><?= h($childAccChartOfAccounts->is_active) ?></td>
                             <td class="actions">
-                                <?= $this->Html->link(__('View'), ['controller' => 'AccChartOfAccounts', 'action' => 'view', $childAccChartOfAccounts->id]) ?>
-                                <?= $this->Html->link(__('Edit'), ['controller' => 'AccChartOfAccounts', 'action' => 'edit', $childAccChartOfAccounts->id]) ?>
-                                <?= $this->Form->postLink(__('Delete'), ['controller' => 'AccChartOfAccounts', 'action' => 'delete', $childAccChartOfAccounts->id], ['confirm' => __('Are you sure you want to delete # {0}?', $childAccChartOfAccounts->id)]) ?>
+                                <?= $this->Html->link(__('View'), ['prefix' => 'Acc', 'controller' => 'AccChartOfAccounts', 'action' => 'view', $childAccChartOfAccounts->id]) ?>
+                                <?= $this->Html->link(__('Edit'), ['prefix' => 'Acc', 'controller' => 'AccChartOfAccounts', 'action' => 'edit', $childAccChartOfAccounts->id]) ?>
+                                <?= $this->Form->postLink(__('Delete'), ['prefix' => 'Acc', 'controller' => 'AccChartOfAccounts', 'action' => 'delete', $childAccChartOfAccounts->id], ['confirm' => __('Are you sure you want to delete # {0}?', $childAccChartOfAccounts->id)]) ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -493,9 +493,9 @@
                             <td><?= h($accJournalLines->deleted) ?></td>
                             <td><?= h($accJournalLines->status) ?></td>
                             <td class="actions">
-                                <?= $this->Html->link(__('View'), ['controller' => 'AccJournalLines', 'action' => 'view', $accJournalLines->id]) ?>
-                                <?= $this->Html->link(__('Edit'), ['controller' => 'AccJournalLines', 'action' => 'edit', $accJournalLines->id]) ?>
-                                <?= $this->Form->postLink(__('Delete'), ['controller' => 'AccJournalLines', 'action' => 'delete', $accJournalLines->id], ['confirm' => __('Are you sure you want to delete # {0}?', $accJournalLines->id)]) ?>
+                                <?= $this->Html->link(__('View'), ['prefix' => 'Acc', 'controller' => 'AccJournalLines', 'action' => 'view', $accJournalLines->id]) ?>
+                                <?= $this->Html->link(__('Edit'), ['prefix' => 'Acc', 'controller' => 'AccJournalLines', 'action' => 'edit', $accJournalLines->id]) ?>
+                                <?= $this->Form->postLink(__('Delete'), ['prefix' => 'Acc', 'controller' => 'AccJournalLines', 'action' => 'delete', $accJournalLines->id], ['confirm' => __('Are you sure you want to delete # {0}?', $accJournalLines->id)]) ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -550,9 +550,9 @@
                             <td><?= h($accJournalMappings->status) ?></td>
                             <td><?= h($accJournalMappings->is_active) ?></td>
                             <td class="actions">
-                                <?= $this->Html->link(__('View'), ['controller' => 'AccJournalMappings', 'action' => 'view', $accJournalMappings->id]) ?>
-                                <?= $this->Html->link(__('Edit'), ['controller' => 'AccJournalMappings', 'action' => 'edit', $accJournalMappings->id]) ?>
-                                <?= $this->Form->postLink(__('Delete'), ['controller' => 'AccJournalMappings', 'action' => 'delete', $accJournalMappings->id], ['confirm' => __('Are you sure you want to delete # {0}?', $accJournalMappings->id)]) ?>
+                                <?= $this->Html->link(__('View'), ['prefix' => 'Acc', 'controller' => 'AccJournalMappings', 'action' => 'view', $accJournalMappings->id]) ?>
+                                <?= $this->Html->link(__('Edit'), ['prefix' => 'Acc', 'controller' => 'AccJournalMappings', 'action' => 'edit', $accJournalMappings->id]) ?>
+                                <?= $this->Form->postLink(__('Delete'), ['prefix' => 'Acc', 'controller' => 'AccJournalMappings', 'action' => 'delete', $accJournalMappings->id], ['confirm' => __('Are you sure you want to delete # {0}?', $accJournalMappings->id)]) ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>

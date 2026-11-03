@@ -1116,7 +1116,7 @@ if (is_object($rawAppointmentTime) && method_exists($rawAppointmentTime, 'format
         var maxDate = '<?= h($maxDate) ?>';
         var grid = document.getElementById('poli-grid');
 
-        var scheduleUrl = '<?= $this->Url->build(['controller' => 'PolyclinicQueues', 'action' => 'getPolyclinicSchedule']) ?>';
+        var scheduleUrl = '<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'PolyclinicQueues', 'action' => 'getPolyclinicSchedule']) ?>';
 
         if (!visitDateInput) {
             return;
@@ -1225,7 +1225,7 @@ if (is_object($rawAppointmentTime) && method_exists($rawAppointmentTime, 'format
         var patientIdInput = document.getElementById('patient-id');
         var selectedInfo = document.getElementById('patient-selected-info');
 
-        var searchUrl = '<?= $this->Url->build(['controller' => 'PolyclinicQueues', 'action' => 'searchPatients']) ?>';
+        var searchUrl = '<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'PolyclinicQueues', 'action' => 'searchPatients']) ?>';
         var typingTimer = null;
         var lastSelectedName = nameInput ? nameInput.value : '';
 

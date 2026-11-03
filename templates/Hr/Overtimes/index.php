@@ -232,7 +232,7 @@ $(document).ready(function() {
     $(document).on('click', '#set_dtl', function() {
         id = $(this).data('id');
         $.ajax({
-            url: "echo $this->url->build(['controller' => 'Overtimes', 'action' => 'view']);",
+            url: "echo $this->url->build(['prefix' => 'Hr', 'controller' => 'Overtimes', 'action' => 'view']);",
             method: "get",
             data: {
                 id: id

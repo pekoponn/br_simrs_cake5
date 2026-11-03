@@ -1119,7 +1119,7 @@ $selectedVisitDate = $this->request->getData('visit_date') ?? $todayDate;
 
         // Endpoint jadwal dokter dipakai bersama dengan modul Polyclinic Queue,
         // supaya sumber datanya satu (tidak duplikat logic jadwal dokter).
-        var scheduleUrl = '<?= $this->Url->build(['controller' => 'PolyclinicQueues', 'action' => 'getPolyclinicSchedule']) ?>';
+        var scheduleUrl = '<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'PolyclinicQueues', 'action' => 'getPolyclinicSchedule']) ?>';
 
         if (!visitDateInput) {
             return;
@@ -1248,7 +1248,7 @@ $selectedVisitDate = $this->request->getData('visit_date') ?? $todayDate;
 
         // Endpoint pencarian pasien dipakai bersama dengan modul Polyclinic Queue
         // (satu master data patients, jangan bikin endpoint baru yang duplikat).
-        var searchUrl = '<?= $this->Url->build(['controller' => 'PolyclinicQueues', 'action' => 'searchPatients']) ?>';
+        var searchUrl = '<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'PolyclinicQueues', 'action' => 'searchPatients']) ?>';
         var typingTimer = null;
         var lastSelectedName = '';
 

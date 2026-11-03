@@ -170,8 +170,7 @@ $dataChild = $this->Html->link(
 
         var formAction = "<?=
             $this->Url->build(
-                [
-                    'controller' => 'Polyclinics',
+                ['prefix' => 'Registrasi', 'controller' => 'Polyclinics',
                     'action' => 'add'
                 ],
                 ['fullBase' => true]

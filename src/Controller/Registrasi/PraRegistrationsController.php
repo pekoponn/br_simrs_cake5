@@ -594,8 +594,7 @@ public function register($id = null)
         . '(tab Instalasi Rawat Jalan) dengan nomor antrian ' . $queue->code . '. Silakan lengkapi registrasinya di sana.'
     ));
 
-    return $this->redirect([
-        'controller' => 'PatientAdmissions',
+    return $this->redirect(['prefix' => 'Registrasi', 'controller' => 'PatientAdmissions',
         'action' => 'index',
         '?' => ['tab' => 'rawat_jalan'],
     ]);

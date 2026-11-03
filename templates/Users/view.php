@@ -20,7 +20,7 @@
             <table>
                 <tr>
                     <th><?= __('Branch') ?></th>
-                    <td><?= $user->has('branch') ? $this->Html->link($user->branch->name, ['controller' => 'Branches', 'action' => 'view', $user->branch->id]) : '' ?></td>
+                    <td><?= $user->has('branch') ? $this->Html->link($user->branch->name, ['prefix' => 'Pengaturan', 'controller' => 'Branches', 'action' => 'view', $user->branch->id]) : '' ?></td>
                 </tr>
                 <tr>
                     <th><?= __('Code') ?></th>
@@ -479,9 +479,9 @@
                             <td><?= h($customers->is_delete) ?></td>
                             <td><?= h($customers->deleted) ?></td>
                             <td class="actions">
-                                <?= $this->Html->link(__('View'), ['controller' => 'Customers', 'action' => 'view', $customers->id]) ?>
-                                <?= $this->Html->link(__('Edit'), ['controller' => 'Customers', 'action' => 'edit', $customers->id]) ?>
-                                <?= $this->Form->postLink(__('Delete'), ['controller' => 'Customers', 'action' => 'delete', $customers->id], ['confirm' => __('Are you sure you want to delete # {0}?', $customers->id)]) ?>
+                                <?= $this->Html->link(__('View'), ['prefix' => 'Master', 'controller' => 'Customers', 'action' => 'view', $customers->id]) ?>
+                                <?= $this->Html->link(__('Edit'), ['prefix' => 'Master', 'controller' => 'Customers', 'action' => 'edit', $customers->id]) ?>
+                                <?= $this->Form->postLink(__('Delete'), ['prefix' => 'Master', 'controller' => 'Customers', 'action' => 'delete', $customers->id], ['confirm' => __('Are you sure you want to delete # {0}?', $customers->id)]) ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>

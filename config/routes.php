@@ -44,32 +44,28 @@ use Cake\Routing\Router;
 return static function (RouteBuilder $routes): void {
 $routes->setRouteClass(DashedRoute::class);
 
-// prefix Registrasi: URL tetap sama (/patients, /registrations, dst.)
-$routes->prefix('Registrasi', ['path' => '/'], function (RouteBuilder $routes) {
-    $controllers = [
-        'patients'            => 'Patients',
-        'polyclinics'         => 'Polyclinics',
-        'polyclinic-queues'   => 'PolyclinicQueues',
-        'pra-registrations'   => 'PraRegistrations',
-        'queue-polys'         => 'QueuePolys',
-        'registrations'       => 'Registrations',
-        'inpatient-entries'   => 'InpatientEntries',
-        'patient-admissions'  => 'PatientAdmissions',
-    ];
-
-    foreach ($controllers as $path => $controller) {
-        $routes->connect(
-            '/' . $path,
-            ['controller' => $controller, 'action' => 'index'],
-            ['routeClass' => DashedRoute::class]
-        );
-        $routes->connect(
-            '/' . $path . '/{action}/*',
-            ['controller' => $controller],
-            ['routeClass' => DashedRoute::class]
-        );
+// Prefix otomatis dari folder src/Controller/<Modul>; URL tetap tanpa nama modul
+$skipFolders = ['Component', 'Acc', 'Hr'];
+foreach (glob(APP . 'Controller' . DS . '*', GLOB_ONLYDIR) as $dir) {
+    $prefix = basename($dir);
+    if (in_array($prefix, $skipFolders, true)) {
+        continue;
     }
-});
+    $controllers = array_map(
+        fn($f) => basename($f, 'Controller.php'),
+        glob($dir . DS . '*Controller.php')
+    );
+    if (!$controllers) {
+        continue;
+    }
+    $routes->prefix($prefix, ['path' => '/'], function (RouteBuilder $b) use ($controllers) {
+        foreach ($controllers as $c) {
+            $path = '/' . \Cake\Utility\Inflector::dasherize($c);
+            $b->connect($path, ['controller' => $c, 'action' => 'index']);
+            $b->connect($path . '/{action}/*', ['controller' => $c]);
+        }
+    });
+}
 
 $routes->scope('/', function (RouteBuilder $builder) {
     $builder->connect('/telegram/webhook', ['controller' => 'Telegram', 'action' => 'webhook'], ['_method' => 'POST']);

@@ -100,9 +100,9 @@ $dataChild = $this->Html->link('Dana Masuk', ['action' => 'index'], ['full_base'
 <script>
 $(document).ready(function() {
     // var confirmTitle = "Apakah anda ingin menyimpan data tersebut ?";
-    // var formAction = "<?php echo $this->Url->build(['prefix' => false, 'controller' => 'BankIncomes', 'action' => 'add'], ['fullBase' => true]); ?>";
+    // var formAction = "<?php echo $this->Url->build(['prefix' => 'Acc', 'controller' => 'BankIncomes', 'action' => 'add'], ['fullBase' => true]); ?>";
     // handleFormConfirmSubmitValid('GroupAddForm', 'btn-add', confirmTitle, formAction);
-    var checkListCoaCash = "<?php echo $this->Url->build(['controller' => 'BankTopups', 'action' => 'getList']); ?>";
+    var checkListCoaCash = "<?php echo $this->Url->build(['prefix' => 'Acc', 'controller' => 'BankTopups', 'action' => 'getList']); ?>";
 	handleFormSelect2Search('checkCOACash', 'Masukkan Nama Perkiraan Kas', 2, checkListCoaCash);
 
     $('.select2Form').select2({ autoclose: true });

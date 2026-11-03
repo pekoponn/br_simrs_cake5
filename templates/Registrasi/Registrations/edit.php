@@ -1199,7 +1199,7 @@ $patient = $registration->patient ?? null;
             if (!idProv) return;
 
             $.getJSON(
-                "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'getKabupatens']) ?>", {
+                "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Registrations', 'action' => 'getKabupatens']) ?>", {
                     id_prov: idProv
                 },
                 function(data) {
@@ -1229,7 +1229,7 @@ $patient = $registration->patient ?? null;
             if (!idKab) return;
 
             $.getJSON(
-                "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'getKecamatans']) ?>", {
+                "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Registrations', 'action' => 'getKecamatans']) ?>", {
                     id_kab: idKab
                 },
                 function(data) {
@@ -1257,7 +1257,7 @@ $patient = $registration->patient ?? null;
             if (!idKec) return;
 
             $.getJSON(
-                "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'getKelurahans']) ?>", {
+                "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Registrations', 'action' => 'getKelurahans']) ?>", {
                     id_kec: idKec
                 },
                 function(data) {
@@ -1356,7 +1356,7 @@ $patient = $registration->patient ?? null;
             );
 
             $.getJSON(
-                "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'searchPatients']) ?>", {
+                "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Registrations', 'action' => 'searchPatients']) ?>", {
                     q: keyword || ''
                 },
                 function(response) {
@@ -1630,7 +1630,7 @@ $patient = $registration->patient ?? null;
             $('#bed-loading').show();
 
             $.getJSON(
-                "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'getAvailableBeds']) ?>", {
+                "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Registrations', 'action' => 'getAvailableBeds']) ?>", {
                     room_id: roomId,
                     current_bed_id: selectedBedId || ''
                 },
@@ -1757,7 +1757,7 @@ $patient = $registration->patient ?? null;
             if (!doctorId) return;
             $('#doctor-schedule-id').html('<option value="">Memuat jadwal...</option>');
             $.getJSON(
-                "<?= $this->Url->build(['controller' => 'Registrations', 'action' => 'getDoctorSchedules']) ?>", {
+                "<?= $this->Url->build(['prefix' => 'Registrasi', 'controller' => 'Registrations', 'action' => 'getDoctorSchedules']) ?>", {
                     doctor_id: doctorId
                 },
                 function(data) {
