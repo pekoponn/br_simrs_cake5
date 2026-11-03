@@ -536,7 +536,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 								<?= $this->Html->link(
 									'Antrian Pasien',
 									[
-										'prefix' => false,
+										'prefix' => 'Registrasi',
 										'controller' => 'PolyclinicQueues',
 										'action' => 'index'
 									],
@@ -551,7 +551,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 								<?= $this->Html->link(
 									'Kiosk',
 									[
-										'prefix' => false,
+										'prefix' => 'Registrasi',
 										'controller' => 'PolyclinicQueues',
 										'action' => 'kiosk'
 									],
@@ -567,7 +567,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 									<?= $this->Html->link(
 										'Kiosk New',
 										[
-											'prefix' => false,
+											'prefix' => 'Registrasi',
 											'controller' => 'PolyclinicQueues',
 											'action' => 'kioskNew'
 										],
@@ -580,7 +580,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 								<?= $this->Html->link(
 									'Registration',
 									[
-										'prefix' => false,
+										'prefix' => 'Registrasi',
 										'controller' => 'Registrations',
 										'action' => 'index'
 									],
@@ -598,7 +598,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 									<?= $this->Html->link(
 										'Pra Registration',
 										[
-											'prefix' => false,
+											'prefix' => 'Registrasi',
 											'controller' => 'PraRegistrations',
 											'action' => 'index'
 										],
@@ -619,7 +619,7 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 									<?= $this->Html->link(
 										'Pendaftaran Pasien',
 										[
-											'prefix' => false,
+											'prefix' => 'Registrasi',
 											'controller' => 'PatientAdmissions',
 											'action' => 'index'
 										],
@@ -994,172 +994,67 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 							<?php
 							}
 
-							if ($patient['index'] == 1) {
-							?>
-								<li <?= $menuPatientIndex ?>>
-									<?= $this->Html->link('Patients', ['prefix' => false,'controller' => 'Patients', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
-								</li>
-							<?php
-							}
+							$masterGroups = [
+									'Pasien & Dokter' => [
+										['Patients',               'Patients',              'Registrasi', !empty($patient['index']),                 'patients'],
+										['Doctor',                 'Doctors',               false,        !empty($doctor['index']),                  'doctors'],
+										['Doctor Schedules',       'DoctorSchedules',       false,        !empty($doctorSchedule['index']),          'doctorschedules'],
+										['Master Tenaga Medis',    'MasterTenagaMedis',     false,        !empty($masterTenagaMedis['index']),       'mastertenagamedis'],
+										['Master Patient Referrers','MasterPatientReferrers',false,       !empty($masterPatientReferrers['index']),  'masterpatientreferrers'],
+									],
+									'Fasilitas' => [
+										['Health Facilities',      'HealthFacilities',      false,        !empty($healthFacility['index']),          'healthfacilities'],
+										['Polyclinics',            'Polyclinics',           'Registrasi', !empty($polyclinic['index']),              'polyclinics'],
+										['Rooms',                  'Rooms',                 false,        !empty($rooms['index']),                   'rooms'],
+										['Bed Management',         'Beds',                  false,        !empty($beds['index']),                    'beds'],
+									],
+									'Penjamin' => [
+										['Insurances',             'Insurances',            false,        !empty($insurance['index']),               'insurances'],
+										['Jenis Asuransi',         'MasterPenjamins',       false,        !empty($masterPenjamins['index']),         'masterpenjamins'],
+									],
+									'Gizi' => [
+										['Nutrition Combine',      'NutritionCombine',      false,        !empty($nutritionCombine['index']),        'nutritioncombine'],
+										['Nutrition Menus',        'NutritionMenus',        false,        !empty($nutritionMenu['index']),           'nutritionmenus'],
+									],
+									'Penunjang Medis' => [
+										['Pharmacy Items',         'PharmacyItems',         false,        !empty($pharmacyItem['index']),            'pharmacyitems'],
+										['Radiologi',              'MasterRadiologies',     false,        !empty($masterRadiologies['index']),       'masterradiologies'],
+										['Laboratory',             'MasterLaboratories',    false,        !empty($masterLaboratories['index']),      'masterlaboratories'],
+									],
+									'Tindakan & Diagnosa' => [
+										['Master Tindakan',        'MasterTindakan',        false,        !empty($masterTindakan['index']),          'mastertindakan'],
+										['Master ICD-9 CM',        'MasterIcd9',            false,        !empty($masterIcd9['index']),              'mastericd9'],
+										['Master ICD-10',          'MasterIcd10',           false,        !empty($masterIcd10['index']),             'mastericd10'],
+										['Master Treatment Packages','MasterTreatmentPackages',false,     !empty($masterTreatmentPackages['index']), 'mastertreatmentpackages'],
+									],
+									'Keuangan' => [
+										['Akun Bank',              'BankAccounts',          'Master',     !empty($bankaccounts['index']),            'bankaccounts'],
+									],
+								];
 
-							if ($doctor['index'] == 1) {
+								foreach ($masterGroups as $groupName => $groupItems):
+									$visibleItems = array_filter($groupItems, fn($i) => $i[3]);
+									if (empty($visibleItems)) {
+										continue;
+									}
+									$groupActive = in_array($getController, array_column($visibleItems, 4), true) ? 'active' : '';
+									?>
+									<li class="has-sub <?= $groupActive ?>">
+										<a href="javascript:;">
+											<b class="caret"></b>
+											<span><?= h($groupName) ?></span>
+										</a>
+										<ul class="sub-menu">
+											<?php foreach ($visibleItems as $i): ?>
+												<li <?= ($getController === $i[4]) ? 'class="active"' : '' ?>>
+													<?= $this->Html->link($i[0], ['prefix' => $i[2], 'controller' => $i[1], 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+												</li>
+											<?php endforeach; ?>
+										</ul>
+									</li>
+									<?php
+								endforeach;
 							?>
-								<li <?= $menuDoctorIndex ?>>
-									<?= $this->Html->link('Doctor', ['prefix' => false,'controller' => 'Doctors', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
-								</li>
-							<?php
-							}
-
-							if ($doctorSchedule['index'] == 1) {
-							?>
-								<li <?= $menuDoctorScheduleIndex ?>>
-									<?= $this->Html->link('Doctor Schedules', ['prefix' => false,'controller' => 'DoctorSchedules', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
-								</li>
-							<?php
-							}
-
-							if ($healthFacility['index'] == 1) {
-							?>
-								<li <?= $menuHealthFacilityIndex ?>>
-									<?= $this->Html->link('Health Facilities', ['prefix' => false,'controller' => 'HealthFacilities', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
-								</li>
-							<?php
-							}
-
-							if ($insurance['index'] == 1) {
-							?>
-								<li <?= $menuInsuranceIndex ?>>
-									<?= $this->Html->link('Insurances', ['prefix' => false,'controller' => 'Insurances', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
-								</li>
-							<?php
-							}
-
-							if ($nutritionCombine['index'] == 1) {
-							?>
-								<li <?= $menuNutritionCombineIndex ?>>
-									<?= $this->Html->link('Nutrition Combine', ['prefix' => false,'controller' => 'NutritionCombine', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
-								</li>
-							<?php
-							}
-
-							if ($nutritionMenu['index'] == 1) {
-							?>
-								<li <?= $menuNutritionMenuIndex ?>>
-									<?= $this->Html->link('Nutrition Menus', ['prefix' => false,'controller' => 'NutritionMenus', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
-								</li>
-							<?php
-							}
-
-							if ($pharmacyItem['index'] == 1) {
-							?>
-								<li <?= $menuPharmacyItemIndex ?>>
-									<?= $this->Html->link('Pharmacy Items', ['prefix' => false,'controller' => 'PharmacyItems', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
-								</li>
-							<?php
-							}
-
-							if (!empty($masterTindakan['index'])) {
-							?>
-								<li <?= $menuMasterTindakanIndex ?>>
-									<?= $this->Html->link('Master Tindakan', ['prefix' => false,'controller' => 'MasterTindakan', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
-								</li>
-							<?php
-							}
-							if (!empty($masterTenagaMedis['index'])) {
-							?>
-								<li <?= $menuMasterTenagaMedisIndex ?>>
-									<?= $this->Html->link('Master Tenaga Medis', ['prefix' => false,'controller' => 'MasterTenagaMedis', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
-								</li>
-							<?php
-							}
-
-							if (!empty($masterIcd9['index'])) {
-							?>
-								<li <?= $menuMasterIcd9Index ?>>
-									<?= $this->Html->link('Master ICD-9 CM', ['prefix' => false,'controller' => 'MasterIcd9', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
-								</li>
-							<?php
-							}
-
-							if (!empty($masterIcd10['index'])) {
-							?>
-								<li <?= $menuMasterIcd10Index ?>>
-									<?= $this->Html->link('Master ICD-10', ['prefix' => false,'controller' => 'MasterIcd10', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
-								</li>
-							<?php
-							}
-
-							if (!empty($masterRadiologies['index'])) {
-							?>
-								<li <?= $menuMasterRadiologiesIndex ?>>
-									<?= $this->Html->link('Radiologi', ['prefix' => false,'controller' => 'MasterRadiologies', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
-								</li>
-							<?php
-							}
-
-							if (!empty($masterLaboratories['index'])) {
-							?>
-								<li <?= $menuMasterLaboratoriesIndex ?>>
-									<?= $this->Html->link('Laboratory', ['prefix' => false,'controller' => 'MasterLaboratories', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
-								</li>
-							<?php
-							}
-
-							if (!empty($masterPenjamins['index'])) {
-							?>
-								<li <?= $menuMasterPenjaminsIndex ?>>
-									<?= $this->Html->link('Jenis Asuransi', ['prefix' => false,'controller' => 'MasterPenjamins', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
-								</li>
-							<?php
-							}
-							if (!empty($masterPatientReferrers['index'])) {
-							?>
-								<li <?= $menuMasterPatientReferrersIndex ?>>
-									<?= $this->Html->link('Master Patient Referrers', ['prefix' => false,'controller' => 'MasterPatientReferrers', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
-								</li>
-							<?php
-							}
-							if (!empty($masterTreatmentPackages['index'])) {
-							?>
-								<li <?= $menuMasterTreatmentPackagesIndex ?>>
-									<?= $this->Html->link('Master Treatment Packages', ['prefix' => false,'controller' => 'MasterTreatmentPackages', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
-								</li>
-							<?php
-							}
-							
-							
-
-							if ($polyclinic['index'] == 1) {
-							?>
-								<li <?= $menuPolyclinicIndex ?>>
-									<?= $this->Html->link('Polyclinics', ['prefix' => false,'controller' => 'Polyclinics', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
-								</li>
-							<?php
-							}
-
-							if ($rooms['index'] == 1) {
-							?>
-								<li <?= $menuRoomIndex ?>>
-									<?= $this->Html->link('Rooms', ['prefix' => false, 'controller' => 'Rooms', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
-								</li>
-							<?php
-							}
-
-							if ($beds['index'] == 1) {
-							?>
-								<li <?= $menuBedIndex ?>>
-									<?= $this->Html->link('Bed Management', ['prefix' => false, 'controller' => 'Beds', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
-								</li>
-							<?php
-							}
-							if($bankaccounts['index']==1) {
-							?>
-								<li <?= $menuBankAccounts ?>><?= $this->Html->link('Akun Bank', ['prefix'=>'Master', 'controller' => 'BankAccounts', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
-								</li>
-							<?php 
-							}
-							?>
-
 						</ul>
 					</li>
 				<?php

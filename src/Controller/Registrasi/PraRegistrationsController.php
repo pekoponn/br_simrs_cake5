@@ -1,7 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Controller;
+namespace App\Controller\Registrasi;
+
+use App\Controller\AppController;
 
 use Cake\ORM\TableRegistry;
 
@@ -56,7 +58,7 @@ class PraRegistrationsController extends AppController
             $query->where(['PraRegistrations.registration_status' => 'batal']);
         } elseif ($status === 'belum_diproses') {
             $query->where(function ($exp) {
-                return $exp->or_([
+                return $exp->or([
                     'PraRegistrations.registration_status IS' => null,
                     'PraRegistrations.registration_status' => 'belum_diproses',
                 ]);

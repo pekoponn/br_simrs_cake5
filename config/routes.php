@@ -44,6 +44,33 @@ use Cake\Routing\Router;
 return static function (RouteBuilder $routes): void {
 $routes->setRouteClass(DashedRoute::class);
 
+// prefix Registrasi: URL tetap sama (/patients, /registrations, dst.)
+$routes->prefix('Registrasi', ['path' => '/'], function (RouteBuilder $routes) {
+    $controllers = [
+        'patients'            => 'Patients',
+        'polyclinics'         => 'Polyclinics',
+        'polyclinic-queues'   => 'PolyclinicQueues',
+        'pra-registrations'   => 'PraRegistrations',
+        'queue-polys'         => 'QueuePolys',
+        'registrations'       => 'Registrations',
+        'inpatient-entries'   => 'InpatientEntries',
+        'patient-admissions'  => 'PatientAdmissions',
+    ];
+
+    foreach ($controllers as $path => $controller) {
+        $routes->connect(
+            '/' . $path,
+            ['controller' => $controller, 'action' => 'index'],
+            ['routeClass' => DashedRoute::class]
+        );
+        $routes->connect(
+            '/' . $path . '/{action}/*',
+            ['controller' => $controller],
+            ['routeClass' => DashedRoute::class]
+        );
+    }
+});
+
 $routes->scope('/', function (RouteBuilder $builder) {
     $builder->connect('/telegram/webhook', ['controller' => 'Telegram', 'action' => 'webhook'], ['_method' => 'POST']);
     /*
@@ -68,17 +95,17 @@ $routes->scope('/', function (RouteBuilder $builder) {
     );
     $builder->connect(
         '/polyclinic-queues/search-poly',
-        ['controller' => 'PolyclinicQueues', 'action' => 'searchPoly'],
+        ['prefix' => 'Registrasi', 'controller' => 'PolyclinicQueues', 'action' => 'searchPoly'],
         ['_method' => 'GET']
     );
     $builder->connect(
         '/polyclinic-queues/search-poly-queue',
-        ['controller' => 'PolyclinicQueues', 'action' => 'searchPolyQueue'],
+        ['prefix' => 'Registrasi', 'controller' => 'PolyclinicQueues', 'action' => 'searchPolyQueue'],
         ['_method' => 'GET']
     );
     $builder->connect(
         '/polyclinic-queues/create-referral-queue',
-        ['controller' => 'PolyclinicQueues', 'action' => 'createReferralQueue'],
+        ['prefix' => 'Registrasi', 'controller' => 'PolyclinicQueues', 'action' => 'createReferralQueue'],
         ['_method' => 'POST']
     );
     $builder->connect(

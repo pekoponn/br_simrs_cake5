@@ -86,7 +86,11 @@ class OutpatientBillingsController extends AppController
             'total' => (clone $base)->count(),
             'waiting' => (clone $base)->where(['status' => 'waiting_payment'])->count(),
             'paid' => (clone $base)->where(['status' => 'paid'])->count(),
-            'revenue' => (float)(clone $base)->where(['status' => 'paid'])->sumOf('grand_total'),
+            'revenue' => (float)((clone $base)
+                ->where(['status' => 'paid'])
+                ->select(['total_revenue' => (clone $base)->func()->sum('grand_total')])
+                ->disableHydration()
+                ->first()['total_revenue'] ?? 0),
         ];
     
         $this->set(compact(

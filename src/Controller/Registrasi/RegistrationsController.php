@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Controller;
+namespace App\Controller\Registrasi;
+
+use App\Controller\AppController;
 
 class RegistrationsController extends AppController
 {
@@ -30,21 +32,12 @@ if (empty($filterDateFrom) && empty($filterDateTo)) {
 $conditions['DATE(Registrations.registration_date) >='] = $filterDateFrom;
 $conditions['DATE(Registrations.registration_date) <='] = $filterDateTo;
 
-    $this->paginate = [
-        'contain' => [
-            'Patients',
-            'Doctors',
-            'Rooms',
-            'Beds',
-        ],
-        'conditions' => $conditions,
-        'order' => [
-            'Registrations.id' => 'ASC'
-        ],
-        'limit' => 25,
-    ];
+$query = $this->Registrations->find()
+    ->contain(['Patients', 'Doctors', 'Rooms', 'Beds'])
+    ->where($conditions)
+    ->orderBy(['Registrations.id' => 'ASC']);
 
-    $registrations = $this->paginate($this->Registrations);
+$registrations = $this->paginate($query, ['limit' => 25]);
 
     $this->set(compact('registrations'));
 }
