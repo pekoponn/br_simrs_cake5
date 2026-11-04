@@ -556,17 +556,10 @@ public function proses($id = null)
                     $tariff = str_replace(['Rp', '.', ','], ['', '', '.'], (string)$tariff);
 
                     $laboratories[] = [
-                        'registration_id' => $registration->id,
-                        'patient_id' => $patient->id,
-                        'doctor_id' => !empty($data['doctor_id']) ? (int)$data['doctor_id'] : null,
-                        'lab_code' => trim((string)($row['lab_code'] ?? '')),
-                        'lab_name' => $labName,
-                        'tariff' => (float)$tariff,
+                        'code' => trim((string)($row['lab_code'] ?? '')),
+                        'examination_name' => $labName,
+                        'price' => (float)$tariff,
                         'approval_note' => $row['approval_note'] ?? '',
-                        'notes' => $row['notes'] ?? '',
-                        'status' => 'draft',
-                        'is_active' => 1,
-                        'is_delete' => 0,
                     ];
                 }
             }
@@ -1012,11 +1005,11 @@ public function proses($id = null)
 
         foreach (($order->order_laboratories ?? []) as $lab) {
             $labs[] = [
-                'kode' => $lab->lab_code ?? '',
-                'nama' => $lab->lab_name ?? '',
-                'tarif' => (float)($lab->tariff ?? 0),
+                'kode' => $lab->code ?? '',
+                'nama' => $lab->examination_name ?? '',
+                'tarif' => (float)($lab->price ?? 0),
                 'approval' => $lab->approval_note ?? '',
-                'notes' => $lab->notes ?? '',
+                'notes' => '',
             ];
         }
 

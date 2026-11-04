@@ -2267,3 +2267,31 @@ ALTER TABLE users
 
 ALTER TABLE users
 	ADD COLUMN working_hours VARCHAR(255) NULL DEFAULT NULL AFTER zona;
+
+CREATE TABLE `lab_examinations` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `lab_no` VARCHAR(30) NOT NULL,
+  `registration_id` INT UNSIGNED NULL,
+  `patient_id` INT UNSIGNED NULL,
+  `medical_record_no` VARCHAR(30) NULL,
+  `patient_name` VARCHAR(150) NOT NULL,
+  `examination_name` VARCHAR(255) NOT NULL,
+  `patient_type` VARCHAR(50) NULL,
+  `sender_doctor` VARCHAR(150) NULL,
+  `origin` VARCHAR(100) NULL,
+  `received_at` DATETIME NULL,
+  `finished_at` DATETIME NULL,
+  `status` ENUM('received','processing','done') NOT NULL DEFAULT 'received',
+  `integration_status` TINYINT(1) NOT NULL DEFAULT 0,
+  `is_create` TINYINT(1) NOT NULL DEFAULT 1,
+  `is_update` TINYINT(1) NOT NULL DEFAULT 0,
+  `is_delete` TINYINT(1) NOT NULL DEFAULT 0,
+  `is_active` CHAR(1) NOT NULL DEFAULT 'Y',
+  `created` DATETIME NULL,
+  `modified` DATETIME NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_lab_no` (`lab_no`),
+  KEY `idx_received_at` (`received_at`),
+  KEY `idx_rm` (`medical_record_no`),
+  KEY `idx_registration` (`registration_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

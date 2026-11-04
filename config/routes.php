@@ -44,6 +44,28 @@ use Cake\Routing\Router;
 return static function (RouteBuilder $routes): void {
 $routes->setRouteClass(DashedRoute::class);
 
+$skipFolders = ['Component', 'Acc', 'Hr'];
+foreach (glob(APP . 'Controller' . DS . '*', GLOB_ONLYDIR) as $dir) {
+    $prefix = basename($dir);
+    if (in_array($prefix, $skipFolders, true)) {
+        continue;
+    }
+    $controllers = array_map(
+        fn($f) => basename($f, 'Controller.php'),
+        glob($dir . DS . '*Controller.php')
+    );
+    if (!$controllers) {
+        continue;
+    }
+    $routes->prefix($prefix, ['path' => '/'], function (RouteBuilder $b) use ($controllers) {
+        foreach ($controllers as $c) {
+            $path = '/' . \Cake\Utility\Inflector::dasherize($c);
+            $b->connect($path, ['controller' => $c, 'action' => 'index']);
+            $b->connect($path . '/{action}/*', ['controller' => $c]);
+        }
+    });
+}
+
 // Prefix otomatis dari folder src/Controller/<Modul>; URL tetap tanpa nama modul
 $skipFolders = ['Component', 'Acc', 'Hr'];
 foreach (glob(APP . 'Controller' . DS . '*', GLOB_ONLYDIR) as $dir) {

@@ -1472,6 +1472,11 @@ $bankincomesXls = ($bankincomes['xls'] == 1) ? 'checked' : '';
                             'saveVitalSigns' => 'Simpan Tanda Vital & Gizi',
                             'viewVitalSigns' => 'Lihat Tanda Vital & Gizi',
                         ]) ?>
+                        
+                        <?= $ruleRow('Laboratorium', 'labexaminations', [
+                            'index' => 'Daftar',
+                        ]) ?>
+
                         <?= $ruleRow('Surat Rawat Jalan', 'outpatientletters', [
                             'index' => 'Daftar',
                             'view' => 'Tampilkan',

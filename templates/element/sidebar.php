@@ -68,6 +68,7 @@ $praregistrations = (isset($checkUrl['praregistrations'])) ? $checkUrl['praregis
 $patientAdmission = (isset($checkUrl['patientadmissions'])) ? $checkUrl['patientadmissions'] : array();
 $outpatientVisit = (isset($checkUrl['outpatientvisits'])) ? $checkUrl['outpatientvisits'] : array();
 $outpatientLetter = (isset($checkUrl['outpatientletters'])) ? $checkUrl['outpatientletters'] : array();
+$labExamination = (isset($checkUrl['labexaminations'])) ? $checkUrl['labexaminations'] : array();
 $emergencyEntry = (isset($checkUrl['emergencyentries'])) ? $checkUrl['emergencyentries'] : array();
 $inpatientEntry = (isset($checkUrl['inpatiententries'])) ? $checkUrl['inpatiententries'] : array();
 $medicalRecord = (isset($checkUrl['medicalrecords'])) ? $checkUrl['medicalrecords'] : array();
@@ -859,6 +860,25 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 				<?php
 				}
 
+				// ===== LABORATORIUM (baru) =====
+				if (!empty($labExamination['index'])) {
+				$menuLab = ($getController == 'labexaminations') ? 'active' : '';
+				?>
+					<li class="has-sub <?= $menuLab ?>">
+						<a href="javascript:;">
+							<b class="caret pull-right"></b>
+							<i class="fa fa-flask"></i>
+							<span>Laboratorium</span>
+						</a>
+						<ul class="sub-menu">
+							<li <?= ($getController == 'labexaminations') ? 'class="active"' : '' ?>>
+								<?= $this->Html->link('Daftar Pemeriksaan', ['prefix' => 'Penunjang', 'controller' => 'LabExaminations', 'action' => 'index'], ['fullBase' => true, 'escape' => false]) ?>
+							</li>
+						</ul>
+					</li>
+				<?php
+				}
+
 				if (
 					$medicine['index'] == 1 ||
 					($medicineMerk['index'] ?? 0) == 1 ||
@@ -997,35 +1017,35 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 							$masterGroups = [
 									'Pasien & Dokter' => [
 										['Patients',               'Patients',              'Registrasi', !empty($patient['index']),                 'patients'],
-										['Doctor',                 'Doctors',               false,        !empty($doctor['index']),                  'doctors'],
-										['Doctor Schedules',       'DoctorSchedules',       false,        !empty($doctorSchedule['index']),          'doctorschedules'],
-										['Master Tenaga Medis',    'MasterTenagaMedis',     false,        !empty($masterTenagaMedis['index']),       'mastertenagamedis'],
-										['Master Patient Referrers','MasterPatientReferrers',false,       !empty($masterPatientReferrers['index']),  'masterpatientreferrers'],
+										['Doctor',                 'Doctors',               'Master',        !empty($doctor['index']),                  'doctors'],
+										['Doctor Schedules',       'DoctorSchedules',       'Master',        !empty($doctorSchedule['index']),          'doctorschedules'],
+										['Master Tenaga Medis',    'MasterTenagaMedis',     'Master',        !empty($masterTenagaMedis['index']),       'mastertenagamedis'],
+										['Master Patient Referrers','MasterPatientReferrers','Master',       !empty($masterPatientReferrers['index']),  'masterpatientreferrers'],
 									],
 									'Fasilitas' => [
-										['Health Facilities',      'HealthFacilities',      false,        !empty($healthFacility['index']),          'healthfacilities'],
+										['Health Facilities',      'HealthFacilities',      'Master',        !empty($healthFacility['index']),          'healthfacilities'],
 										['Polyclinics',            'Polyclinics',           'Registrasi', !empty($polyclinic['index']),              'polyclinics'],
-										['Rooms',                  'Rooms',                 false,        !empty($rooms['index']),                   'rooms'],
-										['Bed Management',         'Beds',                  false,        !empty($beds['index']),                    'beds'],
+										['Rooms',                  'Rooms',                 'Master',        !empty($rooms['index']),                   'rooms'],
+										['Bed Management',         'Beds',                  'Master',        !empty($beds['index']),                    'beds'],
 									],
 									'Penjamin' => [
-										['Insurances',             'Insurances',            false,        !empty($insurance['index']),               'insurances'],
-										['Jenis Asuransi',         'MasterPenjamins',       false,        !empty($masterPenjamins['index']),         'masterpenjamins'],
+										['Insurances',             'Insurances',            'Master',        !empty($insurance['index']),               'insurances'],
+										['Jenis Asuransi',         'MasterPenjamins',       'Master',        !empty($masterPenjamins['index']),         'masterpenjamins'],
 									],
 									'Gizi' => [
-										['Nutrition Combine',      'NutritionCombine',      false,        !empty($nutritionCombine['index']),        'nutritioncombine'],
-										['Nutrition Menus',        'NutritionMenus',        false,        !empty($nutritionMenu['index']),           'nutritionmenus'],
+										['Nutrition Combine',      'NutritionCombine',      'Master',        !empty($nutritionCombine['index']),        'nutritioncombine'],
+										['Nutrition Menus',        'NutritionMenus',        'Master',        !empty($nutritionMenu['index']),           'nutritionmenus'],
 									],
 									'Penunjang Medis' => [
-										['Pharmacy Items',         'PharmacyItems',         false,        !empty($pharmacyItem['index']),            'pharmacyitems'],
-										['Radiologi',              'MasterRadiologies',     false,        !empty($masterRadiologies['index']),       'masterradiologies'],
-										['Laboratory',             'MasterLaboratories',    false,        !empty($masterLaboratories['index']),      'masterlaboratories'],
+										['Pharmacy Items',         'PharmacyItems',         'Master',        !empty($pharmacyItem['index']),            'pharmacyitems'],
+										['Radiologi',              'MasterRadiologies',     'Master',        !empty($masterRadiologies['index']),       'masterradiologies'],
+										['Laboratory',             'MasterLaboratories',    'Master',        !empty($masterLaboratories['index']),      'masterlaboratories'],
 									],
 									'Tindakan & Diagnosa' => [
-										['Master Tindakan',        'MasterTindakan',        false,        !empty($masterTindakan['index']),          'mastertindakan'],
-										['Master ICD-9 CM',        'MasterIcd9',            false,        !empty($masterIcd9['index']),              'mastericd9'],
-										['Master ICD-10',          'MasterIcd10',           false,        !empty($masterIcd10['index']),             'mastericd10'],
-										['Master Treatment Packages','MasterTreatmentPackages',false,     !empty($masterTreatmentPackages['index']), 'mastertreatmentpackages'],
+										['Master Tindakan',        'MasterTindakan',        'Master',        !empty($masterTindakan['index']),          'mastertindakan'],
+										['Master ICD-9 CM',        'MasterIcd9',            'Master',        !empty($masterIcd9['index']),              'mastericd9'],
+										['Master ICD-10',          'MasterIcd10',           'Master',        !empty($masterIcd10['index']),             'mastericd10'],
+										['Master Treatment Packages','MasterTreatmentPackages','Master',     !empty($masterTreatmentPackages['index']), 'mastertreatmentpackages'],
 									],
 									'Keuangan' => [
 										['Akun Bank',              'BankAccounts',          'Master',     !empty($bankaccounts['index']),            'bankaccounts'],
@@ -1102,10 +1122,10 @@ $reportattendances = (isset($checkUrl['reportattendances'])) ? $checkUrl['report
 							</li>
 						<?php
 					}
-					if ($settings['index'] == 1) {
+					if (false && $settings['index'] == 1) {
 					?>
 					<li<?= $menuSettings ?>>
-						<?= $this->Html->link('Perusahaan', ['prefix' => false, 'controller' => 'Settings', 'action' => 'edit/1'], ['fullBase' => true, 'escape' => false]) ?>
+						<?= $this->Html->link('Perusahaan', ['prefix' => 'Pengaturan', 'controller' => 'Settings', 'action' => 'edit', 1], ['fullBase' => true, 'escape' => false]) ?>
 						</li>
 					<?php } ?>
 			</ul>
