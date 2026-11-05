@@ -142,4 +142,24 @@ class LabExaminationsController extends AppController
 
         return $this->redirect(['action' => 'index']);
     }
+
+    public function tindakan($id = null)
+{
+    if ($this->request->is('post')) {
+        $data = $this->request->getData();
+        // TODO: simpan header ($data) + $data['items'] + $data['inventory']
+        // lalu generate lab_no (misal LAB + tanggal + urutan)
+        $this->Flash->success('Tindakan laboratorium tersimpan.');
+        return $this->redirect(['action' => 'index']);
+    }
+
+    // isi dropdown sesuai tabel Anda
+    $this->set([
+        'payMethods'         => [],
+        'classes'            => [],
+        'responsibleDoctors' => [],
+        'senderDoctors'      => [],
+        'officers'           => [],
+    ]);
+}
 }

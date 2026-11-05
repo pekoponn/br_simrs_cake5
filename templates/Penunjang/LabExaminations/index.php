@@ -11,23 +11,41 @@
         <div class="panel panel-inverse">
             <div class="panel-heading"><h4 class="panel-title"><i class="fa fa-bars"></i> Menu</h4></div>
             <div class="panel-body p-2">
-                <a href="javascript:;" class="btn btn-default btn-block text-left mb-1"><i class="fa fa-flask"></i> Isi Nilai Normal</a>
-                <a href="javascript:;" class="btn btn-default btn-block text-left mb-1"><i class="fa fa-user-md"></i> Nama Pengirim dan Petugas</a>
-                <a href="javascript:;" class="btn btn-default btn-block text-left mb-1"><i class="fa fa-vial"></i> Tindakan Laboratorium</a>
-                <a href="javascript:;" class="btn btn-default btn-block text-left mb-1"><i class="fa fa-history"></i> History Pemeriksaan</a>
-                <a href="javascript:;" class="btn btn-default btn-block text-left"><i class="fa fa-sticky-note"></i> Internal Memo</a>
+                <?= $this->Html->link('<i class="fa fa-flask"></i> Isi Nilai Normal', ['prefix' => 'Penunjang', 'controller' => 'LabNormalValues', 'action' => 'index'], ['class' => 'btn btn-default btn-block text-left mb-1', 'escape' => false]) ?>
+                    <div class="dropdown mb-1">
+                        <a href="javascript:;" class="btn btn-default btn-block text-left dropdown-toggle lab-dd-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fa fa-user-md"></i> Nama Pengirim dan Petugas
+                        </a>
+                        <div class="dropdown-menu w-100">
+                            <?= $this->Html->link(
+                                '<i class="fa fa-user-md fa-fw"></i> Setup dokter pengirim',
+                                ['controller' => 'LabSenderDoctors', 'action' => 'index'],
+                                ['class' => 'dropdown-item', 'escape' => false]
+                            ) ?>
+                            <a class="dropdown-item" href="javascript:;"><i class="fa fa-user fa-fw"></i> Setup Petugas Laborat</a>
+                        </div>
+                    </div>
+                <?= $this->Html->link('<i class="fa fa-vial"></i> Tindakan Laboratorium', ['action' => 'tindakan'], ['class' => 'btn btn-default btn-block text-left mb-1', 'escape' => false]) ?>
+                   <?= $this->Html->link('<i class="fa fa-history"></i> History Pemeriksaan',
+                    ['prefix' => 'Penunjang', 'controller' => 'LabHistories', 'action' => 'index'],
+                    ['class' => 'btn btn-default btn-block text-left mb-1', 'escape' => false]) ?>
+                   <a href="javascript:;" class="btn btn-default btn-block text-left" data-toggle="modal" data-target="#modal-lab-memo"><i class="fa fa-sticky-note"></i> Internal Memo</a>
             </div>
         </div>
 
         <div class="panel panel-inverse">
             <div class="panel-heading"><h4 class="panel-title"><i class="fa fa-boxes"></i> Persediaan</h4></div>
             <div class="panel-body p-2">
-                <a href="javascript:;" class="btn btn-default btn-block text-left mb-1"><i class="fa fa-box-open"></i> Persediaan Non Beban Pasien</a>
-                <a href="javascript:;" class="btn btn-default btn-block text-left mb-1"><i class="fa fa-file-invoice"></i> Permohonan Pembelian Persediaan</a>
-                <a href="javascript:;" class="btn btn-default btn-block text-left mb-1"><i class="fa fa-warehouse"></i> Informasi Stock</a>
-                <a href="javascript:;" class="btn btn-default btn-block text-left mb-1"><i class="fa fa-clipboard-list"></i> Permohonan Logistik</a>
-                <a href="javascript:;" class="btn btn-default btn-block text-left mb-1"><i class="fa fa-dolly"></i> Pemakaian Logistik</a>
-                <a href="javascript:;" class="btn btn-default btn-block text-left"><i class="fa fa-list"></i> Daftar Stock Logistik</a>
+                <?= $this->Html->link('<i class="fa fa-dolly"></i> Pemakaian Non Beban BHP', ['prefix' => 'Farmasi', 'controller' => 'BhpUsages', 'action' => 'index'], ['class' => 'btn btn-default btn-block text-left mb-1', 'escape' => false]) ?>
+                <?= $this->Html->link('<i class="fa fa-file-alt"></i> Permohonan Permintaan Barang', ['prefix' => 'Farmasi', 'controller' => 'ItemRequests', 'action' => 'index'], ['class' => 'btn btn-default btn-block text-left mb-1', 'escape' => false]) ?>
+                <?= $this->Html->link('<i class="fa fa-warehouse"></i> Informasi Stock', ['prefix' => 'Penunjang', 'controller' => 'LabStocks', 'action' => 'index'], ['class' => 'btn btn-default btn-block text-left mb-1', 'escape' => false]) ?>
+                <?= $this->Html->link('<i class="fa fa-clipboard-list"></i> Permohonan Logistik',
+                ['prefix' => 'Penunjang', 'controller' => 'LabRequisitions', 'action' => 'add'],
+                ['class' => 'btn btn-default btn-block text-left mb-1', 'escape' => false]) ?>
+                <?= $this->Html->link('<i class="fa fa-dolly"></i> Pemakaian Logistik',
+                ['prefix' => 'Penunjang', 'controller' => 'LabUsages', 'action' => 'add'],
+                ['class' => 'btn btn-default btn-block text-left mb-1', 'escape' => false]) ?>
+                <?= $this->Html->link('<i class="fa fa-boxes"></i> Stock Logistik dan Umum', ['prefix' => 'Farmasi', 'controller' => 'LogisticStocks', 'action' => 'index'], ['class' => 'btn btn-default btn-block text-left mb-1', 'escape' => false]) ?>
             </div>
         </div>
 
@@ -198,6 +216,13 @@
         </div>
     </div>
 </div>
+
+<style>
+.lab-dd-toggle { white-space: normal; position: relative; padding-right: 28px; }
+.lab-dd-toggle::after { position: absolute; right: 10px; top: 50%; margin-top: -2px; }
+.lab-dd-toggle + .dropdown-menu .dropdown-item { white-space: normal; }
+</style>
+<?= $this->element('lab_memo_modal') ?>
 
 <script>
 (function () {

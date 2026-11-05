@@ -1475,6 +1475,73 @@ $bankincomesXls = ($bankincomes['xls'] == 1) ? 'checked' : '';
                         
                         <?= $ruleRow('Laboratorium', 'labexaminations', [
                             'index' => 'Daftar',
+                            'tindakan' => 'Tindakan Laboratorium',
+                            'proses' => 'Proses Permintaan',
+                        ]) ?>
+
+                        <?= $ruleRow('Setup Dokter Pengirim Lab', 'labsenderdoctors', [
+                            'index' => 'Daftar',
+                            'save' => 'Simpan (Tambah/Ubah)',
+                            'delete' => 'Hapus',
+                        ]) ?>
+
+                        <?= $ruleRow('History Pemeriksaan Lab', 'labhistories', [
+                            'index' => 'Daftar',
+                            'searchPatient' => 'Cari Pasien',
+                            'detail' => 'Detail Hasil',
+                        ]) ?>
+
+                        <?= $ruleRow('Pemakaian Non Beban BHP', 'bhpusages', [
+                            'index' => 'Daftar',
+                            'add' => 'Tambah',
+                            'view' => 'Tampilkan',
+                            'delete' => 'Hapus',
+                            'searchItems' => 'Cari Barang',
+                            'searchRegistration' => 'Cari Registrasi',
+                        ]) ?>
+
+                        <?= $ruleRow('Internal Memo Lab', 'labmemos', [
+                            'index' => 'Daftar',
+                            'add' => 'Tambah',
+                            'delete' => 'Hapus',
+                        ]) ?>
+
+                        <?= $ruleRow('Informasi Stock Lab', 'labstocks', [
+                            'index' => 'Daftar',
+                        ]) ?>
+
+                        <?= $ruleRow('Pemakaian Logistik Lab', 'labusages', [
+                            'index' => 'Daftar',
+                            'add' => 'Tambah',
+                            'view' => 'Tampilkan',
+                            'delete' => 'Hapus',
+                            'searchItems' => 'Cari Barang',
+                            'searchRegistration' => 'Cari Registrasi',
+                        ]) ?>
+
+                        <?= $ruleRow('Permohonan Logistik Lab', 'labrequisitions', [
+                            'index' => 'Daftar',
+                            'add' => 'Tambah',
+                            'view' => 'Tampilkan',
+                            'delete' => 'Hapus',
+                            'searchItems' => 'Cari Barang',
+                        ]) ?>
+
+                        <?= $ruleRow('Permohonan Permintaan Barang', 'itemrequests', [
+                            'index' => 'Daftar',
+                            'add' => 'Tambah',
+                            'view' => 'Tampilkan',
+                            'delete' => 'Hapus',
+                            'searchItems' => 'Cari Barang',
+                        ]) ?>
+
+                        <?= $ruleRow('Stock Logistik dan Umum', 'logisticstocks', [
+                            'index' => 'Tampilkan',
+                            'warehouses' => 'Cari Gudang',
+                            'stocks' => 'Daftar Stok',
+                            'save' => 'Tambah/Ubah Stok',
+                            'validateStock' => 'Validasi Stok',
+                            'searchItems' => 'Cari Barang',
                         ]) ?>
 
                         <?= $ruleRow('Surat Rawat Jalan', 'outpatientletters', [
