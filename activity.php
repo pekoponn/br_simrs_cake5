@@ -2295,3 +2295,350 @@ CREATE TABLE `lab_examinations` (
   KEY `idx_rm` (`medical_record_no`),
   KEY `idx_registration` (`registration_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE lab_examinations
+  ADD COLUMN order_id INT NULL AFTER registration_id,
+  ADD KEY idx_order (order_id);
+
+CREATE TABLE `lab_normal_values` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `master_laboratory_id` INT UNSIGNED NOT NULL,
+  `machine_code` VARCHAR(50) NULL,
+  `parameter_name` VARCHAR(150) NOT NULL,
+  `unit` VARCHAR(30) NULL,
+  `general_min` DECIMAL(12,3) NULL,
+  `general_max` DECIMAL(12,3) NULL,
+  `male_min` DECIMAL(12,3) NULL,
+  `male_max` DECIMAL(12,3) NULL,
+  `female_min` DECIMAL(12,3) NULL,
+  `female_max` DECIMAL(12,3) NULL,
+  `child_min` DECIMAL(12,3) NULL,
+  `child_max` DECIMAL(12,3) NULL,
+  `text_male` VARCHAR(150) NULL,
+  `text_female` VARCHAR(150) NULL,
+  `decimals` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  `sort_order` INT NOT NULL DEFAULT 0,
+  `is_create` TINYINT(1) NOT NULL DEFAULT 1,
+  `is_update` TINYINT(1) NOT NULL DEFAULT 0,
+  `is_delete` TINYINT(1) NOT NULL DEFAULT 0,
+  `is_active` CHAR(1) NOT NULL DEFAULT 'Y',
+  `created` DATETIME NULL,
+  `modified` DATETIME NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_master_lab` (`master_laboratory_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `lab_normal_templates` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `master_laboratory_id` INT UNSIGNED NOT NULL,
+  `test_name` VARCHAR(150) NOT NULL,
+  `normal_result` VARCHAR(255) NULL,
+  `is_active` CHAR(1) NOT NULL DEFAULT 'Y',
+  `created` DATETIME NULL,
+  `modified` DATETIME NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_master_lab_tpl` (`master_laboratory_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE master_laboratories
+  ADD COLUMN lab_group VARCHAR(100) NULL,
+  ADD COLUMN lab_subgroup VARCHAR(100) NULL;
+
+  CREATE TABLE `lab_sender_doctors` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `code` VARCHAR(30) NOT NULL,
+  `name` VARCHAR(150) NOT NULL,
+  `address` VARCHAR(255) NULL,
+  `phone` VARCHAR(30) NULL,
+  `mobile` VARCHAR(30) NULL,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `created` DATETIME NULL,
+  `modified` DATETIME NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_lab_sender_doctors_code` (`code`),
+  KEY `idx_lab_sender_doctors_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `lab_examination_results` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `lab_examination_id` INT UNSIGNED NOT NULL,
+  `parameter_name` VARCHAR(150) NOT NULL,
+  `result` VARCHAR(100) NULL,
+  `unit` VARCHAR(50) NULL,
+  `reference_range` VARCHAR(100) NULL,
+  `remarks` VARCHAR(255) NULL,
+  `sort_order` INT NOT NULL DEFAULT 0,
+  `created` DATETIME NULL,
+  `modified` DATETIME NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_lab_results_exam` (`lab_examination_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE `lab_examinations` ADD COLUMN `note` TEXT NULL;
+
+CREATE TABLE `lab_internal_memos` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `registration_no` VARCHAR(50) NULL,
+  `medical_record_no` VARCHAR(50) NULL,
+  `patient_name` VARCHAR(150) NULL,
+  `memo` TEXT NOT NULL,
+  `memo_date` DATETIME NOT NULL,
+  `created_by` VARCHAR(100) NULL,
+  `created` DATETIME NULL,
+  `modified` DATETIME NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_lab_memos_date` (`memo_date`),
+  KEY `idx_lab_memos_rm` (`medical_record_no`),
+  KEY `idx_lab_memos_noreg` (`registration_no`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `stock_warehouses` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `code` VARCHAR(30) NOT NULL,
+  `name` VARCHAR(150) NOT NULL,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `validated_at` DATETIME NULL,
+  `validated_by` VARCHAR(100) NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_stock_wh_code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `stock_items` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `code` VARCHAR(40) NOT NULL,
+  `name` VARCHAR(200) NOT NULL,
+  `unit` VARCHAR(30) NULL,
+  `min_stock` DECIMAL(15,2) NOT NULL DEFAULT 0,
+  `max_stock` DECIMAL(15,2) NOT NULL DEFAULT 0,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_stock_items_code` (`code`),
+  KEY `idx_stock_items_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `stock_balances` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `warehouse_id` INT UNSIGNED NOT NULL,
+  `item_id` INT UNSIGNED NOT NULL,
+  `last_so_date` DATE NULL,
+  `so_qty` DECIMAL(15,2) NOT NULL DEFAULT 0,
+  `adjustment_qty` DECIMAL(15,2) NOT NULL DEFAULT 0,
+  `received_qty` DECIMAL(15,2) NOT NULL DEFAULT 0,
+  `issued_qty` DECIMAL(15,2) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_stock_balance` (`warehouse_id`, `item_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE OR REPLACE VIEW `v_stock_summary` AS
+SELECT
+  b.warehouse_id,
+  b.item_id,
+  i.code AS item_code,
+  i.name AS item_name,
+  i.unit AS unit,
+  b.last_so_date,
+  b.so_qty,
+  b.adjustment_qty,
+  b.received_qty,
+  b.issued_qty,
+  (b.so_qty + b.adjustment_qty + b.received_qty - b.issued_qty) AS closing_qty,
+  i.min_stock,
+  i.max_stock
+FROM stock_balances b
+JOIN stock_items i ON i.id = b.item_id
+WHERE i.is_active = 1;
+
+CREATE TABLE `lab_usages` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `usage_no` VARCHAR(30) NOT NULL,
+  `usage_date` DATE NOT NULL,
+  `warehouse` VARCHAR(100) NULL,
+  `cost_centre` VARCHAR(100) NULL,
+  `notes` VARCHAR(255) NULL,
+  `charge_to_patient` TINYINT(1) NOT NULL DEFAULT 0,
+  `registration_id` INT UNSIGNED NULL,
+  `registration_no` VARCHAR(40) NULL,
+  `medical_record_no` VARCHAR(30) NULL,
+  `patient_name` VARCHAR(150) NULL,
+  `origin` VARCHAR(100) NULL,
+  `grand_total` DECIMAL(14,2) NOT NULL DEFAULT 0,
+  `is_create` TINYINT(1) NOT NULL DEFAULT 1,
+  `is_update` TINYINT(1) NOT NULL DEFAULT 0,
+  `is_delete` TINYINT(1) NOT NULL DEFAULT 0,
+  `is_active` CHAR(1) NOT NULL DEFAULT 'Y',
+  `created` DATETIME NULL,
+  `modified` DATETIME NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_usage_no` (`usage_no`),
+  KEY `idx_usage_date` (`usage_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `lab_usage_items` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `lab_usage_id` INT UNSIGNED NOT NULL,
+  `item_id` INT UNSIGNED NULL,
+  `item_code` VARCHAR(50) NULL,
+  `item_name` VARCHAR(200) NOT NULL,
+  `qty` DECIMAL(12,2) NOT NULL DEFAULT 0,
+  `unit` VARCHAR(30) NULL,
+  `price` DECIMAL(14,2) NOT NULL DEFAULT 0,
+  `total` DECIMAL(14,2) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `idx_usage` (`lab_usage_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `lab_requisitions` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `request_no` VARCHAR(30) NOT NULL,
+  `request_date` DATE NOT NULL,
+  `from_dept` VARCHAR(100) NOT NULL,
+  `to_dept` VARCHAR(100) NOT NULL,
+  `notes` VARCHAR(500) NULL,
+  `status` VARCHAR(20) NOT NULL DEFAULT 'diajukan',
+  `item_count` INT NOT NULL DEFAULT 0,
+  `is_active` CHAR(1) NOT NULL DEFAULT 'Y',
+  `created` DATETIME NULL,
+  `modified` DATETIME NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_requisition_no` (`request_no`),
+  KEY `idx_requisition_date` (`request_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `lab_requisition_items` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `lab_requisition_id` INT UNSIGNED NOT NULL,
+  `item_id` INT UNSIGNED NULL,
+  `item_code` VARCHAR(50) NULL,
+  `item_name` VARCHAR(200) NOT NULL,
+  `qty` DECIMAL(12,2) NOT NULL DEFAULT 0,
+  `unit` VARCHAR(30) NULL,
+  `notes` VARCHAR(255) NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_requisition_items` (`lab_requisition_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `bhp_usages` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `usage_no` VARCHAR(30) NOT NULL,
+  `usage_date` DATE NOT NULL,
+  `usage_time` TIME NULL,
+  `depo` VARCHAR(100) NULL,
+  `queue_no` INT NOT NULL DEFAULT 0,
+  `buyer_type` VARCHAR(10) NOT NULL DEFAULT 'pasien',
+  `unit_name` VARCHAR(100) NULL,                         
+  `registration_id` INT UNSIGNED NULL,
+  `registration_no` VARCHAR(40) NULL,
+  `medical_record_no` VARCHAR(30) NULL,
+  `patient_name` VARCHAR(150) NULL,
+  `origin` VARCHAR(100) NULL,
+  `class_name` VARCHAR(50) NULL,
+  `doctor_name` VARCHAR(150) NULL,
+  `phone` VARCHAR(30) NULL,
+  `subtotal` DECIMAL(14,2) NOT NULL DEFAULT 0,
+  `discount_total` DECIMAL(14,2) NOT NULL DEFAULT 0,
+  `tax_total` DECIMAL(14,2) NOT NULL DEFAULT 0,
+  `grand_total` DECIMAL(14,2) NOT NULL DEFAULT 0,
+  `is_create` TINYINT(1) NOT NULL DEFAULT 1,
+  `is_update` TINYINT(1) NOT NULL DEFAULT 0,
+  `is_delete` TINYINT(1) NOT NULL DEFAULT 0,
+  `is_active` CHAR(1) NOT NULL DEFAULT 'Y',
+  `created` DATETIME NULL,
+  `modified` DATETIME NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_usage_no` (`usage_no`),
+  KEY `idx_usage_date` (`usage_date`),
+  KEY `idx_registration` (`registration_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `bhp_usage_items` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `bhp_usage_id` INT UNSIGNED NOT NULL,
+  `item_id` INT UNSIGNED NULL,
+  `item_code` VARCHAR(50) NULL,
+  `item_name` VARCHAR(200) NOT NULL,
+  `qty` DECIMAL(12,2) NOT NULL DEFAULT 0,
+  `unit` VARCHAR(30) NULL,
+  `price` DECIMAL(14,2) NOT NULL DEFAULT 0,
+  `disc_percent` DECIMAL(5,2) NOT NULL DEFAULT 0,
+  `ppn_percent` DECIMAL(5,2) NOT NULL DEFAULT 0,
+  `ppn_amount` DECIMAL(14,2) NOT NULL DEFAULT 0,
+  `total` DECIMAL(14,2) NOT NULL DEFAULT 0,
+  `expired_date` DATE NULL,
+  `usage_rule` VARCHAR(200) NULL,
+  `shelf_no` VARCHAR(30) NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_usage` (`bhp_usage_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `item_requests` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `request_no` VARCHAR(30) NOT NULL,
+  `request_date` DATE NOT NULL,
+  `from_depo` VARCHAR(100) NOT NULL,          -- Dari Bagian [Depo]
+  `to_depo` VARCHAR(100) NOT NULL,            -- Ke bagian
+  `notes` VARCHAR(255) NULL,
+  `status` VARCHAR(20) NOT NULL DEFAULT 'diajukan',
+  `is_create` TINYINT(1) NOT NULL DEFAULT 1,
+  `is_update` TINYINT(1) NOT NULL DEFAULT 0,
+  `is_delete` TINYINT(1) NOT NULL DEFAULT 0,
+  `is_active` CHAR(1) NOT NULL DEFAULT 'Y',
+  `created` DATETIME NULL,
+  `modified` DATETIME NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_request_no` (`request_no`),
+  KEY `idx_request_date` (`request_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `item_request_items` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `item_request_id` INT UNSIGNED NOT NULL,
+  `item_id` INT UNSIGNED NULL,
+  `item_code` VARCHAR(50) NULL,
+  `item_name` VARCHAR(200) NOT NULL,
+  `qty` DECIMAL(12,2) NOT NULL DEFAULT 0,
+  `unit` VARCHAR(30) NULL,
+  `notes` VARCHAR(255) NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_request` (`item_request_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `logistic_warehouses` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `code` VARCHAR(30) NOT NULL,
+  `name` VARCHAR(150) NOT NULL,
+  `is_active` CHAR(1) NOT NULL DEFAULT 'Y',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_wh_code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `logistic_items` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `code` VARCHAR(50) NOT NULL,
+  `name` VARCHAR(200) NOT NULL,
+  `unit` VARCHAR(30) NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_item_code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `logistic_stocks` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `warehouse_code` VARCHAR(30) NOT NULL,
+  `item_id` INT UNSIGNED NULL,
+  `item_code` VARCHAR(50) NOT NULL,
+  `item_name` VARCHAR(200) NOT NULL,
+  `unit` VARCHAR(30) NULL,
+  `last_so_date` DATE NULL,                              
+  `so_qty` DECIMAL(14,2) NOT NULL DEFAULT 0,             
+  `adjustment` DECIMAL(14,2) NOT NULL DEFAULT 0,
+  `received` DECIMAL(14,2) NOT NULL DEFAULT 0,           
+  `issued` DECIMAL(14,2) NOT NULL DEFAULT 0,             
+  `balance` DECIMAL(14,2) NOT NULL DEFAULT 0,           
+  `min_stock` DECIMAL(14,2) NOT NULL DEFAULT 0,
+  `max_stock` DECIMAL(14,2) NOT NULL DEFAULT 0,
+  `is_valid` TINYINT(1) NOT NULL DEFAULT 0,
+  `created` DATETIME NULL,
+  `modified` DATETIME NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_wh_item` (`warehouse_code`, `item_code`),
+  KEY `idx_item` (`item_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
